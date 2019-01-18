@@ -1,0 +1,568 @@
+\documentclass[12pt,twocolumn,tighten]{aastex62}
+%\pdfoutput=1 %for arXiv submission
+\usepackage{amsmath,amstext,amssymb}
+\usepackage[T1]{fontenc}
+\usepackage{apjfonts}
+\usepackage[figure,figure*]{hypcap}
+\usepackage{graphics,graphicx}
+\usepackage{hyperref}
+\usepackage{comment}
+
+\renewcommand*{\sectionautorefname}{Section} %for \autoref
+\renewcommand*{\subsectionautorefname}{Section} %for \autoref
+
+%% Reintroduced the \received and \accepted commands from AASTeX v5.2.
+%% Add "Submitted to " argument.
+\received{\today}
+\revised{---}
+\accepted{---}
+\submitjournal{AAS journals.}
+
+\shortauthors{Bouma et al.}
+\shorttitle{Light Curves for Stars in Clusters}
+
+%\NewPageAfterKeywords
+
+\begin{document}
+
+\title{Homogeneous Light Curves for Stars in Clusters from TESS}
+
+\correspondingauthor{L. G. Bouma}
+\email{luke@astro.princeton.edu}
+
+\author[0000-0002-0514-5538]{L. G. Bouma}
+\affiliation{ Department of Astrophysical Sciences, Princeton
+University, 4 Ivy Lane, Princeton, NJ 08540, USA}
+%
+\author[0000-0002-0628-0088]{W. Bhatti}
+\affiliation{ Department of Astrophysical Sciences, Princeton
+    University, 4 Ivy Lane, Princeton, NJ 08540, USA}
+%
+\author[0000-0001-8732-6166]{J. D. Hartman}
+\affiliation{ Department of Astrophysical Sciences, Princeton
+University, 4 Ivy Lane, Princeton, NJ 08540, USA}
+%
+\author[0000-0001-7204-6727]{G. \'A. Bakos}
+\affiliation{ Department of Astrophysical Sciences, Princeton
+University, 4 Ivy Lane, Princeton, NJ 08540, USA}
+%
+\author[0000-0002-4265-047X]{J. N. Winn}
+\affiliation{ Department of Astrophysical Sciences, Princeton
+University, 4 Ivy Lane, Princeton, NJ 08540, USA}
+
+\begin{abstract}
+  Lorem ipsum.
+\end{abstract}
+
+\keywords{
+  methods: data analysis ---
+  techniques: photometric ---
+  %TODO: could be individual, and enumerate each cluster as well.
+  (Galaxy:) open clusters and associations: general ---
+  planets and satellites: detection 
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{sec:intro}
+
+Lorem ipsum.
+
+In what follows, \S~\ref{sec:method} presents BLAH, and
+\S~\ref{sec:results} describes BLAH BLAH.
+\S~\ref{sec:discussion} discusses, and \S~\ref{sec:conclusion}
+concludes.
+
+
+\begin{figure*}[t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.7\textwidth]{f1_PLACEHOLDER.pdf}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+    {\bf There are many clusters; TESS looks at them.} Placeholder skymap.
+		\label{fig:clustermap}
+	}
+\end{figure*}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Method}
+\label{sec:method}
+
+\begin{figure}[t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.3\textwidth]{f2.pdf}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+    {\bf Pipeline.} This is what we do.
+		\label{fig:pipeline}
+	}
+\end{figure}
+
+\subsection{Overview}
+
+We reduced the TESS images to lightcurves by performing a sequence of
+steps using stand-alone programs.  A conceptual overview of our
+``pipeline'' is given in Figure~\ref{fig:pipeline}.  Similar pipelines
+have been presented by \citet{Pal_2009},
+\citet{soares-furtado_image_2017} and \citet{oelkers_precision_2018}.
+
+We begin with the calibrated full frame images produced by SPOC
+(\S~\ref{subsec:observations}).  We then perform a collection of
+preparatory steps, including source extraction of bright stars,
+astrometry using the resulting positions, and coarse simple aperture
+photometry (\S~\ref{subsec:preparation}).  Using the shape values from
+the initial astrometry, we select an astrometric reference frame and
+transform all of the calibrated images to it.  We construct a
+photometric reference by stacking a collection of frames, and then
+convolve all the transformed frames to match the photometric reference,
+and subtract (\S~\ref{subsec:imagesubtraction}).  We perform aperture
+photometry on the subtracted images using positions projected onto the
+frame from Gaia DR2.  We detrend the resulting lightcurves
+(\S~\ref{subsec:lcdetrending}) in two subsequent steps.  First, we apply
+External Parameter Decorrelation (EPD, \citealt{bakos_2010}), and then
+we apply a Trend Filtering Algorithm (TFA, \citealt{kovacs_trend_2005}).
+Finally, we assess the resulting lightcurves using a variety of
+statistics for their white noise and red noise properties
+(\S~\ref{sec:results}).
+
+
+
+
+\subsection{Observations}
+\label{subsec:observations}
+
+% How did TESS observe?
+% What processing steps happened in order to get the calibrated frames?
+% Why did we choose to start with them?
+
+The TESS spacecraft began science operations on July 25, 2018.  To
+keep its cameras pointed opposite the Sun, the spacecraft advances by
+$\approx$$28$ degrees in ecliptic longitude every lunar month.  Data
+acquired throughout each ``sector'' is downlinked at spacecraft
+perigee through the Deep Space Network.  Verbose descriptions of the
+spacecraft's design and operations are given by
+\citet{ricker_transiting_2015} and the instrument handbook
+\citep{vanderspek_2018}.
+
+For us, the main data product of interest is the calibrated full frame
+image (FFI).  Each TESS camera reads out every 2 seconds.  To produce
+a manageable telemetric load, the resulting pixel values are summed by
+the onboard computer into 30 minute averages. (An on-board cosmic ray
+mitigation algorithm is applied.) Once transmitted to the ground, the
+raw images are calibrated by the Science Processing Operations Center.
+The calibration process includes an overscan, bias, and dark current
+correction, and also dividing out a flat field.  The details are given by
+\citet{clarke_kepler_2017}, and the resulting science data products are
+described by \citet{tess_data_product_description_2018}.
+
+We begin our analysis using the calibrated images, their uncertainty
+maps, and their associated headers.  The spacecraft has four cameras,
+and each camera has four CCDs.  In the following analysis, all
+image-level operations are thus performed on the images for each CCD,
+so that at any instant of time there are 16 independent images
+undergoing analysis.
+
+
+\subsection{Preparatory Steps}
+\label{subsec:preparation}
+
+Before we can perform any kind of photometry, a few janitorial tasks
+are required.
+
+The first is to trim and mask the images.  We convert the calibrated
+image from MAST into a \texttt{fitsh}-compatible image by retrieving
+the image data (omitting the uncertainty map, for now). We then trim
+the image to remove virtual rows and columns (using the
+\texttt{SCIROWS}, \texttt{SCIROWE}, \texttt{SCCSA}, \texttt{SCCED},
+header values).  We then mask out saturated stars using the `fiign`
+program with a fixed saturation level of $2^{16}\,{\rm ADU}$.  As
+described by \citet{Pal_2009}, the mask is metadata to the image, and
+is not actually applied to the pixel values.  During masking, we also
+use the algorithm described by \citet{Pal_2009} to extend masks beyond
+purely satured pixels to ``bloomed'' pixels -- pixels horizontally and
+vertically adjacent to the saturated pixels.  Finally, for frames with
+the \texttt{DQUALITY} bit-flag set to 32~---~corresponding to the
+``momentum dumps'' described by \citet{vanderspek_2018}~---~we mask
+out the entire frame.  This removes on average a few frames per
+sector. Through visual inspection, we see that the stars on these
+frames are extremely smeared, and are unlikely to produce useful
+science data.
+
+Next, we perform some initial analysis steps to produce metadata
+needed during image subtraction.  To obtain an astrometric solution
+(independent from the WCS data packaged with the frames), we use
+\texttt{fistar} to perform source extraction on bright stars in each
+image.  We pass the resulting source lists through
+\texttt{astrometry.net} \citep{lang_2010}, which returns an
+astrometric solution for each frame packaged in the WCS format
+\citep[][Sec.~8]{pence_fits_2010}.  During the initial source
+extraction, we also fit elongated gaussians to the bright stars,
+yielding the shape parameters (S,D,K), where the flux as a function of
+position is assumed to take the form
+\begin{align}
+  f_{\rm elong}(\vec{x}) &= B + A \exp \{ -0.5 \times ( 
+    S(\Delta x^2 + \Delta y^2) + \\
+    &D(\Delta x^2 - \Delta y^2) +
+    K(2\Delta x \Delta y)
+  )  \},
+\end{align}
+for $\Delta x = x-x_0$, and $\Delta y = y - y_0$.  $S$ is typically
+called the ``sharpness''.  For a nearly circular shape profile, ${\rm
+FWHM} \approx 2.35\sqrt{S}$ \citep[{\it e.g.},][]{Pal_2009}.  These
+shape parameters are later used when selecting an astrometric
+reference (\S~\ref{subsec:imagesubtraction})
+
+With the resulting WCS information, we then project a source catalog
+from Gaia-DR2 onto the frame, down to a pre-selected magnitude cutoff
+\citep{gaia_collaboration_gaia_2018}.  We use these expected positions
+to center the apertures in our photometry, rather than attempting to
+detect the positions.  Such ``forced-aperture photometry'' is
+preferable to performing source extraction because of the large TESS
+pixels, and the accurate Gaia positions.  The Gaia-DR2 epoch is
+J2015.5, so even the fastest-moving stars with proper motions of
+$\sim$$1\,{\rm arcsecond}\,{\rm yr}^{-1}$ are still well within one pixel
+of their predicted positions in the TESS images.  The projection and
+catalog-indexing is performed using
+\texttt{gaia2read}\footnote{\url{github.com/samuelyeewl/gaia2read}}
+(CITE Jason Kim junior thesis).
+
+Finally, we perform aperture photometry on the bright stars from the
+source list, by summing the counts inside appropriately-weighted
+circular apertures centered on the projected positions from Gaia DR2. 
+The pixel weights $w_{x,y}$ are equal to the fraction of the pixel
+that falls within the aperture.  They are thus unity for pixels
+entirely within the aperture, and fractional along the aperture
+boundary (e.g., \citealt{Pal_2009} Fig 17). 
+The background levels are measured in annuli around each aperture
+center.  The raw flux of the object after background removal is then
+(\citealt{Pal_2009} Eq 65)
+\begin{equation}
+  f = \sum_{x,y} w_{x,y} (I_{x,y} - B) = f_{\rm total} - B r_0^2.
+  \label{eq:simple_aperture_phot}
+\end{equation}
+The resulting measurements, for instance of the background level of
+each aperture, and the number of ``good'' objects that are detected,
+are later used as input for selecting photometric reference frames.
+
+
+\subsection{Image Subtraction}
+\label{subsec:imagesubtraction}
+
+We then select two ``reference frames'' for image subtraction.
+The first is the astrometric reference; the second is the photometric
+reference.
+To choose the astrometric reference, we use the following heuristics:
+\begin{enumerate}
+  \item The frame must have large and round stars (largest ``S'',
+    smallest ``D'' and ``K'' values).
+  \item The frame must minimal background noise, as measured in annuli
+    around the bright stars selected in \S~\ref{subsec:preparation}.
+  \item The frame must have, relative to the other frames being
+    considered, a large number of detected sources.
+\end{enumerate}
+We sort the frames using the above metrics, and then select the
+astrometric reference from successive intersections of each sorted
+list.
+Using the algorithm presented by \citet{pal_astrometry_2006}, we then
+calculate a spatial transformation that maps the X and Y coordinates
+from each calibrated frame onto the the astrometric reference.
+
+``Registering'' the images onto a common astrometric reference frame
+requires some care. In particular, the transformation must preserve
+the fluxes of the sources. Since the transformation is affine (a
+combination of {\it e.g.}, translation, rotation, dilation, and shear)
+standard bilinear or bicubic interpolation would not achieve flux
+conservations.  We therefore use the flux-conserving interpolation
+scheme described by \citet{Pal_2009} which is based on analytic
+integration of the surfaces determined by the pixel values. 
+%FIXME: is this interpolation scheme definitely being applied?
+The largest component of the transformation is a translation, of order
+2 arcseconds, or about 0.1 TESS pixels.
+
+The second reference frame needed for image subtraction is the
+photometric reference.
+This is a high-SNR median average of frames that is used both to
+calculate the convolution kernel during image subtraction, and to
+measure the reference flux of each star.
+To select viable frames for inclusion in the photometric reference, we
+use the results of our initial photometry step
+(\S~\ref{subsec:preparation}), and sort frames for each sector by:
+\begin{enumerate}
+  \item Lowest median scatter in photometry
+  \item Lowest median error in photometry
+  \item Lowest median background measurement
+  \item Lowest median absolute deviation in background measurements
+  \item Largest number of stars detected by \texttt{fiphot} with good
+    flags.
+    % fiphot files used for all of this.
+\end{enumerate}
+We convolve the 50 best candidate photometric references to the best
+photometric reference, and then perform a median combination of the
+frames to make the photometric reference.
+
+%FIXME: it seems like it would be smart to produce a photometric
+%reference for different intervals of time. 480 frames over 10 days ->
+%perhaps split the full 28 day sector entirely by momentum dumps to
+%get ~10 photometric references per sector. 
+
+%FIXME: LEFT OFF HERE
+Some details of, and motivation for, the convolution process are warranted.
+The general idea of the image subtraction problem is to...
+
+This has some benefits for crowded regions. Most notably, in enables a
+measurement of the background flux level.
+
+Our approach follows from the algorithm presented by
+\citet{Alard_Lupton_1998}, and explained in detail by
+\citet{miller_optimal_2008}.
+The process is: %FIXME: following miller 2008...
+\begin{enumerate}
+  \item Select a set of isolated stars (``stamps'').
+  \item Choose basis vectors $K_n$ for the kernel, $K = \sum_{n=1}^N
+    a_n K_n$. Our goal is to determine the best-fitting coefficients
+    $a_n$. 
+  \item Using these stamps and the least-squares method, ...
+\end{enumerate}
+
+
+%FIXME: when do we actually get the reference fluxes? Where do those
+%come from???
+
+Finally, we convolve and subtract all the frames that have been
+translated from the photometric reference (\texttt{grcombine}).
+We use the same kernel formalism as described by
+\citet{soares-furtado_image_2017}.
+To compute the convolution kernel, we minimize the difference between
+each image and the photometric reference (or something like this),
+using the Alard \& Lupton 1998 method (CITE, also CITE Miller's
+reference).
+The software implementation is that by \citet{Pal_2009}, in the
+\texttt{ficonv} program.
+The implemented math is as follows.
+\begin{equation}
+  XXX = XXX. %FIXME: maybe Soares pg 5 main equation?
+\end{equation}
+We explored a variety of kernel options, including X, Y, and Z.
+We wound up including an ``identity'' term (MEANING?), a ``background
+term'' (MEANING?) and a delta function term (MEANING? Give math for
+all of these).
+There are also spatially-varying terms of order XX. (MEANING?)
+% I believe this means that we should be able to somehow _visualize_
+% the kernel as a function of spatial position in the image. What
+% should it look like? Is it like a star's PSF? Or somehow related??
+
+We perform forced-aperture photometry on the subtracted frames,
+using the locations from the Gaia projection, to measure the resulting
+difference fluxes.
+We use circular apertures, with the appropriate weigths along the
+boundaries (\texttt{fiphot}; \citet{Pal_2009} Section FIXME).
+
+Note that to measure the fluxes on the differenced images, a
+slightly different procedure from Eq.~\ref{eq:simple_aperture_phot} is
+relevant.
+(Pal 2009 Section 2.9).
+Specifically, the subtracted image $S$ is given by $I - B - R\ast K$,
+for $I$ the original image, $B$ the background, $R$ the reference
+image, and $K$ the convolution kernel.
+The flux in the original image is given by
+%FIXME: this equation IS PROBABLY WRONG. I_xy? Or S_xy?
+\begin{align}
+  f &= \sum_{x,y} w_{x,y} I_{x,y} \\
+    &= 
+       \frac{1}{|| K ||_1^2} \sum_{x,y} S_{x,y} (w \ast K)_{x,y}
+       +
+       \sum_{x,y} R_{x,y} w_{x,y},
+\end{align}
+%FIXME: derive this equation. why exactly does this work?
+
+Finally, to convert from a list of sources on each frame to a list of
+flux values at any given time, we use the \texttt{grcollect}
+transposition tool.
+
+\subsection{Lightcurve Detrending}
+\label{subsec:lcdetrending}
+
+The preceding tedium produces lightcurves that include both
+instrumental systematics as well as astrophysical variability.
+We perform two subsequent detrending steps:
+we decorrelate against known external parameters (EPD,
+\citealt{bakos_2010}) that we know affect the stellar flux
+measurements, and then we filter remaining systematic trends from
+unknown parameters (TFA, \citealt{kovacs_trend_2005}).  These
+procedures are the standard that have been adopted for the HAT group
+(see discussions from {\it e.g.}
+\citealt{huang_high-precision_2015,zhang_precision_2016}).
+We briefly summarize them here for self-consistency.
+
+In ``external parameter decorrelation'', we fit the magnitude of each star
+as a function of parameters that we suspect may systematically affect
+the brightness counts.
+For instance, intra-pixel quantum efficiency variations can affect
+the measured stellar brightness as a function of the fractional
+centroid positions, $\{ x \}$ and $\{ y \}$, where $\{ x \} = x -
+\lfloor x \rfloor$, for $\lfloor \cdot \rfloor$ the floor function.
+Changes in the CCD electronics due to their temperature $T$ might
+matter.
+The fast focal ratio of the TESS cameras introduces significant
+comatic aberrations to the images, which affect the shape of the point
+spread function as a function of distance from the center of each
+camera's field; this might be at least superficially treated by
+allowing the elongated gaussian shape parameters $(S,D,K)$ to be free
+parameters.
+
+To chose among these free parameters, we plotted the magnitudes
+against each parameter in the vector $\theta' = (S,D,K,S^2,K^2, D^2,
+S\cdot D, S\cdot K, D\cdot K, x,y,\{x\},\{y\},T, \sin(2\pi x),
+\cos(2\pi x), \sin(2\pi
+y),\cos(2\pi y))$.
+We used the temperature from the on-chip aluminum-copper sensor
+measurements included in the engineering
+data\footnote{\url{archive.stsci.edu/missions/tess/engineering/}}.
+
+%FIXME: what did we see? What did we fit for?
+We saw significant correlations for parameters X,Y, and Z.
+
+We then fit the following model to the magnitudes $m$:
+\begin{equation}
+  m = {\rm const.} + \sum_i \theta_i,
+\end{equation}
+for 
+$\theta = (S,D,K,S^2,K^2, D^2, S\cdot D, S\cdot K, D\cdot K,
+x,y,\{x\},\{y\},T, \sin(2\pi x), \cos(2\pi x), \sin(2\pi y),\cos(2\pi
+y))$.
+We optimized via least-squares, and subtracted the maximum-likelihood
+model to produce ``EPD'' lightcurves.
+
+In ``trend filtering'', we correlate the flux timeseries of each star
+against other stars in the frame (TFA, \citealt{kovacs_trend_2005}).
+This requires selecting ``template stars'', which are a subsample of
+star that are supposed to represent all the types of systematics
+across the dataset. 
+%FIXME: clarify this procedure
+We select 500 template stars randomly from the stars on-chip with
+$G_{\rm R_p}$ magnitudes between 8.5 and 13 (TODO: rather bright?).
+We additionally require these stars to not have excessive variability,
+by fitting a parabola in the RMS-magnitude plane, and discarding stars
+more than $4\sigma$ away from the prediction of this fit.
+
+Once the template stars are selected, we use the secret TFA
+implementation from the \texttt{HATpipe} source code, that you and
+nobody else is allowed to see.
+% It's at /home/lbouma/proj/HATpipe/source/lc/frontends/tfa.c, I
+% believe. We could perhaps use the vartools equivalent of this.
+
+To select template stars, we impose a 
+
+The details of this selection procedure are 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Results}
+\label{sec:results}
+
+RMS vs mag plots.
+
+SNR of retrieved HJs.
+
+Some stellar variability plots (perhaps of known stellar variables).
+
+Some focus on actual cluster fields.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}
+\label{sec:discussion}
+
+Lorem ipsum.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+\label{sec:conclusion}
+
+% \begin{figure}[t]
+% 	\begin{center}
+% 		\leavevmode
+% 		\includegraphics[width=0.49\textwidth]{f6.pdf}
+% 	\end{center}
+% 	\vspace{-0.5cm}
+% 	\caption{
+%     {\bf Further observations will be needed to confirm and understand
+%     the timing variations of WASP-4b.} Dots are as in
+%     Figure~\ref{fig:times}.  Lines are 100 random draws from the
+%     posteriors of the apsidal precession model (orange), and the
+%     orbital decay model (blue).    
+% 		\label{fig:future}
+% 	}
+% \end{figure}
+
+
+
+
+\acknowledgements
+L.G.B.\ gladly acknowledges helpful discussions with
+..., and is
+grateful to the people who have turned TESS from an idea into reality.
+%
+J.N.W.\ thanks ...
+%
+This paper includes data collected by the TESS mission, which are
+publicly available from the Mikulski Archive for Space Telescopes
+(MAST).
+%
+Funding for the TESS mission is provided by NASA's Science Mission
+directorate.
+%
+This research has made use of the NASA Exoplanet Archive, which is
+operated by the California Institute of Technology, under contract
+with the National Aeronautics and Space Administration under the
+Exoplanet Exploration Program.
+%
+This work made use of NASA's Astrophysics Data System Bibliographic
+Services.
+%
+This research has made use of the VizieR catalogue access tool, CDS,
+Strasbourg, France. The original description of the VizieR service was
+published in A\&AS 143, 23.
+%
+This work has made use of data from the European Space Agency (ESA)
+mission {\it Gaia} (\url{https://www.cosmos.esa.int/gaia}), processed
+by the {\it Gaia} Data Processing and Analysis Consortium (DPAC,
+\url{https://www.cosmos.esa.int/web/gaia/dpac/consortium}). Funding
+for the DPAC has been provided by national institutions, in particular
+the institutions participating in the {\it Gaia} Multilateral
+Agreement.
+%
+\newline
+%
+\facility{
+	TESS \citep{ricker_transiting_2015},
+	Gaia \citep{gaia_collaboration_gaia_2016,gaia_collaboration_gaia_2018}
+}
+%
+\software{
+  \texttt{astrobase} \citep{bhatti_astrobase_2018},
+  \texttt{astropy} \citep{the_astropy_collaboration_astropy_2018},
+  \texttt{astroquery} \citep{astroquery_2018},
+  \texttt{BATMAN} \citep{kreidberg_batman_2015},
+  \texttt{corner} \citep{corner_2016},
+  \texttt{emcee} \citep{foreman-mackey_emcee_2013},
+  \texttt{fitsh} \citep{Pal_2012},
+  \texttt{IPython} \citep{perez_2007},
+  \texttt{matplotlib} \citep{hunter_matplotlib_2007}, 
+  \texttt{numpy} \citep{walt_numpy_2011}, 
+  \texttt{pandas} \citep{mckinney-proc-scipy-2010},
+  \texttt{scipy} \citep{jones_scipy_2001}.
+}
+
+\bibliographystyle{yahapj}                            
+\bibliography{bibliography} 
+
+% \appendix -- only if needed
+
+\end{document}
