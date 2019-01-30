@@ -8,8 +8,6 @@ import os
 
 from astropy.io import fits
 
-from plot_mag_vs_EPD_parameters import get_data as small_get_data
-
 import seaborn as sns
 
 from scipy.interpolate import splprep, splev
@@ -17,16 +15,16 @@ from scipy.interpolate import splprep, splev
 from numpy import array as nparr
 
 
-def homog_get_data(lctype='corner'):
+def homog_get_data(lctype='corner', lcdir=None):
     # lctype = 'corner' or 'center'
 
-    lcdir = '../results/projid1030_lc_fit_check/{}_lcs'.format(lctype)
     lcfiles = glob(os.path.join(lcdir, '*_llc.fits'))
 
     datalist = []
     for lcfile in lcfiles:
         hdulist = fits.open(lcfile)
         datalist.append(hdulist[1].data)
+        hdulist.close()
 
     return lcfiles, datalist
 
@@ -140,9 +138,10 @@ def do_bspline_fit_xyTmag(lcpaths, lcdatalist, magtype='IRM1', frac_of_lc=0.4,
             magtype, frac_of_lc, os.path.splitext(os.path.basename(lcpath))[0])
         savpath = os.path.join(savdir, savname)
 
-        if os.path.exists(savpath):
-            print('found {}, continue'.format(savpath))
-            continue
+        #FIXME put in
+        # if os.path.exists(savpath):
+        #     print('found {}, continue'.format(savpath))
+        #     continue
 
         # find the knot points
         x = [nparr(df['x']), nparr(df['y']),
@@ -191,6 +190,7 @@ def do_bspline_fit_xyTmag(lcpaths, lcdatalist, magtype='IRM1', frac_of_lc=0.4,
             # _k: order
             _t,_c,_k = tckp
             coeffs, knots, order = tckp
+            import IPython; IPython.embed() #FIXME
 
             n_dim = 4
             n_data = len(x[0])
