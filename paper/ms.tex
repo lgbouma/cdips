@@ -177,17 +177,18 @@ are required.
 
 The first is to trim and mask the images.  We convert the calibrated
 image from MAST into a \texttt{fitsh}-compatible image by retrieving
-the image data (omitting the uncertainty map, for now). We then trim
-the image to remove virtual rows and columns (using the
-\texttt{SCIROWS}, \texttt{SCIROWE}, \texttt{SCCSA}, \texttt{SCCED},
-header values).  We then mask out saturated stars using the `fiign`
-program with a fixed saturation level of $2^{16}\,{\rm ADU}$.  As
-described by \citet{Pal_2009}, the mask is metadata to the image, and
-is not actually applied to the pixel values.  During masking, we also
-use the algorithm described by \citet{Pal_2009} to extend masks beyond
-purely satured pixels to ``bloomed'' pixels -- pixels horizontally and
-vertically adjacent to the saturated pixels.  Finally, for frames with
-the \texttt{DQUALITY} bit-flag set to 32~---~corresponding to the
+the image data, and omitting the uncertainty map. We then trim the
+image to remove virtual rows and columns using the \texttt{SCIROWS},
+\texttt{SCIROWE}, \texttt{SCCSA}, \texttt{SCCED}, header values.  We
+mask out saturated stars using the `fiign` program with a fixed
+saturation level of $2^{16}\,{\rm ADU}$.  As described by
+\citet{Pal_2009}, the mask is metadata to the image, and is not ever
+actually applied to the pixel values, except during specific image
+processing steps that follow.  During masking, we also use the
+algorithm described by \citet{Pal_2009} to extend masks beyond purely
+saturated pixels to ``bloomed'' pixels horizontally and vertically
+adjacent to the saturated pixels.  Finally, for frames with the
+\texttt{DQUALITY} bit-flag set to 32~---~corresponding to the
 ``momentum dumps'' described by \citet{vanderspek_2018}~---~we mask
 out the entire frame.  This removes on average a few frames per
 sector. Through visual inspection, we see that the stars on these
@@ -216,7 +217,11 @@ for $\Delta x = x-x_0$, and $\Delta y = y - y_0$.  $S$ is typically
 called the ``sharpness''.  For a nearly circular shape profile, ${\rm
 FWHM} \approx 2.35\sqrt{S}$ \citep[{\it e.g.},][]{Pal_2009}.  These
 shape parameters are later used when selecting an astrometric
-reference (\S~\ref{subsec:imagesubtraction})
+reference (\S~\ref{subsec:imagesubtraction}).
+We note that the fast focal ratio of the TESS cameras introduces
+significant comatic aberrations to the images, stars closer to the
+center of the field are more round; stars towards the edges are more
+triangular.
 
 With the resulting WCS information, we then project a source catalog
 from Gaia-DR2 onto the frame, down to a pre-selected magnitude cutoff
@@ -286,10 +291,16 @@ The largest component of the transformation is a translation, of order
 2 arcseconds, or about 0.1 TESS pixels.
 
 The second reference frame needed for image subtraction is the
-photometric reference.
-This is a high-SNR median average of frames that is used both to
-calculate the convolution kernel during image subtraction, and to
-measure the reference flux of each star.
+photometric reference.  Generically, if one were to simply subtract
+two arbitrary frames, the noise level in the resulting difference
+image would be $\sqrt{2}$ times greater than that in the original
+target frame.
+To minimize this effect, we create a high-SNR median average of
+$N$ selected frames, so that the noise level in the resulting
+subtracted images goes as $\sqrt{1+1/N}$.
+This ``photometric reference'' is used both to calculate the
+convolution kernel during image subtraction, and to measure the
+reference flux of each star.
 To select viable frames for inclusion in the photometric reference, we
 use the results of our initial photometry step
 (\S~\ref{subsec:preparation}), and sort frames for each sector by:
@@ -388,59 +399,194 @@ transposition tool.
 \subsection{Lightcurve Detrending}
 \label{subsec:lcdetrending}
 
-The preceding tedium produces lightcurves that include both
-instrumental systematics as well as astrophysical variability.
-We perform two subsequent detrending steps:
-we decorrelate against known external parameters (EPD,
-\citealt{bakos_2010}) that we know affect the stellar flux
-measurements, and then we filter remaining systematic trends from
-unknown parameters (TFA, \citealt{kovacs_trend_2005}).  These
-procedures are the standard that have been adopted for the HAT group
-(see discussions from {\it e.g.}
-\citealt{huang_high-precision_2015,zhang_precision_2016}).
-We briefly summarize them here for self-consistency.
+The preceding steps produce lightcurves that include both instrumental
+systematics as well as astrophysical variability.  The detrending
+philosophy adopted by the HAT group typically proceeeds in two
+sequential stages (see discussions from {\it e.g.}
+\citealt{bakos_2010,huang_high-precision_2015,zhang_precision_2016}) .
+The first stage is to decorrelate against external parameters that are
+known to affect the stellar flux measurements (EPD,
+\citealt{bakos_2010}). The second stage is to filter remaining
+systematic trends caused by unknown parameters by decorrelating the
+measured brightnesses of stars against each other (TFA,
+\citealt{kovacs_trend_2005}).  
 
-In ``external parameter decorrelation'', we fit the magnitude of each star
-as a function of parameters that we suspect may systematically affect
-the brightness counts.
-For instance, intra-pixel quantum efficiency variations can affect
-the measured stellar brightness as a function of the fractional
-centroid positions, $\{ x \}$ and $\{ y \}$, where $\{ x \} = x -
-\lfloor x \rfloor$, for $\lfloor \cdot \rfloor$ the floor function.
-Changes in the CCD electronics due to their temperature $T$ might
-matter.
-The fast focal ratio of the TESS cameras introduces significant
-comatic aberrations to the images, which affect the shape of the point
-spread function as a function of distance from the center of each
-camera's field; this might be at least superficially treated by
-allowing the elongated gaussian shape parameters $(S,D,K)$ to be free
-parameters.
+In general though, one must adapt detrending procedures to the data at
+hand.  In \S~\ref{sec:flux_vs_external_parameters}, we show that the
+``external parameter'' dependence visible in the TESS data is rather
+complex: ordinary linear model-fitting, as well as an initial attempts
+at non-linear model fitting, are poor descriptions of the data.  We go
+on to show (\S~\ref{sec:tfa_is_good_enough}) that a plausible
+detrending approach for the purpose of transit discovery is to simply
+decorrelate against other nearby stars with standard TFA.
 
-To chose among these free parameters, we plotted the magnitudes
-against each parameter in the vector $\theta' = (S,D,K,S^2,K^2, D^2,
-S\cdot D, S\cdot K, D\cdot K, x,y,\{x\},\{y\},T, \sin(2\pi x),
-\cos(2\pi x), \sin(2\pi
-y),\cos(2\pi y))$.
-We used the temperature from the on-chip aluminum-copper sensor
-measurements included in the engineering
-data\footnote{\url{archive.stsci.edu/missions/tess/engineering/}}.
 
-%FIXME: what did we see? What did we fit for?
-We saw significant correlations for parameters X,Y, and Z.
+\subsubsection{Flux versus external parameters}
+\label{sec:flux_vs_external_parameters}
 
-We then fit the following model to the magnitudes $m$:
+\begin{figure*}[t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.7\textwidth]{f3.png}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+    {\bf Timeseries of ``external parameters'' for a representative
+    star.} {\it Top}: Instrumental raw magnitude (with a particular
+    aperture size), as a function of time.  {\it Second and third from
+    top}: $x$ and $y$ centroid positions as a function of time.
+    Continuing in order are the CCD temperature, the $(s,d,k)$ shape
+    parameters, and the measured background value.
+    Most of the apparent variability is instrumental: see
+    \S~\ref{sec:flux_vs_external_parameters}.
+		\label{fig:external_parameter_timeseries}
+	}
+\end{figure*}
+
+
+\begin{figure*}[t]
+    \begin{center}
+		\includegraphics[height=0.97\textheight]{f4.png}
+    \end{center}
+    \vspace{-0.8cm}
+    \caption{
+      {\bf Flux as a function of ``external parameters'' for four
+      representative stars.} The left two columns are stars at the
+      corner of a camera's field; the right two columns are from the
+      centers.
+      Each row shows a different parameter along the $x$-axis, given
+      in text at the bottom right of each subplot.
+      ``Hooks'' are common features in flux as a function of
+      temperature and centroid position.
+      \S~\ref{sec:flux_vs_external_parameters} gives a verbose
+      description.
+     \label{fig:flux_vs_external_parameters}
+    }
+\end{figure*}
+
+The traditional approach to EPD 
+\citep[][]{Pal_2009,bakos_2010,zhang_precision_2016} is to fit and
+subtract a model of the form
+
 \begin{equation}
-  m = {\rm const.} + \sum_i \theta_i,
+  m = {\rm const.} + \sum_i c_i \theta_i,
+  \label{eq:classical_EPD}
 \end{equation}
-for 
-$\theta = (S,D,K,S^2,K^2, D^2, S\cdot D, S\cdot K, D\cdot K,
-x,y,\{x\},\{y\},T, \sin(2\pi x), \cos(2\pi x), \sin(2\pi y),\cos(2\pi
-y))$.
-We optimized via least-squares, and subtracted the maximum-likelihood
-model to produce ``EPD'' lightcurves.
 
-In ``trend filtering'', we correlate the flux timeseries of each star
+where $\vec{\theta}$ is a vector of parameters such as the shape
+parameters $(s,d,k)$, their products $(s^2, s\cdot d, d^2, \ldots)$,
+the temperature $T$ of the CCDs\footnote{ We used the temperature from
+the on-chip aluminum-copper sensor measurements included in the
+engineering
+data\footnote{\url{archive.stsci.edu/missions/tess/engineering/}}.  },
+the centroid positions $(x,y)$, the fractional part of the
+centroid positions $(\{x\},\{y\})$, and any other parameters that are
+expected\footnote{ The fractional centroid positions might matter
+because intra-pixel quantum efficiency variations could affect the
+measured stellar brightness.  The varying temperature $T$ of the CCD
+electronics might matter.  } to correlate strongly with the observed
+flux.  The coefficients $c_i$ are calculated through linear
+least-squares, and subtracted to produce ``EPD'' lightcurves.
+
+The premise of this model is that the correlations between the
+magnitudes and these external parameters are linear.  For ground-based
+CCD data (e.g., HATNet, HATS, and Nikon DSLRs), \citet{bakos_2010} and
+\citet{zhang_precision_2016} have verified that this model is a
+reasonable fit to the data.
+
+To discern whether such a model describes the TESS data, we examined scatter 
+plots of each
+parameter, as a function of all the other parameters.  We also
+examined plots of each parameter as a function of time.
+A few prominent trends were present.
+
+\begin{enumerate}
+
+\item {\it Flux vs. time}. Most of the lightcurves we examined showed a secular
+    drift with amplitude $0.01\,{\rm mag}$ over the timescale of each
+    orbit.  Sharper trends (``hooks'') at the beginning of each orbit
+    seemed to be less prominent for stars at the corners of the fields
+    than stars at the center.  The periodicity incurred by the
+    2.5$\,{\rm day}$ momentum dumps was also noticeable in more of the
+    lightcurves at the center of the field than at the corners.
+
+\item {\it Flux vs. centroid positions}. The flux as a function of
+  centroid position often showed non-linear ``hooks'' (see Figure
+    \ref{fig:flux_vs_external_parameters}). Most of the data points from a 
+    given orbit reside at a given
+    level, but about 10\% are in a tail. This was seen in lightcurves
+    all across the TESS field of view.
+
+\item {\it Flux vs. temperature} exhibited similar hooks, with most of
+  the flux values residing at a particular level, and perhaps 10\%
+    following a non-linear path (often resembling the Nike ``swoosh'')
+    away from the bulk of points.
+
+\item {\it Flux vs. shape parameters}.  For lightcurves in the corner
+  of the field of view, similar hooks are present in flux {\it vs.}
+    $(s,d,k)$, though the hooks are less sharp.  In the center of the
+    field of view, gaussian ellipses are a better description of the
+    flux {\it vs.} the shape parameters.
+    
+\end{enumerate}
+
+Considering the timeseries of parameters other than flux 
+(Figure~\ref{fig:external_parameter_timeseries}):
+
+\begin{enumerate}
+
+\item {\it Centroid positions vs. time}.  The main variability in the
+  centroid positions as a function of time is a secular drift, that is
+    reset every orbit.  The 2.5 day momentum wheel dump is
+    superimposed on this secular drift, and has smaller amplitude than
+    the drift.
+
+\item {\it Temperature vs. time}.  The main variability in temperature
+  {\it vs.} time is a secular drift of the same timescale as that for
+    the centroid positions timeseries.
+
+\item {\it Shape parameters vs. time}.  The main variability in the
+  shape parameters as a function of time is the 2.5 day momentum wheel
+    dump periodicity, with hooks before each momentum dump.
+
+\item {\it Background value vs. time}.  The background is typically stable, 
+except when scattered light from the Earth or Moon enters the frame (visible 
+towards the end of each orbit in 
+Figure~\ref{fig:external_parameter_timeseries}).
+
+\end{enumerate}
+
+Given the characteristics of the variability, a linear model of the
+form given in Equation~\ref{eq:classical_EPD} is not applicable.  To
+fit out the correlations between flux and parameters which most
+commonly exhibited ``hooks'', we explored fitting a parametric open
+curve (an $N$-dimensional B-spline, \citealt{dierckx_curve_1996}) to
+the flux, centroid positions, and temperatures simultaneously.  We
+selected the number of knots through brute-force, by calculating
+$\chi^2$ for the model fit of a grid of knots, and minimizing the
+Bayesian Information Criterion.  Though this approach showed some
+initial promise, even with ``optimal'' knot-selection (in the BIC
+sense) it introduced undesirable residuals in the lightcurves, and
+also distorted transits.
+
+Given these complications, for the time being we omit the step of
+``detrending'' as a function of external parameters. To
+enable further exploration of the issue, we include all the necessary
+vectors of {\it e.g.}, centroid positions, temperatures, and shape
+parameters in our reported lightcurves.
+
+
+
+\subsubsection{Trend filtering algorithm}
+\label{sec:tfa_is_good_enough}
+
+
+Since most of the external parameter dependence is shared between
+stars, we opt to decorrelate the flux timeseries of each star
 against other stars in the frame (TFA, \citealt{kovacs_trend_2005}).
+
+%TODO: write out the procedure, give a model equation!
+
 This requires selecting ``template stars'', which are a subsample of
 star that are supposed to represent all the types of systematics
 across the dataset. 
