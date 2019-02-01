@@ -131,7 +131,10 @@ def plot_exoplanetarchive_Rp_vs_P_age_cuts(whichcut='none'):
         transform=ax.transAxes
     )
 
-    savpath = '../results/exoplanetarchive_Rp_vs_P_cut{}.png'.format(whichcut)
+    savdir = '../results/exoplanet_archive_age_cut_plots/'
+    savpath = os.path.join(
+        savdir,'exoplanetarchive_Rp_vs_P_cut{}.png'.format(whichcut)
+    )
     f.savefig(savpath, bbox_inches='tight', dpi=400)
     print('made {}'.format(savpath))
 
