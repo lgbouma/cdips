@@ -198,7 +198,14 @@ def plot_knownplanet_comparison(d, projids, camccdstr, expmtstr, apstr='TFA1',
                       "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a",
                       "#ffed6f", "#b15928", "#000000"]
         else:
-            raise NotImplementedError('need a new color scheme')
+            # give up trying to do smart color schemes. just loop it, and
+            # overlap. (the use of individual colors becomes small at N>13
+            # anyway).
+            colors = ["#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99",
+                      "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a",
+                      "#ffed6f", "#b15928", "#000000"]
+            colors *= 4
+            colors = colors[:len(projids)]
 
     #colors = itertools.cycle(defaultcolors[:len(projids)])
 
@@ -410,9 +417,25 @@ if __name__=="__main__":
     # projids = [1120,1123,1126]
     # cam, ccd = 2, 2
 
-    expmtstr = 'kernelsALL_2-2_'
-    projids = list(np.arange(1090,1129,3))
-    cam, ccd = 2, 2
+    # nb. this one is only for "knownplanet" plots (not rms ones)
+    # expmtstr = 'kernelsALL190130_2-2_'
+    # projids = list(np.arange(1090,1129,3))
+    # cam, ccd = 2, 2
+
+    # expmtstr = 'kernelsnobkgd_2-2_'
+    # projids = [1093,1154,1155,1156,1157,1158,1159,1160,1161]
+    # cam, ccd = 2, 2
+
+    # expmtstr = 'kernelsALL_2-2_'
+    # projids = (
+    #     list(np.arange(1090,1129,3)) +
+    #     [1154,1155,1156,1157,1158,1159,1160,1161]
+    # )
+    # cam, ccd = 2, 2
+
+    expmtstr = 'kernelvarypreliminary_1-2_'
+    projids = [1162,1163,1164,1165]
+    cam, ccd = 1, 2
 
     #expmtstr = 'kernelvarybkgnd_4-4_'
     #projids = [1091,1094,1097,1100]
@@ -509,15 +532,20 @@ if __name__=="__main__":
         for apstr in apstrs:
             for projid in projids:
                 tois.append(list(apd[apstr][projid].keys()))
-        tois = np.unique(np.atleast_1d(tois).flatten())
+        utois = np.unique(np.concatenate(
+            list(np.array(t) for t in np.atleast_1d(tois))).ravel())
 
         d = {}
         for projid in projids:
             d[projid] = {}
-            for toi in tois:
-                ap_snrs = np.array(
-                    [apd[apstr][projid][toi]['trapz_snr'] for apstr in apstrs]
-                )
+            for toi in utois:
+                try:
+                    ap_snrs = np.array(
+                        [apd[apstr][projid][toi]['trapz_snr'] for apstr in apstrs]
+                    )
+                except KeyError:
+                    ap_snrs = np.ones_like(apstrs).astype(float)
+                    ap_snrs *= np.nan
 
                 try:
                     argmaxsnr = np.nanargmax(ap_snrs)
