@@ -93,10 +93,10 @@ def plot_rms_comparison(d, projids, camccdstr, expmtstr, overplot_theory=True,
 
     fig,ax = plt.subplots(figsize=(4,3))
 
-    pctiles = [2,25,50,75,98]
+    pctiles = [25,50,75]
 
     defaultcolors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-    defaultlines = ['-.','-',':','--']
+    defaultlines = ['-.','-',':','--']*2
     if len(projids) > len(defaultcolors):
         raise NotImplementedError('need a new color scheme')
     if len(projids) > len(defaultlines):
@@ -111,7 +111,7 @@ def plot_rms_comparison(d, projids, camccdstr, expmtstr, overplot_theory=True,
 
         run_id = "{}-{}".format(camccdstr, projid)
 
-        for ix, ls in zip([1,2,3], linestyles):
+        for ix, ls in zip([0,1,2], linestyles):
 
             midbins = nparr(d[projid].iloc[ix].index).astype(float)
             rms_vals = nparr(d[projid].iloc[ix])
@@ -220,6 +220,13 @@ def plot_knownplanet_comparison(d, projids, camccdstr, expmtstr, apstr='TFA1',
 
     # some projids have different numbers of TOIs. they will get nans.
     utois = np.sort(np.unique(np.concatenate(temp_tois)))
+
+    # some TOIs are "bad" and need to be filtered. (e.g., if they have
+    # systematics that mess with BLS, and so you dont want them in this
+    # comparison). NOTE: these are manually appended.
+    manual_bad_tois = ['243', '354', '359']
+    utois = [u for u in utois if u.split('.')[0] not in manual_bad_tois]
+
     n_tois = len(utois)
 
     arr = np.zeros((n_projids, n_tois))
@@ -393,11 +400,11 @@ if __name__=="__main__":
     # select your option from the boolean ones below. input your projids and
     # cam/ccd pairs.
 
-    scp_projid_pickle_parameters = 0 # scp the projid pickle descriptions to local
-    scp_rms_files = 0 # scp the RMS percentile csv files to local
-    scp_knownplanet_files = 0
+    scp_projid_pickle_parameters = 1 # scp the projid pickle descriptions to local
+    scp_rms_files = 1 # scp the RMS percentile csv files to local
+    scp_knownplanet_files = 1
 
-    find_what_projids_meant = 0 # for given projids, make text file summary
+    find_what_projids_meant = 1 # for given projids, make text file summary
     analyze_rms_files = 0 # for given projids, make plot comparison RMS percentiles
     analyze_knownplanet_files = 1 # for projids, check SNR of known planets
 
@@ -433,9 +440,57 @@ if __name__=="__main__":
     # )
     # cam, ccd = 2, 2
 
-    expmtstr = 'kernelvarypreliminary_1-2_'
-    projids = [1162,1163,1164,1165]
-    cam, ccd = 1, 2
+    # 20190303 cam2ccd2!
+    # # varying half-size...
+    # expmtstr = 'kernelvaryhalfsize_2-2_'
+    # projids = np.arange(1194,1199,1)
+    # cam, ccd = 2, 2
+
+    # # varying spatialorder...
+    # expmtstr = 'kernelvaryspatialorder_2-2_'
+    # projids = [1194, 1199, 1200, 1201, 1202]
+    # cam, ccd = 2, 2
+
+    # # varying identityorder...
+    # expmtstr = 'kernelvaryidentityorder_2-2_'
+    # projids = [1194, 1203, 1204, 1205, 1206]
+    # cam, ccd = 2, 2
+
+    # varying ALL
+    expmtstr = 'kernelvaryALL_2-2_'
+    projids = np.arange(1194,1207,1)
+    cam, ccd = 2, 2
+
+    # 20190303 cam1ccd2
+    # # varying half-size...
+    # expmtstr = 'kernelvaryhalfsize_1-2_'
+    # projids = np.arange(1207,1212,1)
+    # cam, ccd = 1, 2
+
+    # # varying spatialorder...
+    # expmtstr = 'kernelvaryspatialorder_1-2_'
+    # projids = [1207, 1212, 1213, 1214, 1215]
+    # cam, ccd = 1, 2
+
+    # # varying identityorder...
+    # expmtstr = 'kernelvaryidentityorder_1-2_'
+    # projids = [1207, 1216, 1217, 1218, 1219]
+    # cam, ccd = 1, 2
+
+    # # varying ALL
+    # expmtstr = 'kernelvaryALL_1-2_'
+    # projids = np.arange(1207,1220,1)
+    # cam, ccd = 1, 2
+    #FIXME from here
+
+    # expmtstr = 'kernelvarypreliminary_1-2_'
+    # #projids = [1162,1163,1164,1165,1166]
+    # projids = [1162,1163,1164,1165]
+    # cam, ccd = 1, 2
+
+    # expmtstr = 'kernelvary20190206_1-2_'
+    # projids = np.arange(1162,1183+1,1)
+    # cam, ccd = 1, 2
 
     #expmtstr = 'kernelvarybkgnd_4-4_'
     #projids = [1091,1094,1097,1100]
