@@ -25,8 +25,10 @@
 
 \begin{document}
 
-\title{Homogeneous Light Curves for Stars in Clusters from TESS:
-Method \& Sector 1-4 Data Release}
+\title{
+  The Cluster Difference Imaging Photometric Survey (CDIPS).
+  I. Methods \& Light Curves from TESS Sectors 1-5
+}
 
 \correspondingauthor{L. G. Bouma}
 \email{luke@astro.princeton.edu}
@@ -143,7 +145,7 @@ red noise properties (\S~\ref{sec:results}).
 The TESS spacecraft began science operations on July 25, 2018.  To
 keep its cameras pointed opposite the Sun, the spacecraft advances by
 $\approx$$28$ degrees in ecliptic longitude every lunar month.  Data
-acquired throughout each ``sector'' is downlinked at spacecraft
+acquired throughout each ``sector'' are downlinked at spacecraft
 perigee through the Deep Space Network.  Verbose descriptions of the
 spacecraft's design and operations are given by
 \citet{ricker_transiting_2015} and the instrument handbook
@@ -152,14 +154,14 @@ spacecraft's design and operations are given by
 For us, the main data product of interest is the calibrated full frame
 image (FFI).  Each TESS camera reads out every 2 seconds.  To produce
 a manageable telemetric load, the resulting pixel values are averaged
-by the onboard computer into 30 minute exposures. (An on-board cosmic
-ray mitigation algorithm is applied.) Once transmitted to the ground,
-the raw images are calibrated by the Science Processing Operations
-Center.  The calibration process includes an overscan, bias, and dark
-current correction, and also dividing out a flat field.  The details
-are given by \citet{clarke_kepler_2017}, and the resulting science
-data products are described by
-\citet{tess_data_product_description_2018}.
+by the onboard computer into 30 minute exposures. An on-board cosmic
+ray mitigation algorithm is applied (CITE: BERTA-THOMPSON). Once
+transmitted to the ground, the raw images are calibrated by the
+Science Processing Operations Center.  The calibration process
+includes an overscan, bias, and dark current correction, and also
+divides out a flat field.  The details are given by
+\citet{clarke_kepler_2017}, and the resulting science data products
+are described by \citet{tess_data_product_description_2018}.
 
 We begin our analysis using the calibrated images, their uncertainty
 maps, and their associated headers.  The spacecraft has four cameras,
@@ -169,31 +171,60 @@ so that at any instant of time there are 16 independent images
 undergoing analysis.
 
 
-\subsection{Preparatory Steps}
+\subsection{Image Preparation \& Background Removal}
 \label{subsec:preparation}
 
 Before we can perform any kind of photometry, a few janitorial tasks
 are required.
 
-The first is to trim and mask the images.  We convert the calibrated
-image from MAST into a \texttt{fitsh}-compatible image by retrieving
-the image data, and omitting the uncertainty map. We then trim the
-image to remove virtual rows and columns using the \texttt{SCIROWS},
-\texttt{SCIROWE}, \texttt{SCCSA}, \texttt{SCCED}, header values.  We
-mask out saturated stars using the `fiign` program with a fixed
-saturation level of $2^{16}\,{\rm ADU}$.  As described by
-\citet{Pal_2009}, the mask is metadata to the image, and is not ever
-actually applied to the pixel values, except during specific image
-processing steps that follow.  During masking, we also use the
-algorithm described by \citet{Pal_2009} to extend masks beyond purely
-saturated pixels to ``bloomed'' pixels horizontally and vertically
-adjacent to the saturated pixels.  Finally, for frames with the
-\texttt{DQUALITY} bit-flag set to 32~---~corresponding to the
-``momentum dumps'' described by \citet{vanderspek_2018}~---~we mask
-out the entire frame.  This removes on average a few frames per
-sector. Through visual inspection, we see that the stars on these
-frames are extremely smeared, and are unlikely to produce useful
-science data.
+First, we trim the images.  We convert the calibrated image from MAST
+into a single-extension FITS image, trimmed to remove virtual rows and
+columns using the \texttt{SCIROWS}, \texttt{SCIROWE}, \texttt{SCCSA},
+and \texttt{SCCED} header values.
+
+Second, we estimate the background of each frame.  We do this by
+temporarily masking out pixels more than $2\sigma$ from the median,
+and then passing a $48\times48$ median box filter over each pixel in
+the image, using reflective boundary conditions. We subtract out this
+smooth background estimate from each image.  This step helps mitigate
+two unwanted image artifacts.  First, it removes a low-level glow
+present in the corners of many images, which remains even after
+flat-fielding \citep[see][\S 7.3.5]{vanderspek_2018}.  Second,
+background subtraction removes scattered light patches from the Earth
+and Moon, which vary in positions around the camera boresight over
+each spacecraft orbit \citep[see][\S 7.3.1--7.3.4]{vanderspek_2018}.
+The typical size of scattered light patches is greater than 32 pixels,
+and their typical amplitude is $\sim 10\times$ the sky background
+level. 
+
+% We found this background subtraction step to be particularly important
+% in our subsequent difference imaging analysis. In its absense, the
+% scattered light artifacts could introduce erroneous residuals into the
+% kernel solution used to match reference and target images.  Including
+% this step mitigated such effects, and helped produce clean
+% subtractions.  Even after subtraction, a small fraction of frames also
+% show sharp features (caustics) below our median box filter's size
+% scale.  Such features may affect flux measurements at specific times
+% in a small subset of lightcurves.
+
+After subtracting the background, we mask out saturated stars using a
+fixed saturation level of $8\times10^4\,{\rm ADU}$. This value was
+chosen based on the onset of visible trails of bleeding charge, and is
+slightly greater than the expected saturation level quoted by
+\citet{vanderspek_2018}.  As described by \citet{Pal_2009}, our masks
+are metadata to the image, and are only applied to the
+pixel values during the specific image processing steps ({\it e.g.},
+convolution) in which they are necessary. We also extend the masks
+beyond purely saturated pixels to ``bloomed'' pixels horizontally and
+vertically adjacent to the saturated pixels using the algorithm
+described by \citet{Pal_2009}.
+
+Finally, for frames with the \texttt{DQUALITY} bit-flag set to
+32~---~corresponding to the ``momentum dumps'' described by
+\citet{vanderspek_2018}~---~we mask out the entire frame.  This
+removes on average a few frames per sector. Through visual inspection,
+we see that the stars on these frames are extremely smeared, and are
+unlikely to produce useful science data.
 
 Next, we perform some initial analysis steps to produce metadata
 needed during image subtraction.  To obtain an astrometric solution
