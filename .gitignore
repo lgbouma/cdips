@@ -9,3 +9,5 @@ results*
 *.bbl
 *.blg
 *.log
+logs*
+*temp*
