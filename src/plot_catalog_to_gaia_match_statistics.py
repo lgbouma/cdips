@@ -47,9 +47,12 @@ def get_mwsc_gaia_xmatch_statistics():
 
     return bigdf
 
-def plot_catalog_to_gaia_match_statistics(bigdf):
+def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
 
-    dist_arcsec = (np.array(bigdf['dist_deg'])*u.deg).to(u.arcsec)
+    if not isD14:
+        dist_arcsec = (np.array(bigdf['dist_deg'])*u.deg).to(u.arcsec)
+    else:
+        dist_arcsec = (np.array(bigdf['dist'])*u.deg).to(u.arcsec)
 
     f,axs = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
 
@@ -57,18 +60,25 @@ def plot_catalog_to_gaia_match_statistics(bigdf):
     axs[0].set_xlabel('distance [arcsec]')
     axs[0].set_yscale('log')
 
-    axs[1].hist(bigdf['gmag_match_minus_estimate'])
+    if isD14:
+        axs[1].hist(bigdf['gaia_gmag']-bigdf['gmag_estimate'])
+    else:
+        axs[1].hist(bigdf['gmag_match_minus_estimate'])
     axs[1].set_xlabel('$\mathrm{G}_{\mathrm{true}}$ -'
-                        '$\mathrm{G}_{\mathrm{pred}}$')
+                      '$\mathrm{G}_{\mathrm{pred}}$')
     axs[1].set_yscale('log')
 
-    axs[2].scatter(bigdf['gmag_match'], bigdf['gmag_match_minus_estimate'],
-                   s=5, alpha=0.1, rasterized=True, linewidths=0)
+    if isD14:
+        axs[2].scatter(bigdf['gaia_gmag'],
+                       bigdf['gaia_gmag']-bigdf['gmag_estimate'], s=5,
+                       alpha=0.1, rasterized=True, linewidths=0)
+    else:
+        axs[2].scatter(bigdf['gmag_match'], bigdf['gmag_match_minus_estimate'],
+                       s=5, alpha=0.1, rasterized=True, linewidths=0)
     axs[2].set_xlabel('$\mathrm{G}_{\mathrm{true}}$')
     axs[2].set_ylabel('$\mathrm{G}_{\mathrm{true}}$ -'
-                        '$\mathrm{G}_{\mathrm{pred}}$')
+                      '$\mathrm{G}_{\mathrm{pred}}$')
 
-    outpath = '../results/catalog_to_gaia_match_statististics.png'
     f.tight_layout()
     f.savefig(outpath, dpi=300)
     print('saved {}'.format(outpath))
@@ -76,11 +86,20 @@ def plot_catalog_to_gaia_match_statistics(bigdf):
 
 if __name__=="__main__":
 
+    # Kharchenko+ 2013 catalog
     mwscconcatpath = '../data/cluster_data/MWSC_Gaia_matched_concatenated.csv'
     if not os.path.exists(mwscconcatpath):
         bigdf = get_mwsc_gaia_xmatch_statistics()
         bigdf.to_csv(mwscconcatpath, index=False)
     else:
         bigdf = pd.read_csv(mwscconcatpath)
+    outpath = '../results/catalog_to_gaia_match_statistics_MWSC.png'
 
-    plot_catalog_to_gaia_match_statistics(bigdf)
+    plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False)
+
+    # Dias 2014 catalog
+    d14_df = pd.read_csv('../data/cluster_data/Dias14_seplt5arcsec_Gdifflt2.csv')
+    outpath = '../results/catalog_to_gaia_match_statistics_Dias14.png'
+    plot_catalog_to_gaia_match_statistics(d14_df, outpath, isD14=True)
+
+    import IPython; IPython.embed()
