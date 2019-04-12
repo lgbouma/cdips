@@ -1,18 +1,23 @@
-"""
-For a given cluster, get the lightcurves that you have made.
-"""
-import numpy as np, matplotlib.pyplot as plt, pandas as pd
-from glob import glob
-import os, pickle, subprocess, itertools
+def make_cg18_cut():
+    """for speed, work with only DR2 source id's and cluster names."""
 
-from numpy import array as nparr
+    datadir = '../data/cluster_data/'
+    tabpath = os.path.join(
+        datadir,'CantatGaudin_2018_table2_membership_info.vot'
+    )
+    vot = parse(tabpath)
+    tab = vot.get_first_table().to_table()
 
-from astropy.table import Table
-from astropy import units as u, constants as c
+    outdf = pd.DataFrame({'source':tab['Source'],'cluster':tab['Cluster']})
 
-from astroquery.gaia import Gaia
+    outpath = (
+        '../data/cluster_data/CantatGaudin_2018_table2_cut_only_source_cluster.csv'
+    )
 
-from astropy.io.votable import from_table, writeto, parse
+    outdf.to_csv(outpath, index=False)
+    print('made {}'.format(outpath))
+
+
 
 def kharchenko13_to_gaiadr2_xmatch(df, cluster_name):
     """
@@ -186,52 +191,8 @@ def write_k13_tab_to_vot(_tab, cluster_name):
     print('wrote {}'.format(outpath))
 
 
-def scp_lightcurves(lcbasenames,
-                    lcdir='/nfs/phtess1/ar1/TESS/FFI/LC/FULL/s0002/ISP_1-2-1163',
-                    outdir='../data/cluster_data/lightcurves/Blanco_1/'):
 
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-
-    for lcbasename in lcbasenames:
-
-        fromstr = "lbouma@phn12:{}/{}".format(lcdir, lcbasename)
-        tostr = "{}/.".format(outdir)
-
-        p = subprocess.Popen([
-            "scp",
-            fromstr,
-            tostr,
-        ])
-        sts = os.waitpid(p.pid, 0)
-
-    return 1
-
-
-def make_cg18_cut():
-    """for speed, work with only DR2 source id's and cluster names."""
-
-    datadir = '../data/cluster_data/'
-    tabpath = os.path.join(
-        datadir,'CantatGaudin_2018_table2_membership_info.vot'
-    )
-    vot = parse(tabpath)
-    tab = vot.get_first_table().to_table()
-
-    outdf = pd.DataFrame({'source':tab['Source'],'cluster':tab['Cluster']})
-
-    outpath = (
-        '../data/cluster_data/CantatGaudin_2018_table2_cut_only_source_cluster.csv'
-    )
-
-    outdf.to_csv(outpath, index=False)
-    print('made {}'.format(outpath))
-
-
-
-
-if __name__ == "__main__":
-
+def old_main():
     # first, test this process with one cluster.
 
     cluster_name = 'Blanco_1'
