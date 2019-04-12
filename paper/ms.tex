@@ -464,6 +464,9 @@ Our approach follows from the algorithm presented by
 The process is: %FIXME: following miller 2008...
 \begin{enumerate}
   \item Select a set of isolated stars (``stamps'').
+  (For ficonv, the default procedure is: grid up the image. Within
+    each grid... find the brightest nonsaturated region. Use that to
+    fit the kernel!)
   \item Choose basis vectors $K_n$ for the kernel, $K = \sum_{n=1}^N
     a_n K_n$. Our goal is to determine the best-fitting coefficients
     $a_n$. 
