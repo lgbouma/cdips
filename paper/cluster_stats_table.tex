@@ -1,0 +1,77 @@
+%% \begin{deluxetable}{} command tell LaTeX how many columns
+%% there are and how to align them.
+\begin{deluxetable}{cccc}
+    
+%% Keep a portrait orientation
+
+%% Over-ride the default font size
+%% Use Default (12pt)
+
+%% Use \tablewidth{?pt} to over-ride the default table width.
+%% If you are unhappy with the default look at the end of the
+%% *.log file to see what the default was set at before adjusting
+%% this value.
+
+%% This is the title of the table.
+\caption{Catalogs used to identify stars that are in clusters.}
+\label{tab:cluster_stats}
+
+%% This command over-rides LaTeX's natural table count
+%% and replaces it with this number.  LaTeX will increment 
+%% all other tables after this table based on this number
+\tablenum{1}
+
+%% The \tablehead gives provides the column headers.  It
+%% is currently set up so that the column labels are on the
+%% top line and the units surrounded by ()s are in the 
+%% bottom line.  You may add more header information by writing
+%% another line between these lines. For each column that requries
+%% extra information be sure to include a \colhead{text} command
+%% and remember to end any extra lines with \\ and include the 
+%% correct number of &s.
+\tablehead{
+\colhead{Reference}
+&
+\colhead{$N_\star$ total}
+&
+\colhead{$N_\star$ this work} 
+&
+\colhead{$N_{\rm cluster}$ total} 
+&
+\colhead{$N_{\rm cluster}$ this work} 
+}
+
+%% All data must appear between the \startdata and \enddata commands
+\startdata
+\citet{cantat-gaudin_gaia_2018}       & \cgXVIIInstartot    & \cgXVIIInclustertot    & \cgXVIIInstarcdipsI    & \cgXVIIInclustercdipsI      \\
+\citet{gaia_hr_2018}                  & \gaiaXVIIInstartot  & \gaiaXVIIInclustertot  & \gaiaXVIIInstarcdipsI  & \gaiaXVIIInclustercdipsI    \\
+\citet{Kharchenko_et_al_2013}         & \kXIIInstartot      & \kXIIInclustertot      & \kXIIInstarcdipsI      & \kXIIInclustercdipsI        \\
+\citet{dias_proper_2014}              & \dXIVnstartot       & \dXIVnclustertot       & \dXIVnstarcdipsI       & \dXIVnclustercdipsI         \\
+\citet{gagne_banyan_XI_2018}          & \banyanXInstartot   & \banyanXInclustertot   & \banyanXInstarcdipsI   & \banyanXInclustercdipsI     \\
+\citet{gagne_banyan_XII_2018}         & \banyanXIInstartot  & \banyanXIInclustertot  & \banyanXIInstarcdipsI  & \banyanXIInclustercdipsI    \\
+\citet{gagne_banyan_XIII_2018}        & \banyanXIIInstartot & \banyanXIIInclustertot & \banyanXIIInstarcdipsI & \banyanXIIInclustercdipsI   \\
+\citet{oh_comoving_2017}              & \ohXVIInstartot     & \ohXVIInclustertot     & \ohXVIInstarcdipsI     & \ohXVIInclustercdipsI       \\
+\citet{kraus_tucanahor_2014}          & \krausXIVnstartot   & \krausXIVnclustertot   & \krausXIVnstarcdipsI   & \krausXIVnclustercdipsI     \\
+\citet{bell_32ori_2017}               & \bellXVIInstartot   & \bellXVIInclustertot   & \bellXVIInstarcdipsI   & \bellXVIInclustercdipsI     \\
+\citet{rizzuto_multidimensional_2011} & \rizzutoXInstartot  & \rizzutoXInclustertot  & \rizzutoXInstarcdipsI  & \rizzutoXInclustercdipsI    \\
+\citet{roser_deep_2011}               & \roserXInstartot    & \roserXInclustertot    & \roserXInstarcdipsI    & \roserXInclustercdipsI      \\
+\enddata
+
+%% Include any \tablenotetext{key}{text}, \tablerefs{ref list},
+%% or \tablecomments{text} between the \enddata and 
+%% \end{deluxetable} commands
+
+%% General table comment marker
+\tablecomments{
+  Globular clusters are omitted from the \citet{gaia_hr_2018}, \citet{Kharchenko_et_al_2013}, and \citet{dias_proper_2014} catalogs due to crowding.
+  Members from \citet{cantat-gaudin_gaia_2018} and \citet{gaia_hr_2018} are determined using Gaia DR2 astrometry.
+  \citet{Kharchenko_et_al_2013} used kinematic data from PPMXL and photometric data from 2MASS.
+  \citet{dias_proper_2014} used kinematic data from UCAC4.
+}
+%\tablenotetext{a}{
+%    \citet{howard_planet_2012}'s ``solar subset'' was defined as {\it 
+%    Kepler}-observed stars with $4100\,{\rm K}<T_{\rm eff}<6100\,{\rm K}$, $Kp 
+%    <15$, $4.0 < \log g < 4.9$. They required signal to noise $>10$ for planet 
+%    detection.
+%    }
+\end{deluxetable}
