@@ -57,11 +57,15 @@ def make_local_lc_directories(
         if not os.path.exists(sectordir):
             os.mkdir(sectordir)
             print('made {}'.format(sectordir))
-    for cam,ccd in zip(cams, ccds):
-        camccddir = os.path.join(cdipslcdir,sector,'cam{}_ccd{}'.format(cam,ccd))
-        if not os.path.exists(camccddir):
-            os.mkdir(camccddir)
-            print('made {}'.format(camccddir))
+
+        for cam in cams:
+            for ccd in ccds:
+                camccddir = os.path.join(cdipslcdir,
+                                         sectordir,
+                                         'cam{}_ccd{}'.format(cam,ccd))
+                if not os.path.exists(camccddir):
+                    os.mkdir(camccddir)
+                    print('made {}'.format(camccddir))
 
 
 def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
@@ -70,11 +74,11 @@ def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
 
     d = {}
     for snum in [2,3,4,5,1]:
-        d[sector] = {}
+        d[snum] = {}
         for cam in range(1,5):
-            d[sector][cam] = cam
+            d[snum][cam] = {}
             for ccd in range(1,5):
-                d[sector][cam][ccd]
+                d[snum][cam][ccd] = projid
                 projid += 1
 
     return d[_sector][_cam][_ccd]
@@ -89,33 +93,40 @@ def symlink_cdips_lcs(
     lcglob='*_llc.fits'):
 
     for sector in sectors:
-        for cam,ccd in zip(cams, ccds):
+        for cam in cams:
+            for ccd in ccds:
 
-            sstr = 's'+str(sector).zfill(4)
-            projid = given_sector_cam_ccd_get_projid(sector,cam,ccd)
-            dirstr = 'ISP_{}-{}-{}'.format(cam,ccd,projid)
+                sstr = 's'+str(sector).zfill(4)
+                projid = given_sector_cam_ccd_get_projid(sector,cam,ccd)
+                dirstr = 'ISP_{}-{}-{}'.format(cam,ccd,projid)
 
-            lcpaths = glob(os.path.join(basedir, sstr, dirstr, lcglob))
+                lcpaths = np.array(
+                    glob(os.path.join(basedir, sstr, dirstr, lcglob))
+                )
 
-            have_ids = np.array([
-                lcpath.split('_llcs.fits')[0] for lcpath in lcpaths])
+                have_ids = np.array([
+                    os.path.basename(lcpath).split('_llc.fits')[0]
+                    for lcpath in lcpaths]
+                )
 
-            is_cdips = np.in1d(have_ids, cdips_ids)
+                is_cdips = np.in1d(have_ids, cdips_ids)
 
-            import IPython; IPython.embed()
-            if len(lcpaths[is_cdips]) == 0:
-                print('{}: did not find any CDIPS stars in these lcs!!'.
-                      format(dirstr))
-                continue
+                if len(lcpaths[is_cdips]) == 0:
+                    print('{}: did not find any CDIPS stars in these lcs!!'.
+                          format(dirstr))
+                    continue
 
-            print('{}: begin symlinking'.format(dirstr))
-            for lcpath in lcpaths[is_cdips]:
-                dst = os.path.join(cdipslcdir,
-                                   'sector-{}'.format(sector),
-                                   'cam{}_ccd{}'.format(cam,ccd),
-                                   os.path.basename(lcpath))
-                os.symlink(lcpath, dst)
-                print('\tsymlink {} -> {}'.format(src,dst))
+                print('{}: begin symlinking'.format(dirstr))
+                for lcpath in lcpaths[is_cdips]:
+                    dst = os.path.join(cdipslcdir,
+                                       'sector-{}'.format(sector),
+                                       'cam{}_ccd{}'.format(cam,ccd),
+                                       os.path.basename(lcpath))
+                    if not os.path.exists(dst):
+                        os.symlink(lcpath, dst)
+                        print('\tsymlink {} -> {}'.format(lcpath,dst))
+                    else:
+                        print('\t found {}'.format(dst))
 
 def get_cdips_sourceids():
 
@@ -123,23 +134,47 @@ def get_cdips_sourceids():
         '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16.csv'
     )
 
-    df = pd.read_csv(cdips_stars_path)
+    df = pd.read_csv(cdips_stars_path, sep=';')
 
     cdips_sourceids = np.array(df['source_id']).astype(str)
 
+    # we've saved names as 19-character gaia id strings. if the names in the
+    # cluster list have different max character length, is bad.
+    assert np.max(list(map(lambda x: len(x), cdips_sourceids))) == 19
+
     return cdips_sourceids
 
+def plot_cdips_lcs(
+    cdipslcdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS',
+    sector=2):
+
+    lcpaths = glob(os.path.join(cdipslcdir,
+                                'sector-{}'.format(sector),
+                                'cam?_ccd?',
+                                '*_llc.fits'))
+
+    from lcstatistics import plot_raw_tfa_bkgd_fits
+    for lcpath in lcpaths:
+        savdir = os.path.dirname(lcpath)
+        plot_raw_tfa_bkgd_fits(lcpath, savdir)
 
 def main(
+    make_symlinks=0,
+    make_plots=1,
     sectors=range(1,5+1,1),
     cams=range(1,4+1,1),
-    ccds=range(1,4+1,1)):
+    ccds=range(1,4+1,1)
+):
 
-    make_local_lc_directories(sectors=sectors, cams=cams, ccds=ccds)
+    if make_symlinks:
+        make_local_lc_directories(sectors=sectors, cams=cams, ccds=ccds)
+        cdips_sourceids = get_cdips_sourceids()
+        symlink_cdips_lcs(cdips_sourceids, sectors=sectors, cams=cams, ccds=ccds)
 
-    cdips_sourceids = get_cdips_sourceids()
+    if make_plots:
+        plot_cdips_lcs(sector=2)
 
-    symlink_cdips_lcs(cdips_sourceids, sectors=sectors, cams=cams, ccds=ccds)
+
 
 if __name__ == "__main__":
 
