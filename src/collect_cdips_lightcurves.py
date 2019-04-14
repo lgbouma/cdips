@@ -47,9 +47,9 @@ def scp_lightcurves(lcbasenames,
     return 1
 
 def make_local_lc_directories(
-    sectors=range(1,stop=5+1,step=1),
-    cams=range(1,stop=4+1,step=1),
-    ccds=range(1,stop=4+1,step=1),
+    sectors=range(1,5+1,1),
+    cams=range(1,4+1,1),
+    ccds=range(1,4+1,1),
     cdipslcdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS'):
 
     for sector in sectors:
@@ -81,9 +81,9 @@ def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
 
 def symlink_cdips_lcs(
     cdips_ids,
-    sectors=range(1,stop=5+1,step=1),
-    cams=range(1,stop=4+1,step=1),
-    ccds=range(1,stop=4+1,step=1),
+    sectors=range(1,5+1,1),
+    cams=range(1,4+1,1),
+    ccds=range(1,4+1,1),
     basedir='/nfs/phtess1/ar1/TESS/FFI/LC/FULL/',
     cdipslcdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS',
     lcglob='*_llc.fits'):
@@ -131,9 +131,9 @@ def get_cdips_sourceids():
 
 
 def main(
-    sectors=range(1,stop=5+1,step=1),
-    cams=range(1,stop=4+1,step=1),
-    ccds=range(1,stop=4+1,step=1)):
+    sectors=range(1,5+1,1),
+    cams=range(1,4+1,1),
+    ccds=range(1,4+1,1)):
 
     make_local_lc_directories(sectors=sectors, cams=cams, ccds=ccds)
 
