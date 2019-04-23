@@ -47,20 +47,20 @@ def scp_lightcurves(lcbasenames,
     return 1
 
 def make_local_lc_directories(
-    sectors=range(1,5+1,1),
-    cams=range(1,4+1,1),
-    ccds=range(1,4+1,1),
-    cdipslcdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS'):
+    sectors=None,
+    cams=None,
+    ccds=None,
+    cdipssymlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS'):
 
     for sector in sectors:
-        sectordir = os.path.join(cdipslcdir,'sector-{}'.format(sector))
+        sectordir = os.path.join(cdipssymlinkdir,'sector-{}'.format(sector))
         if not os.path.exists(sectordir):
             os.mkdir(sectordir)
             print('made {}'.format(sectordir))
 
         for cam in cams:
             for ccd in ccds:
-                camccddir = os.path.join(cdipslcdir,
+                camccddir = os.path.join(cdipssymlinkdir,
                                          sectordir,
                                          'cam{}_ccd{}'.format(cam,ccd))
                 if not os.path.exists(camccddir):
@@ -99,7 +99,7 @@ def symlink_cdips_lcs(
     cams=range(1,4+1,1),
     ccds=range(1,4+1,1),
     basedir='/nfs/phtess1/ar1/TESS/FFI/LC/FULL/',
-    cdipslcdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS',
+    cdipssymlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS',
     lcglob='*_llc.fits'):
 
     for sector in sectors:
@@ -128,7 +128,7 @@ def symlink_cdips_lcs(
 
                 print('{}: begin symlinking'.format(dirstr))
                 for lcpath in lcpaths[is_cdips]:
-                    dst = os.path.join(cdipslcdir,
+                    dst = os.path.join(cdipssymlinkdir,
                                        'sector-{}'.format(sector),
                                        'cam{}_ccd{}'.format(cam,ccd),
                                        os.path.basename(lcpath))
@@ -155,7 +155,7 @@ def get_cdips_sourceids():
     return cdips_sourceids
 
 def plot_cdips_lcs(
-    cdipslcdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS',
+    cdipssymlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS',
     sectors=[2],
     cams=[3],
     ccds=[1]):
@@ -163,7 +163,7 @@ def plot_cdips_lcs(
     for sector in sectors:
         for cam in cams:
             for ccd in ccds:
-                lcpaths = glob(os.path.join(cdipslcdir,
+                lcpaths = glob(os.path.join(cdipssymlinkdir,
                                             'sector-{}'.format(sector),
                                             'cam{}_ccd{}'.format(cam,ccd),
                                             '*_llc.fits'))
@@ -176,9 +176,9 @@ def plot_cdips_lcs(
 def main(
     make_symlinks=1,
     make_plots=1,
-    sectors=range(1,5+1,1),
-    cams=range(1,4+1,1),
-    ccds=range(1,4+1,1)
+    sectors=None,
+    cams=None,
+    ccds=None
 ):
 
     if make_symlinks:
