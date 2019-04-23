@@ -11,3 +11,4 @@ results*
 *.log
 logs*
 *temp*
+*.egg-info
