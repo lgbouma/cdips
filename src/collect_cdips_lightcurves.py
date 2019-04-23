@@ -81,6 +81,16 @@ def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
                 d[snum][cam][ccd] = projid
                 projid += 1
 
+    projid = 1500
+
+    for snum in [6,7,8,9,10,11,12,13]:
+        d[snum] = {}
+        for cam in range(1,5):
+            d[snum][cam] = {}
+            for ccd in range(1,5):
+                d[snum][cam][ccd] = projid
+                projid += 1
+
     return d[_sector][_cam][_ccd]
 
 def symlink_cdips_lcs(
@@ -146,20 +156,25 @@ def get_cdips_sourceids():
 
 def plot_cdips_lcs(
     cdipslcdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS',
-    sector=2):
+    sectors=[2],
+    cams=[3],
+    ccds=[1]):
 
-    lcpaths = glob(os.path.join(cdipslcdir,
-                                'sector-{}'.format(sector),
-                                'cam?_ccd?',
-                                '*_llc.fits'))
+    for sector in sectors:
+        for cam in cams:
+            for ccd in ccds:
+                lcpaths = glob(os.path.join(cdipslcdir,
+                                            'sector-{}'.format(sector),
+                                            'cam{}_ccd{}'.format(cam,ccd),
+                                            '*_llc.fits'))
 
-    from lcstatistics import plot_raw_tfa_bkgd_fits
-    for lcpath in lcpaths:
-        savdir = os.path.dirname(lcpath)
-        plot_raw_tfa_bkgd_fits(lcpath, savdir)
+                from lcstatistics import plot_raw_tfa_bkgd_fits
+                for lcpath in lcpaths:
+                    savdir = os.path.dirname(lcpath)
+                    plot_raw_tfa_bkgd_fits(lcpath, savdir)
 
 def main(
-    make_symlinks=0,
+    make_symlinks=1,
     make_plots=1,
     sectors=range(1,5+1,1),
     cams=range(1,4+1,1),
@@ -172,14 +187,14 @@ def main(
         symlink_cdips_lcs(cdips_sourceids, sectors=sectors, cams=cams, ccds=ccds)
 
     if make_plots:
-        plot_cdips_lcs(sector=2)
+        plot_cdips_lcs(sectors=sectors, cams=cams)
 
 
 
 if __name__ == "__main__":
 
     main(
-        sectors=[2],
-        cams=[1,2,3],
+        sectors=[6],
+        cams=[1,2],
         ccds=[1,2,3,4]
     )
