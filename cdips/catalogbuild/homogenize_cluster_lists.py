@@ -23,12 +23,12 @@ from astroquery.gaia import Gaia
 from astrobase.timeutils import precess_coordinates
 from datetime import datetime
 
-from open_cluster_xmatch_utils import (
+from cdips.catalogbuild.open_cluster_xmatch_utils import (
     GaiaCollaboration2018_clusters_to_csv,
     Kharchenko2013_position_mag_match_Gaia,
     Dias2014_nbhr_gaia_to_nearestnbhr
 )
-from moving_group_xmatch_utils import (
+from cdips.catalogbuild.moving_group_xmatch_utils import (
     make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch,
     make_Gagne18_BANYAN_XII_GaiaDR2_crossmatch,
     make_Gagne18_BANYAN_XIII_GaiaDR2_crossmatch,
@@ -394,14 +394,15 @@ def merge_OC_MG_catalogs():
     print('made {}'.format(outpath))
 
 
-def final_merge():
+def final_merge(vnum='0.2'):
     """
     merge Gaia-DR2 info and source/reference info into one file.
     NOTE: for some reason ~half of the sources in OC_MG_MERGED.csv are lost
     in this step. scary, and unclear why...!
     """
 
-    datadir = '/home/luke/local/tess-trex/catalogs/'
+    #datadir = '/home/luke/local/tess-trex/catalogs/'
+    datadir = '/home/lbouma/local/tess-trex/catalogs/'
 
     ocmg_df = pd.read_csv(datadir+'OC_MG_MERGED.csv', sep=';')
 
@@ -412,7 +413,9 @@ def final_merge():
     outdf = df.merge(ocmg_df, how='left', on='source_id')
     outdf['source_id'] = outdf['source_id'].astype(np.int64)
 
-    # there are overlaps from the OC/MG concatenation. FIXME
+    # there are overlaps from the OC/MG concatenation. sources that only show
+    # up once can be staged to FINAL_SINGLES.csv. those that show up twice or
+    # more need to be combined ("combine_it_final").
     usources, inv, cnts = np.unique(outdf['source_id'], return_inverse=True,
                                     return_counts=True)
     n_usources = len(usources)
@@ -429,6 +432,10 @@ def final_merge():
 
     df_mults = outdf.iloc[ind_mults]
     del outdf, df_sings
+
+    import IPython; IPython.embed()
+    assert 0 #FIXME
+
     print('beginning aggregation...')
     #FIXME
     df_mults_agg = df_mults.groupby('source_id').apply(combine_it_final)
@@ -444,7 +451,7 @@ def final_merge():
     outdf.to_csv(outpath, sep=';', index=False)
     print('made {}'.format(outpath))
 
-    outpath = datadir+'OC_MG_FINAL_GaiaRp_lt_16.csv'
+    outpath = datadir+'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(vnum)
     outdf[outdf['phot_rp_mean_mag']<16].to_csv(outpath, sep=';', index=False)
     print('made {}'.format(outpath))
 
