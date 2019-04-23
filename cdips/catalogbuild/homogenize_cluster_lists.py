@@ -433,11 +433,7 @@ def final_merge(vnum='0.2'):
     df_mults = outdf.iloc[ind_mults]
     del outdf, df_sings
 
-    import IPython; IPython.embed()
-    assert 0 #FIXME
-
     print('beginning aggregation...')
-    #FIXME
     df_mults_agg = df_mults.groupby('source_id').apply(combine_it_final)
     mult_path = os.path.join(datadir,'FINAL_MULTS.csv')
     df_mults_agg.to_csv(mult_path, index=False, sep=';')
@@ -454,7 +450,6 @@ def final_merge(vnum='0.2'):
     outpath = datadir+'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(vnum)
     outdf[outdf['phot_rp_mean_mag']<16].to_csv(outpath, sep=';', index=False)
     print('made {}'.format(outpath))
-
 
 
 if __name__ == "__main__":
