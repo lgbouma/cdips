@@ -138,10 +138,10 @@ def symlink_cdips_lcs(
                     else:
                         print('\t found {}'.format(dst))
 
-def get_cdips_sourceids():
+def get_cdips_sourceids(ver=0.2):
 
     cdips_stars_path = (
-        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16.csv'
+        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(ver)
     )
 
     df = pd.read_csv(cdips_stars_path, sep=';')
@@ -178,12 +178,13 @@ def main(
     make_plots=1,
     sectors=None,
     cams=None,
-    ccds=None
+    ccds=None,
+    OC_MG_CAT_ver=0.2
 ):
 
     if make_symlinks:
         make_local_lc_directories(sectors=sectors, cams=cams, ccds=ccds)
-        cdips_sourceids = get_cdips_sourceids()
+        cdips_sourceids = get_cdips_sourceids(ver=OC_MG_CAT_ver)
         symlink_cdips_lcs(cdips_sourceids, sectors=sectors, cams=cams, ccds=ccds)
 
     if make_plots:
@@ -195,6 +196,9 @@ if __name__ == "__main__":
 
     main(
         sectors=[6],
-        cams=[1,2],
-        ccds=[1,2,3,4]
+        cams=[1,2,3],
+        ccds=[1,2,3,4],
+        make_symlinks=1,
+        make_plots=0,
+        OC_MG_CAT_ver=0.2
     )
