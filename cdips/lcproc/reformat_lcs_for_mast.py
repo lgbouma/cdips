@@ -9,7 +9,7 @@ from astropy.io import fits
 from datetime import datetime
 
 cdips_cat_file = ('/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
-                  'OC_MG_FINAL_GaiaRp_lt_16_v0.1.csv')
+                  'OC_MG_FINAL_GaiaRp_lt_16_v0.2.csv')
 
 def _map_timeseries_key_to_comment(k):
     kcd = {
@@ -69,29 +69,25 @@ def _reformat_header(lcpath, cdips_df, outdir):
 
     lcgaiaid = os.path.basename(lcpath).split('_')[0]
     info = cdips_df.loc[cdips_df['source_id'] == np.int64(lcgaiaid)]
-    assert len(info) == 1
 
     #
     # set CDIPS key/value/comments in primary header.
     #
-    try:
-        primaryhdr.set('CDIPS_REFERENCE',
-                       info['reference'].iloc[0],
-                       'Catalog(s) suggesting cluster membership [comma-separated]')
-    except:
-        import IPython; IPython.embed()
+    primaryhdr.set('CDIPSREF',
+                   info['reference'].iloc[0],
+                   'Catalog(s) w/ cluster membrshp [,sep]')
 
-    primaryhdr.set('CDIPS_CLUSTER',
+    primaryhdr.set('CDCLSTER',
                    info['cluster'].iloc[0],
-                   'Name(s) of cluster from CDIPS_REFERENCE [comma-separated]')
+                   'Name(s) of cluster in CDIPSREF [,sep]')
 
-    primaryhdr.set('CDIPS_EXTCATALOGNAME',
+    primaryhdr.set('CDEXTCAT',
                    info['ext_catalog_name'].iloc[0],
-                   'Name(s) of star from CDIPS_REFERENCE [comma-separated]')
+                   'Name(s) of star in CDIPSREF [,sep]')
 
     primaryhdr.set('CDXMDIST',
                    str(info['dist'].iloc[0]),
-                   '[deg] dist btwn CDIPS_REFERENCE and GAIADR2 positions')
+                   '[deg] dist btwn CDIPSREF & GAIADR2 locn')
 
     primaryhdr.set('TIMEUNIT',
                    primaryhdr['TIMEUNIT'],
@@ -104,7 +100,7 @@ def _reformat_header(lcpath, cdips_df, outdir):
 
     primaryhdr.set('Gaia-ID',
                    primaryhdr['Gaia-ID'],
-                   'GaiaDR2 source_id. -> lum_val from same')
+                   'GaiaDR2 source_id. ->lum_val from same')
 
     #
     # set timeseries extension header key comments
