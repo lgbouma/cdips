@@ -4,6 +4,7 @@ worth implementing in pipe-trex proper, since they're very specific to the
 CDIPS project. they include:
 
     * symlinking LCs of CDIPS stars into a reasonable directory structure
+    (a replacement of the main function of utils/collect_cdips_lightcurves.py)
 
     * copying from these symlinks, while reformatting the headers to reflect
     the additional knowledge we have about them (i.e. what cluster are they in?
@@ -26,12 +27,13 @@ def trex_lc_to_mast_lc(
     cams=None,
     ccds=None,
     symlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS/',
-    outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
+    outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/',
+    OC_MG_CAT_ver=0.2
 ):
 
     if make_symlinks:
         ccl.make_local_lc_directories(sectors=sectors, cams=cams, ccds=ccds)
-        cdips_sourceids = ccl.get_cdips_sourceids()
+        cdips_sourceids = ccl.get_cdips_sourceids(ver=OC_MG_CAT_ver)
         ccl.symlink_cdips_lcs(cdips_sourceids, sectors=sectors, cams=cams, ccds=ccds)
 
     if make_plots:
@@ -84,9 +86,9 @@ if __name__ == "__main__":
 
     trex_lc_to_mast_lc(
         sectors=[6],
-        cams=[1,2],
+        cams=[4],
         ccds=[1,2,3,4],
-        make_symlinks=0,
+        make_symlinks=1,
         make_plots=0,
         reformat_lcs=1,
         mask_orbit_start_and_end=0
