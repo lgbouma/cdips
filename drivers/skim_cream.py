@@ -60,7 +60,7 @@ def plot_initial_period_finding_results(
     print('made {}'.format(outpath))
 
 
-def skim_cream(sectornum=6, tls_sde_cut=15, fap_cut=1e-40):
+def skim_cream(sectornum=6, tls_sde_cut=12, fap_cut=1e-30):
 
     resultsdir = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
@@ -81,32 +81,38 @@ def skim_cream(sectornum=6, tls_sde_cut=15, fap_cut=1e-40):
     )
     lcpaths = glob(os.path.join(lcdir, 'cam?_ccd?', '*_llc.fits'))
 
-    #FIXME
-    sel = df['ls_fap'] < fap_cut
-    outdir = os.path.join(resultsdir, 'fap_lt_{}'.format(fap_cut))
+    outdir = os.path.join(resultsdir, 'sde_gt_{}'.format(tls_sde_cut))
     if not os.path.exists(outdir):
         os.mkdir(outdir)
-    for ix, row in df[sel].iterrows():
+
+    sel = (df['tls_sde'] > tls_sde_cut) & ~pd.isnull(df['tls_sde'])
+
+    for ix, row in df[sel].sort_values(by='tls_sde',ascending=False).iterrows():
         source_id = str(int(row['source_id']))
         matching = [l for l in lcpaths if source_id in l]
         if len(matching) != 1:
-            print('expected 1 matching lcpath')
+            print('ERR! expected 1 matching lcpath') # FIXME WTF this shouldn't happen
+            continue
             import IPython; IPython.embed()
         lcpath = matching[0]
         pfc.do_period_finding_fitslc(lcpath, ap=2, outdir=outdir)
 
 
-    sel = df['tls_sde'] > tls_sde_cut
-    outdir = os.path.join(resultsdir, 'sde_gt_{}'.format(tls_sde_cut))
+    sel = (df['ls_fap'] < fap_cut) & ~pd.isnull(df['ls_fap'])
+    outdir = os.path.join(resultsdir, 'fap_lt_{}'.format(fap_cut))
     if not os.path.exists(outdir):
         os.mkdir(outdir)
-    for ix, row in df[sel].iterrows():
+    for ix, row in df[sel].sort_values(by='ls_fap',ascending=True).iterrows():
         source_id = str(int(row['source_id']))
         matching = [l for l in lcpaths if source_id in l]
         if len(matching) != 1:
-            raise AssertionError('expected 1 matching lcpath')
+            print('ERR! expected 1 matching lcpath')
+            continue
+            import IPython; IPython.embed()
         lcpath = matching[0]
-        pfc.do_period_finding_fitslc(lcpath, ap=2)
+        pfc.do_period_finding_fitslc(lcpath, ap=2, outdir=outdir)
+
 
 if __name__=="__main__":
+
     skim_cream(sectornum=6)
