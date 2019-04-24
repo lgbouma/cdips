@@ -80,12 +80,18 @@ dependencies:
   - pip:
     - astropy==3.1.2
     - cycler==0.10.0
+    - jplephem==2.9
     - kiwisolver==1.0.1
     - matplotlib==3.1.0rc1
     - numpy==1.16.3
+    - pillow==6.0.0
+    - pyeebls==0.1.6
     - pyparsing==2.4.0
     - python-dateutil==2.8.0
+    - scikit-learn==0.20.3
     - scipy==1.2.1
     - six==1.12.0
+    - tornado==6.0.2
+    - tqdm==4.31.1
 prefix: /home/lbouma/miniconda3/envs/cdips
 
