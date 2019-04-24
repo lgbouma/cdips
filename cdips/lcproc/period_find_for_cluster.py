@@ -9,7 +9,16 @@ import os
 
 from astrobase import periodbase, checkplot
 
-def do_period_finding_fitslc(lcpath, ap=2):
+def do_period_finding_fitslc(lcpath, ap=2, period_min=0.5, outdir=None):
+
+    if not outdir:
+        outdir = os.path.dirname(lcpath)
+    outfile = os.path.basename(lcpath).replace(
+        '.fits', '_spdm_blsp_checkplot.png'
+    )
+    outpath = os.path.join(outdir, outfile)
+    if os.path.exists(outpath):
+        return
 
     hdulist = fits.open(lcpath)
     hdr, lc = hdulist[0].header, hdulist[1].data
@@ -21,8 +30,9 @@ def do_period_finding_fitslc(lcpath, ap=2):
     )
 
     #glsp = periodbase.pgen_lsp(times,mags,errs)
-    spdm = periodbase.stellingwerf_pdm(times,mags,errs)
-    blsp = periodbase.bls_parallel_pfind(times,mags,errs,startp=1.0)
+    spdm = periodbase.stellingwerf_pdm(times, mags, errs)
+    blsp = periodbase.bls_parallel_pfind(times, mags, errs, startp=period_min,
+                                         get_stats=False)
 
     objectinfo = {}
     keys = ['objectid','ra','decl','pmra','pmdecl','teff','gmag']
@@ -33,12 +43,6 @@ def do_period_finding_fitslc(lcpath, ap=2):
             objectinfo[k] = hdr[hk]
         else:
             objectinfo[k] = np.nan
-
-    outdir = os.path.dirname(lcpath)
-    outfile = os.path.basename(lcpath).replace(
-        '.fits', '_spdm_blsp_checkplot.png'
-    )
-    outpath = os.path.join(outdir, outfile)
 
     cp = checkplot.twolsp_checkplot_png(blsp, spdm, times, mags, errs,
                                         objectinfo=objectinfo,
