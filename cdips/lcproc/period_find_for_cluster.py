@@ -18,6 +18,7 @@ def do_period_finding_fitslc(lcpath, ap=2, period_min=0.5, outdir=None):
     )
     outpath = os.path.join(outdir, outfile)
     if os.path.exists(outpath):
+        print('found & skipped {}'.format(outpath))
         return
 
     hdulist = fits.open(lcpath)
