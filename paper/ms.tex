@@ -543,6 +543,7 @@ systematic trends caused by unknown parameters by decorrelating the
 measured brightnesses of stars against each other (TFA,
 \citealt{kovacs_trend_2005}).  
 
+%FIXME TURGID PROSE
 In general though, one must adapt detrending procedures to the data at
 hand.  In \S~\ref{sec:flux_vs_external_parameters}, we show that the
 ``external parameter'' dependence visible in the TESS data is rather
@@ -722,11 +723,27 @@ This requires selecting ``template stars'', which are a subsample of
 star that are supposed to represent all the types of systematics
 across the dataset. 
 %FIXME: clarify this procedure
-We select 500 template stars randomly from the stars on-chip with
+We select XXX template stars randomly from the stars on-chip with
 $G_{\rm R_p}$ magnitudes between 8.5 and 13 (TODO: rather bright?).
-We additionally require these stars to not have excessive variability,
-by fitting a parabola in the RMS-magnitude plane, and discarding stars
-more than $4\sigma$ away from the prediction of this fit.
+As an initial variability cut, we fit a parabola in the RMS-magnitude
+plane, and discarding stars more than $2\sigma$ away from the
+prediction of the fit.
+
+We then perform an initial iteration of TFA, on only the candidate
+template stars.
+We inspect the resulting detrended lightcurves for residual
+structure by computing a Lomb-Scargle periodogram.
+If the maximum-power peak has a false alarm probability below 0.1\%, 
+we exclude the star from the list of candidate template stars, on the
+basis of its presumed periodic variability signal.
+
+We then randomly select 200 template stars from the remaining
+non-variable candidates. 
+The choice of number of template stars was discussed by (CITE KOVACS).
+While it can be optimized by constructing and minimizing a BIC-like 
+quantity, a little overfitting is acceptable for our puposes.
+
+
 
 Once the template stars are selected, we use the secret TFA
 implementation from the \texttt{HATpipe} source code, that you and
