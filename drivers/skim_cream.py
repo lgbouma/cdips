@@ -90,8 +90,9 @@ def skim_cream(sectornum=6, tls_sde_cut=15, fap_cut=1e-40):
         source_id = str(int(row['source_id']))
         matching = [l for l in lcpaths if source_id in l]
         if len(matching) != 1:
-            print('expected 1 matching lcpath')
-            import IPython; IPython.embed()
+            print('ERR! expected 1 matching lcpath')
+            continue
+            #import IPython; IPython.embed()
         lcpath = matching[0]
         pfc.do_period_finding_fitslc(lcpath, ap=2, outdir=outdir)
 
@@ -104,7 +105,9 @@ def skim_cream(sectornum=6, tls_sde_cut=15, fap_cut=1e-40):
         source_id = str(int(row['source_id']))
         matching = [l for l in lcpaths if source_id in l]
         if len(matching) != 1:
-            raise AssertionError('expected 1 matching lcpath')
+            print('ERR! expected 1 matching lcpath')
+            continue
+            #raise AssertionError('expected 1 matching lcpath')
         lcpath = matching[0]
         pfc.do_period_finding_fitslc(lcpath, ap=2)
 

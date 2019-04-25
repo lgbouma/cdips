@@ -132,8 +132,8 @@ def do_initial_period_finding(
     lcpaths = glob(os.path.join(lcdirectory, lcglob))
     np.random.shuffle(lcpaths)
 
-    tasks = [(x) for x in lcpaths[:1000]]
-    N_lcs = len(lcpaths[:1000])
+    tasks = [(x) for x in lcpaths]
+    N_lcs = len(lcpaths)
 
     print('%sZ: %s files to run initial periodograms on' %
           (datetime.utcnow().isoformat(), len(lcpaths)))
