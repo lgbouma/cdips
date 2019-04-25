@@ -138,6 +138,18 @@ def symlink_cdips_lcs(
                     else:
                         print('\t found {}'.format(dst))
 
+
+def get_cdips_catalog(ver=0.2):
+
+    cdips_stars_path = (
+        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(ver)
+    )
+
+    df = pd.read_csv(cdips_stars_path, sep=';')
+
+    return df
+
+
 def get_cdips_sourceids(ver=0.2):
 
     cdips_stars_path = (

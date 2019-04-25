@@ -66,6 +66,7 @@ def trex_lc_to_mast_lc(
                     if len(lcpaths) > 0:
                         rlm.reformat_headers(lcpaths, camccddir)
 
+    #TODO : implement. it's worth it. 5% less data. >>5% improvement.
     if mask_orbit_start_and_end:
 
         for sector in sectors:
