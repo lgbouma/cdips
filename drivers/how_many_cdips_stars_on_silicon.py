@@ -1,3 +1,7 @@
+"""
+use WCS in the given calibrated images to compute how many CDIPS stars are
+expected to fall on silicon. (in every sector, over all images)
+"""
 import os, textwrap
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 
@@ -15,7 +19,10 @@ from datetime import datetime
 
 def how_many_cdips_stars_on_silicon(sector=6, ver=0.2):
 
-    fitsdir = '../data/cal_imgs/sector-{}/'.format(sector)
+    fitsdir = (
+        '/home/luke/local/cdips/fullframeimages/cal_imgs/sector-{}/'.
+        format(sector)
+    )
     fnames = glob(os.path.join(fitsdir,'*cal_img.fits'))
 
     df = ccl.get_cdips_catalog(ver=ver)
@@ -88,4 +95,5 @@ def how_many_cdips_stars_on_silicon(sector=6, ver=0.2):
         print('made {}'.format(outpath))
 
 if __name__ == "__main__":
+
     how_many_cdips_stars_on_silicon()
