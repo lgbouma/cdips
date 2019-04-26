@@ -14,7 +14,7 @@ cam / ccd.
 """
 import numpy as np, matplotlib.pyplot as plt, pandas as pd
 from glob import glob
-import os, pickle, subprocess, itertools
+import os, pickle, subprocess, itertools, socket
 
 from numpy import array as nparr
 
@@ -141,8 +141,17 @@ def symlink_cdips_lcs(
 
 def get_cdips_catalog(ver=0.2):
 
-    cdips_stars_path = (
-        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(ver)
+    dir_d = {
+        'brik':'/home/luke/local/cdips/catalogs/',
+        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
+    }
+
+    cdips_stars_dir = dir_d[socket.gethostname()]
+
+    cdips_stars_path = os.path.join(
+        cdips_stars_dir, 'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(ver)
     )
 
     df = pd.read_csv(cdips_stars_path, sep=';')

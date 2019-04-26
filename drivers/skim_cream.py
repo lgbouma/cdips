@@ -13,8 +13,7 @@ from cdips.lcproc import period_find_for_cluster as pfc
 
 def plot_initial_period_finding_results(
     df,
-    resultsdir
-):
+    resultsdir):
 
     n_tot = len(df)
 
@@ -108,11 +107,6 @@ def skim_cream(sectornum=6, tls_sde_cut=12, fap_cut=1e-30):
         if len(matching) != 1:
             print('ERR! expected 1 matching lcpath')
             continue
-<<<<<<< HEAD
-            #raise AssertionError('expected 1 matching lcpath')
-=======
-            import IPython; IPython.embed()
->>>>>>> 3ffbbc6db10d0324e9abc0903906cb925ef1d608
         lcpath = matching[0]
         pfc.do_period_finding_fitslc(lcpath, ap=2, outdir=outdir)
 
