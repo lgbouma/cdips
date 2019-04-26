@@ -82,10 +82,16 @@ def print_metadata_stats(sectornum=6):
 
 if __name__ == "__main__":
 
-    get_stats=0
+    get_stats=1
     print_metadata=1
 
     if get_stats:
-        get_cdips_lc_stats()
+        get_cdips_lc_stats(
+            sectornum=6,
+            cdipssource_vnum=0.2,
+            nworkers=32
+        )
     if print_metadata:
-        print_metadata_stats()
+        print_metadata_stats(
+            sectornum=6
+        )
