@@ -19,3 +19,8 @@
 6. `skim_cream`: make BLS/SPDM two-panel checkplots for the "cream" determined
    by the TLS and LS checks above.
 
+7. `reconstructive_tfa/RunTFASR.sh` does signal reconstruction for TFA
+   lightcurves
+
+8.  `skim_cream`: make BLS/SPDM two-panel checkplots for the "cream" determined
+    by the TLS and LS checks above.
