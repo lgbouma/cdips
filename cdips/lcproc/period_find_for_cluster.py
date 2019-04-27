@@ -66,9 +66,3 @@ def do_period_finding_cluster(clustername, runname, ap=2):
     for lcpath in lcpaths:
 
         do_period_finding_fitslc(lcpath)
-
-
-if __name__ == "__main__":
-    clustername = 'Blanco_1'
-    runname = 'ISP_1-2-1186'
-    do_period_finding_cluster(clustername, runname)
