@@ -12,3 +12,5 @@ results*
 logs*
 *temp*
 *.egg-info
+drivers/reconstructive_tfa/*.out
+drivers/reconstructive_tfa/*.txt
