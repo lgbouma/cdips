@@ -9,7 +9,7 @@ import os
 
 from astrobase import periodbase, checkplot
 
-def do_period_finding_fitslc(lcpath, ap=2, period_min=0.5, outdir=None):
+def do_period_finding_fitslc(lcpath, fluxap='TFA2', period_min=0.5, outdir=None):
 
     if not outdir:
         outdir = os.path.dirname(lcpath)
@@ -26,8 +26,8 @@ def do_period_finding_fitslc(lcpath, ap=2, period_min=0.5, outdir=None):
 
     times, mags, errs = (
         lc['TMID_BJD'],
-        lc['TFA{}'.format(ap)],
-        lc['IRE{}'.format(ap)]
+        lc[fluxap],
+        np.ones_like(lc[fluxap])*np.nanmedian(lc[fluxap])/1000
     )
 
     #glsp = periodbase.pgen_lsp(times,mags,errs)

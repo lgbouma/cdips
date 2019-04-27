@@ -1,12 +1,19 @@
 """
-given initial period finding results (just the best LSP and BLS peaks), check
-their distributions.
+skim_cream(sectornum=6, tls_sde_cut=12, fap_cut=1e-30, SR_TFA=args.tfasr):
 
-then do some cuts, and re-iterate their periodograms but save the full results,
-and perhaps make checkplots.
+    once do_initial_period_finding is done, will
+    plot_initial_period_finding_results -- overall distribution stats of SDE,
+    FAP, vs periods.
+
+    then it will make cuts, and re-iterate periodogram creation but save the
+    full results, and make a 2-lsp checkplot.
+
+usage: skim_cream.py [-h] [--tfasr] [--no-tfasr]
+
+e.g., python skim_cream.py -tfasr &> ../logs/skim_cream_sector6_tfasr.log &
 """
 import pandas as pd, numpy as np, matplotlib.pyplot as plt
-import os
+import os, argparse
 from glob import glob
 
 from cdips.lcproc import period_find_for_cluster as pfc
@@ -59,32 +66,48 @@ def plot_initial_period_finding_results(
     print('made {}'.format(outpath))
 
 
-def skim_cream(sectornum=6, tls_sde_cut=12, fap_cut=1e-30):
+def skim_cream(sectornum=6, tls_sde_cut=12, fap_cut=1e-30, SR_TFA=None):
 
     resultsdir = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
         'cdips_lc_periodfinding/'
-        'sector-{}/'.format(sectornum)
+        'sector-{}'.format(sectornum)
     )
     initpfresultspath = (
         os.path.join(resultsdir, 'initial_period_finding_results.csv')
     )
+    if SR_TFA:
+        resultsdir = os.path.join(
+            os.path.dirname(resultsdir),
+            'sector-{}_TFA_SR'.format(sectornum)
+        )
+        if not os.path.exists(resultsdir):
+            os.mkdir(resultsdir)
 
     df = pd.read_csv(initpfresultspath)
 
     plot_initial_period_finding_results(df, resultsdir)
 
-    lcdir = (
-        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}'.
-        format(sectornum)
-    )
-    lcpaths = glob(os.path.join(lcdir, 'cam?_ccd?', '*_llc.fits'))
+    if not SR_TFA:
+        lcdir = (
+            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}'.
+            format(sectornum)
+        )
+        lcpaths = glob(os.path.join(lcdir, 'cam?_ccd?', '*_llc.fits'))
+    else:
+        lcdir = (
+            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}_TFA_SR'.
+            format(sectornum)
+        )
+        lcpaths = glob(os.path.join(lcdir, '*_llc.fits'))
 
     outdir = os.path.join(resultsdir, 'sde_gt_{}'.format(tls_sde_cut))
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
     sel = (df['tls_sde'] > tls_sde_cut) & ~pd.isnull(df['tls_sde'])
+
+    fluxap = 'TFA2' if not SR_TFA else 'TFASR2'
 
     for ix, row in df[sel].sort_values(by='tls_sde',ascending=False).iterrows():
         source_id = str(int(row['source_id']))
@@ -94,7 +117,7 @@ def skim_cream(sectornum=6, tls_sde_cut=12, fap_cut=1e-30):
             continue
             #import IPython; IPython.embed()
         lcpath = matching[0]
-        pfc.do_period_finding_fitslc(lcpath, ap=2, outdir=outdir)
+        pfc.do_period_finding_fitslc(lcpath, fluxap=fluxap, outdir=outdir)
 
 
     sel = (df['ls_fap'] < fap_cut) & ~pd.isnull(df['ls_fap'])
@@ -108,9 +131,23 @@ def skim_cream(sectornum=6, tls_sde_cut=12, fap_cut=1e-30):
             print('ERR! expected 1 matching lcpath')
             continue
         lcpath = matching[0]
-        pfc.do_period_finding_fitslc(lcpath, ap=2, outdir=outdir)
+        pfc.do_period_finding_fitslc(lcpath, fluxap=fluxap, outdir=outdir)
 
 
 if __name__=="__main__":
 
-    skim_cream(sectornum=6)
+    parser = argparse.ArgumentParser(
+        description=('Make 2-periodogram checkplots, before/after TFA_SR')
+    )
+    parser.add_argument(
+        '--tfasr', dest='tfasr', action='store_true',
+        help=('have you run TFA signal reconstruction & do u want that glob?')
+    )
+    parser.add_argument(
+        '--no-tfasr', dest='tfasr', action='store_false',
+        help=('before running TFA signal reconstrn, if u want to see plots')
+    )
+    parser.set_defaults(tfasr=False)
+    args = parser.parse_args()
+
+    skim_cream(sectornum=6, tls_sde_cut=12, fap_cut=1e-30, SR_TFA=args.tfasr)
