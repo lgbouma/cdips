@@ -24,3 +24,6 @@
 
 8.  `skim_cream`: make BLS/SPDM two-panel checkplots for the "cream" determined
     by the TLS and LS checks above.
+
+9. `make_vetting_multipg_pdf`: make a multipage PDF with the information needed
+   to make classifications for vetting.
