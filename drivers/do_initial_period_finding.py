@@ -18,6 +18,7 @@ from datetime import datetime
 from astropy.io import fits
 
 from cdips.utils import collect_cdips_lightcurves as ccl
+from cdips.lcproc import mask_orbit_edges as moe
 
 def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
                      period_max=27, orbitgap=1, expected_norbits=2,
@@ -50,22 +51,7 @@ def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
     #
     # ignore the times near the edges of orbits for TLS.
     #
-    norbits, groups = lcmath.find_lc_timegroups(tfa_time, mingap=orbitgap)
-
-    if norbits != expected_norbits:
-        raise AssertionError
-
-    sel = np.zeros_like(tfa_time).astype(bool)
-    for group in groups:
-        tg_time = tfa_time[group]
-        start_mask = (np.min(tg_time), np.min(tg_time) + orbitpadding)
-        end_mask = (np.max(tg_time) - orbitpadding, np.max(tg_time))
-        sel |= (
-            (tfa_time > max(start_mask)) & (tfa_time < min(end_mask))
-        )
-
-    bls_times = tfa_time[sel]
-    bls_flux = tfa_flux[sel]
+    bls_times, bls_flux = moe.mask_orbit_start_and_end(tfa_time, tfa_flux)
 
     model = transitleastsquares(bls_times, bls_flux)
     results = model.power(use_threads=1, show_progress_bar=False,

@@ -17,6 +17,7 @@ from glob import glob
 
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.lcproc import reformat_lcs_for_mast as rlm
+from cdips.lcproc import mask_orbit_edges as moe
 
 def trex_lc_to_mast_lc(
     make_symlinks=1,
@@ -80,7 +81,7 @@ def trex_lc_to_mast_lc(
 
                     if len(lcpaths) > 0:
                         raise NotImplementedError
-                        rlm.mask_orbit_start_and_end(lcpaths)
+                        moe.mask_orbit_start_and_end_given_lcpaths(lcpaths)
 
 
 if __name__ == "__main__":
