@@ -48,7 +48,7 @@ def do_period_finding_fitslc(lcpath, fluxap='TFA2', period_min=0.5, outdir=None)
     cp = checkplot.twolsp_checkplot_png(blsp, spdm, times, mags, errs,
                                         objectinfo=objectinfo,
                                         outfile=outpath,
-                                        sigclip=30,
+                                        sigclip=[50.,5.],
                                         plotdpi=100,
                                         phasebin=3e-2,
                                         phasems=6.0,
