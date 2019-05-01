@@ -23,13 +23,13 @@ def trex_lc_to_mast_lc(
     make_symlinks=1,
     make_plots=0,
     reformat_lcs=1,
-    mask_orbit_start_and_end=1,
     sectors=None,
     cams=None,
     ccds=None,
     symlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS/',
     outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/',
-    OC_MG_CAT_ver=0.2
+    OC_MG_CAT_ver=0.2,
+    cdipsvnum=1
 ):
 
     if make_symlinks:
@@ -65,33 +65,17 @@ def trex_lc_to_mast_lc(
                                   )
 
                     if len(lcpaths) > 0:
-                        rlm.reformat_headers(lcpaths, camccddir)
-
-    #TODO : implement. it's worth it. 5% less data. >>5% improvement.
-    if mask_orbit_start_and_end:
-
-        for sector in sectors:
-            for cam in cams:
-                for ccd in ccds:
-
-                    camccddir = os.path.join(sectordir,
-                                             'sector-{}'.format(sector),
-                                             'cam{}_ccd{}'.format(cam,ccd))
-                    lcpaths = glob(os.path.join(camccddir, '*_llc.fits'))
-
-                    if len(lcpaths) > 0:
-                        raise NotImplementedError
-                        moe.mask_orbit_start_and_end_given_lcpaths(lcpaths)
+                        rlm.reformat_headers(lcpaths, camccddir, sector,
+                                             cdipsvnum)
 
 
 if __name__ == "__main__":
 
     trex_lc_to_mast_lc(
         sectors=[6],
-        cams=[4],
+        cams=[1,2,3,4],
         ccds=[1,2,3,4],
-        make_symlinks=1,
+        make_symlinks=0,
         make_plots=0,
-        reformat_lcs=1,
-        mask_orbit_start_and_end=0
+        reformat_lcs=1
     )
