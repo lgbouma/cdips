@@ -4,6 +4,7 @@ import numpy as np, pandas as pd, matplotlib.pyplot as plt
 
 from astrobase import periodbase, checkplot
 from astrobase.checkplot.png import _make_phased_magseries_plot
+from astrobase.lcmath import sigclip_magseries
 
 from cdips.lcproc import mask_orbit_edges as moe
 
@@ -304,10 +305,13 @@ def _get_full_infodict(tlsp, hdr, mdf):
 
 
 def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
-                        figsize=(30,24), returnfig=True):
+                        figsize=(30,24), returnfig=True, sigclip=[50,5]):
 
     time, tfasrmag = moe.mask_orbit_start_and_end(tfatime, tfasrmag)
     flux = _given_mag_get_flux(tfasrmag)
+
+    stime, sflux, _ = sigclip_magseries(time, flux, np.ones_like(flux)*1e-4,
+                                        magsarefluxes=True, sigclip=sigclip)
 
     d = _get_full_infodict(tlsp, hdr, mdf)
 
@@ -332,7 +336,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
     #
     # ax0: flux v time, top left
     #
-    ax0.scatter(time, flux, c='black', alpha=0.9, zorder=2, s=50,
+    ax0.scatter(stime, sflux, c='black', alpha=0.9, zorder=2, s=50,
                 rasterized=True, linewidths=0)
     ax0.set_xlabel('BJDTDB')
     ax0.set_ylabel('TFASR2')
@@ -408,10 +412,12 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
             )
         )
     except Exception as e:
-        print('error making outstr. FIX ME!')
-        print(e)
-        import IPython; IPython.embed()
-        assert 0
+        outstr = 'got bug {}'.format(e)
+        pass
+        #print('error making outstr. FIX ME!')
+        #print(e)
+        #import IPython; IPython.embed()
+        #assert 0
 
     txt_x, txt_y = 0.01, 0.99
     ax1.text(txt_x, txt_y, textwrap.dedent(outstr),
@@ -426,7 +432,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
     minbinelems=2
     tdur_by_period=d['duration']/d['period']
     plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
-    _make_phased_magseries_plot(ax2, 0, time, flux, np.ones_like(flux)/1e4,
+    _make_phased_magseries_plot(ax2, 0, stime, sflux, np.ones_like(sflux)/1e4,
                                 d['period'], d['t0'], True, True, phasebin,
                                 minbinelems, plotxlim, 'tls',
                                 xliminsetmode=False, magsarefluxes=True,
@@ -436,7 +442,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
     # ax3: occultation
     #
     plotxlim=(-2.0*tdur_by_period+0.5,2.0*tdur_by_period+0.5)
-    _make_phased_magseries_plot(ax3, 0, time, flux, np.ones_like(flux)/1e4,
+    _make_phased_magseries_plot(ax3, 0, stime, sflux, np.ones_like(sflux)/1e4,
                                 d['period'], d['t0'], True, True, phasebin,
                                 minbinelems, plotxlim, 'tls',
                                 xliminsetmode=False, magsarefluxes=True,
@@ -454,16 +460,16 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
     delta_t = 0.245*d['period']
     even_windows = np.array((even_midtimes - delta_t, even_midtimes+delta_t))
 
-    even_mask = np.zeros_like(time).astype(bool)
+    even_mask = np.zeros_like(stime).astype(bool)
     for even_window in even_windows.T:
         even_mask |= np.array(
-            (time > np.min(even_window)) & (time < np.max(even_window))
+            (stime > np.min(even_window)) & (stime < np.max(even_window))
         )
     odd_mask = ~even_mask
 
     plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
-    _make_phased_magseries_plot(ax4, 0, time[odd_mask], flux[odd_mask],
-                                np.ones_like(flux[odd_mask])/1e4,
+    _make_phased_magseries_plot(ax4, 0, stime[odd_mask], sflux[odd_mask],
+                                np.ones_like(sflux[odd_mask])/1e4,
                                 d['period'], d['t0'], True, True, phasebin,
                                 minbinelems, plotxlim, 'tls',
                                 xliminsetmode=False, magsarefluxes=True,
@@ -473,8 +479,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
     # ax5: even
     #
     plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
-    _make_phased_magseries_plot(ax5, 0, time[even_mask], flux[even_mask],
-                                np.ones_like(flux[even_mask])/1e4,
+    _make_phased_magseries_plot(ax5, 0, stime[even_mask], sflux[even_mask],
+                                np.ones_like(sflux[even_mask])/1e4,
                                 d['period'], d['t0'], True, True, phasebin,
                                 minbinelems, plotxlim, 'tls',
                                 xliminsetmode=False, magsarefluxes=True,
