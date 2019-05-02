@@ -21,6 +21,8 @@ def mask_orbit_start_and_end(time, flux, orbitgap=1, expected_norbits=2,
     norbits, groups = lcmath.find_lc_timegroups(time, mingap=orbitgap)
 
     if norbits != expected_norbits:
+        errmsg = 'got {} orbits, expected {}. groups are {}'.format(
+            norbits, expected_norbits, repr(groups))
         raise AssertionError
 
     sel = np.zeros_like(time).astype(bool)

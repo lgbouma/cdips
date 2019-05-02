@@ -98,7 +98,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         print('made {}'.format(picklepath))
 
 
-def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df):
+def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df, sectornum=6,
+                  cdipsvnum=1):
 
     for tfa_sr_path in tfa_sr_paths:
 
@@ -113,10 +114,20 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df):
         cam, ccd = hdr['CAMERA'], hdr['CCD']
         hdul.close()
 
+        lcname = (
+            'hlsp_cdips_tess_ffi_'
+            'gaiatwo{zsourceid}-{zsector}_'
+            'tess_v{zcdipsvnum}_llc.fits'
+        ).format(
+            zsourceid=str(sourceid).zfill(22),
+            zsector=str(sectornum).zfill(4),
+            zcdipsvnum=str(cdipsvnum).zfill(2)
+        )
+
         lcpath = os.path.join(
             lcbasedir,
             'cam{}_ccd{}'.format(cam, ccd),
-            os.path.basename(tfa_sr_path)
+            lcname
         )
 
         outpath = os.path.join(
@@ -157,7 +168,10 @@ def main(sectornum=6, cdips_cat_vnum=0.2):
     # make pdfs for.
     tfa_sr_paths = glob(os.path.join(tfasrdir, '*_llc.fits'))
 
-    make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df)
+    make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
+                  sectornum=sectornum)
+
 
 if __name__ == "__main__":
+
     main(sectornum=6)

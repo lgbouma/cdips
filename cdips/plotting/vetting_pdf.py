@@ -26,7 +26,11 @@ def two_periodogram_checkplot(lc_sr, hdr, mask_orbit_edges=True,
                               fluxap='TFASR2', nworkers=32):
 
     time, mag = lc_sr['TMID_BJD'], lc_sr[fluxap]
-    time, mag = moe.mask_orbit_start_and_end(time, mag)
+    try:
+        time, mag = moe.mask_orbit_start_and_end(time, mag)
+    except AssertionError:
+        # got more gaps than expected. ignore.
+        pass
 
     flux = _given_mag_get_flux(mag)
     err = np.ones_like(flux)*1e-4
@@ -40,7 +44,7 @@ def two_periodogram_checkplot(lc_sr, hdr, mask_orbit_edges=True,
 
     objectinfo = {}
     keys = ['objectid','ra','decl','pmra','pmdecl','teff','gmag']
-    hdrkeys = ['Gaia-ID', 'RA[deg]', 'Dec[deg]', 'PM_RA[mas/yr]',
+    hdrkeys = ['Gaia-ID', 'RA_OBJ', 'DEC_OBJ', 'PM_RA[mas/yr]',
                'PM_Dec[mas/year]', 'teff_val', 'phot_g_mean_mag']
     for k,hk in zip(keys,hdrkeys):
         if hk in hdr:
@@ -89,11 +93,20 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
     """
 
     if isinstance(tfatime,np.ndarray):
-        tfatime, tfamag = moe.mask_orbit_start_and_end(tfatime, tfamag)
+        try:
+            tfatime, tfamag = moe.mask_orbit_start_and_end(tfatime, tfamag)
+        except AssertionError:
+            # got more gaps than expected. ignore.
+            pass
     else:
         raise NotImplementedError
-    _, rawmag = moe.mask_orbit_start_and_end(time, rawmag)
-    time, bkgdval = moe.mask_orbit_start_and_end(time, bkgdval)
+    try:
+        _, rawmag = moe.mask_orbit_start_and_end(time, rawmag)
+        time, bkgdval = moe.mask_orbit_start_and_end(time, bkgdval)
+    except AssertionError:
+        # got more gaps than expected. ignore.
+        pass
+
 
     plt.close('all')
     nrows = 3
@@ -199,13 +212,17 @@ def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
     time = lc_sr['TMID_BJD']
     yvals = [_given_mag_get_flux(lc_sr[i]) for i in stagestrs]
 
-    masked_yvals = []
-    times = []
-    for yval in yvals:
-        masked_yvals.append(moe.mask_orbit_start_and_end(time, yval)[1])
-        times.append(moe.mask_orbit_start_and_end(time, yval)[0])
-    yvals = masked_yvals
-    time = times[0]
+    try:
+        masked_yvals = []
+        times = []
+        for yval in yvals:
+            masked_yvals.append(moe.mask_orbit_start_and_end(time, yval)[1])
+            times.append(moe.mask_orbit_start_and_end(time, yval)[0])
+        yvals = masked_yvals
+        time = times[0]
+    except AssertionError:
+        # got more gaps than expected. ignore.
+        pass
 
     nums = list(range(len(yvals)))
 
@@ -310,7 +327,7 @@ def _get_full_infodict(tlsp, hdr, mdf):
 
     # if you have Gaia Rstar, use that to estimate stellar mass, and the
     # circular transit duration timescale
-    mamadf = pd.read_csv('Mamajek_Rstar_Mstar_Teff_SpT.txt',
+    mamadf = pd.read_csv('../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
                          delim_whitespace=True)
 
     if h['rstar'] != 'NaN':
@@ -351,7 +368,11 @@ def _get_a_given_P_and_Mstar(period, mstar):
 def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
                         figsize=(30,24), returnfig=True, sigclip=[50,5]):
 
-    time, tfasrmag = moe.mask_orbit_start_and_end(tfatime, tfasrmag)
+    try:
+        time, tfasrmag = moe.mask_orbit_start_and_end(tfatime, tfasrmag)
+    except AssertionError:
+        # got more gaps than expected. ignore.
+        time, tfasrmag = tfatime, tfasrmag
     flux = _given_mag_get_flux(tfasrmag)
 
     stime, sflux, _ = sigclip_magseries(time, flux, np.ones_like(flux)*1e-4,
@@ -418,7 +439,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
     pmRA = {pmra:.1f}, pmDEC = {pmdec:.1f}
     d = 1/plx = {dist_pc:.0f} pc
     AstExc: {AstExcNoiseSig:.1f} $\sigma$
-    $R_\star$ & $M_\star$ $T_{{b0}}$: {circduration:s} hr
+    $R_\star$+$M_\star$->$T_{{b0}}$: {circduration:s} hr
 
     Cluster: {cluster:s}
     Reference: {reference:s}
@@ -442,14 +463,14 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
             rstar=str(d['rstar']),
             mstar=str(d['mstar']),
             teff=str(d['teff']),
-            ra=d['ra'],
-            dec=d['dec'],
+            ra=float(d['ra']),
+            dec=float(d['dec']),
             phot_g_mean_mag=d['phot_g_mean_mag'],
             phot_rp_mean_mag=d['phot_rp_mean_mag'],
             phot_bp_mean_mag=d['phot_bp_mean_mag'],
-            pmra=d['pmra'],
-            pmdec=d['pmdec'],
-            dist_pc=1/(1e-3 * hdr['Parallax[mas]']),
+            pmra=float(d['pmra']),
+            pmdec=float(d['pmdec']),
+            dist_pc=1/(1e-3 * float(hdr['Parallax[mas]'])),
             AstExcNoiseSig=d['AstExcNoiseSig'],
             cluster=d['cluster'],
             reference=d['reference'],
@@ -460,6 +481,9 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
         )
     except Exception as e:
         outstr = 'got bug {}'.format(e)
+        print(outstr)
+        import IPython; IPython.embed()
+        assert 0
         pass
         #print('error making outstr. FIX ME!')
         #print(e)

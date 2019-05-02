@@ -215,8 +215,8 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
     # who dun it
     #
     primaryhdr.set('ORIGIN',
-                   'Luke Bouma / CDIPS',
-                   'Author / project name.')
+                   'Bouma|CDIPS|Princeton',
+                   'Author|Project|Institution')
 
     #
     # set timeseries extension header key comments. also set the units.
@@ -271,12 +271,9 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
 
     outfile = os.path.join(outdir, outname)
 
-    try:
-        outhdulist.writeto(outfile, overwrite=False)
-        print('{}: reformatted {}, wrote to {}'.format(
-            datetime.utcnow().isoformat(), lcpath, outfile))
-    except:
-        import IPython; IPython.embed()
+    outhdulist.writeto(outfile, overwrite=False)
+    print('{}: reformatted {}, wrote to {}'.format(
+        datetime.utcnow().isoformat(), lcpath, outfile))
 
     outhdulist.close()
 

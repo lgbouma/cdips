@@ -2,7 +2,11 @@
 get simple rms vs mag stats for CDIPS LCs. plot them. assess how many all-nan
 LCs there are.
 
-NOTE: depends on pipe-trex (best run in trex_37)
+usage:
+
+    $ (trex_37) python get_cdips_lc_stats.py |& tee /nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats/sector-6/stats_overview_log.txt
+
+NOTE: depends on pipe-trex (--> run in trex_37 environment)
 """
 import aperturephot as ap
 import os
