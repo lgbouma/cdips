@@ -52,7 +52,7 @@ def two_periodogram_checkplot(lc_sr, hdr, mask_orbit_edges=True,
                                          phasebin=3e-2, phasems=6.0,
                                          phasebinms=14.0, unphasedms=6.0,
                                          figsize=(30,24), returnfigure=True,
-                                         circleoverlay=1.5*21)
+                                         circleoverlay=1.5*21, yticksize=20)
 
     return fig, tlsp, spdm
 
