@@ -76,7 +76,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 4 
         ##########
-        fig = vp.scatter_increasing_ap_size(lc_sr, obsd_midtimes=obsd_midtimes,
+        fig = vp.scatter_increasing_ap_size(lc_sr, infodict=infodict,
+                                            obsd_midtimes=obsd_midtimes,
                                             xlabel='BJDTDB', figsize=(30,20))
         pdf.savefig(fig)
         plt.close()

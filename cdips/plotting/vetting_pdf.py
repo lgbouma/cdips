@@ -11,6 +11,9 @@ from cdips.lcproc import mask_orbit_edges as moe
 from astropy.io import fits
 from astropy import units as u, constants as const
 
+from scipy.interpolate import interp1d
+from numpy import array as nparr
+
 def _given_mag_get_flux(mag):
 
     mag_0, f_0 = 12, 1e4
@@ -172,8 +175,9 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
         print('%sZ: made plot: %s' % (datetime.utcnow().isoformat(), savpath))
 
 
-def scatter_increasing_ap_size(lc_sr, obsd_midtimes=None, xlabel='BJDTDB',
-                               customstr='', figsize=(30,24), returnfig=True):
+def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
+                               xlabel='BJDTDB', customstr='', figsize=(30,24),
+                               returnfig=True):
     """
     Plot 3 row, 1 column plot with rows of:
         * TFASR ap 1 (smallest)
@@ -231,6 +235,11 @@ def scatter_increasing_ap_size(lc_sr, obsd_midtimes=None, xlabel='BJDTDB',
                                        labelsize=26)
         ax.get_xaxis().set_tick_params(which='both', direction='in',
                                        labelsize='xx-large')
+
+        if isinstance(infodict, dict):
+            # show transit depth in detection aperture (ap2). depth is saved as
+            # 1-delta.
+            ax.axhline(infodict['depth'], lw=2, alpha=0.3, color='C0')
 
         if isinstance(obsd_midtimes, np.ndarray):
             ylim = ax.get_ylim()
@@ -299,9 +308,44 @@ def _get_full_infodict(tlsp, hdr, mdf):
     if h['rstar'] != 'NaN':
         h['rstar'] = '{:.2f}'.format(h['rstar'])
 
+    # if you have Gaia Rstar, use that to estimate stellar mass, and the
+    # circular transit duration timescale
+    mamadf = pd.read_csv('Mamajek_Rstar_Mstar_Teff_SpT.txt',
+                         delim_whitespace=True)
+
+    if h['rstar'] != 'NaN':
+        fn = interp1d(nparr(mamadf['Rsun']), nparr(mamadf['Msun']),
+                      kind='quadratic', bounds_error=False,
+                      fill_value='extrapolate')
+        mstar = fn(float(h['rstar']))
+        rstar = float(h['rstar'])*u.Rsun
+
+        a = _get_a_given_P_and_Mstar(d['period']*u.day, mstar*u.Msun)
+        tdur_circ = (rstar*(d['period']*u.day)/(np.pi*a)).to(u.hr)
+
+        h['mstar'] = '{:.2f}'.format(mstar)
+        h['circduration'] = '{:.1f}'.format(tdur_circ)
+
+    #FIXME TODO
+    # if you're not given gaia radius, but do have teff, then estimate Rstar
+    # using the relations worked out in TIC8.
+    #
+    # NOTE: you need the extinction to be subtracted for this ---
+    # G = Gobs - A_G
+
+    else:
+        h['mstar'] = 'NaN'
+        h['circduration'] = 'NaN'
+
     megad = {**d, **c, **h}
 
     return megad
+
+def _get_a_given_P_and_Mstar(period, mstar):
+
+    return (
+        const.G * mstar / (4*np.pi*np.pi) * period**2
+    )**(1/3.)
 
 
 def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
@@ -365,7 +409,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
     odd-even-diff = {odd_even_mismatch:.1f} $\sigma$
 
     Star: DR2 {sourceid}
-    $R_\star$ = {rstar:s} $R_\odot$
+    $R_\star$ = {rstar:s} $R_\odot$, $M_\star$ = {mstar:s} $M_\odot$
     Teff = {teff:s} K
     RA = {ra:.3f}, DEC = {dec:.3f}
     G = {phot_g_mean_mag:.1f}
@@ -374,6 +418,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
     pmRA = {pmra:.1f}, pmDEC = {pmdec:.1f}
     d = 1/plx = {dist_pc:.0f} pc
     AstExc: {AstExcNoiseSig:.1f} $\sigma$
+    $R_\star$ & $M_\star$ $T_{{b0}}$: {circduration:s} hr
 
     Cluster: {cluster:s}
     Reference: {reference:s}
@@ -389,11 +434,13 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
             rp_rs=d['rp_rs'],
             tdur_by_period=d['duration']/d['period'],
             duration=d['duration']*24,
+            circduration=d['circduration'],#FIXME
             snr=d['snr'],
             snr_pink_per_transit=np.nanmean(d['snr_pink_per_transit']),
             odd_even_mismatch=d['odd_even_mismatch'],
             sourceid=hdr['Gaia-ID'],
             rstar=str(d['rstar']),
+            mstar=str(d['mstar']),
             teff=str(d['teff']),
             ra=d['ra'],
             dec=d['dec'],

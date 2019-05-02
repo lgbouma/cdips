@@ -1,4 +1,4 @@
-SpT   Teff  Rsun Msun
+SpT    Teff  Rsun   Msun
 O7V    36500 9.62   28  
 O7.5V  35000 9.11   24  
 O8V    34500 8.75   22.9
