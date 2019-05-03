@@ -5,6 +5,7 @@ import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from astrobase import periodbase, checkplot
 from astrobase.checkplot.png import _make_phased_magseries_plot
 from astrobase.lcmath import sigclip_magseries
+from astrobase.lcfit.eclipses import gaussianeb_fit_magseries
 
 from cdips.lcproc import mask_orbit_edges as moe
 
@@ -300,6 +301,7 @@ def _get_full_infodict(tlsp, hdr, mdf):
         'snr':tlsp['tlsresult']['snr'],
         'snr_pink_per_transit':tlsp['tlsresult']['snr_pink_per_transit'],
         'odd_even_mismatch':tlsp['tlsresult']['odd_even_mismatch'],
+        'sde':tlsp['tlsresult']['SDE']
     }
 
     # dict from CDIPS star catalog with the following keys:
@@ -365,8 +367,9 @@ def _get_a_given_P_and_Mstar(period, mstar):
     )**(1/3.)
 
 
-def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
-                        figsize=(30,24), returnfig=True, sigclip=[50,5]):
+def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, suppdf,
+                        obsd_midtimes=None, figsize=(30,24), returnfig=True,
+                        sigclip=[50,5]):
 
     try:
         time, tfasrmag = moe.mask_orbit_start_and_end(tfatime, tfasrmag)
@@ -379,6 +382,38 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
                                         magsarefluxes=True, sigclip=sigclip)
 
     d = _get_full_infodict(tlsp, hdr, mdf)
+
+    #FIXME
+    # [period (time), epoch (time), pdepth (mags), pduration (phase),
+    # psdepthratio, secondaryphase]
+    initebparams = [d['period'], d['t0'], 1-d['depth'],
+                    d['duration']/d['period'], 0.2, 0.5 ]
+    ebfitd = gaussianeb_fit_magseries(time, flux, np.ones_like(flux)*1e-4,
+                                      initebparams, sigclip=None,
+                                      plotfit=False, magsarefluxes=True,
+                                      verbose=True)
+    fitparams = ebfitd['finalparams']
+    fitparamerrs = ebfitd['finalparamerrs']
+
+    psdepthratio = fitparams[4]
+    psdepthratioerr = fitparamserrs[4]
+
+    #
+    # if primary/secondary ratio is >~ 6, could be a planet. (Most extreme case
+    # is probably KELT-9b, with delta_tra/delta_occ of ~= 10).
+    # if primary/secondary ratio is very near 1, could be a planet, phased at 2x the
+    # true orbital period.
+    #
+    # so it's really only in the primary/secondary range of ~1.2-7 that we can
+    # be pretty certain it's an EB.
+    #
+    d['psdepthratio'] = psdepthratio
+    d['psdepthratioerr'] = psdepthratioerr
+
+    import IPython; IPython.embed() #FIXME check
+    assert 0
+    #FIXME
+
 
     ##########################################
 
@@ -424,20 +459,19 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
     $R_p/R_\star$ = {rp_rs:.3f}
     $T_{{14}}/P$ = {tdur_by_period:.3f}
     $T_{{14}}$ = {duration:.2f} hr
-    SNR = {snr:.1f}
-    SNRpinkpertra = {snr_pink_per_transit:.1f}
+    SNR = {snr:.1f}, SNRpink/tra = {snr_pink_per_transit:.1f}
 
-    odd-even-diff = {odd_even_mismatch:.1f} $\sigma$
+    $\delta_{{odd}}$ vs $\delta_{{even}}$ = {odd_even_mismatch:.1f} $\sigma$
+    $\delta_{{tra}}/\delta_{{occ}}$ = {psdepthratio:.2f} $\pm$ {psdepthratioerr:.2f}
 
     Star: DR2 {sourceid}
     $R_\star$ = {rstar:s} $R_\odot$, $M_\star$ = {mstar:s} $M_\odot$
     Teff = {teff:s} K
     RA = {ra:.3f}, DEC = {dec:.3f}
-    G = {phot_g_mean_mag:.1f}
-    Rp = {phot_rp_mean_mag:.1f}
-    Bp = {phot_bp_mean_mag:.1f}
+    G = {phot_g_mean_mag:.1f}, Rp = {phot_rp_mean_mag:.1f}, Bp = {phot_bp_mean_mag:.1f}
     pmRA = {pmra:.1f}, pmDEC = {pmdec:.1f}
-    d = 1/plx = {dist_pc:.0f} pc
+    $\omega$ = {plx_mas:.2f} $\pm$ {plx_mas_err:.2f} mas
+    d = 1/$\omega_{{as}}$ = {dist_pc:.0f} pc
     AstExc: {AstExcNoiseSig:.1f} $\sigma$
     $R_\star$+$M_\star$->$T_{{b0}}$: {circduration:s} hr
 
@@ -455,7 +489,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
             rp_rs=d['rp_rs'],
             tdur_by_period=d['duration']/d['period'],
             duration=d['duration']*24,
-            circduration=d['circduration'],#FIXME
+            circduration=d['circduration'],
             snr=d['snr'],
             snr_pink_per_transit=np.nanmean(d['snr_pink_per_transit']),
             odd_even_mismatch=d['odd_even_mismatch'],
@@ -465,11 +499,15 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=None,
             teff=str(d['teff']),
             ra=float(d['ra']),
             dec=float(d['dec']),
+            psdepthratio=float(d['psdepthratio']),
+            psdepthratioerr=float(d['psdepthratioerr']),
             phot_g_mean_mag=d['phot_g_mean_mag'],
             phot_rp_mean_mag=d['phot_rp_mean_mag'],
             phot_bp_mean_mag=d['phot_bp_mean_mag'],
             pmra=float(d['pmra']),
             pmdec=float(d['pmdec']),
+            plx_mas=float(suppdf['Parallax[mas][6]']),
+            plx_mas_err=float(suppdf['Parallax_error[mas][7]']),
             dist_pc=1/(1e-3 * float(hdr['Parallax[mas]'])),
             AstExcNoiseSig=d['AstExcNoiseSig'],
             cluster=d['cluster'],
