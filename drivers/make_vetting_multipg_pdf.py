@@ -2,7 +2,7 @@
 Make multipage PDFs needed to vet CDIPS objects of interest. (TCEs. Whatever).
 """
 from glob import glob
-import datetime, os, pickle
+import datetime, os, pickle, shutil
 import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -14,13 +14,41 @@ from astropy.io import fits
 from datetime import datetime
 
 def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
+                             suppdf,
                              mask_orbit_edges=True,
                              nworkers=32):
     """
-    tfa_sr_path: path to signal-reconstructed TFA lightcurve.
-    lcpath: path to "main" lightcurve.
-    outpath: where we're saving the vetting pdf
-    mdf: single row dataframe from CDIPS source catalog
+    args:
+
+        tfa_sr_path: path to signal-reconstructed TFA lightcurve.
+
+        lcpath: path to "main" lightcurve.
+
+        outpath: where we're saving the vetting pdf, by default (if
+        isobviouslynottransit is False)
+
+        mdf: single row dataframe from CDIPS source catalog
+
+        suppdf: dataframe with LC statistics, Gaia xmatch info, CDIPS xmatch
+        info.  Columns include:
+
+           'lcobj', 'cat_mag', 'med_rm1', 'mad_rm1', 'mean_rm1', 'stdev_rm1',
+           'ndet_rm1', 'med_sc_rm1', 'mad_sc_rm1', 'mean_sc_rm1',
+           ...
+           '#Gaia-ID[1]', 'RA[deg][2]', 'Dec[deg][3]', 'RAError[mas][4]',
+           'DecError[mas][5]', 'Parallax[mas][6]', 'Parallax_error[mas][7]',
+           'PM_RA[mas/yr][8]', 'PM_Dec[mas/year][9]', 'PMRA_error[mas/yr][10]',
+           'PMDec_error[mas/yr][11]', 'Ref_Epoch[yr][12]', 'phot_g_mean_mag[20]',
+           'phot_bp_mean_mag[25]', 'phot_rp_mean_mag[30]', 'radial_velocity[32]',
+           'radial_velocity_error[33]', 'teff_val[35]',
+           'teff_percentile_lower[36]', 'teff_percentile_upper[37]', 'a_g_val[38]',
+           'a_g_percentile_lower[39]', 'a_g_percentile_upper[40]',
+           'e_bp_min_rp_val[41]', 'e_bp_min_rp_percentile_lower[42]',
+           'e_bp_min_rp_percentile_upper[43]', 'radius_val[44]',
+           'radius_percentile_lower[45]', 'radius_percentile_upper[46]',
+           'lum_val[47]', 'lum_percentile_lower[48]', 'lum_percentile_upper[49]'
+           ...
+           'cluster', 'ext_catalog_name', 'reference', 'source_id'
     """
 
     hdul_sr = fits.open(tfa_sr_path)
@@ -68,8 +96,9 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # page 3 -- it's a QLP ripoff
         ##########
         fig, infodict = vp.transitcheckdetails(
-            tfasrmag, tfatime, tlsp, mdf, hdr, obsd_midtimes=obsd_midtimes,
-            figsize=(30,20))
+            tfasrmag, tfatime, tlsp, mdf, hdr, suppdf,
+            obsd_midtimes=obsd_midtimes, figsize=(30,20)
+        )
         pdf.savefig(fig)
         plt.close()
 
@@ -97,8 +126,49 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             pickle.dump(infodict, f)
         print('made {}'.format(picklepath))
 
+        ##########
+        # check if is obviously nottransit. this will be the case if:
+        # * ndet_tf2 < 100
+        # * depth < 0.85
+        # * rp > 6 R_jup = 67.25 R_earth. Based on 2x the limit given at 1Myr
+        #   in Burrows+2001, figure 3.
+        # * SDE from TLS is < 12 (these will be unbelievable no matter what.
+        #   they might exist b/c TFA SR could have lowered overall SDE)
+        # * primary depth is >10%
+        # * primary/secondary depth ratios from gaussian fitting in range of
+        #   ~1.2-7, accounting for 1-sigma formal uncertainty in measurement
+        ##########
+        if (
+        (float(suppdf['ndet_tf2']) < 100) or
+        (float(infodict['depth']) < 0.85) or
+        (float(infodict['sde']) < 12) or
+        (float(infodict['rp']) > 67.25) or
+        ( (float(infodict['psdepthratio'] - infodict['psdepthratioerr']) > 1.2)
+         &
+          (float(infodict['psdepthratio'] + infodict['psdepthratioerr']) < 7.0)
+        )
+        ):
+            isobviouslynottransit = True
+        else:
+            isobviouslynottransit = False
 
-def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df, sectornum=6,
+    if isobviouslynottransit:
+        for path in [outpath, picklepath]:
+            src = path
+            dst = path.replace('pdfs','nottransitpdfs')
+            shutil.move(src,dst)
+            print('found was nottransit. moved {} -> {}'.format(src,dst))
+
+
+
+def _get_suppdf(sourceid, supplementstatsdf):
+
+    mdf = supplementstatsdf.loc[supplementstatsdf['lcobj']==sourceid]
+
+    return mdf
+
+def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
+                  supplementstatsdf, sectornum=6,
                   cdipsvnum=1):
 
     for tfa_sr_path in tfa_sr_paths:
@@ -130,14 +200,23 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df, sectornum=6,
             lcname
         )
 
+        # logic: even if you know it's nottransit, it's a TCE. therefore, the pdf will
+        # be made. i just dont want to have to look at it. put it in a separate
+        # directory.
         outpath = os.path.join(
             resultsdir,'pdfs',
             'vet_'+os.path.basename(tfa_sr_path).replace('.fits','.pdf')
         )
+        nottransitpath = os.path.join(
+            resultsdir,'nottransitpdfs',
+            'vet_'+os.path.basename(tfa_sr_path).replace('.fits','.pdf')
+        )
 
-        if not os.path.exists(outpath):
+        suppdf = _get_suppdf(sourceid, supplementstatsdf)
+
+        if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
             make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
-                                     sourceid)
+                                     sourceid, suppdf)
         else:
             print('found {}, continue'.format(outpath))
 
@@ -153,6 +232,8 @@ def main(sectornum=6, cdips_cat_vnum=0.2):
         os.mkdir(resultsdir)
         os.mkdir(os.path.join(resultsdir,'pdfs'))
         os.mkdir(os.path.join(resultsdir,'pkls'))
+        os.mkdir(os.path.join(resultsdir,'nottransitpdfs'))
+        os.mkdir(os.path.join(resultsdir,'nottransitpkls'))
 
     tfasrdir = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
                 'CDIPS_LCS/sector-{}_TFA_SR'.format(sectornum))
@@ -163,13 +244,18 @@ def main(sectornum=6, cdips_cat_vnum=0.2):
                     'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(cdips_cat_vnum))
     cdips_df = pd.read_csv(cdipscatpath, sep=';')
 
+    supppath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
+                'cdips_lc_stats/sector-{}/'.format(sectornum)+
+                'supplemented_cdips_lc_statistics.txt')
+    supplementstatsdf = pd.read_csv(supppath, sep=';')
+
     # reconstructive_tfa/RunTFASR.sh applied the SDE cutoff on TFA_SR
     # lightcurves. use whatever is in `tfasrdir` to determine which sources to
     # make pdfs for.
     tfa_sr_paths = glob(os.path.join(tfasrdir, '*_llc.fits'))
 
     make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
-                  sectornum=sectornum)
+                  supplementstatsdf, sectornum=sectornum)
 
 
 if __name__ == "__main__":
