@@ -12,8 +12,10 @@ from cdips.lcproc import mask_orbit_edges as moe
 from astropy.io import fits
 from astropy import units as u, constants as const
 
+from scipy import optimize
 from scipy.interpolate import interp1d
 from numpy import array as nparr
+from astropy.io.votable import from_table, writeto, parse
 
 def _given_mag_get_flux(mag):
 
@@ -333,10 +335,21 @@ def _get_full_infodict(tlsp, hdr, mdf):
                          delim_whitespace=True)
 
     if h['rstar'] != 'NaN':
-        fn = interp1d(nparr(mamadf['Rsun']), nparr(mamadf['Msun']),
-                      kind='quadratic', bounds_error=False,
-                      fill_value='extrapolate')
-        mstar = fn(float(h['rstar']))
+        # mass monotonically decreases, but radius does not...
+        mamarstar, mamamstar = nparr(mamadf['Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
+
+        isbad = np.insert(np.diff(mamamstar) <= 0, False, 0)
+        fn_mass_to_rstar = interp1d(mamamstar[~isbad], mamarstar[~isbad],
+                                    kind='quadratic', bounds_error=False,
+                                    fill_value='extrapolate')
+
+        radiusval = float(h['rstar'])
+        fn = lambda mass: fn_mass_to_rstar(mass) - radiusval
+
+        mass_guess = mamamstar[np.argmin(mamarstar - radiusval)]
+        mass_val = optimize.newton(fn, mass_guess)
+
+        mstar = mass_val
         rstar = float(h['rstar'])*u.Rsun
 
         a = _get_a_given_P_and_Mstar(d['period']*u.day, mstar*u.Msun)
@@ -367,7 +380,7 @@ def _get_a_given_P_and_Mstar(period, mstar):
     )**(1/3.)
 
 
-def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, suppdf,
+def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                         obsd_midtimes=None, figsize=(30,24), returnfig=True,
                         sigclip=[50,5]):
 
@@ -383,7 +396,6 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, suppdf,
 
     d = _get_full_infodict(tlsp, hdr, mdf)
 
-    #FIXME
     # [period (time), epoch (time), pdepth (mags), pduration (phase),
     # psdepthratio, secondaryphase]
     initebparams = [d['period'], d['t0'], 1-d['depth'],
@@ -392,11 +404,11 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, suppdf,
                                       initebparams, sigclip=None,
                                       plotfit=False, magsarefluxes=True,
                                       verbose=True)
-    fitparams = ebfitd['finalparams']
-    fitparamerrs = ebfitd['finalparamerrs']
+    fitparams = ebfitd['fitinfo']['finalparams']
+    fitparamerrs = ebfitd['fitinfo']['finalparamerrs']
 
-    psdepthratio = fitparams[4]
-    psdepthratioerr = fitparamserrs[4]
+    psdepthratio = 1/fitparams[4]
+    psdepthratioerr = psdepthratio*(fitparamerrs[4]/fitparams[4])
 
     #
     # if primary/secondary ratio is >~ 6, could be a planet. (Most extreme case
@@ -409,10 +421,6 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, suppdf,
     #
     d['psdepthratio'] = psdepthratio
     d['psdepthratioerr'] = psdepthratioerr
-
-    import IPython; IPython.embed() #FIXME check
-    assert 0
-    #FIXME
 
 
     ##########################################
@@ -506,8 +514,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, suppdf,
             phot_bp_mean_mag=d['phot_bp_mean_mag'],
             pmra=float(d['pmra']),
             pmdec=float(d['pmdec']),
-            plx_mas=float(suppdf['Parallax[mas][6]']),
-            plx_mas_err=float(suppdf['Parallax_error[mas][7]']),
+            plx_mas=float(supprow['Parallax[mas][6]']),
+            plx_mas_err=float(supprow['Parallax_error[mas][7]']),
             dist_pc=1/(1e-3 * float(hdr['Parallax[mas]'])),
             AstExcNoiseSig=d['AstExcNoiseSig'],
             cluster=d['cluster'],
@@ -518,15 +526,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, suppdf,
             )
         )
     except Exception as e:
-        outstr = 'got bug {}'.format(e)
+        outstr = 'transitcheckdetails: got bug {}'.format(e)
         print(outstr)
-        import IPython; IPython.embed()
-        assert 0
-        pass
-        #print('error making outstr. FIX ME!')
-        #print(e)
-        #import IPython; IPython.embed()
-        #assert 0
 
     txt_x, txt_y = 0.01, 0.99
     ax1.text(txt_x, txt_y, textwrap.dedent(outstr),
@@ -598,3 +599,242 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, suppdf,
     fig.tight_layout(h_pad=0)
     if returnfig:
         return fig, d
+
+
+def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)):
+
+    #
+    # first, given cluster name(s), you need to search for kharchenko match.
+    #
+    getfile = '../data/cluster_data/Kharchenko_2013_MWSC.vot'
+    vot = parse(getfile)
+    tab = vot.get_first_table().to_table()
+    k13 = tab.to_pandas()
+    del tab
+    k13['Name'] = k13['Name'].str.decode('utf-8')
+    k13['Type'] = k13['Type'].str.decode('utf-8')
+    k13['MWSC'] = k13['MWSC'].str.decode('utf-8')
+
+    have_name_match = False
+
+    cluster = str(supprow['cluster'].iloc[0])
+
+    clustersplt = cluster.split(',')
+    trystrs = []
+    for c in clustersplt:
+        trystrs.append(c)
+        trystrs.append(c.replace(' ','_'))
+
+    for trystr in trystrs:
+        if trystr in nparr(k13['Name']):
+            have_name_match=True
+            name_match = trystr
+            break
+
+    if not have_name_match:
+        #FIXME: there are probably hella edge cases for this
+        print('didnt get name match')
+        import IPython; IPython.embed()
+        assert 0
+
+    _k13 = k13.loc[k13['Name'] == name_match]
+
+    ##########################################
+
+    plt.close('all')
+    fig = plt.figure(figsize=figsize)
+
+    # ax0: distance pdf (or mebe just plx pdf?)
+    # ax1: proper motion
+    # ax2: big text
+    # ax3: HR diagram
+    # ax4: spatial positions
+    ax0 = plt.subplot2grid((2, 3), (0, 0))
+    ax1 = plt.subplot2grid((2, 3), (0, 1))
+    ax2 = plt.subplot2grid((2, 3), (0, 2), rowspan=2)
+    ax3 = plt.subplot2grid((2, 3), (1, 0))
+    ax4 = plt.subplot2grid((2, 3), (1, 1))
+
+    #
+    # ax0: parallax probabilities. (boxplot).
+    #
+    k13_plx_mas = (1/float(_k13['d'].iloc[0]))*1e3  # "truth"
+
+    dr2_plx = supprow['Parallax[mas][6]'].iloc[0]
+    dr2_plx_err = supprow['Parallax_error[mas][7]'].iloc[0]
+
+    dr2_samples = np.random.normal(loc=dr2_plx, scale=dr2_plx_err, size=300)
+
+    ax0.boxplot(dr2_samples, showfliers=False, whis=[5, 95], zorder=3)
+
+    ax0.axhline(k13_plx_mas, lw=2, alpha=0.3, color='C0', zorder=2)
+
+    ax0.set_xticklabels('')
+    ax0.set_xlabel('DR2 (line is K13 cluster)')
+    ax0.set_ylabel('star parallax [mas]')
+
+    #
+    # ax1: proper motion. just use error bars in 2d.
+    #
+    ax1.errorbar(_k13['pmRA'], _k13['pmDE'], yerr=_k13['e_pm'],
+                 xerr=_k13['e_pm'], fmt='o', ecolor='C0', capthick=2,
+                 color='C0', label='K13 cluster', zorder=2)
+
+    ax1.errorbar(supprow['PM_RA[mas/yr][8]'].iloc[0],
+                 supprow['PM_Dec[mas/year][9]'].iloc[0],
+                 xerr=supprow['PMRA_error[mas/yr][10]'].iloc[0],
+                 yerr=supprow['PMDec_error[mas/yr][11]'].iloc[0], fmt='o',
+                 ecolor='C1', capthick=2, color='C1', label='GaiaDR2 star',
+                 zorder=3)
+
+    ax1.legend(loc='best')
+    ax1.set_xlabel('pmRA [mas/yr]')
+    ax1.set_ylabel('pmDEC [mas/yr]')
+
+    #
+    # ax2: big text
+    #
+    if have_name_match:
+        mwscid = str(_k13['MWSC'].iloc[0])
+        n1sr2 = float(_k13['N1sr2'])
+        logt = float(_k13['logt'])
+        k13type = str(_k13['Type'].iloc[0])
+        if k13type == '':
+            k13type = 'oc'
+        k13dist = float(_k13['d'])
+    else:
+        mwscid = 'N/A'
+        n1sr2 = np.nan
+        logt = np.nan
+        k13type = 'N/A'
+        k13dist = np.nan
+
+    d = infodict
+
+    txt = (
+    """
+    Cluster: {cluster:s}
+    Reference: {reference:s}
+    Starname: {ext_catalog_name:s}
+    xmatchdist: {xmatchdist:s}
+
+    K13 match: MWSC {mwscid:s}
+    N1sr2: {n1sr2:.0f}, logt = {logt:.1f},
+    type = {k13type:s}, $d_{{K13}}$ = {k13dist:.0f} pc
+    Expect $\omega_{{K13}}$ = {omegak13:.2f} mas
+
+    Star: DR2 {sourceid}
+    $R_\star$ = {rstar:s} $R_\odot$, $M_\star$ = {mstar:s} $M_\odot$
+    Teff = {teff:s} K
+    RA = {ra:.3f}, DEC = {dec:.3f}
+    G = {phot_g_mean_mag:.1f}, Rp = {phot_rp_mean_mag:.1f}, Bp = {phot_bp_mean_mag:.1f}
+    pmRA = {pmra:.1f}, pmDEC = {pmdec:.1f}
+    $\omega$ = {plx_mas:.2f} $\pm$ {plx_mas_err:.2f} mas
+    d = 1/$\omega_{{as}}$ = {dist_pc:.0f} pc
+    """
+    )
+    try:
+        outstr = txt.format(
+            mwscid=mwscid,
+            n1sr2=n1sr2,
+            logt=logt,
+            k13type=k13type,
+            k13dist=k13dist,
+            omegak13=k13_plx_mas,
+            sourceid=hdr['Gaia-ID'],
+            rstar=str(d['rstar']),
+            mstar=str(d['mstar']),
+            teff=str(d['teff']),
+            ra=float(d['ra']),
+            dec=float(d['dec']),
+            phot_g_mean_mag=d['phot_g_mean_mag'],
+            phot_rp_mean_mag=d['phot_rp_mean_mag'],
+            phot_bp_mean_mag=d['phot_bp_mean_mag'],
+            pmra=float(d['pmra']),
+            pmdec=float(d['pmdec']),
+            plx_mas=float(supprow['Parallax[mas][6]']),
+            plx_mas_err=float(supprow['Parallax_error[mas][7]']),
+            dist_pc=1/(1e-3 * float(hdr['Parallax[mas]'])),
+            cluster=d['cluster'],
+            reference=d['reference'],
+            ext_catalog_name=d['ext_catalog_name'],
+            xmatchdist=','.join(
+                ['{:.1e}'.format(float(l)) for l in str(d['dist']).split(',')]
+            )
+        )
+    except Exception as e:
+        outstr = 'clusterdetails: got bug {}'.format(e)
+        print(outstr)
+
+    txt_x, txt_y = 0.01, 0.99
+    ax2.text(txt_x, txt_y, textwrap.dedent(outstr),
+             ha='left', va='top', fontsize=36, zorder=2,
+             transform=ax2.transAxes)
+    ax2.set_axis_off()
+
+    #
+    # ax3: HR diagram
+    #
+    cluster = str(supprow['cluster'].iloc[0])
+
+    cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
+
+    dfs = [cluster_df, supprow]
+    zorders = [1,2]
+    sizes = [30,150]
+    colors = ['k','orangered']
+    labels = [cluster,'target star']
+
+    for df,zorder,color,s,l in zip(dfs,zorders,colors,sizes,labels):
+
+        _yval = nparr(
+            df['phot_g_mean_mag[20]']
+            + 5*np.log10(df['Parallax[mas][6]'])
+            + 5
+            #- df['a_g_val[38]']   # NOTE: too many nans
+        )
+        _xval = nparr(
+            df['phot_bp_mean_mag[25]']
+            - df['phot_rp_mean_mag[30]']
+            #- df['e_bp_min_rp_val[41]']
+        )
+
+        ax3.scatter(_xval, _yval, c=color, alpha=0.9, zorder=zorder, s=s,
+                    rasterized=True, linewidths=0, label=l)
+
+    ylim = ax3.get_ylim()
+    ax3.set_ylim((max(ylim),min(ylim)))
+    ax3.legend(loc='best')
+    ax3.set_ylabel('G + 5$\log_{{10}}\omega$ + 5') # - $A_G$
+    ax3.set_xlabel('Bp - Rp') #  - E(Bp-Rp)
+
+    #
+    # ax4: spatial positions
+    #
+    dfs = [cluster_df, supprow]
+    zorders = [1,2]
+    sizes = [20,150]
+    colors = ['k','orangered']
+    labels = [cluster,'target star']
+
+    for df,zorder,color,s,l in zip(dfs,zorders,colors,sizes, labels):
+
+        _xval = (
+            df['RA[deg][2]']
+        )
+        _yval = (
+            df['Dec[deg][3]']
+        )
+
+        ax4.scatter(_xval, _yval, c=color, alpha=0.9, zorder=zorder, s=s,
+                    rasterized=True, linewidths=0, label=l)
+
+    ax4.legend(loc='best')
+    ax4.set_xlabel('RA')
+    ax4.set_ylabel('DEC')
+
+    ##########################################
+
+    fig.tight_layout(h_pad=0.)
+    return fig
+
