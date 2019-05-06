@@ -13,6 +13,8 @@ from astropy.io import fits
 from astropy import units as u, constants as const
 from astropy.coordinates import SkyCoord
 
+from astroquery.simbad import Simbad
+
 from scipy import optimize
 from scipy.interpolate import interp1d
 from numpy import array as nparr
@@ -354,7 +356,7 @@ def _get_full_infodict(tlsp, hdr, mdf):
         rstar = float(h['rstar'])*u.Rsun
 
         a = _get_a_given_P_and_Mstar(d['period']*u.day, mstar*u.Msun)
-        tdur_circ = (rstar*(d['period']*u.day)/(np.pi*a)).to(u.hr)
+        tdur_circ = (rstar*(d['period']*u.day)/(np.pi*a)).to(u.hr).value
 
         h['mstar'] = '{:.2f}'.format(mstar)
         h['circduration'] = '{:.1f}'.format(tdur_circ)
@@ -634,53 +636,57 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             name_match = trystr
             break
 
+    # try if SIMBAD's name matcher anything.
     if not have_name_match:
-        # try if SIMBAD's name matche has anything.
-        from astroquery.simbad import Simbad
-        res = Simbad.query_objectids(cluster)
-        try:
-            resdf = res.to_pandas()
-        except:
-            print('simbad fails')
-            import IPython; IPython.embed()
-            assert e
-        resdf['ID'] = resdf['ID'].str.decode('utf-8')
-        smatches = nparr(resdf['ID'])
+        for c in clustersplt:
+            res = Simbad.query_objectids(c)
+            try:
+                resdf = res.to_pandas()
+            except:
+                print('simbad fails')
+                import IPython; IPython.embed()
+                assert e
+            resdf['ID'] = resdf['ID'].str.decode('utf-8')
+            smatches = nparr(resdf['ID'])
 
-        # some names have format 'Name M 42'
-        clean_smatches = [s.lstrip('NAME ') for s in smatches]
-        # some names have format '[KPS2012] MWSC 0531'
-        for ix, s in enumerate(clean_smatches):
-            strm = re.search("\[.*\]\ ", s)
-            if strm is not None:
-                clean_smatches[ix] = s.lstrip(strm.group())
+            # some names have format 'Name M 42'
+            clean_smatches = [s.lstrip('NAME ') for s in smatches]
+            # some names have format '[KPS2012] MWSC 0531'
+            for ix, s in enumerate(clean_smatches):
+                strm = re.search("\[.*\]\ ", s)
+                if strm is not None:
+                    clean_smatches[ix] = s.lstrip(strm.group())
 
-        # first set of attempts: everything in clean matches (irrespective if
-        # MWSC number exists)
-        trystrs = []
-        for c in clean_smatches:
-            trystrs.append(c)
-            trystrs.append(c.replace(' ','_'))
+            # first set of attempts: everything in clean matches (irrespective if
+            # MWSC number exists)
+            trystrs = []
+            for _c in clean_smatches:
+                trystrs.append(_c)
+                trystrs.append(_c.replace(' ','_'))
 
-        for trystr in trystrs:
-            if trystr in nparr(k13['Name']):
-                have_name_match = True
-                name_match = trystr
+            for trystr in trystrs:
+                if trystr in nparr(k13['Name']):
+                    have_name_match = True
+                    name_match = trystr
+                    break
+
+            # only then: check if you have MWSC identifier.
+            inds = ['MWSC' in _c for _c in clean_smatches]
+            mwsc_match = nparr(clean_smatches)[inds]
+            if len(mwsc_match) > 1:
+                pass
+            if len(mwsc_match) == 1:
+                have_mwsc_id_match = True
+                mwsc_id_match = mwsc_match[0].replace('MWSC ','')
+            if len(mwsc_match) == 0:
+                pass
+
+            if have_mwsc_id_match:
                 break
 
-        # only then: check if you have MWSC identifier.
-        inds = ['MWSC' in c for c in clean_smatches]
-        mwsc_match = nparr(clean_smatches)[inds]
-        if len(mwsc_match) > 1:
-            raise NotImplementedError
-        if len(mwsc_match) == 1:
-            have_mwsc_id_match = True
-            mwsc_id_match = mwsc_match[0].replace('MWSC ','')
-        if len(mwsc_match) == 0:
-            pass
-
     if not have_name_match and not have_mwsc_id_match:
-        # try searching K13 within 10 arcminutes of the quoted position
+        # try searching K13 within circles of 5,10,...arcminutes of the quoted
+        # position
         ra,dec = float(supprow['RA[deg][2]']), float(supprow['Dec[deg][3]'])
 
         c = SkyCoord(ra, dec, unit=(u.deg,u.deg), frame='icrs')
@@ -690,23 +696,25 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
 
         seps = k13_c.separation(c)
 
-        CUTOFF = 10*u.arcmin
+        CUTOFFS = [5*10*u.arcmin, 10*u.arcmin, 15*u.arcmin, 20*u.arcmin]
 
-        cseps = seps < CUTOFF
+        for CUTOFF in CUTOFFS:
+            cseps = seps < CUTOFF
 
-        if len(cseps[cseps]) == 1:
-            have_name_match=True
-            name_match = k13.loc[cseps, 'Name'].iloc[0]
+            if len(cseps[cseps]) == 1:
+                have_name_match=True
+                name_match = k13.loc[cseps, 'Name'].iloc[0]
 
-        elif len(cseps[cseps]) > 1:
-            print('got too many matches within 10 arcminutes!')
-            pass
-            # a good automated decision becomes harder
-            raise NotImplementedError
+            elif len(cseps[cseps]) > 1:
+                print('got too many matches within {} arcminutes!'.
+                      format(CUTOFF))
+                pass
 
-        else:
-            pass
+            else:
+                pass
 
+            if have_name_match:
+                break
 
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
@@ -803,6 +811,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     N1sr2: {n1sr2:.0f}, logt = {logt:.1f},
     type = {k13type:s}, $d_{{K13}}$ = {k13dist:.0f} pc
     Expect $\omega_{{K13}}$ = {omegak13:.2f} mas
+    Got $\omega_{{DR2}}$ = {plx_mas:.2f} $\pm$ {plx_mas_err:.2f} mas
 
     Star: DR2 {sourceid}
     $R_\star$ = {rstar:s} $R_\odot$, $M_\star$ = {mstar:s} $M_\odot$
