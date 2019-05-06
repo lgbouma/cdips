@@ -58,12 +58,14 @@ def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
                           R_star_min=0.13, R_star_max=3.5, M_star_min=0.1,
                           M_star_max=2.0, period_min=period_min,
                           period_max=period_max, n_transits_min=2,
-                          transit_template='default', oversampling_factor=3)
+                          transit_template='default', oversampling_factor=5)
 
     tls_sde = results.SDE
     tls_period = results.period
+    tls_t0 = results.T0
+    tls_depth = results.depth
 
-    r = [source_id, ls_period, ls_fap, tls_period, tls_sde]
+    r = [source_id, ls_period, ls_fap, tls_period, tls_sde, tls_t0, tls_depth]
 
     return r
 
@@ -87,7 +89,7 @@ def periodfindingworker(lcpath):
     source_id, tfa_time, tfa_mag = get_lc_data(lcpath)
 
     if np.all(pd.isnull(tfa_mag)):
-        r = [source_id, np.nan, np.nan, np.nan, np.nan]
+        r = [source_id, np.nan, np.nan, np.nan, np.na, np.nan, np.nan]
 
     else:
         r = run_periodograms(source_id, tfa_time, tfa_mag)
@@ -143,7 +145,8 @@ def do_initial_period_finding(
 
     df = pd.DataFrame(
         results,
-        columns=['source_id', 'ls_period', 'ls_fap', 'tls_period', 'tls_sde']
+        columns=['source_id', 'ls_period', 'ls_fap', 'tls_period', 'tls_sde',
+                 'tls_t0', 'tls_depth']
     )
     df = df.sort_values(by='source_id')
 
