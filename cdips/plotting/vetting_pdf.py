@@ -1,5 +1,5 @@
 from glob import glob
-import os, textwrap
+import os, textwrap, re
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 
 from astrobase import periodbase, checkplot
@@ -388,6 +388,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
         time, tfasrmag = moe.mask_orbit_start_and_end(tfatime, tfasrmag)
     except AssertionError:
         # got more gaps than expected. ignore.
+
         time, tfasrmag = tfatime, tfasrmag
     flux = _given_mag_get_flux(tfasrmag)
 
@@ -616,6 +617,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     k13['MWSC'] = k13['MWSC'].str.decode('utf-8')
 
     have_name_match = False
+    have_mwsc_id_match = False
 
     cluster = str(supprow['cluster'].iloc[0])
 
@@ -632,12 +634,56 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             break
 
     if not have_name_match:
+        # try SIMBAD
+        from astroquery.simbad import Simbad
+        res = Simbad.query_objectids(cluster)
+        resdf = res.to_pandas()
+        resdf['ID'] = resdf['ID'].str.decode('utf-8')
+        smatches = nparr(resdf['ID'])
+
+        # some names have format 'Name M 42'
+        clean_smatches = [s.lstrip('NAME ') for s in smatches]
+        # some names have format '[KPS2012] MWSC 0531'
+        for ix, s in enumerate(clean_smatches):
+            strm = re.search("\[.*\]\ ", s)
+            if strm is not None:
+                clean_smatches[ix] = s.lstrip(strm.group())
+
+        # first set of attempts: everything in clean matches (irrespective if
+        # MWSC number exists)
+        trystrs = []
+        for c in clean_smatches:
+            trystrs.append(c)
+            trystrs.append(c.replace(' ','_'))
+
+        for trystr in trystrs:
+            if trystr in nparr(k13['Name']):
+                have_name_match = True
+                name_match = trystr
+                break
+
+        # only then: check if you have MWSC identifier.
+        inds = ['MWSC' in c for c in clean_smatches]
+        mwsc_match = nparr(clean_smatches)[inds]
+        if len(mwsc_match) > 1:
+            raise NotImplementedError
+        if len(mwsc_match) == 1:
+            have_mwsc_id_match = True
+            mwsc_id_match = mwsc_match[0].replace('MWSC ','')
+        if len(mwsc_match) == 0:
+            pass
+
+    if have_name_match:
+        _k13 = k13.loc[k13['Name'] == name_match]
+    elif have_mwsc_id_match:
+        _k13 = k13.loc[k13['MWSC'].astype(str) == str(mwsc_id_match)]
+        name_match = str(_k13['Name'].iloc[0])
+    else:
         #FIXME: there are probably hella edge cases for this
         print('didnt get name match')
         import IPython; IPython.embed()
         assert 0
 
-    _k13 = k13.loc[k13['Name'] == name_match]
 
     ##########################################
 
@@ -718,7 +764,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     Starname: {ext_catalog_name:s}
     xmatchdist: {xmatchdist:s}
 
-    K13 match: MWSC {mwscid:s}
+    K13 match: MWSC {mwscid:s}, {name_match:s}
     N1sr2: {n1sr2:.0f}, logt = {logt:.1f},
     type = {k13type:s}, $d_{{K13}}$ = {k13dist:.0f} pc
     Expect $\omega_{{K13}}$ = {omegak13:.2f} mas
@@ -736,6 +782,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     try:
         outstr = txt.format(
             mwscid=mwscid,
+            name_match=name_match,
             n1sr2=n1sr2,
             logt=logt,
             k13type=k13type,
@@ -777,7 +824,11 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     #
     cluster = str(supprow['cluster'].iloc[0])
 
-    cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
+    if have_name_match:
+        cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
+    elif have_mwsc_id_match:
+        name_match = str(_k13["Name"].iloc[0])
+        cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
 
     dfs = [cluster_df, supprow]
     zorders = [1,2]
