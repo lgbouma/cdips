@@ -338,7 +338,13 @@ def _get_full_infodict(tlsp, hdr, mdf):
                          delim_whitespace=True)
 
     if h['rstar'] != 'NaN':
-        # mass monotonically decreases, but radius does not...
+
+        #
+        # mass monotonically decreases, but radius does not (in Mamajek's
+        # table). so do the interpolation as a function that given mass, gives
+        # rstar. then invert it by numerically attempting to find the root. if
+        # this fails, just take a "by-eye" interpolation value as Mstar.
+        #
         mamarstar, mamamstar = nparr(mamadf['Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
 
         isbad = np.insert(np.diff(mamamstar) <= 0, False, 0)
@@ -349,8 +355,11 @@ def _get_full_infodict(tlsp, hdr, mdf):
         radiusval = float(h['rstar'])
         fn = lambda mass: fn_mass_to_rstar(mass) - radiusval
 
-        mass_guess = mamamstar[np.argmin(mamarstar - radiusval)]
-        mass_val = optimize.newton(fn, mass_guess)
+        mass_guess = mamamstar[np.argmin(np.abs(mamarstar - radiusval))]
+        try:
+            mass_val = optimize.newton(fn, mass_guess)
+        except RuntimeError:
+            mass_val = mass_guess
 
         mstar = mass_val
         rstar = float(h['rstar'])*u.Rsun
@@ -696,7 +705,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
 
         seps = k13_c.separation(c)
 
-        CUTOFFS = [5*10*u.arcmin, 10*u.arcmin, 15*u.arcmin, 20*u.arcmin]
+        CUTOFFS = [5*u.arcmin, 10*u.arcmin, 15*u.arcmin, 20*u.arcmin]
 
         for CUTOFF in CUTOFFS:
             cseps = seps < CUTOFF
