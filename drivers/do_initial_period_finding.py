@@ -77,22 +77,27 @@ def get_lc_data(lcpath, tfa_aperture='TFA2'):
     tfa_time = hdul[1].data['TMID_BJD']
     tfa_mag = hdul[1].data[tfa_aperture]
 
+    xcc, ycc = hdul[0].header['XCC'], hdul[0].header['YCC']
+
     hdul.close()
 
     source_id = os.path.basename(lcpath).split('_')[0]
 
-    return source_id, tfa_time, tfa_mag
+    return source_id, tfa_time, tfa_mag, xcc, ycc
 
 
 def periodfindingworker(lcpath):
 
-    source_id, tfa_time, tfa_mag = get_lc_data(lcpath)
+    source_id, tfa_time, tfa_mag, xcc, ycc = get_lc_data(lcpath)
 
     if np.all(pd.isnull(tfa_mag)):
-        r = [source_id, np.nan, np.nan, np.nan, np.na, np.nan, np.nan]
+        r = [source_id, np.nan, np.nan, np.nan, np.na, np.nan, np.nan, xcc,
+             ycc]
 
     else:
         r = run_periodograms(source_id, tfa_time, tfa_mag)
+        r = r.append(xcc)
+        r = r.append(ycc)
 
     return r
 
@@ -146,7 +151,7 @@ def do_initial_period_finding(
     df = pd.DataFrame(
         results,
         columns=['source_id', 'ls_period', 'ls_fap', 'tls_period', 'tls_sde',
-                 'tls_t0', 'tls_depth']
+                 'tls_t0', 'tls_depth', 'xcc', 'ycc']
     )
     df = df.sort_values(by='source_id')
 
@@ -162,6 +167,12 @@ def do_initial_period_finding(
     # important.
     cd = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
     mdf = df.merge(cd, how='left', on='source_id')
+
+    outpath = os.path.join(
+        outdir, 'initial_period_finding_results_supplemented.csv'
+    )
+    mdf.to_csv(outpath, index=False)
+    print('made {}'.format(outpath))
 
     u_ref, u_ref_count = np.unique(mdf['reference'], return_counts=True)
     u_cluster, u_cluster_count = np.unique(mdf['cluster'], return_counts=True)
