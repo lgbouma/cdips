@@ -11,6 +11,7 @@ from cdips.lcproc import mask_orbit_edges as moe
 
 from astropy.io import fits
 from astropy import units as u, constants as const
+from astropy.coordinates import SkyCoord
 
 from scipy import optimize
 from scipy.interpolate import interp1d
@@ -634,10 +635,15 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             break
 
     if not have_name_match:
-        # try SIMBAD
+        # try if SIMBAD's name matche has anything.
         from astroquery.simbad import Simbad
         res = Simbad.query_objectids(cluster)
-        resdf = res.to_pandas()
+        try:
+            resdf = res.to_pandas()
+        except:
+            print('simbad fails')
+            import IPython; IPython.embed()
+            assert e
         resdf['ID'] = resdf['ID'].str.decode('utf-8')
         smatches = nparr(resdf['ID'])
 
@@ -672,6 +678,35 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             mwsc_id_match = mwsc_match[0].replace('MWSC ','')
         if len(mwsc_match) == 0:
             pass
+
+    if not have_name_match and not have_mwsc_id_match:
+        # try searching K13 within 10 arcminutes of the quoted position
+        ra,dec = float(supprow['RA[deg][2]']), float(supprow['Dec[deg][3]'])
+
+        c = SkyCoord(ra, dec, unit=(u.deg,u.deg), frame='icrs')
+
+        k13_c = SkyCoord(nparr(k13['RAJ2000']), nparr(k13['DEJ2000']),
+                         frame='icrs', unit=(u.deg,u.deg))
+
+        seps = k13_c.separation(c)
+
+        CUTOFF = 10*u.arcmin
+
+        cseps = seps < CUTOFF
+
+        if len(cseps[cseps]) == 1:
+            have_name_match=True
+            name_match = k13.loc[cseps, 'Name'].iloc[0]
+
+        elif len(cseps[cseps]) > 1:
+            print('got too many matches within 10 arcminutes!')
+            pass
+            # a good automated decision becomes harder
+            raise NotImplementedError
+
+        else:
+            pass
+
 
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
