@@ -645,16 +645,18 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             name_match = trystr
             break
 
-    # try if SIMBAD's name matcher anything.
+    #
+    # try if SIMBAD's name matcher has anything.
+    #
     if not have_name_match:
         for c in clustersplt:
             res = Simbad.query_objectids(c)
             try:
                 resdf = res.to_pandas()
-            except:
-                print('simbad fails')
-                import IPython; IPython.embed()
-                assert e
+            except AttributeError:
+                print('simbad no matches')
+                continue
+
             resdf['ID'] = resdf['ID'].str.decode('utf-8')
             smatches = nparr(resdf['ID'])
 
@@ -694,9 +696,12 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             if have_mwsc_id_match:
                 break
 
+    #
+    # try searching K13 within circles of 5,10,...arcminutes of the quoted
+    # position
+    #
     if not have_name_match and not have_mwsc_id_match:
-        # try searching K13 within circles of 5,10,...arcminutes of the quoted
-        # position
+
         ra,dec = float(supprow['RA[deg][2]']), float(supprow['Dec[deg][3]'])
 
         c = SkyCoord(ra, dec, unit=(u.deg,u.deg), frame='icrs')
@@ -726,7 +731,9 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             if have_name_match:
                 break
 
-    # Check against known asterisms
+    #
+    # Check against known asterisms reported by Sulentic+ 1973
+    #
     is_known_asterism = False
     for c in clustersplt:
         if 'NGC' in c:
@@ -747,12 +754,16 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
                 is_known_asterism = True
                 break
 
+    is_gagne_mg = False
+    if 'Gagne' in supprow['reference'].iloc[0]:
+        is_gagne_mg = True
+
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
     elif have_mwsc_id_match:
         _k13 = k13.loc[k13['MWSC'].astype(str) == str(mwsc_id_match)]
         name_match = str(_k13['Name'].iloc[0])
-    elif is_known_asterism:
+    elif is_known_asterism or is_gagne_mg:
         pass
     else:
         #FIXME: there are probably hella edge cases for this
@@ -833,6 +844,14 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         n1sr2 = np.nan
         logt = np.nan
         k13type = 'KNOWN ASTERISM (SULENTIC 1973)'
+        k13dist = np.nan
+        k13_plx_mas = np.nan
+    elif is_gagne_mg:
+        mwscid = 'N/A'
+        name_match = cluster
+        n1sr2 = np.nan
+        logt = np.nan
+        k13type = 'GAGNE MG'
         k13dist = np.nan
         k13_plx_mas = np.nan
     else:
