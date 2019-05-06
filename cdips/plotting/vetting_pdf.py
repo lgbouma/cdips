@@ -665,6 +665,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
                 strm = re.search("\[.*\]\ ", s)
                 if strm is not None:
                     clean_smatches[ix] = s.lstrip(strm.group())
+            # some names have variable length whitespace... e.g., 'NGC  2224'
 
             # first set of attempts: everything in clean matches (irrespective if
             # MWSC number exists)
@@ -725,11 +726,34 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             if have_name_match:
                 break
 
+    # Check against known asterisms
+    is_known_asterism = False
+    for c in clustersplt:
+        if 'NGC' in c:
+            getfile = '/nfs/phn12/ar0/H/PROJ/lbouma/cdips/data/cluster_data/Sulentic_1973_NGC_known_asterisms.vot'
+            vot = parse(getfile)
+            tab = vot.get_first_table().to_table()
+            ddf = tab.to_pandas()
+            del tab
+
+            ngc_asterisms = nparr(ddf['NGC'])
+
+            if c.startswith('NGC '):
+                c = c.lstrip('NGC ')
+            elif c.startswith('NGC_'):
+                c = c.lstrip('NGC_')
+
+            if int(c) in ngc_asterisms:
+                is_known_asterism = True
+                break
+
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
     elif have_mwsc_id_match:
         _k13 = k13.loc[k13['MWSC'].astype(str) == str(mwsc_id_match)]
         name_match = str(_k13['Name'].iloc[0])
+    elif is_known_asterism:
+        pass
     else:
         #FIXME: there are probably hella edge cases for this
         print('didnt get name match')
@@ -756,43 +780,46 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     #
     # ax0: parallax probabilities. (boxplot).
     #
-    k13_plx_mas = (1/float(_k13['d'].iloc[0]))*1e3  # "truth"
+    if have_name_match or have_mwsc_id_match:
 
-    dr2_plx = supprow['Parallax[mas][6]'].iloc[0]
-    dr2_plx_err = supprow['Parallax_error[mas][7]'].iloc[0]
+        k13_plx_mas = (1/float(_k13['d'].iloc[0]))*1e3  # "truth"
 
-    dr2_samples = np.random.normal(loc=dr2_plx, scale=dr2_plx_err, size=300)
+        dr2_plx = supprow['Parallax[mas][6]'].iloc[0]
+        dr2_plx_err = supprow['Parallax_error[mas][7]'].iloc[0]
 
-    ax0.boxplot(dr2_samples, showfliers=False, whis=[5, 95], zorder=3)
+        dr2_samples = np.random.normal(loc=dr2_plx, scale=dr2_plx_err, size=300)
 
-    ax0.axhline(k13_plx_mas, lw=2, alpha=0.3, color='C0', zorder=2)
+        ax0.boxplot(dr2_samples, showfliers=False, whis=[5, 95], zorder=3)
 
-    ax0.set_xticklabels('')
-    ax0.set_xlabel('DR2 (line is K13 cluster)')
-    ax0.set_ylabel('star parallax [mas]')
+        ax0.axhline(k13_plx_mas, lw=2, alpha=0.3, color='C0', zorder=2)
+
+        ax0.set_xticklabels('')
+        ax0.set_xlabel('DR2 (line is K13 cluster)')
+        ax0.set_ylabel('star parallax [mas]')
 
     #
     # ax1: proper motion. just use error bars in 2d.
     #
-    ax1.errorbar(_k13['pmRA'], _k13['pmDE'], yerr=_k13['e_pm'],
-                 xerr=_k13['e_pm'], fmt='o', ecolor='C0', capthick=2,
-                 color='C0', label='K13 cluster', zorder=2)
+    if have_name_match or have_mwsc_id_match:
+        ax1.errorbar(_k13['pmRA'], _k13['pmDE'], yerr=_k13['e_pm'],
+                     xerr=_k13['e_pm'], fmt='o', ecolor='C0', capthick=2,
+                     color='C0', label='K13 cluster', zorder=2)
 
-    ax1.errorbar(supprow['PM_RA[mas/yr][8]'].iloc[0],
-                 supprow['PM_Dec[mas/year][9]'].iloc[0],
-                 xerr=supprow['PMRA_error[mas/yr][10]'].iloc[0],
-                 yerr=supprow['PMDec_error[mas/yr][11]'].iloc[0], fmt='o',
-                 ecolor='C1', capthick=2, color='C1', label='GaiaDR2 star',
-                 zorder=3)
+        ax1.errorbar(supprow['PM_RA[mas/yr][8]'].iloc[0],
+                     supprow['PM_Dec[mas/year][9]'].iloc[0],
+                     xerr=supprow['PMRA_error[mas/yr][10]'].iloc[0],
+                     yerr=supprow['PMDec_error[mas/yr][11]'].iloc[0], fmt='o',
+                     ecolor='C1', capthick=2, color='C1', label='GaiaDR2 star',
+                     zorder=3)
 
-    ax1.legend(loc='best')
-    ax1.set_xlabel('pmRA [mas/yr]')
-    ax1.set_ylabel('pmDEC [mas/yr]')
+        ax1.legend(loc='best')
+        ax1.set_xlabel('pmRA [mas/yr]')
+        ax1.set_ylabel('pmDEC [mas/yr]')
 
     #
     # ax2: big text
     #
-    if have_name_match:
+    if have_name_match or have_mwsc_id_match:
         mwscid = str(_k13['MWSC'].iloc[0])
         n1sr2 = float(_k13['N1sr2'])
         logt = float(_k13['logt'])
@@ -800,12 +827,22 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         if k13type == '':
             k13type = 'oc'
         k13dist = float(_k13['d'])
+    elif is_known_asterism:
+        mwscid = 'N/A'
+        name_match = cluster
+        n1sr2 = np.nan
+        logt = np.nan
+        k13type = 'KNOWN ASTERISM (SULENTIC 1973)'
+        k13dist = np.nan
+        k13_plx_mas = np.nan
     else:
         mwscid = 'N/A'
+        name_match = 'N/A'
         n1sr2 = np.nan
         logt = np.nan
         k13type = 'N/A'
         k13dist = np.nan
+        k13_plx_mas = np.nan
 
     d = infodict
 
@@ -875,67 +912,71 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     #
     # ax3: HR diagram
     #
-    cluster = str(supprow['cluster'].iloc[0])
+    if have_name_match or have_mwsc_id_match:
 
-    if have_name_match:
-        cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
-    elif have_mwsc_id_match:
-        name_match = str(_k13["Name"].iloc[0])
-        cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
+        cluster = str(supprow['cluster'].iloc[0])
 
-    dfs = [cluster_df, supprow]
-    zorders = [1,2]
-    sizes = [30,150]
-    colors = ['k','orangered']
-    labels = [cluster,'target star']
+        if have_name_match:
+            cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
+        elif have_mwsc_id_match:
+            name_match = str(_k13["Name"].iloc[0])
+            cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
 
-    for df,zorder,color,s,l in zip(dfs,zorders,colors,sizes,labels):
+        dfs = [cluster_df, supprow]
+        zorders = [1,2]
+        sizes = [30,150]
+        colors = ['k','orangered']
+        labels = [cluster,'target star']
 
-        _yval = nparr(
-            df['phot_g_mean_mag[20]']
-            + 5*np.log10(df['Parallax[mas][6]'])
-            + 5
-            #- df['a_g_val[38]']   # NOTE: too many nans
-        )
-        _xval = nparr(
-            df['phot_bp_mean_mag[25]']
-            - df['phot_rp_mean_mag[30]']
-            #- df['e_bp_min_rp_val[41]']
-        )
+        for df,zorder,color,s,l in zip(dfs,zorders,colors,sizes,labels):
 
-        ax3.scatter(_xval, _yval, c=color, alpha=0.9, zorder=zorder, s=s,
-                    rasterized=True, linewidths=0, label=l)
+            _yval = nparr(
+                df['phot_g_mean_mag[20]']
+                + 5*np.log10(df['Parallax[mas][6]'])
+                + 5
+                #- df['a_g_val[38]']   # NOTE: too many nans
+            )
+            _xval = nparr(
+                df['phot_bp_mean_mag[25]']
+                - df['phot_rp_mean_mag[30]']
+                #- df['e_bp_min_rp_val[41]']
+            )
 
-    ylim = ax3.get_ylim()
-    ax3.set_ylim((max(ylim),min(ylim)))
-    ax3.legend(loc='best')
-    ax3.set_ylabel('G + 5$\log_{{10}}\omega$ + 5') # - $A_G$
-    ax3.set_xlabel('Bp - Rp') #  - E(Bp-Rp)
+            ax3.scatter(_xval, _yval, c=color, alpha=0.9, zorder=zorder, s=s,
+                        rasterized=True, linewidths=0, label=l)
+
+        ylim = ax3.get_ylim()
+        ax3.set_ylim((max(ylim),min(ylim)))
+        ax3.legend(loc='best')
+        ax3.set_ylabel('G + 5$\log_{{10}}\omega$ + 5') # - $A_G$
+        ax3.set_xlabel('Bp - Rp') #  - E(Bp-Rp)
 
     #
     # ax4: spatial positions
     #
-    dfs = [cluster_df, supprow]
-    zorders = [1,2]
-    sizes = [20,150]
-    colors = ['k','orangered']
-    labels = [cluster,'target star']
+    if have_name_match or have_mwsc_id_match:
 
-    for df,zorder,color,s,l in zip(dfs,zorders,colors,sizes, labels):
+        dfs = [cluster_df, supprow]
+        zorders = [1,2]
+        sizes = [20,150]
+        colors = ['k','orangered']
+        labels = [cluster,'target star']
 
-        _xval = (
-            df['RA[deg][2]']
-        )
-        _yval = (
-            df['Dec[deg][3]']
-        )
+        for df,zorder,color,s,l in zip(dfs,zorders,colors,sizes, labels):
 
-        ax4.scatter(_xval, _yval, c=color, alpha=0.9, zorder=zorder, s=s,
-                    rasterized=True, linewidths=0, label=l)
+            _xval = (
+                df['RA[deg][2]']
+            )
+            _yval = (
+                df['Dec[deg][3]']
+            )
 
-    ax4.legend(loc='best')
-    ax4.set_xlabel('RA')
-    ax4.set_ylabel('DEC')
+            ax4.scatter(_xval, _yval, c=color, alpha=0.9, zorder=zorder, s=s,
+                        rasterized=True, linewidths=0, label=l)
+
+        ax4.legend(loc='best')
+        ax4.set_xlabel('RA')
+        ax4.set_ylabel('DEC')
 
     ##########################################
 
