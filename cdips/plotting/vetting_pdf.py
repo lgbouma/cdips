@@ -758,12 +758,16 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     if 'Gagne' in supprow['reference'].iloc[0]:
         is_gagne_mg = True
 
+    is_oh_mg = False
+    if 'Oh' in supprow['reference'].iloc[0]:
+        is_oh_mg = True
+
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
     elif have_mwsc_id_match:
         _k13 = k13.loc[k13['MWSC'].astype(str) == str(mwsc_id_match)]
         name_match = str(_k13['Name'].iloc[0])
-    elif is_known_asterism or is_gagne_mg:
+    elif is_known_asterism or is_gagne_mg or is_oh_mg:
         pass
     else:
         #FIXME: there are probably hella edge cases for this
@@ -846,12 +850,12 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         k13type = 'KNOWN ASTERISM (SULENTIC 1973)'
         k13dist = np.nan
         k13_plx_mas = np.nan
-    elif is_gagne_mg:
+    elif is_gagne_mg or is_oh_mg:
         mwscid = 'N/A'
         name_match = cluster
         n1sr2 = np.nan
         logt = np.nan
-        k13type = 'GAGNE MG'
+        k13type = 'MG (Gagne, Oh)'
         k13dist = np.nan
         k13_plx_mas = np.nan
     else:
