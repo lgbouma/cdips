@@ -215,7 +215,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
     # who dun it
     #
     primaryhdr.set('ORIGIN',
-                   'Bouma|CDIPS|Princeton',
+                   'Bouma&team|CDIPS|Princeton',
                    'Author|Project|Institution')
 
     #
