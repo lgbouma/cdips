@@ -16,14 +16,17 @@
    also writes `which_references_and_clusters_matter.txt` (to know how badly
    your results depend on the Dias 2014 catalog)
 
-6. `skim_cream`: make BLS/SPDM two-panel checkplots for the "cream" determined
-   by the TLS and LS checks above.
+6. [optional] `skim_cream`: make BLS/SPDM two-panel checkplots for the "cream"
+   determined by the TLS and LS checks above.
 
 7. `reconstructive_tfa/RunTFASR.sh` does signal reconstruction for TFA
    lightcurves
 
-8.  `skim_cream`: make BLS/SPDM two-panel checkplots for the "cream" determined
-    by the TLS and LS checks above.
+8. `drivers/make_fficut_wget_script.py`: makes wget script to grab the FFI
+   cutouts needed for centroid analysis. (There are manual steps).
 
-9. `make_vetting_multipg_pdf`: make a multipage PDF with the information needed
+9.  [optional] `skim_cream`: make BLS/SPDM two-panel checkplots for the "cream"
+    determined by the TLS and LS checks above.
+
+10. `make_vetting_multipg_pdf`: make a multipage PDF with the information needed
    to make classifications for vetting.

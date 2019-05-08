@@ -82,23 +82,11 @@ def make_wget_script(tfasrdir, xlen_px=10, ylen_px=10, tesscutvernum=0.1):
 
     outpath = os.path.join(outdir, 'ra_dec_to_lcpath_dict.csv')
     df = pd.DataFrame({'lcpath':lcpaths,'ra':ras,'dec':decs})
-    df.to_csv(outpath)
+    df.to_csv(outpath, index=False)
     print('made {}'.format(outpath))
 
 
-
-def do_centroid_analysis(sectornum=6):
-
-    #
-    # assume fficut_wget_script has been run.
-    # outdir is full of files like
-    # tess-s0006-1-1_84.0898_-2.1764_10x10_astrocut.fits
-    #
-    cutdir = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/temp/"
-    fficutpaths = os.path.join(cutdir, 'tess*.fits')
-
-    dfpath = os.path.join(cutdir, 'ra_dec_to_lcpath_dict.csv')
-    df = pd.read_csv(dfpath)
+def _match_lcs_and_cutouts(df, sectornum, cutdir):
 
     szfill = str(sectornum).zfill(4)
 
@@ -121,15 +109,44 @@ def do_centroid_analysis(sectornum=6):
 
     df['cutpath'] = [glob(g)[0] for g in globpaths]
 
-    #NOTE: df now contains lcpath and cutpath. So you can now match in the
-    #period-finding information, and do the image averaging.
+    return df
 
-    #TODO TODO TODO TODO
 
-    import IPython; IPython.embed() #FIXME
-    assert 0
+def do_centroid_analysis(sectornum=6):
 
-    for f in fficutpaths:
+    #
+    # assume fficut_wget_script has been run.
+    # cutdir is full of files like
+    # tess-s0006-1-1_84.0898_-2.1764_10x10_astrocut.fits
+    #
+    cutdir = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/temp/"
+    fficutpaths = os.path.join(cutdir, 'tess*.fits')
+
+    dfpath = os.path.join(cutdir, 'ra_dec_to_lcpath_dict.csv')
+    df = pd.read_csv(dfpath)
+
+    # df now contains lcpath,ra,dec,cutpath
+    df = _match_lcs_and_cutouts(df, sectornum, cutdir)
+    df['source_id'] = nparr(list(map(
+        lambda x: x.split('gaiatwo')[1].split('-')[0].lstrip('0'),
+        nparr(df['lcpath'])
+    ))).astype(np.int64)
+
+    # will match in the period-finding information, and do the image averaging.
+    # pfdf has: source_id,ls_period,ls_fap,tls_period,tls_sde,
+    #           tls_t0,tls_depth,tls_duration,xcc,ycc,ra,dec
+    periodfinddir = (
+        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
+        'cdips_lc_periodfinding/sector-{}'.format(sectornum)
+    )
+    pfpath = os.path.join(periodfinddir,'initial_period_finding_results.csv')
+    pfdf = pd.read_csv(pfpath, sep=',')
+    pfdf['source_id'] = pfdf['source_id'].astype(np.int64)
+
+    df.merge(pfdf, how='left', on='source_id')
+
+    import IPython; IPython.embed()
+    for r in df.itertuples():
         measure_centroid(f)
 
 
