@@ -58,14 +58,16 @@ def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
                           R_star_min=0.13, R_star_max=3.5, M_star_min=0.1,
                           M_star_max=2.0, period_min=period_min,
                           period_max=period_max, n_transits_min=2,
-                          transit_template='default', oversampling_factor=5)
+                          transit_template='default', oversampling_factor=4)
 
     tls_sde = results.SDE
     tls_period = results.period
     tls_t0 = results.T0
     tls_depth = results.depth
+    tls_duration = results.duration
 
-    r = [source_id, ls_period, ls_fap, tls_period, tls_sde, tls_t0, tls_depth]
+    r = [source_id, ls_period, ls_fap, tls_period, tls_sde, tls_t0, tls_depth,
+        tls_duration]
 
     return r
 
@@ -78,26 +80,31 @@ def get_lc_data(lcpath, tfa_aperture='TFA2'):
     tfa_mag = hdul[1].data[tfa_aperture]
 
     xcc, ycc = hdul[0].header['XCC'], hdul[0].header['YCC']
+    ra, dec = hdul[0].header['RA_OBJ'], hdul[0].header['DEC_OBJ']
 
     hdul.close()
 
-    source_id = os.path.basename(lcpath).split('_')[0]
+    # e.g.,
+    # */cam2_ccd1/hlsp_cdips_tess_ffi_gaiatwo0002916360554371119104-0006_tess_v01_llc.fits
+    source_id = lcpath.split('gaiatwo')[1].split('-')[0].lstrip('0')
 
-    return source_id, tfa_time, tfa_mag, xcc, ycc
+    return source_id, tfa_time, tfa_mag, xcc, ycc, ra, dec
 
 
 def periodfindingworker(lcpath):
 
-    source_id, tfa_time, tfa_mag, xcc, ycc = get_lc_data(lcpath)
+    source_id, tfa_time, tfa_mag, xcc, ycc, ra, dec = get_lc_data(lcpath)
 
     if np.all(pd.isnull(tfa_mag)):
-        r = [source_id, np.nan, np.nan, np.nan, np.na, np.nan, np.nan, xcc,
-             ycc]
+        r = [source_id, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
+             xcc, ycc, ra, dec]
 
     else:
         r = run_periodograms(source_id, tfa_time, tfa_mag)
-        r = r.append(xcc)
-        r = r.append(ycc)
+        r.append(xcc)
+        r.append(ycc)
+        r.append(ra)
+        r.append(dec)
 
     return r
 
@@ -105,9 +112,10 @@ def periodfindingworker(lcpath):
 def make_log_result(results, N_lcs):
     def log_result(return_value):
         results.append(return_value)
-        if len(results) % (N_lcs//100) == 0:
-            print('{}: {:.0%} done'.format(datetime.utcnow().isoformat(),
-                                           len(results)/N_lcs))
+        if N_lcs >= 100:
+            if len(results) % (N_lcs//100) == 0:
+                print('{}: {:.0%} done'.format(datetime.utcnow().isoformat(),
+                                               len(results)/N_lcs))
     return log_result
 
 def do_initial_period_finding(
@@ -127,6 +135,8 @@ def do_initial_period_finding(
     np.random.seed(42)
     lcpaths = glob(os.path.join(lcdirectory, lcglob))
     np.random.shuffle(lcpaths)
+
+    #lcpaths = np.random.choice(lcpaths,size=1000) #NOTE for debugging
 
     tasks = [(x) for x in lcpaths]
     N_lcs = len(lcpaths)
@@ -151,7 +161,8 @@ def do_initial_period_finding(
     df = pd.DataFrame(
         results,
         columns=['source_id', 'ls_period', 'ls_fap', 'tls_period', 'tls_sde',
-                 'tls_t0', 'tls_depth', 'xcc', 'ycc']
+                 'tls_t0', 'tls_depth', 'tls_duration', 'xcc', 'ycc', 'ra',
+                 'dec']
     )
     df = df.sort_values(by='source_id')
 
@@ -166,6 +177,8 @@ def do_initial_period_finding(
     # you want some idea of what references, and what clusters are most
     # important.
     cd = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
+
+    df['source_id'] = df['source_id'].astype(np.int64)
     mdf = df.merge(cd, how='left', on='source_id')
 
     outpath = os.path.join(
