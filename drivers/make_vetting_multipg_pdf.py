@@ -9,12 +9,14 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from cdips.plotting import vetting_pdf as vp
 
+from cdips.vetting import centroid_analysis as cdva
+
 from numpy import array as nparr
 from astropy.io import fits
 from datetime import datetime
 
 def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
-                             supprow, suppfulldf,
+                             supprow, suppfulldf, sectornum,
                              mask_orbit_edges=True,
                              nworkers=32):
     """
@@ -88,7 +90,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         t0, per = tlsp['tlsresult'].T0, tlsp['tlsresult'].period
         midtimes = np.array([t0 + ix*per for ix in range(-100,100)])
         obsd_midtimes = midtimes[ (midtimes > np.nanmin(time)) &
-                                  (midtimes < np.nanmax(time)) ]
+                                 (midtimes < np.nanmax(time)) ]
         fig = vp.plot_raw_tfa_bkgd(time, rawmag, tfasrmag, bkgdval, ap_index,
                                    obsd_midtimes=obsd_midtimes,
                                    xlabel='BJDTDB', customstr='',
@@ -125,6 +127,24 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         plt.close()
 
         ##########
+        # page 6
+        ##########
+        mdf = cdva.initialize_centroid_analysis(sectornum)
+        mdfs = mdf.loc[mdf['source_id'].astype(np.int64) == np.int64(sourceid)]
+        t0,per,dur,lcpath,cutpath,sourceid = (float(mdfs['tls_t0']),
+                                              float(mdfs['tls_period']),
+                                              float(mdfs['tls_duration']),
+                                              mdfs['lcpath'].iloc[0],
+                                              mdfs['cutpath'].iloc[0],
+                                              int(mdfs['source_id'].iloc[0]) )
+        cd = cdva.measure_centroid(t0,per,dur,lcpath,cutpath,sourceid)
+
+        fig = vp.centroid_plots(mdfs, cd, hdr, figsize=(30,24))
+        pdf.savefig(fig)
+        plt.close()
+
+
+        ##########
         # set the file's metadata via the PdfPages object:
         ##########
         d = pdf.infodict()
@@ -137,7 +157,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         picklepath = outpath.replace('pdfs','pkls').replace('.pdf','.pkl')
         with open(picklepath,'wb') as f:
             pickle.dump(infodict, f)
-        print('made {}'.format(picklepath))
+            print('made {}'.format(picklepath))
 
         ##########
         # check if is obviously nottransit. this will be the case if:
@@ -158,7 +178,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         (float(infodict['rp']) > 67.25) or
         ( (float(infodict['psdepthratio'] - infodict['psdepthratioerr']) > 1.2)
          &
-          (float(infodict['psdepthratio'] + infodict['psdepthratioerr']) < 7.0)
+         (float(infodict['psdepthratio'] + infodict['psdepthratioerr']) < 7.0)
         )
         ):
             isobviouslynottransit = True
@@ -230,7 +250,7 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
 
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
             make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
-                                     sourceid, supprow, suppfulldf)
+                                     sourceid, supprow, suppfulldf, sectornum)
         else:
             print('found {}, continue'.format(outpath))
 

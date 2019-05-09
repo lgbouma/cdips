@@ -8,6 +8,7 @@ import numpy as np, pandas as pd
 
 from numpy import array as nparr
 from astropy.io import fits
+from astropy import wcs
 from datetime import datetime
 
 from cdips.lcproc import mask_orbit_edges as moe
@@ -117,14 +118,30 @@ def _match_lcs_and_cutouts(df, sectornum, cutdir):
     return df
 
 
-def do_centroid_analysis(sectornum=6):
-
-    #
-    # assume fficut_wget_script has been run.
-    # cutdir is full of files like
-    # tess-s0006-1-1_84.0898_-2.1764_10x10_astrocut.fits
-    #
+def initialize_centroid_analysis(
+    sectornum,
     cutdir = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/temp/"
+):
+    """
+    drivers/make_fficut_wget_script.py needs to have been run manually before
+    this, in order to download the TESSCut FFI cutouts for each TCE.
+
+    Args:
+
+        sectornum (int) : sector number
+
+        cutdir (str) : path to directory full of files like
+
+            tess-s0006-1-1_84.0898_-2.1764_10x10_astrocut.fits
+
+        which are extracted from the wget script referenced above.
+
+    Returns:
+
+        mdf (pd.DataFrame) : dataframe with lcpath (to lightcurve), cutpath (to
+        FFI cutout), and the TLS ephemeris used to do centroid analyses.
+    """
+
     fficutpaths = os.path.join(cutdir, 'tess*.fits')
 
     dfpath = os.path.join(cutdir, 'ra_dec_to_lcpath_dict.csv')
@@ -164,6 +181,13 @@ def do_centroid_analysis(sectornum=6):
 
     if DEBUG:
         mdf = mdf[~pd.isnull(mdf['tls_sde'])]
+
+    return mdf
+
+
+def do_centroid_analysis(sectornum=6):
+
+    mdf = initialize_centroid_analysis(sectornum)
 
     for t0,per,dur,lcpath,cutpath,sourceid in zip(
         nparr(mdf['tls_t0']),
@@ -238,6 +262,9 @@ def compute_centroid_from_first_moment(data):
 
 def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
     """
+    Quoting Kostov+2019, who I followed:
+
+    '''
     1) create the mean in-transit and out-of-transit images for each transit
     (ignoring cadences with non-zero quality flags), where the latter are based
     on the same number of exposure cadences as the former, split evenly before
@@ -256,10 +283,42 @@ def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
     significant photocenter shifts between the respective difference images and
     out-of-transit images for any of the planet candidates, which confirms that
     the targets star is the source of the transits.
+    '''
+
+    args:
+
+        t0,per,dur : float, days. Epoch, period, duration.  Used to isolate
+        transit windows.
+
+        lcpath, cutpath: Path to lightcurve, path to FFI cutout.
+
+        sourceid (int)
+
+    returns:
+
+        outdict = {
+            'm_oot_flux':m_oot_flux, # mean OOT image
+            'm_oot_flux_err':m_oot_flux_err, # mean OOT image uncert
+            'm_intra_flux':m_intra_flux, # mean in transit image
+            'm_intra_flux_err':m_intra_flux_err,  # mean in transit image uncert
+            'm_oot_minus_intra_flux':m_oot_minus_intra_flux, # mean OOT - mean intra
+            'm_oot_minus_intra_flux_err':m_oot_minus_intra_flux_err,
+            'm_oot_minus_intra_snr':m_oot_minus_intra_snr,
+            'ctds_intra':ctds_intra, # centroids of all transits
+            'ctds_oot':ctds_oot, # centroids of all ootransits
+            'ctds_oot_minus_intra':ctds_oot_minus_intra, # centroids of diff
+            'm_ctd_intra':m_ctd_intra, # centroid of mean intransit image
+            'm_ctd_oot':m_ctd_oot,
+            'intra_imgs_flux':intra_imgs_flux,
+            'oot_imgs_flux':oot_imgs_flux,
+            'intra_imgs_flux_err':intra_imgs_flux_err,
+            'oot_imgs_flux_err':oot_imgs_flux_err
+        }
     """
 
     cuthdul = fits.open(cutpath)
     data, data_hdr = cuthdul[1].data, cuthdul[1].header
+    cutout_wcs = wcs.WCS(cuthdul[2].header)
 
     # flux and flux_err are image cubes of (time x spatial x spatial)
     quality = data['QUALITY']
@@ -334,6 +393,12 @@ def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
         [compute_centroid_from_first_moment(oot_imgs_flux[ix,:,:])
          for ix in range(oot_imgs_flux.shape[0]) ]
     )
+    ctds_oot_minus_intra = nparr(
+        [ compute_centroid_from_first_moment(
+            oot_imgs_flux[ix,:,:]-intra_imgs_flux[ix,:,:])
+          for ix in range(oot_imgs_flux.shape[0])
+        ]
+    )
 
     # make OOT - intra image. NOTE: the uncertainty map might be a bit wrong,
     # b/c you should get a sqrt(N) on the flux in the mean image. I think.
@@ -344,7 +409,24 @@ def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
 
     m_oot_minus_intra_snr = m_oot_minus_intra_flux / m_oot_minus_intra_flux_err
 
+    # calculate the centroid shift amplitude, deltaC = C_oot - C_intra
+    delta_ctd_px = np.sqrt(
+        (m_ctd_oot[0] - m_ctd_intra[0])**2
+        +
+        (m_ctd_oot[1] - m_ctd_intra[1])**2
+    )
+    delta_ctd_arcsec = delta_ctd_px * 21 # 21arcsec/px
+
+    # error in centroid shift amplitude: assume it is roughly the scatter in
+    # OOT centroids
+    delta_ctd_err_px = np.sqrt(
+        np.std(ctds_oot, axis=0)[0]**2 +
+        np.std(ctds_oot, axis=0)[1]**2
+    )
+    delta_ctd_err_arcsec = delta_ctd_err_px*21
+
     outdict = {
+        'cutout_wcs':cutout_wcs,
         'm_oot_flux':m_oot_flux, # mean OOT image
         'm_oot_flux_err':m_oot_flux_err, # mean OOT image uncert
         'm_intra_flux':m_intra_flux, # mean in transit image
@@ -354,12 +436,16 @@ def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
         'm_oot_minus_intra_snr':m_oot_minus_intra_snr,
         'ctds_intra':ctds_intra, # centroids of all transits
         'ctds_oot':ctds_oot, # centroids of all ootransits
+        'ctds_oot_minus_intra':ctds_oot_minus_intra,
         'm_ctd_intra':m_ctd_intra, # centroid of mean intransit image
         'm_ctd_oot':m_ctd_oot,
         'intra_imgs_flux':intra_imgs_flux,
         'oot_imgs_flux':oot_imgs_flux,
         'intra_imgs_flux_err':intra_imgs_flux_err,
-        'oot_imgs_flux_err':oot_imgs_flux_err
+        'oot_imgs_flux_err':oot_imgs_flux_err,
+        'delta_ctd_arcsec':delta_ctd_arcsec,
+        'delta_ctd_err_arcsec':delta_ctd_err_arcsec,
+        'delta_ctd_sigma':delta_ctd_arcsec/delta_ctd_err_arcsec
     }
 
     outpath = os.path.join(
