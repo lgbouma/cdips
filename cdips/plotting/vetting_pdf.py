@@ -1,17 +1,21 @@
 from glob import glob
 import os, textwrap, re
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
+import matplotlib.colors as colors
+from matplotlib.colors import ListedColormap
 
 from astrobase import periodbase, checkplot
 from astrobase.checkplot.png import _make_phased_magseries_plot
 from astrobase.lcmath import sigclip_magseries
 from astrobase.lcfit.eclipses import gaussianeb_fit_magseries
+from astrobase.plotbase import skyview_stamp
 
 from cdips.lcproc import mask_orbit_edges as moe
 
 from astropy.io import fits
 from astropy import units as u, constants as const
 from astropy.coordinates import SkyCoord
+from astropy import wcs
 
 from astroquery.simbad import Simbad
 
@@ -19,6 +23,11 @@ from scipy import optimize
 from scipy.interpolate import interp1d
 from numpy import array as nparr
 from astropy.io.votable import from_table, writeto, parse
+
+from astropy.coordinates import SkyCoord
+from astroquery.gaia import Gaia
+
+from astroquery.mast import Catalogs
 
 def _given_mag_get_flux(mag):
 
@@ -44,8 +53,8 @@ def two_periodogram_checkplot(lc_sr, hdr, mask_orbit_edges=True,
     spdm = periodbase.stellingwerf_pdm(time, flux, err, magsarefluxes=True,
                                        startp=0.1, endp=19, nworkers=nworkers)
     tlsp = periodbase.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
-                                         startp=0.1, endp=19, tlsoversample=7,
-                                         tlsmintransits=2, sigclip=[50.,5.],
+                                         startp=0.1, endp=19, tls_oversample=7,
+                                         tls_mintransits=2, sigclip=[50.,5.],
                                          nworkers=nworkers)
 
     objectinfo = {}
@@ -1006,3 +1015,259 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     fig.tight_layout(h_pad=0.)
     return fig
 
+
+def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
+                   findercachedir='~/.astrobase/stamp-cache'):
+    """
+    cd = {
+        'm_oot_flux':m_oot_flux, # mean OOT image
+        'm_oot_flux_err':m_oot_flux_err, # mean OOT image uncert
+        'm_intra_flux':m_intra_flux, # mean in transit image
+        'm_intra_flux_err':m_intra_flux_err,  # mean in transit image uncert
+        'm_oot_minus_intra_flux':m_oot_minus_intra_flux, # mean OOT - mean intra
+        'm_oot_minus_intra_flux_err':m_oot_minus_intra_flux_err,
+        'm_oot_minus_intra_snr':m_oot_minus_intra_snr,
+        'ctds_intra':ctds_intra, # centroids of all transits
+        'ctds_oot':ctds_oot, # centroids of all ootransits
+        'm_ctd_intra':m_ctd_intra, # centroid of mean intransit image
+        'm_ctd_oot':m_ctd_oot,
+        'intra_imgs_flux':intra_imgs_flux,
+        'oot_imgs_flux':oot_imgs_flux,
+        'intra_imgs_flux_err':intra_imgs_flux_err,
+        'oot_imgs_flux_err':oot_imgs_flux_err
+    }
+    """
+
+    #
+    # wcs information parsing
+    # follow Clara Brasseur's https://github.com/ceb8/tessworkshop_wcs_hack
+    #
+    ra, dec = mdfs['ra_x'], mdfs['dec_x']
+    coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
+    radius = 2.0*u.arcminute
+
+    nbhr_stars = Catalogs.query_region(
+        "{} {}".format(float(coord.ra.value), float(coord.dec.value)),
+        catalog="TIC",
+        radius=radius
+    )
+
+    cutout_wcs = cd['cutout_wcs']
+    px,py = cutout_wcs.all_world2pix(
+        nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['ra'],
+        nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['dec'],
+        0
+    )
+
+    ticids = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['ID']
+    tmags = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['Tmag']
+
+    sel = (px > 0) & (px < 9) & (py > 0) & (py < 9)
+    px,py = px[sel], py[sel]
+    ticids, tmags = ticids[sel], tmags[sel]
+
+    target_x, target_y = cutout_wcs.all_world2pix(
+        ra,dec,0
+    )
+
+
+    ##########################################
+
+    plt.close('all')
+    fig = plt.figure(figsize=figsize)
+
+    # ax0: OOT
+    # ax1: intra
+    # ax2: DSS
+    # ax3: OOT-intra
+    # ax4: OOT-intra SNR
+    # ax5 (and 9): text
+    ax0 = plt.subplot2grid((3, 3), (0, 0))
+    ax1 = plt.subplot2grid((3, 3), (0, 1))
+    ax2 = plt.subplot2grid((3, 3), (0, 2))
+    ax3 = plt.subplot2grid((3, 3), (1, 0))
+    ax4 = plt.subplot2grid((3, 3), (1, 1))
+    ax5 = plt.subplot2grid((3, 3), (1, 2), colspan=2)
+    ax6 = plt.subplot2grid((3, 3), (2, 0), colspan=2)
+    ax7 = plt.subplot2grid((3, 3), (2, 1), colspan=2)
+
+    ##########################################
+
+    #
+    # ax0: OOT
+    #
+
+    cset0 = ax0.imshow(cd['m_oot_flux'], cmap='YlGnBu_r', origin='lower',
+                       zorder=1, vmin=0)
+
+    ax0.scatter(cd['ctds_oot'][:,0], cd['ctds_oot'][:,1], marker='o',
+                linewidths=0, rasterized=True, c='fuchsia', alpha=0.9,
+                zorder=3, s=60)
+
+    ax0.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
+                linewidths=1)
+
+    ax0.set_title('OOT (cyan o: centroid for e/ OOT window)')
+
+    cb0 = fig.colorbar(cset0, ax=ax0, extend='neither', fraction=0.046, pad=0.04)
+
+    #
+    # ax1: intra
+    #
+
+    cset1 = ax1.imshow(cd['m_intra_flux'], cmap='YlGnBu_r', origin='lower',
+                       vmin=0, zorder=1)
+
+    ax1.scatter(cd['ctds_intra'][:,0], cd['ctds_intra'][:,1], marker='o',
+                linewidths=0, rasterized=True, c='fuchsia', alpha=0.9,
+                zorder=3, s=60)
+
+    ax1.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
+                linewidths=1)
+
+    ax1.set_title('in transit  (cyan o: centroid for e/ transit)')
+
+    cb1 = fig.colorbar(cset1, ax=ax1, extend='neither', fraction=0.046, pad=0.04)
+
+    #
+    # ax2: positions & mags of nieghbor stars
+    # Offsets of the difference image centroids relative the out-of-transit
+    # centroids for each sector in which the star was observed. Nearby objects
+    # are also marked. The 3 radius of uncertainty is displayed for the mean
+    # (over sectors) centroid offset.
+    #
+
+    ax2.scatter(px, py, marker='x', c='k', s=15, rasterized=True, zorder=2,
+                linewidths=1)
+
+    ax2.scatter(target_x, target_y, marker='*', c='C0', s=60, rasterized=True,
+                zorder=3, linewidths=1)
+
+    for ix, _px, _py, ticid, tmag in zip(np.arange(len(px)),
+                                         px,py,ticids,tmags):
+        txtstr = '{:d}, {:.1f}'.format(ix, tmag)
+        if ix==0:
+            ax2.text(_px, _py, txtstr, ha='center', va='bottom', fontsize=22,
+                     zorder=4, color='C0')
+        else:
+            ax2.text(_px, _py, txtstr, ha='center', va='bottom', fontsize=22,
+                     zorder=4, color='k')
+
+    # white background, for size scale
+    whitecmap = ListedColormap(np.zeros((256,4)))
+
+    cset2 = ax2.imshow(np.zeros_like(cd['m_oot_minus_intra_flux']),
+                       cmap=whitecmap, origin='lower', zorder=1)
+
+    ax2.set_title('nbhd info. (starid,Tmag)')
+    cb2 = fig.colorbar(cset2, ax=ax2, extend='neither', fraction=0.046,
+                       pad=0.04, drawedges=False)
+
+    cb2.set_alpha(0)
+    cb2.set_ticks([])
+    cb2.set_ticklabels([])
+    cb2.ax.axis('off')
+    cb2.ax.xaxis.set_visible(False)
+    cb2.ax.yaxis.set_visible(False)
+    cb2.outline.set_linewidth(0)
+
+    #
+    # ax3: oot - intra
+    #
+
+    cset3 = ax3.imshow(cd['m_oot_minus_intra_flux'], cmap='YlGnBu_r',
+                       origin='lower', zorder=1)
+
+    cen_x, cen_y = (cd['ctds_oot_minus_intra'][:,0],
+                    cd['ctds_oot_minus_intra'][:,1])
+    sel = (cen_x > 0) & (cen_x < 9) & (cen_y > 0) & (cen_y < 9)
+    ax3.scatter(cen_x[sel], cen_y[sel], marker='*', linewidths=1,
+                rasterized=True, c='fuchsia', alpha=0.9, zorder=3, s=60)
+
+    ax3.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
+                linewidths=1)
+
+    ax3.set_title('OOT - in. (cyan *: centroid per transit)')
+
+    cb3 = fig.colorbar(cset3, ax=ax3, extend='neither', fraction=0.046, pad=0.04)
+
+    #
+    # ax4 : OOT-intra SNR
+    #
+
+    cset4 = ax4.imshow(cd['m_oot_minus_intra_snr'], cmap='YlGnBu_r',
+                       origin='lower', zorder= 1)
+    ax4.set_title('(OOT - in)/noise')
+
+    ax4.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
+                linewidths=1)
+
+    cb4 = fig.colorbar(cset4, ax=ax4, extend='neither', fraction=0.046, pad=0.04)
+
+    #
+    # ax5 : text
+    #
+
+    txt = (
+    """
+    DR2 {sourceid}
+    ctd |OOT-intra|: {delta_ctd_arcsec:.1f} arcsec ({delta_ctd_sigma:.1f}$\sigma$)
+    """
+    )
+    try:
+        outstr = txt.format(
+            sourceid=hdr['Gaia-ID'],
+            delta_ctd_arcsec=cd['delta_ctd_arcsec'],
+            delta_ctd_sigma=cd['delta_ctd_sigma']
+        )
+    except Exception as e:
+        outstr = 'centroid analysis: got bug {}'.format(e)
+        print(outstr)
+
+    # outstr = "\nSome stuff\nMore stuff\n"
+    outstr = textwrap.dedent(outstr)
+
+    for ix, _px, _py, ticid, tmag in zip(np.arange(len(px)),
+                                         px,py,ticids,tmags):
+        if ix >= 10:
+            continue
+        outstr += '{}: {} ({:.1f})\n'.format(ix, ticid, tmag)
+
+    txt_x, txt_y = 0.01, 0.99
+    ax5.text(txt_x, txt_y, outstr.rstrip('\n'), ha='left', va='top',
+             fontsize=32, zorder=2, transform=ax5.transAxes)
+    ax5.set_axis_off()
+
+    #
+    # ax6: DSS linear (rotated to TESS WCS)
+    #
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    skyview_stamp
+    try:
+        dss, dssheader = skyview_stamp(objectinfo['ra'],
+                                       objectinfo['decl'],
+                                       convolvewith=finderconvolve,
+                                       flip=False,
+                                       cachedir=findercachedir,
+                                       verbose=verbose)
+        stamp = dss
+
+    #
+    # ax7: DSS log (rotated to TESS WCS)
+    #
+
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+
+    ##########################################
+
+    fig.tight_layout(h_pad=0., w_pad=-0.5, pad=0.1)
+    return fig
