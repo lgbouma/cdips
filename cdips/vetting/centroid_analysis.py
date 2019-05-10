@@ -353,7 +353,11 @@ def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
         thistra_oot_flux = flux[np.in1d(time, thistra_oot_time)]
         thistra_oot_flux_err = flux_err[np.in1d(time, thistra_oot_time)]
 
-        assert len(thistra_intra_time) == len(thistra_oot_time)
+        try:
+            assert len(thistra_intra_time) == len(thistra_oot_time)
+        except AssertionError:
+            print('fix assertion error...')
+            import IPython; IPython.embed()
 
         intra_imgs_flux.append(
             np.mean(thistra_intra_flux, axis=0)

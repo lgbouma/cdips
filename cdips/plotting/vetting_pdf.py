@@ -1082,23 +1082,32 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     # ax3: OOT-intra
     # ax4: OOT-intra SNR
     # ax5 (and 9): text
-    ax0 = plt.subplot2grid((3, 3), (0, 0))
-    ax1 = plt.subplot2grid((3, 3), (0, 1))
-    ax2 = plt.subplot2grid((3, 3), (0, 2))
-    ax3 = plt.subplot2grid((3, 3), (1, 0))
-    ax4 = plt.subplot2grid((3, 3), (1, 1))
-    ax5 = plt.subplot2grid((3, 3), (1, 2), colspan=2)
-    ax6 = plt.subplot2grid((3, 3), (2, 0), colspan=2)
-    ax7 = plt.subplot2grid((3, 3), (2, 1), colspan=2)
+    ax0 = plt.subplot2grid((2, 3), (0, 0))
+    ax1 = plt.subplot2grid((2, 3), (0, 1))
+    ax2 = plt.subplot2grid((2, 3), (0, 2))
+    ax3 = plt.subplot2grid((2, 3), (1, 0))
+    ax4 = plt.subplot2grid((2, 3), (1, 1))
+    ax5 = plt.subplot2grid((2, 3), (1, 2))
+
+    # ax0 = plt.subplot2grid((3, 3), (0, 0))
+    # ax1 = plt.subplot2grid((3, 3), (0, 1))
+    # ax2 = plt.subplot2grid((3, 3), (0, 2))
+    # ax3 = plt.subplot2grid((3, 3), (1, 0))
+    # ax4 = plt.subplot2grid((3, 3), (1, 1))
+    # ax5 = plt.subplot2grid((3, 3), (1, 2), colspan=2)
+    # ax6 = plt.subplot2grid((3, 3), (2, 0), colspan=2)
+    # ax7 = plt.subplot2grid((3, 3), (2, 1), colspan=2)
 
     ##########################################
 
     #
     # ax0: OOT
     #
+    vmin = np.min([np.min(cd['m_oot_flux']), np.min(cd['m_intra_flux'])])
+    vmax = np.max([np.max(cd['m_oot_flux']), np.max(cd['m_intra_flux'])])
 
     cset0 = ax0.imshow(cd['m_oot_flux'], cmap='YlGnBu_r', origin='lower',
-                       zorder=1, vmin=0)
+                       zorder=1, vmin=vmin, vmax=vmax)
 
     ax0.scatter(cd['ctds_oot'][:,0], cd['ctds_oot'][:,1], marker='o',
                 linewidths=0, rasterized=True, c='fuchsia', alpha=0.9,
@@ -1116,7 +1125,7 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     #
 
     cset1 = ax1.imshow(cd['m_intra_flux'], cmap='YlGnBu_r', origin='lower',
-                       vmin=0, zorder=1)
+                       zorder=1, vmin=vmin, vmax=vmax)
 
     ax1.scatter(cd['ctds_intra'][:,0], cd['ctds_intra'][:,1], marker='o',
                 linewidths=0, rasterized=True, c='fuchsia', alpha=0.9,
@@ -1238,34 +1247,34 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
              fontsize=32, zorder=2, transform=ax5.transAxes)
     ax5.set_axis_off()
 
-    #
-    # ax6: DSS linear (rotated to TESS WCS)
-    #
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    skyview_stamp
-    try:
-        dss, dssheader = skyview_stamp(objectinfo['ra'],
-                                       objectinfo['decl'],
-                                       convolvewith=finderconvolve,
-                                       flip=False,
-                                       cachedir=findercachedir,
-                                       verbose=verbose)
-        stamp = dss
+    # #
+    # # ax6: DSS linear (rotated to TESS WCS)
+    # #
+    # #FIXME FIXME FIXME
+    # #FIXME FIXME FIXME
+    # #FIXME FIXME FIXME
+    # #FIXME FIXME FIXME
+    # #FIXME FIXME FIXME
+    # #FIXME FIXME FIXME
+    # skyview_stamp
+    # try:
+    #     dss, dssheader = skyview_stamp(objectinfo['ra'],
+    #                                    objectinfo['decl'],
+    #                                    convolvewith=finderconvolve,
+    #                                    flip=False,
+    #                                    cachedir=findercachedir,
+    #                                    verbose=verbose)
+    #     stamp = dss
 
-    #
-    # ax7: DSS log (rotated to TESS WCS)
-    #
+    # #
+    # # ax7: DSS log (rotated to TESS WCS)
+    # #
 
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
+    # #FIXME FIXME FIXME
+    # #FIXME FIXME FIXME
+    # #FIXME FIXME FIXME
+    # #FIXME FIXME FIXME
+    # #FIXME FIXME FIXME
 
     ##########################################
 
