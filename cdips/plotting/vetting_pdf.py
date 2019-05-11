@@ -16,6 +16,7 @@ from astropy.io import fits
 from astropy import units as u, constants as const
 from astropy.coordinates import SkyCoord
 from astropy import wcs
+from astropy.wcs import WCS
 
 from astroquery.simbad import Simbad
 
@@ -1066,10 +1067,12 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     px,py = px[sel], py[sel]
     ticids, tmags = ticids[sel], tmags[sel]
 
-    target_x, target_y = cutout_wcs.all_world2pix(
-        ra,dec,0
-    )
+    target_x, target_y = cutout_wcs.all_world2pix(ra,dec,0)
 
+    # geometry: there are TWO coordinate axes. (x,y) and (ra,dec). To get their
+    # relative orientations, the WCS and ignoring curvature will usually work.
+    shiftra_x, shiftra_y = cutout_wcs.all_world2pix(ra+1e-4,dec,0)
+    shiftdec_x, shiftdec_y = cutout_wcs.all_world2pix(ra,dec+1e-4,0)
 
     ##########################################
 
@@ -1090,14 +1093,12 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     # ax4 = plt.subplot2grid((2, 3), (1, 1))
     # ax5 = plt.subplot2grid((2, 3), (1, 2))
 
-    ax0 = plt.subplot2grid((3, 3), (0, 0))
-    ax1 = plt.subplot2grid((3, 3), (0, 1))
-    ax2 = plt.subplot2grid((3, 3), (0, 2))
-    ax3 = plt.subplot2grid((3, 3), (1, 0))
-    ax4 = plt.subplot2grid((3, 3), (1, 1))
+    ax0 = plt.subplot2grid((3, 3), (0, 0), projection=cutout_wcs)
+    ax1 = plt.subplot2grid((3, 3), (0, 1), projection=cutout_wcs)
+    ax2 = plt.subplot2grid((3, 3), (0, 2), projection=cutout_wcs)
+    ax3 = plt.subplot2grid((3, 3), (1, 0), projection=cutout_wcs)
+    ax4 = plt.subplot2grid((3, 3), (1, 1), projection=cutout_wcs)
     ax5 = plt.subplot2grid((3, 3), (1, 2), colspan=2)
-    ax6 = plt.subplot2grid((3, 3), (2, 0))
-    ax7 = plt.subplot2grid((3, 3), (2, 1))
 
     ##########################################
 
@@ -1215,6 +1216,18 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     cb4 = fig.colorbar(cset4, ax=ax4, extend='neither', fraction=0.046, pad=0.04)
 
     #
+    # ITNERMEDIATE SINCE TESS IMAGES NOW PLOTTED
+    #
+    for ax in [ax0,ax1,ax2,ax3,ax4]:
+        ax.grid(ls='--', alpha=0.5)
+        if shiftra_x - target_x > 0:
+            # want RA to increase to the left (almost E)
+            ax.invert_xaxis()
+        if shiftdec_y - target_y < 0:
+            # want DEC to increase up (almost N)
+            ax.invert_yaxis()
+
+    #
     # ax5 : text
     #
 
@@ -1239,13 +1252,13 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
 
     for ix, _px, _py, ticid, tmag in zip(np.arange(len(px)),
                                          px,py,ticids,tmags):
-        if ix >= 10:
+        if ix >= 15:
             continue
         outstr += '{}: {} ({:.1f})\n'.format(ix, ticid, tmag)
 
     txt_x, txt_y = 0.01, 0.99
     ax5.text(txt_x, txt_y, outstr.rstrip('\n'), ha='left', va='top',
-             fontsize=32, zorder=2, transform=ax5.transAxes)
+             fontsize=24, zorder=2, transform=ax5.transAxes)
     ax5.set_axis_off()
 
     #
@@ -1254,18 +1267,16 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     ra = coord.ra.value
     dec = coord.dec.value
     try:
-        # NB. scaling can be any of (Log, Linear, Sqrt, HistEq)
-        # see https://skyview.gsfc.nasa.gov/current/docs/batchpage.html
         dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
                                      scaling='Linear', convolvewith=None,
-                                     sizepix=300, flip=False,
+                                     sizepix=220, flip=False,
                                      cachedir='~/.astrobase/stamp-cache',
                                      verbose=True, savewcsheader=True)
     except OSError as e:
         print('downloaded FITS appears to be corrupt, retrying...')
         dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
                                      scaling='Linear', convolvewith=None,
-                                     sizepix=300, flip=False,
+                                     sizepix=220, flip=False,
                                      cachedir='~/.astrobase/stamp-cache',
                                      verbose=True, savewcsheader=True,
                                      forcefetch=True)
@@ -1275,29 +1286,34 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
 
     # image 1: TESS mean OOT. (data: cd['m_oot_flux'], wcs: cutout_wcs)
     # image 2: DSS linear. (data: dss, hdr: dss_hdr)
-    from reproject import reproject_interp
-    shape_out = (11,11)
-    dss_reproj, footprint = reproject_interp((dss, dss_hdr), cutout_wcs,
-                                             shape_out=shape_out)
+    ax6 = plt.subplot2grid((3, 3), (2, 0), projection=WCS(dss_hdr))
+    ax7 = plt.subplot2grid((3, 3), (2, 1), projection=WCS(dss_hdr))
 
-    import IPython; IPython.embed()
-    ax6.imshow(dss_reproj, origin='lower', cmap=plt.cm.gray_r)
-
-    ax7.imshow(footprint, origin='lower')
-
-    #TODO rotation...
+    cset6 = ax6.imshow(dss, origin='lower', cmap=plt.cm.gray_r)
+    ax6.grid(ls='--', alpha=0.5)
+    ax6.set_title('DSS2 Red linear')
+    cb6 = fig.colorbar(cset6, ax=ax6, extend='neither', fraction=0.046,
+                       pad=0.04)
 
     #
     # ax7: DSS log (rotated to TESS WCS)
     #
+    import astropy.visualization as vis
 
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
+    interval = vis.PercentileInterval(99.99)
+    vmin,vmax = interval.get_limits(dss)
+    norm = vis.ImageNormalize(
+        vmin=vmin, vmax=vmax, stretch=vis.LogStretch(1000))
+
+    cset7 = ax7.imshow(dss, origin='lower', cmap=plt.cm.gray_r, norm=norm)
+
+    ax7.grid(ls='--', alpha=0.5)
+    ax7.set_title('DSS2 Red logstretch')
+    cb7 = fig.colorbar(cset7, ax=ax7, extend='neither', fraction=0.046,
+                       pad=0.04)
 
     ##########################################
 
-    fig.tight_layout(h_pad=0., w_pad=-0.5, pad=0.1)
+    fig.tight_layout(pad=2)
+    #fig.tight_layout(h_pad=0, w_pad=0, pad=0)
     return fig
