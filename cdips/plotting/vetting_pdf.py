@@ -1082,21 +1082,22 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     # ax3: OOT-intra
     # ax4: OOT-intra SNR
     # ax5 (and 9): text
-    ax0 = plt.subplot2grid((2, 3), (0, 0))
-    ax1 = plt.subplot2grid((2, 3), (0, 1))
-    ax2 = plt.subplot2grid((2, 3), (0, 2))
-    ax3 = plt.subplot2grid((2, 3), (1, 0))
-    ax4 = plt.subplot2grid((2, 3), (1, 1))
-    ax5 = plt.subplot2grid((2, 3), (1, 2))
 
-    # ax0 = plt.subplot2grid((3, 3), (0, 0))
-    # ax1 = plt.subplot2grid((3, 3), (0, 1))
-    # ax2 = plt.subplot2grid((3, 3), (0, 2))
-    # ax3 = plt.subplot2grid((3, 3), (1, 0))
-    # ax4 = plt.subplot2grid((3, 3), (1, 1))
-    # ax5 = plt.subplot2grid((3, 3), (1, 2), colspan=2)
-    # ax6 = plt.subplot2grid((3, 3), (2, 0), colspan=2)
-    # ax7 = plt.subplot2grid((3, 3), (2, 1), colspan=2)
+    # ax0 = plt.subplot2grid((2, 3), (0, 0))
+    # ax1 = plt.subplot2grid((2, 3), (0, 1))
+    # ax2 = plt.subplot2grid((2, 3), (0, 2))
+    # ax3 = plt.subplot2grid((2, 3), (1, 0))
+    # ax4 = plt.subplot2grid((2, 3), (1, 1))
+    # ax5 = plt.subplot2grid((2, 3), (1, 2))
+
+    ax0 = plt.subplot2grid((3, 3), (0, 0))
+    ax1 = plt.subplot2grid((3, 3), (0, 1))
+    ax2 = plt.subplot2grid((3, 3), (0, 2))
+    ax3 = plt.subplot2grid((3, 3), (1, 0))
+    ax4 = plt.subplot2grid((3, 3), (1, 1))
+    ax5 = plt.subplot2grid((3, 3), (1, 2), colspan=2)
+    ax6 = plt.subplot2grid((3, 3), (2, 0))
+    ax7 = plt.subplot2grid((3, 3), (2, 1))
 
     ##########################################
 
@@ -1247,34 +1248,54 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
              fontsize=32, zorder=2, transform=ax5.transAxes)
     ax5.set_axis_off()
 
-    # #
-    # # ax6: DSS linear (rotated to TESS WCS)
-    # #
-    # #FIXME FIXME FIXME
-    # #FIXME FIXME FIXME
-    # #FIXME FIXME FIXME
-    # #FIXME FIXME FIXME
-    # #FIXME FIXME FIXME
-    # #FIXME FIXME FIXME
-    # skyview_stamp
-    # try:
-    #     dss, dssheader = skyview_stamp(objectinfo['ra'],
-    #                                    objectinfo['decl'],
-    #                                    convolvewith=finderconvolve,
-    #                                    flip=False,
-    #                                    cachedir=findercachedir,
-    #                                    verbose=verbose)
-    #     stamp = dss
+    #
+    # ax6: DSS linear (rotated to TESS WCS)
+    #
+    ra = coord.ra.value
+    dec = coord.dec.value
+    try:
+        # NB. scaling can be any of (Log, Linear, Sqrt, HistEq)
+        # see https://skyview.gsfc.nasa.gov/current/docs/batchpage.html
+        dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
+                                     scaling='Linear', convolvewith=None,
+                                     sizepix=300, flip=False,
+                                     cachedir='~/.astrobase/stamp-cache',
+                                     verbose=True, savewcsheader=True)
+    except OSError as e:
+        print('downloaded FITS appears to be corrupt, retrying...')
+        dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
+                                     scaling='Linear', convolvewith=None,
+                                     sizepix=300, flip=False,
+                                     cachedir='~/.astrobase/stamp-cache',
+                                     verbose=True, savewcsheader=True,
+                                     forcefetch=True)
+    except Exception as e:
+        print('failed to get DSS stamp ra {} dec {}, error was {}'.
+              format(ra, dec, repr(e)))
 
-    # #
-    # # ax7: DSS log (rotated to TESS WCS)
-    # #
+    # image 1: TESS mean OOT. (data: cd['m_oot_flux'], wcs: cutout_wcs)
+    # image 2: DSS linear. (data: dss, hdr: dss_hdr)
+    from reproject import reproject_interp
+    shape_out = (11,11)
+    dss_reproj, footprint = reproject_interp((dss, dss_hdr), cutout_wcs,
+                                             shape_out=shape_out)
 
-    # #FIXME FIXME FIXME
-    # #FIXME FIXME FIXME
-    # #FIXME FIXME FIXME
-    # #FIXME FIXME FIXME
-    # #FIXME FIXME FIXME
+    import IPython; IPython.embed()
+    ax6.imshow(dss_reproj, origin='lower', cmap=plt.cm.gray_r)
+
+    ax7.imshow(footprint, origin='lower')
+
+    #TODO rotation...
+
+    #
+    # ax7: DSS log (rotated to TESS WCS)
+    #
+
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
 
     ##########################################
 
