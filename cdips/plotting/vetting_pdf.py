@@ -543,7 +543,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
             reference=d['reference'],
             ext_catalog_name=d['ext_catalog_name'],
             xmatchdist=','.join(
-                ['{:.1e}'.format(float(l)) for l in str(d['dist']).split(',')]
+                ['{:.1e}"'.format(3600*float(l)) for l in str(d['dist']).split(',')]
             )
         )
     except Exception as e:
@@ -929,7 +929,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             reference=d['reference'],
             ext_catalog_name=d['ext_catalog_name'],
             xmatchdist=','.join(
-                ['{:.1e}'.format(float(l)) for l in str(d['dist']).split(',')]
+                ['{:.1e}"'.format(3600*float(l)) for l in str(d['dist']).split(',')]
             )
         )
     except Exception as e:
