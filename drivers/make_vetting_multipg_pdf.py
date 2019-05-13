@@ -15,8 +15,11 @@ from numpy import array as nparr
 from astropy.io import fits
 from datetime import datetime
 
+from astropy.coordinates import SkyCoord
+from astropy import units as u
+
 def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
-                             supprow, suppfulldf, sectornum,
+                             supprow, suppfulldf, pfdf, sectornum,
                              mask_orbit_edges=True,
                              nworkers=32):
     """
@@ -56,6 +59,9 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         suppfulldf: as above, but the whole dataframe for all CDIPS sources
         that got lightcurves for this sector. Useful for broader assessment of
         the LC within the sample of cluster lightcurves.
+
+        pfdf: dataframe with period finding results for everything from this
+        sector. good to check on matching ephemerides.
     """
 
     hdul_sr = fits.open(tfa_sr_path)
@@ -129,7 +135,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 6
         ##########
-        # NOTE: a much much better approach would be to just use
+        # NOTE: a much much better approach upon rewrite would be to use
         # from astroquery.mast import Tesscut; Tesscut.get_cutouts(coord)
         cutdir = ("/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/"
                   "sector-{}_TFA_SR/".format(sectornum))
@@ -143,7 +149,33 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                                               int(mdfs['source_id'].iloc[0]) )
         cd = cdva.measure_centroid(t0,per,dur,lcpath,cutpath,sourceid)
 
-        fig = vp.centroid_plots(mdfs, cd, hdr, figsize=(30,24))
+        tls_period, tls_t0 = nparr(pfdf['tls_period']), nparr(pfdf['tls_t0'])
+        ras, decs = nparr(pfdf['ra_x']), nparr(pfdf['dec_x'])
+        ra_obj, dec_obj = hdr['RA_OBJ'], hdr['DEC_OBJ']
+        c_obj = SkyCoord(ra_obj, dec_obj, unit=(u.deg), frame='icrs')
+        coords = SkyCoord(ras, decs, unit=(u.deg), frame='icrs')
+
+        seps_px = c_obj.separation(coords).to(u.arcsec).value/21
+
+        # these cutoffs came by looking at distribution of errors on the QLP
+        # quoted parameters
+        period_cutoff = 2e-3 # about 3 minutes
+        t0_cutoff = 5e-3 # 7 minutes
+
+        close_per = np.abs(tls_period - per) < period_cutoff
+        close_t0 = np.abs(tls_t0 - t0) < t0_cutoff
+        is_close = close_per & close_t0
+
+        if len(seps_px[is_close]) > 1:
+
+            _pfdf = pfdf.loc[is_close]
+            _pfdf['seps_px'] = seps_px[is_close]
+            _pfdf = _pfdf[_pfdf['source_id'] != sourceid]
+
+        else:
+            _pfdf = None
+
+        fig = vp.centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,24))
         pdf.savefig(fig)
         plt.close()
 
@@ -205,7 +237,7 @@ def _get_supprow(sourceid, supplementstatsdf):
     return mdf
 
 def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
-                  supplementstatsdf, sectornum=6,
+                  supplementstatsdf, pfdf, sectornum=6,
                   cdipsvnum=1):
 
     for tfa_sr_path in tfa_sr_paths:
@@ -254,7 +286,8 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
 
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
             make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
-                                     sourceid, supprow, suppfulldf, sectornum)
+                                     sourceid, supprow, suppfulldf, pfdf,
+                                     sectornum)
         else:
             print('found {}, continue'.format(outpath))
 
@@ -288,13 +321,19 @@ def main(sectornum=6, cdips_cat_vnum=0.2):
                 'supplemented_cdips_lc_statistics.txt')
     supplementstatsdf = pd.read_csv(supppath, sep=';')
 
+    pfpath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
+              'cdips/results/cdips_lc_periodfinding/'
+              'sector-{}/'.format(sectornum)+
+              'initial_period_finding_results_supplemented.csv')
+    pfdf = pd.read_csv(pfpath)
+
     # reconstructive_tfa/RunTFASR.sh applied the SDE cutoff on TFA_SR
     # lightcurves. use whatever is in `tfasrdir` to determine which sources to
     # make pdfs for.
     tfa_sr_paths = glob(os.path.join(tfasrdir, '*_llc.fits'))
 
     make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
-                  supplementstatsdf, sectornum=sectornum)
+                  supplementstatsdf, pfdf, sectornum=sectornum)
 
 
 if __name__ == "__main__":
