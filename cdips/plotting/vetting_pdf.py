@@ -1030,7 +1030,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     return fig
 
 
-def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
+def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
                    findercachedir='~/.astrobase/stamp-cache'):
     """
     cd = {
@@ -1252,7 +1252,7 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
         cd['ctd_m_oot_minus_m_intra'][1],
         0
     )
-    _coord = SkyCoord(_coord[0], _coord[1], unit=(u.deg))
+    _coord = SkyCoord(_coord[0], _coord[1], unit=(u.deg), frame='icrs')
     sep = float(_coord.separation(targetcoord).to(u.arcsec).value)
 
     # for error, assume error on the centroid dominates that of the catalog
@@ -1282,18 +1282,36 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
         outstr = 'centroid analysis: got bug {}'.format(e)
         print(outstr)
 
-    # outstr = "\nSome stuff\nMore stuff\n"
+    # TEMPLATE: outstr is like "\nSome stuff\nMore stuff\n"
     outstr = textwrap.dedent(outstr)
 
     for ix, _px, _py, ticid, tmag in zip(np.arange(len(px)),
                                          px,py,ticids,tmags):
-        if ix >= 21:
+        if ix == 0:
+            outstr += (
+                '\nTarget star (0) and {} nearest nbhrs\nTICID (Tmag)\n'.
+                format( np.min([15, len(px)-1]) ) )
+        if ix >= 16:
             continue
         outstr += '{}: {} ({:.1f})\n'.format(ix, ticid, tmag)
 
-    txt_x, txt_y = 0.01, 0.99
-    ax5.text(txt_x, txt_y, outstr.rstrip('\n'), ha='left', va='top',
-             fontsize=24, zorder=2, transform=ax5.transAxes)
+    if isinstance(_pfdf, pd.DataFrame):
+        outstr += '\n{} ephem matches in CDIPS LCs\n'.format(len(_pfdf))
+        outstr += 'DR2, sepn [arcsec], G_Rp\n'
+        # GaiaID, sep, G_Rp mag
+        iy = 0
+        _pfdf = _pfdf.sort_values(by='seps_px')
+        for i,s,rp in zip(_pfdf['source_id'], _pfdf['seps_px'],
+                          _pfdf['phot_rp_mean_mag']):
+
+            if iy >= 16:
+                continue
+            outstr += '{}: {:.1f}", {:.1f}\n'.format(i,s,rp)
+            iy += 1
+
+    txt_x, txt_y = 0.03, 0.98
+    #ax5.text(txt_x, txt_y, outstr.rstrip('\n'), ha='left', va='top',
+    #         fontsize=22, zorder=2, transform=ax5.transAxes)
     ax5.set_axis_off()
 
     #
@@ -1363,4 +1381,8 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     ##########################################
 
     fig.tight_layout(pad=2, h_pad=1.2)
+
+    ax5.text(txt_x, txt_y, outstr, ha='left', va='top',
+             fontsize=22, zorder=2, transform=ax5.transAxes)
+
     return fig
