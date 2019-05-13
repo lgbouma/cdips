@@ -120,7 +120,7 @@ def _match_lcs_and_cutouts(df, sectornum, cutdir):
 
 def initialize_centroid_analysis(
     sectornum,
-    cutdir = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/temp/"
+    cutdir=None
 ):
     """
     drivers/make_fficut_wget_script.py needs to have been run manually before
@@ -187,7 +187,9 @@ def initialize_centroid_analysis(
 
 def do_centroid_analysis(sectornum=6):
 
-    mdf = initialize_centroid_analysis(sectornum)
+    cutdir = ("/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/"
+              "sector-{}_TFA_SR/".format(sectornum))
+    mdf = initialize_centroid_analysis(sectornum, cutdir=cutdir)
 
     for t0,per,dur,lcpath,cutpath,sourceid in zip(
         nparr(mdf['tls_t0']),

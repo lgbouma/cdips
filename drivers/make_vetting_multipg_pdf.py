@@ -129,7 +129,11 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 6
         ##########
-        mdf = cdva.initialize_centroid_analysis(sectornum)
+        # NOTE: a much much better approach would be to just use
+        # from astroquery.mast import Tesscut; Tesscut.get_cutouts(coord)
+        cutdir = ("/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/"
+                  "sector-{}_TFA_SR/".format(sectornum))
+        mdf = cdva.initialize_centroid_analysis(sectornum, cutdir)
         mdfs = mdf.loc[mdf['source_id'].astype(np.int64) == np.int64(sourceid)]
         t0,per,dur,lcpath,cutpath,sourceid = (float(mdfs['tls_t0']),
                                               float(mdfs['tls_period']),
