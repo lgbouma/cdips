@@ -759,6 +759,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
                 c = c.lstrip('NGC ')
             elif c.startswith('NGC_'):
                 c = c.lstrip('NGC_')
+            elif c.startswith('NGC'):
+                c = c.lstrip('NGC')
 
             if int(c) in ngc_asterisms:
                 is_known_asterism = True
@@ -1266,17 +1268,18 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     #
     ra = coord.ra.value
     dec = coord.dec.value
+    sizepix = 220
     try:
         dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
                                      scaling='Linear', convolvewith=None,
-                                     sizepix=220, flip=False,
+                                     sizepix=sizepix, flip=False,
                                      cachedir='~/.astrobase/stamp-cache',
                                      verbose=True, savewcsheader=True)
     except OSError as e:
         print('downloaded FITS appears to be corrupt, retrying...')
         dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
                                      scaling='Linear', convolvewith=None,
-                                     sizepix=220, flip=False,
+                                     sizepix=sizepix, flip=False,
                                      cachedir='~/.astrobase/stamp-cache',
                                      verbose=True, savewcsheader=True,
                                      forcefetch=True)
@@ -1290,10 +1293,17 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     ax7 = plt.subplot2grid((3, 3), (2, 1), projection=WCS(dss_hdr))
 
     cset6 = ax6.imshow(dss, origin='lower', cmap=plt.cm.gray_r)
+
     ax6.grid(ls='--', alpha=0.5)
     ax6.set_title('DSS2 Red linear')
     cb6 = fig.colorbar(cset6, ax=ax6, extend='neither', fraction=0.046,
                        pad=0.04)
+
+    # DSS is ~1 arcsecond per pixel. overplot apertures on axes 6,7
+    for ix, radius_px in enumerate([21,21*1.5,21*2.25]):
+        circle = plt.Circle((sizepix/2, sizepix/2), radius_px,
+                            color='C{}'.format(ix), fill=False, zorder=5+ix)
+        ax6.add_artist(circle)
 
     #
     # ax7: DSS log (rotated to TESS WCS)
@@ -1311,6 +1321,13 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     ax7.set_title('DSS2 Red logstretch')
     cb7 = fig.colorbar(cset7, ax=ax7, extend='neither', fraction=0.046,
                        pad=0.04)
+
+    # DSS is ~1 arcsecond per pixel. overplot apertures on axes 6,7
+    for ix, radius_px in enumerate([21,21*1.5,21*2.25]):
+        circle = plt.Circle((sizepix/2, sizepix/2), radius_px,
+                            color='C{}'.format(ix), fill=False, zorder=5+ix)
+        ax7.add_artist(circle)
+
 
     ##########################################
 
