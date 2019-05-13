@@ -272,17 +272,23 @@ def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
             # 1-delta.
             ax.axhline(infodict['depth'], lw=2, alpha=0.3, color='C0')
 
-        if isinstance(obsd_midtimes, np.ndarray):
-            ylim = ax.get_ylim()
-            ax.set_ylim((min(ylim), max(ylim)))
-            ax.vlines(obsd_midtimes, min(ylim), max(ylim), color='orangered',
-                      linestyle='--', zorder=1, lw=2, alpha=0.3)
-            ax.set_ylim((min(ylim), max(ylim)))
-
     if not isinstance(obsd_midtimes, np.ndarray):
         for ax in axs:
             ylim = ax.get_ylim()
             ax.set_ylim((min(ylim), max(ylim)))
+
+    ylims = []
+    # make ylims same on all subplots to make by-eye check easier.
+    for ax in axs:
+        ylims.append(ax.get_ylim())
+    ylims = nparr(ylims)
+    ymin = np.min(ylims[:,0])
+    ymax = np.max(ylims[:,1])
+    for ax in axs:
+        if isinstance(obsd_midtimes, np.ndarray):
+            ax.vlines(obsd_midtimes, ymin, ymax, color='orangered',
+                      linestyle='--', zorder=1, lw=2, alpha=0.3)
+            ax.set_ylim((ymin, ymax))
 
     axs[-1].set_xlabel(xlabel, fontsize='small')
 
@@ -293,7 +299,7 @@ def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
     ax_hidden.set_ylabel('[flux] big ap | detection (medium) aperture | small ap',
                          fontsize='small', labelpad=5)
 
-    fig.tight_layout(h_pad=-0.1)
+    fig.tight_layout(h_pad=1)
     if returnfig:
         return fig
     else:
