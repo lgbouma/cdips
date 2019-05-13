@@ -1131,6 +1131,8 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
 
     ax0.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
                 linewidths=1)
+    ax0.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
+             markersize=25, marker='*', color='k', lw=0)
 
     ax0.set_title('OOT (cyan o: centroid for e/ OOT window)')
 
@@ -1149,6 +1151,8 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
 
     ax1.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
                 linewidths=1)
+    ax1.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
+             markersize=25, marker='*', color='k', lw=0)
 
     ax1.set_title('in transit  (cyan o: centroid for e/ transit)')
 
@@ -1211,6 +1215,8 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
 
     ax3.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
                 linewidths=1)
+    ax3.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
+             markersize=25, marker='*', color='k', lw=0)
 
     ax3.set_title('OOT - in. (cyan *: centroid per transit)')
 
@@ -1226,6 +1232,8 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
 
     ax4.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
                 linewidths=1)
+    ax4.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
+             markersize=25, marker='*', color='k', lw=0)
 
     cb4 = fig.colorbar(cset4, ax=ax4, extend='neither', fraction=0.046, pad=0.04)
 
