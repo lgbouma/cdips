@@ -189,7 +189,9 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
     ax_hidden = fig.add_subplot(111, frameon=False)
     ax_hidden.tick_params(labelcolor='none', top=False, bottom=False,
                           left=False, right=False)
-    ax_hidden.set_ylabel('bkgd | TFASR | IRM', fontsize='small', labelpad=5)
+    ax_hidden.set_ylabel(
+        'bottom: background [ADU]. middle: TFASR2 [mag]. top: IRM2 [mag]',
+        fontsize='small', labelpad=5)
 
     if not savpath:
         savpath = 'temp_{:s}.png'.format(apstr)
@@ -296,8 +298,9 @@ def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
     ax_hidden = fig.add_subplot(111, frameon=False)
     ax_hidden.tick_params(labelcolor='none', top=False, bottom=False,
                           left=False, right=False)
-    ax_hidden.set_ylabel('[flux] big ap | detection (medium) aperture | small ap',
-                         fontsize='small', labelpad=5)
+    ax_hidden.set_title('flux vs time. top: smallest aperture. middle: '+
+                        'detection (medium) aperture. bottom: biggest',
+                        fontsize='small')
 
     fig.tight_layout(h_pad=1)
     if returnfig:
@@ -1018,8 +1021,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
                         rasterized=True, linewidths=0, label=l)
 
         ax4.legend(loc='best')
-        ax4.set_xlabel('RA')
-        ax4.set_ylabel('DEC')
+        ax4.set_xlabel('RA [deg]')
+        ax4.set_ylabel('DEC [deg]')
 
     ##########################################
 
