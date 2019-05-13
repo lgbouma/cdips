@@ -387,6 +387,8 @@ def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
     # compute x and y centroid values for mean image
     m_ctd_intra = compute_centroid_from_first_moment(m_intra_flux)
     m_ctd_oot = compute_centroid_from_first_moment(m_oot_flux)
+    ctd_m_oot_minus_m_intra = compute_centroid_from_first_moment(
+        m_oot_flux - m_intra_flux)
 
     # compute x and y centroid values for each transit
     ctds_intra = nparr(
@@ -443,6 +445,7 @@ def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
         'ctds_oot_minus_intra':ctds_oot_minus_intra,
         'm_ctd_intra':m_ctd_intra, # centroid of mean intransit image
         'm_ctd_oot':m_ctd_oot,
+        'ctd_m_oot_minus_m_intra':ctd_m_oot_minus_m_intra,
         'intra_imgs_flux':intra_imgs_flux,
         'oot_imgs_flux':oot_imgs_flux,
         'intra_imgs_flux_err':intra_imgs_flux_err,

@@ -17,17 +17,15 @@ from astropy import units as u, constants as const
 from astropy.coordinates import SkyCoord
 from astropy import wcs
 from astropy.wcs import WCS
-
-from astroquery.simbad import Simbad
+import astropy.visualization as vis
+from astropy.io.votable import from_table, writeto, parse
 
 from scipy import optimize
 from scipy.interpolate import interp1d
 from numpy import array as nparr
-from astropy.io.votable import from_table, writeto, parse
 
-from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
-
+from astroquery.simbad import Simbad
 from astroquery.mast import Catalogs
 
 def _given_mag_get_flux(mag):
@@ -1031,6 +1029,7 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
         'm_oot_minus_intra_flux_err':m_oot_minus_intra_flux_err,
         'm_oot_minus_intra_snr':m_oot_minus_intra_snr,
         'ctds_intra':ctds_intra, # centroids of all transits
+        'ctds_oot_minus_intra':ctds_oot_minus_intra,
         'ctds_oot':ctds_oot, # centroids of all ootransits
         'm_ctd_intra':m_ctd_intra, # centroid of mean intransit image
         'm_ctd_oot':m_ctd_oot,
@@ -1046,11 +1045,11 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     # follow Clara Brasseur's https://github.com/ceb8/tessworkshop_wcs_hack
     #
     ra, dec = mdfs['ra_x'], mdfs['dec_x']
-    coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
+    targetcoord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
     radius = 2.0*u.arcminute
 
     nbhr_stars = Catalogs.query_region(
-        "{} {}".format(float(coord.ra.value), float(coord.dec.value)),
+        "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
         catalog="TIC",
         radius=radius
     )
@@ -1233,17 +1232,38 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     # ax5 : text
     #
 
+    # calculate eta_ctd: catalog position - centroid of mean difference
+    # image.
+    _coord = cutout_wcs.all_pix2world(
+        cd['ctd_m_oot_minus_m_intra'][0],
+        cd['ctd_m_oot_minus_m_intra'][1],
+        0
+    )
+    _coord = SkyCoord(_coord[0], _coord[1], unit=(u.deg))
+    sep = float(_coord.separation(targetcoord).to(u.arcsec).value)
+
+    # for error, assume error on the centroid dominates that of the catalog
+    # position
+
+    err_x = np.std(cen_x[sel])
+    err_y = np.std(cen_y[sel])
+    err_sep_px = np.sqrt(err_x**2 + err_y**2)
+    err_sep_arcsec = err_sep_px*21 # 21 arcsec/px
+
     txt = (
     """
     DR2 {sourceid}
-    ctd |OOT-intra|: {delta_ctd_arcsec:.1f} arcsec ({delta_ctd_sigma:.1f}$\sigma$)
+    ctd |OOT-intra|: {delta_ctd_arcsec:.1f}" ({delta_ctd_sigma:.1f}$\sigma$)
+    ctlg - ctd mean OOT-intra img: {sep:.1f}" ({sepsnr:.1f}$\sigma$)
     """
     )
     try:
         outstr = txt.format(
             sourceid=hdr['Gaia-ID'],
             delta_ctd_arcsec=cd['delta_ctd_arcsec'],
-            delta_ctd_sigma=cd['delta_ctd_sigma']
+            delta_ctd_sigma=cd['delta_ctd_sigma'],
+            sep=sep,
+            sepsnr=sep/err_sep_arcsec
         )
     except Exception as e:
         outstr = 'centroid analysis: got bug {}'.format(e)
@@ -1266,8 +1286,8 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     #
     # ax6: DSS linear (rotated to TESS WCS)
     #
-    ra = coord.ra.value
-    dec = coord.dec.value
+    ra = targetcoord.ra.value
+    dec = targetcoord.dec.value
     sizepix = 220
     try:
         dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
@@ -1308,8 +1328,6 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     #
     # ax7: DSS log (rotated to TESS WCS)
     #
-    import astropy.visualization as vis
-
     interval = vis.PercentileInterval(99.99)
     vmin,vmax = interval.get_limits(dss)
     norm = vis.ImageNormalize(
