@@ -573,7 +573,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                 d['period'], d['t0'], True, True, phasebin,
                                 minbinelems, plotxlim, 'tls',
                                 xliminsetmode=False, magsarefluxes=True,
-                                phasems=6.0, phasebinms=12.0, verbose=True)
+                                phasems=6.0, phasebinms=12.0, verbose=True,
+                                lowerleftstr='primary')
 
     #
     # ax3: occultation
@@ -583,7 +584,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                 d['period'], d['t0'], True, True, phasebin,
                                 minbinelems, plotxlim, 'tls',
                                 xliminsetmode=False, magsarefluxes=True,
-                                phasems=6.0, phasebinms=12.0, verbose=True)
+                                phasems=6.0, phasebinms=12.0, verbose=True,
+                                lowerleftstr='secondary')
 
     #
     # ax4: odd
@@ -610,7 +612,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                 d['period'], d['t0'], True, True, phasebin,
                                 minbinelems, plotxlim, 'tls',
                                 xliminsetmode=False, magsarefluxes=True,
-                                phasems=6.0, phasebinms=12.0, verbose=True)
+                                phasems=6.0, phasebinms=12.0, verbose=True,
+                                lowerleftstr='odd')
 
     #
     # ax5: even
@@ -621,7 +624,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                 d['period'], d['t0'], True, True, phasebin,
                                 minbinelems, plotxlim, 'tls',
                                 xliminsetmode=False, magsarefluxes=True,
-                                phasems=6.0, phasebinms=12.0, verbose=True)
+                                phasems=6.0, phasebinms=12.0, verbose=True,
+                                lowerleftstr='even')
 
     fig.tight_layout(h_pad=0)
     if returnfig:
@@ -1280,7 +1284,7 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
 
     for ix, _px, _py, ticid, tmag in zip(np.arange(len(px)),
                                          px,py,ticids,tmags):
-        if ix >= 15:
+        if ix >= 21:
             continue
         outstr += '{}: {} ({:.1f})\n'.format(ix, ticid, tmag)
 
