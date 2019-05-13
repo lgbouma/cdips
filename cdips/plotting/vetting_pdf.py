@@ -1254,7 +1254,7 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
     """
     DR2 {sourceid}
     ctd |OOT-intra|: {delta_ctd_arcsec:.1f}" ({delta_ctd_sigma:.1f}$\sigma$)
-    ctlg - ctd mean OOT-intra img: {sep:.1f}" ({sepsnr:.1f}$\sigma$)
+    ctlg - <OOT-intra>: {sep:.1f}" ({sepsnr:.1f}$\sigma$)
     """
     )
     try:
@@ -1349,6 +1349,5 @@ def centroid_plots(mdfs, cd, hdr, figsize=(30,20), Tmag_cutoff=16,
 
     ##########################################
 
-    fig.tight_layout(pad=2)
-    #fig.tight_layout(h_pad=0, w_pad=0, pad=0)
+    fig.tight_layout(pad=2, h_pad=1.2)
     return fig
