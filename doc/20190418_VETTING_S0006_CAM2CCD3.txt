@@ -1,0 +1,16 @@
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/2949532854543795200_llc_raw_tfa_bkgd.png' maybe HJ
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/2949621227791832064_llc_raw_tfa_bkgd.png' nice EB
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/2950836016338711552_llc_raw_tfa_bkgd.png' eccentric EB
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/2954014601377987584_llc_raw_tfa_bkgd.png' contact binary
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/3002502411324940288_llc_raw_tfa_bkgd.png' CB
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/3006706909428340736_llc_raw_tfa_bkgd.png' EB/VHJ
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/3007158980506721280_llc_raw_tfa_bkgd.png' EB/HJ
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/3007171311355035136_llc_raw_tfa_bkgd.png' EB/HJ
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/3007458700504002560_llc_raw_tfa_bkgd.png' gorgeous EB. 
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/3007459868735163904_llc_raw_tfa_bkgd.png' a big eclipse
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/3049068652908112896_llc_raw_tfa_bkgd.png' EB/HJ
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/3099227273859068416_llc_raw_tfa_bkgd.png' EB/HJ
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam2_ccd3/3099278882184614912_llc_raw_tfa_bkgd.png' EB/HJ
+
+* during BLS/TLS : mask out ~12 datapoints closest to gaps. (they are almost always contaminated!).
+  means total of 48 data points, or 1 day of the data.

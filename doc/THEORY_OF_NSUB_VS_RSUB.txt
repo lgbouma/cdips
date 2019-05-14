@@ -1,0 +1,53 @@
+Fri 22 Feb 2019 06:47:30 PM EST
+
+Using "nsub" instead of "rsub" introduces a sign error in the magnitudes that
+are derived. I know this because all the transits are the wrong way around.
+This can be fixed in post-processing.
+
+A more general concern is: is there any theoretical reason to prefer one
+direction over the other? My thought is NO.
+
+Let D be the difference image, I the target image, M the model of the static
+background, R the reference image (from median stack), and K the kernel. _nsub_
+means:
+
+D_xy = I_xy - Mxy,
+M_xy = (R \otimes K)_xy, s.t.    chi^2 = \sum (I_xy - M_xy) minimized.
+
+_rsub_ means:
+D_xy = R_xy - Mxy,
+M_xy = (I \otimes K)_xy, s.t.    chi^2 = \sum (R_xy - M_xy) minimized.
+
+In nsub, you convolve the high SNR median-stacked frame to match a lower SNR
+image frame. (Usually, this is a blurring).
+
+In rsub, you convolve the low SNR median-stacked frame to match a high SNR
+image frame. (Usually this would be a sharpening).
+
+In THEORY, it seems that either direction should be fine; it shouldn't matter.
+The convolution should be able to sharpen just as well as it can blur.
+
+I hesitate though, because the literature on the topic (e.g., Miller+08,
+Bramich+08) discusses the problem from the 
+
+perspective of ground-based observers, where the seeing problem matters MORE.
+
+In this case... yes, it does seem like BLURRING is an easier operation than
+sharpening.
+
+It seems like it's asking the convolution kernel to do LESS.  It's easier to
+lose information than to gain it!
+
+HOWEVER arguing the point from the PoV of poisson statistics... it shouldn't
+matter! Both operations have 1 high SNR image, 1 low SNR image. No matter which
+you're convolving around, the statistical fluctuations shouldn't make a
+difference.
+
+--------
+
+EXPERIMENTALLY, I checked in 1190 vs 1192, where 1190 was nsub, 1192 was rsub.
+(I didn't fix the TFA detrending stars, which is annoying). In the TFA
+lightcurves, the RMS vs mag for each was IDENTICAL.
+
+So this would argue that it's not important, though theory would suggestion
+that "nsub" is the better approach.

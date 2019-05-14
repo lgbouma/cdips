@@ -1,0 +1,159 @@
+====================
+2019/01/30 UPDATE
+
+For cam2ccd2, and cam4ccd4
+
+projids 1090, 1093, 1096, 1099 -- and projids 1091, 1094, 1097, 1100.
+
+BACKGROUND-ORDER EXPERIMENTS:
+
+Comparing between the kernels "i/3", "i/3;d=3/2", and "i/3;b/3;d=3/2" and
+"i/3;b/5;d=3/2" :
+
+mag-vs-RMS diagrams:
+* "i/3" does the worst. Perhaps by a factor of 1.5-2.
+* The "i/3;d=3/2", "i/3;b/3;d=3/2", and "i/3;b/5;d=3/2" kernels seem
+  comparable. There is a hint that going WITHOUT the background term may
+  improve the RMS by a factor of ~1.05-1.1. (Small amount).
+
+For "gaussianity": 
+
+* The ACFs for TFA lightcurves seem pretty gaussian for all of them (from
+  inspection; no plot-making needed).
+
+For SNR of known planets:
+
+* "i/3" (only identity) consistently does worst. It misses some projids that
+  the others get.
+
+* The latter two kernels seem comparable. There is a hint that going WITH the
+  background term improves the planet detectability, but there are cases that
+  go both ways.
+
+* Seems like i/3;b/3;d=3/2 is consistent pretty good, between the four (once
+  marginalizing out the apertures).
+
+====================
+Fri 01 Feb 2019 05:01:52 PM EST
+
+For cam2ccd2, comparing kernelsALL (projids1090 through 1126, every third).
+
+Somewhat surprisingly: i/3;d=3/2 seems a bit better than anything else.
+
+This is tricky because it is one of only a FEW in which I completely omitted
+the attempted background modeling.
+
+This implies that the background model is bad. (Probably not surprising,
+because I don't really understand it yet, and polynomials seem like not a good
+description of the variation that I see).
+
+Looking at the RMS diagram, it doesn't seem to be related to the noise. So it
+must be linked to the signal. Perhaps doing the extra background subtraction
+leads to smaller measured signal deviations.(?)
+
+====================
+From kernelvarydeltaorder:
+
+* d=5/3 maybe best in RMS, but all are comparable. (between d=5/2, d=5/3, d=5/5).
+* comparing the known planets, d=5/5 missed one. d=5/2 slightly higher in
+  <SNR/SNR_max>.
+
+====================
+From kernelvaryhalfsize: d=5/2, d=3/2, and none.
+
+* No delta kernel is bad. You want the delta kernel.
+* Otherwise, d=5/2 might be marginally better in RMS. (but hardly)
+* d=5/2 did a bit better in <SNR/SNR_max>. (Though both d=5/2 and d=3/2 missed
+  a TOI!).
+
+====================
+From kernelvaryidentityorder: i/5;b/3;d=3/2 vs i/3, i/2 of the same.
+
+* The best noise (pushing 60ppm at the 75th pctile) is from i/2;b/3;d=3/2.
+* i/5 and i/3 both missed one extra TOI vs i/2.
+* i/3 is worst in <SNR/SNR_max>
+* i/2 and i/5 are comparable in <SNR/SNR_max>.
+
+
+==========================================
+Fri 01 Feb 2019 05:02:02 PM EST SUMMARY
+
+It turns out that a background-free model, "i/3;d=3/2" did best at
+known-planet recovery.
+
+Looking at the movie, this is surprising because it becomes a mess when
+scattered light passes through the frame.
+
+"i/2;b/3;d=3/2" pushes 70 ppm hr^{1/2} at the bright end.
+
+"i/3;d=3/2" seems to do about the same in RMS performance, though perhaps
+marginally worse(?).
+
+----------
+IMPLICATIONS:
+
+* I should explore more background-free models.
+
+* I should explore varied identity-orders (lower priority)
+
+flux term spatial order ; kernel half-size; kernel spatial order
+"i/3;d=3/2" was done.
+* i.e.:
+
+"i/2;d=3/2", #change spatial order
+"i/5;d=3/2",
+"i/3;d=5/2", # assorted others
+"i/3;d=3/3",
+"i/2;d=3/3",
+"i/2;d=2/2",
+"i/1;d=3/2",
+
+(* I should also probably be assessing these based on some kind of cluster
+characteristic. E.g., how many good lightcurves in clusters? Or similar).
+
+==========================================
+Sat Feb  2 20:33:49 2019 UPDATE
+
+projids 1143 through 1151 were erroneous. (they had the wrong kernels)
+
+1152: tests the "nsub" option. seems to work.
+
+1153: timing test for a full run of cam1, ccd2 on nsub.
+
+1154 - 1161: cam2ccd2 no bkgnd kernel tests.
+  paired with 1093, get all "no bkgnd" expts.
+
+kernelsALL for cam2ccd2 becomes: (projids1090 through 1126, every third, plus
+  projids 1154 - 1161). [22 or 23 in total...]
+
+----------
+
+then define projids 1162 through 1183: cam1ccd2 kernel tests.
+
+all being done with apertures r=1,1.5,2.25, which correspond to pixel areas of
+3,7, and 16. according to sullivan+2015, these span the range of acceptable
+small apertures, to somewhat large apertures that enable nice photmetric
+precision at the bright end. 
+
+BEFORE RUNNING 1162 THRU 1183... WE NEED TO KNOW WHY CAM1CCD2 DOESN'T SEEM TO
+BE GIVING LIGHTCURVES FOR BLANCO 1.
+
+----------
+
+==========================================
+Mon 04 Feb 2019 09:40:52 AM EST UPDATE
+
+kernelsALL_2-2_compare_knownplanetsdivmaxsnr_1090_1093_1096_1099_1102_1105_1108_1111_1114_1117_1120_1123_1126_1154_1155_1156_1157_1158_1159_1160_1161_BESTAP.png
+
+gives the main result:
+
+"i/3;d=3/2" still "best". But seems a bit marginal.
+
+Also good are:
+
+"i/5;d=3/2".
+"i/3;=d3/4".
+"i/5;b/3;d=5/2"
+"i/5;/3;d=5/5".
+
+

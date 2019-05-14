@@ -1,0 +1,93 @@
+The traditional approach to EPD \citep[{\it e.g.,}][]{Pal_2009,bakos_2010,zhang_precision_2016}
+is to fit and subtract a model of the form
+
+\begin{equation}
+  m = {\rm const.} + \sum_i c_i \theta_i,
+  \label{eq:classical_EPD}
+\end{equation}
+
+where $\vec{\theta}$ is a vector of parameters such as the shape parameters
+$(s,d,k)$, their products $(s^2, s\cdot d, d^2, \ldots)$, the temperature $T$
+of the CCDs, the centroid positions $(x,y)$, perhaps the fractional part of the
+centroid positions $(\{x\},\{y\})$, and other parameters that are expected to
+correlate strongly with the observed flux.  The coefficients $c_i$ are
+calculated through linear least-squares, and subtracted to produce ``EPD''
+lightcurves.
+
+The premise of this model is that the correlations between the magnitudes and
+these external parameters are linear.  For ground-based CCD data (e.g., HATNet,
+HATS, and Nikon DSLR), \citet{bakos_2010} and \citet{zhang_precision_2016}
+have verified that this model is a reasonable fit to the data.
+
+For TESS, we investigated whether fitting such a linear model would be useful.
+We considered the parameters mentioned above, as well as the measured
+background level.  We then examined scatter plots of each parameter, as a
+function of all the other parameters.  We also examined plots of each parameter
+as a function of time.
+
+A few prominent trends were present.
+
+\begin{enumerate}
+
+\item {\it Flux vs. time}. Most of the lightcurves we examined did not show
+particularly exceptional time-variability, except for a secular drift with
+amplitude $0.01\,{\rm mag}$ over the timescale of each orbit.  Sharper trends
+(``hooks'') at the beginning of each orbit seemed to be less prominent for stars
+at the corners of the fields than stars at the center.  The periodicity
+incurred by the 2.5$\,{\rm day}$ momentum-dumps was also noticeable in more of
+the lightcurves at the center of the field than at the corners.
+
+\item {\it Flux vs. centroid positions}. The flux as a function of centroid
+position often showed non-linear ``hooks'' (see Figure XXX). Most of the data
+points from a given orbit reside at a given level, but about 10\% are in a
+tail. This was seen in lightcurves all across the TESS field of view.
+
+\item {\it Flux vs. temperature} exhibited similar hooks, with most of the
+flux values residing at a particular level, and perhaps 10\% following a
+non-linear path (often resembling the Nike ``swoosh'') away from the bulk of
+points.
+
+\item {\it Flux vs. shape parameters}.  For lightcurves in the corner of the
+field of view, similar hooks are present in flux {\it vs.} $(s,d,k)$, though
+the hooks are less sharp.  In the center of the field of view, gaussian
+ellipses are a better description of the flux {\it vs.} the shape parameters.
+    
+\end{enumerate}
+
+Considering the timeseries of parameters other than flux:
+
+\begin{enumerate}
+
+\item {\it Centroid positions vs. time}.  The main variability in the centroid
+positions as a function of time is a secular drift, that is reset every orbit.
+The 2.5 day momentum wheel dump is superimposed on this secular drift, and has
+smaller amplitude than the drift.
+
+\item {\it Temperature vs. time}.  The main variability in temperature {\it
+vs.} time is a secular drift of the same timescale as that for the centroid
+positions timeseries.
+
+\item {\it Shape parameters vs. time}.  The main variability in the shape
+parameters as a function of time is the 2.5 day momentum wheel dump
+periodicity, with hooks before each momentum dump.
+
+\item {\it Background value vs. time}.  The variability in background value
+{\it vs.} time is different.  There is a strong spike at the end of the sector.
+From examining full frame image movies, this corresponds to the incidence of
+scattered light from the Earth or Moon entering the frame.
+
+\end{enumerate}
+
+Given the characteristics of the variability, a linear model of the form given
+in Equation~\ref{eq:classical_EPD} is not applicable.  To fit out the
+correlations between flux and parameters which most commonly exhibited
+``hooks'', we explored fitting a parametric open curve (an $N$-dimensional
+B-spline \citealt{Dierckx_1993}) to the flux, centroid positions, and
+temperatures simultaneously.  We selected the number of knots through
+brute-force, by calculating $\chi^2$ for the model fit of a grid of knots, and
+minimizing the Bayesian Information Criterion.  Though this approach showed
+some initial promise, even with ``optimal'' knot-selection (in the BIC sense)
+it introduced undesirable residuals in the lightcurves, and also distorted
+transits.
+
+
