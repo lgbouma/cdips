@@ -1,0 +1,37 @@
+- the dominant scope is: lightcurves for stars with known ages.
+
+- implication: we need an approach to present the data. there will be
+  single-sector clusters, and multi-sector clusters.
+  Particularly for the single-sector clusters, it makes sense to immediately
+  reduce them.
+
+  How will we structure the data product?
+
+  "TESS lightcurves for stars with good ages (down to T=16)"
+
+- most of these stars are in crowded fields
+
+- but a non-negligble fraction are not -- e.g., stars in associations or
+  moving groups.
+
+- we therefore need to produce lightcurves both in extremely crowded regions
+  (open clusters) and in typical field regions.
+
+- and critically, in regions of the sky that might otherwise go neglected
+  (towards the galactic plane).
+
+- produce lightcurves on a rolling basis. need stitching procedures...
+
+- we also need to programmatically assign "known ages" to a subset of stars,
+  while being clear about the method used to generate them, and the
+  provenance of the results.
+
+- it makes sense to do this in the metadata associated with any given
+  lightcurve, and/or in a separate catalog of preferred age values for any
+  given star.
+
+(provided that this particular catalog also is easily linked to the
+lightcurves).
+
+
+

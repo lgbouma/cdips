@@ -1,0 +1,56 @@
+2019/03/03
+
+launched everything.
+jobs seems to be averaging about 0.5 days per cam/ccd tuple.
+
+after what looks like successful completion of projids 1300-1306, which are:
+cam1, ccd1-4
+cam2, ccd1-3
+
+2019/03/06
+realized for the GI proposal that we might want better images in the vicinity
+of NGC 2506 (southern beehive).
+
+stopped the job in the middle of projid1307, during an initial astrometry step.
+(cam2ccd4)
+
+restarted from cam4 ccd1. (will do those ccds first)
+
+--------------------
+
+2019/04/09
+
+unclear how well above jobs are working. the TFA lightcurves look overfit. you
+might sometimes still be able to get HJs. who knows.
+
+at the bright end, they also appear to be "bimodal" -- some are substantially
+more variable than they should be. this looks like it might be a feature
+already in the instrumental raw magnitudes, rather than an artifact of the TFA
+subtraction.
+
+what could put it into the raw magnitudes?
+
+* background subtraction as-implemented introduces extra noise
+  ( if the background varies, so does the average value -> subtracting it out
+    multiple times adds noise)
+
+*  maybe magnitude-fitting, which was being called as part of the fiphot
+   command on the image-subtracted frames, introduces it. the "raw
+   instrumental" magnitudes are in fact not that. they are processed through
+   an additional spatial polynomial, and color-dependent polynomial.
+
+   so basically, the "magnitude fitting" and "EPD" procedures are just ways of
+   saying "we fit polynomials in different ways". magnitude fitting is on a
+   per-frame basis. and EPD is on a lightcurve basis.  neither should be
+   particularly relevant in the case of these tess images.
+
+    - run projid_1472. s1, cam3, ccd1. down to G_RP=13.
+
+    * hope to learn: does removing the "magnitude-fitting" step actually
+      negatively impact anything? if not, keep it removed.
+
+
+
+- additionally there were some issues introduced by incorrect "badtimes". (for
+  sector 1, at least).
+  - i have dealt with this by fixing the time windows.

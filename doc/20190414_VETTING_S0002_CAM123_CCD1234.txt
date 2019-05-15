@@ -1,0 +1,18 @@
+blanco 1, in cam1 ccd2, has most stars.
+
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-2/cam1_ccd2/2320868389659322368_llc_raw_tfa_bkgd.png' looks like could be a planet.
+
+(or EB?)
+
+a few of the stars show large flare-looking things in second orbit that could be from stray light subtraction
+
+'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-2/cam1_ccd2/2365520587655155200_llc_raw_tfa_bkgd.png' possible single transit
+
+
+...
+
+2320868389659322368 has primary eclipse depth 0.2 mags, secondary 0.06 mags. period 1.1 days.
+unless planet were EXCEPTIONALLY inflated, mostly likely an EB.
+nonetheless, the nicest i've seen so far in blanco-1, and almost certainly a member!
+
+---

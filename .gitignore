@@ -1,7 +1,6 @@
 data/*
 fits_images*
 images_to_share*
-doc*
 results*
 *__pycache__*
 *.aux
@@ -14,3 +13,4 @@ logs*
 *.egg-info
 drivers/reconstructive_tfa/*.out
 drivers/reconstructive_tfa/*.txt
+doc/Jenkins*pdf

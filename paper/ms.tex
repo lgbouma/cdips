@@ -19,7 +19,7 @@
 \submitjournal{AAS journals.}
 
 \shortauthors{Bouma et al.}
-\shorttitle{Light Curves for Stars in Clusters}
+\shorttitle{CDIPS I: Method \& Sector 6}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % BEGIN CUSTOM SHORT-CUT COMMANDS
@@ -90,7 +90,7 @@
 
 \title{
   The Cluster Difference Imaging Photometric Survey (CDIPS).
-  I. Method \& TESS Light Curves from XXX Clusters
+  I. Method \& TESS Light Curves from Sector 6
 }
 
 \correspondingauthor{L. G. Bouma}
@@ -133,8 +133,59 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 \section{Introduction}
 \label{sec:intro}
 
-Lorem ipsum.
+The exoplanet field is evolving.
+At the beginning, Doppler spectroscopy by the Geneva and California groups
+led to the first exoplanet detections (CITE: Mayor 95, Butler, Marcy).
+Some of these planets transited (CITE: Henry, Charbonneau).
+Despite the geometric rarity of transits, photometric monitoring can
+be performed in parallel, while spectroscopy cannot.
+This enabled thousands of planet detections with the Kepler spacecraft
+(CITE: Borucki, Morton).
+The abundance of planets from Kepler taught us about statistics
+(CITE: Howard, Fressin, Petigura).
+By nature of its design, Kepler left open two major avenues for
+improvement: (i) brighter stars, (ii) rare weirdos.
+TESS (CITE: Ricker), by nature of its small, wide-field cameras, and
+nearly all-sky coverage, can capitalize on both.
+TESS observes more stars than Kepler, for on average less time.
+One class of rare weirdo to which TESS is sensitive is stars in
+clusters.  For brevity, we use the term ``cluster'' to refer to open
+clusters, moving groups, associations, and star-forming regions.
+Each of the $\sim$1000 star clusters of the Milky Way is a gift to
+astrophysics, providing a sample of stars that vary widely in mass
+but all have approximately the same age and composition. 
 
+Cluster stars have been monitored photometrically from the ground
+(CITE: Joel thesis, Cambridge group).
+A few clusters, NAME1 and NAME2, were observed by Kepler in its prime
+mission (CITE: Meibom).
+And a few more, most notably X,Y, and Z, were observed in K2's
+ecliptic mission (CITE).
+
+TESS holds the promise to deliver the most homogeneous and
+comprehensive cluster photometric survey in history.  Based on the
+cluster membership database of \citet{Kharchenko_et_al_2013} and the
+TESS apparent magnitude calculator of \citet{Jaffe_Barclay_2017}, we
+estimate that $10^5$ cluster members brighter than $T=16$ will be
+observed in the northern ecliptic hemisphere's full-frame images.
+
+Yet, there are formidable obstacles to deriving precise photometry
+from the {\it TESS} images because of the relatively poor angular
+resolution.  Almost all of the clusters are within 10 degrees of the
+Galactic plane (see Figure~1), where the problems with crowding and
+complex backgrounds are so severe that the {\it TESS}\, Science Team
+has neglected that portion of the sky in their planet simulations
+\citep{Sullivan_et_al_2015}. Similarly, the {\it TESS}\, Candidate
+Target List deprioritizes all objects within $15^\circ$ of the
+galactic plane~\citep{stassun_TIC_2018}, which includes 90\% of all
+star clusters.  The large pixel size and the high stellar surface
+density will make aperture photometry unreliable.  Yet, aperture
+photometry is the basis of the official {\it TESS} data reduction
+pipeline and almost all reduction methods that have been applied to
+{\it Kepler} and {\it K2} data.
+
+
+We have begun to produce photometry from the TESS images.
 In what follows, \S~\ref{sec:method} presents BLAH, and
 \S~\ref{sec:results} describes BLAH BLAH.
 \S~\ref{sec:discussion} discusses, and \S~\ref{sec:conclusion}
@@ -152,6 +203,199 @@ concludes.
 		\label{fig:clustermap}
 	}
 \end{figure*}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Method: Star Selection}
+\label{sec:starselection}
+
+A major motivator for the CDIPS project is to increase the number of
+cluster stars for which continuous photometric timeseries are
+available, and thus facilitate studies of exoplanetary and stellar
+processes across different times and stellar environments.
+
+An essential aspect of the project is therefore to define a {\it
+cluster star sample}, consisting of stars that are thought to be
+members of clusters.
+
+Performing a homogeneous membership determination for every known
+cluster is beyond the scope of this work.  Instead, we collect various
+cluster membership catalogs from the literature.  We then use them to
+identify cluster members for which we have already made lightcurves
+from the TESS images.  Our goal in selecting stars is completeness,
+rather than precision.  If there has been a claim in the literature
+that a star should be considered as a cluster member, we aim to
+provide a lightcurve for that star.
+
+Table~N describes the cluster membership catalogs we have used to
+identify candidate cluster members.  Since our photometric reduction
+is based on positions reported in {\it Gaia DR2}, each of our
+lightcurve sources by default is associated with a Gaia identifier.
+Correspondingly, the cluster membership determinations performed by
+\citet{cantat-gaudin_gaia_2018} and \citet{gaia_hr_2018} are the
+easiest case for us to merge against our lightcurve database.
+For the TESS Sectors 1--5 lightcurves produced in this study, this
+yielded X and Y lightcurves respectively.
+
+
+
+%FIXME: make table
+
+\subsection{Open clusters (OCs)}
+\label{subsec:oc}
+
+\paragraph{{\it Gaia}-derived OC memberships}
+At the time of writing, two relatively large, homogeneous cluster
+memberships studies had been performed using {\it Gaia}-DR2: those by
+\citet{cantat-gaudin_gaia_2018} and \citet{gaia_hr_2018}.
+
+\citet{cantat-gaudin_gaia_2018} used an unsupervised membership
+assignment algorithm to identify clusters in the three-dimensional
+astrometric space of proper motion and parallax. They used {\it Gaia}
+photometry and radial velocities to then verify the claimed
+membership properties.  From their Table~2, we collect 401{,}448
+cluster members, in 1229 clusters, down to a limiting magnitude of
+$G=18$.
+
+\citet{gaia_hr_2018} reported memberships for stars in a smaller, more
+select group of well-studied open clusters. From their Table~A1, we
+collect 40{,}903 cluster members, in 41 open clusters, mostly within
+$500\,{\rm pc}$. While this work also included memberships for
+globular clusters, we omitted these from consideration.
+
+
+\paragraph{Pre-{\it Gaia} OC memberships}
+\citet{Kharchenko_et_al_2013} used proper motions calculated in PPMXL
+\citep[][a combination of USNO-B1{.}0 and 2MASS
+astrometry]{roeser_ppmxl_2010} and near-infrared photometry from 2MASS
+\citep{skrutskie_tmass_2006} and reported the existence of 2859 open
+clusters and stellar associations.
+We selected their ``$1\sigma$'' members according to the
+combined photometric, kinematic, and spatial criteria described by
+\citet{kharchenko_global_2012}.  Then, to obtain {\it Gaia}-DR2 source
+identifiers for the members, we performed a crossmatch for {\it
+Gaia}-DR2 sources within 5 arcseconds of the listed positions.  As an
+additional constraint, we used the 2MASS photometry to predict the
+$G$-band magnitudes\footnote{See
+\url{https://gea.esac.esa.int/archive/documentation/GDR2/Data_processing/chap_cu5pho/sec_cu5pho_calibr/ssec_cu5pho_PhotTransf.html},
+online, \texttt{2019-03-29}, or \citet{carrasco_gaia_2016}}, and
+required that the measured $G$-magnitude fall within 2 magnitudes of
+the predicted $G$-magnitude.  If multiple neighbors matched the
+position and magnitude constraints, we took the nearest spatial
+neighbor as the match.  From 373{,}226 stars, this yielded a unique
+best neighbor for 352{,}332 stars (94.4\% of the sample), and a choice
+between two neighbors for 17{,}774 stars. 
+
+The second (non-{\it Gaia} derived) open cluster membership catalog we
+used was the \citet{dias_proper_2014} catalog, which was based on
+UCAC4 proper motions.
+From their 1805 reported open clusters, we selected sources with
+quoted membership probability above 50\%.
+To obtain {\it Gaia}-DR2 source identifiers for the members, we
+performed a similar crossmatch as before, looking for sources within 5
+arcseconds of the listed positions, and within $\pm$2 $G$-band
+magnitudes of the prediction.
+From 2{,}034{,}269 stars, this yielded a unique
+best neighbor for 1{,}828{,}630 stars (89.9\% of the sample), and a choice
+between two neighbors for 8.7\% of the remaining sample. 
+
+\begin{figure*}[!ht]
+  \gridline{\fig{f5a.png}{0.95\textwidth}{}}
+  \vspace{-0.8cm}
+  \gridline{\fig{f5b.png}{0.95\textwidth}{}}
+  \caption{
+      {\it Top.} Cross-match statistics from \cite{Kharchenko_et_al_2013} {\it 
+      vs.} Gaia-DR2.
+      {\it Bottom.} Ditto, for \cite{dias_proper_2014} {\it vs.} Gaia-DR2.
+  }
+  \label{fig:xmatch_info}
+\end{figure*}
+
+The distributions of various cross-matching statistics are shown in
+Figure~\ref{fig:xmatch_info}.  The distances between matches is
+typically below 1 arcsecond.  The Dias catalog shows somewhat stronger
+crowding effects at the faint end compared to the Kharchenko catalog.
+The Kharchenko catalog also has a more lop-sided distribution of true
+{\it vs.} predicted $G$-band magnitudes.
+
+
+\subsection{Moving groups and stellar associations}
+\label{subsec:mg}
+
+Stars, moving groups and stellar associations are of interest for
+similar reasons as stars in open clusters.  Though fewer stars
+are known to exist in moving groups, they are of particular interest
+because moving groups are less crowded than open clusters, and are
+often closer to the Sun.
+
+We obtained Gaia DR2 identifiers from the results of the following
+studies:
+\citet{gagne_banyan_XI_2018},
+\citet{gagne_banyan_XII_2018},
+\citet{gagne_banyan_XIII_2018},
+\citet{kraus_tucanahor_2014},
+\citet{roser_deep_2011}, % OC, not MG...
+\citet{bell_32ori_2017},
+\citet{rizzuto_multidimensional_2011},
+and \citet{oh_comoving_2017}, The methods applied in these studies
+vary from kinematic analyses, to astrometric analyses included
+Gaia-DR1 parallaxes, to photometric searches for infrared excesses, to
+spectroscopic studies including RVs, H$\alpha$
+emission, and Li absorption.
+
+For the Gagne et al{.} catalogs, we searched the Gaia-DR2 archive for
+sources within 10 arcseconds of the listed positions.  If Gagne et
+al{.} gave a proper motion, we required that the sign of each the Gaia
+proper motion components match that of the Gagne values (the stated
+proper motion uncertainties seemed to have been underestimated).  We
+also imposed a $G<18$ cut on any putative matches.  Of 3012 moving
+group members collected from the three combined Gagne et al{.}
+catalogs, we found 2702 matches.
+
+The \citet{kraus_tucanahor_2014}, \citet{roser_deep_2011}, and
+\citet{bell_32ori_2017} studies reported members in Tucana-Horologium,
+the Hyades, and 32$\,$Ori respectively.  Applying the same procedure as
+for the Gagne catalogs gave 187, 684, and 119 best-neighbors
+respectively, compared to 205, 724, and 141 initially reported
+members.  Note that \citet{kraus_tucanahor_2014} found that only
+$\sim$70\% of their listed members have spectroscopic indicators
+consistent with their membership in Tucana-Horologium.
+
+\citet{rizzuto_multidimensional_2011} also focused on a single moving
+group: the Sco OB2 association. We used their reported Hipparcos
+identifiers, and matched against the {\it Gaia} archive's
+\texttt{hipparcos2\_best\_neighbour} table, which gave 319
+nearest-neigbor stars from 436 candidate members.
+
+Finally, \citet{oh_comoving_2017} searched for comoving stars in the
+$\approx$2 million stars that overlapped between Tycho-2 and {\it
+Gaia}-DR1.  They found many wide binaries, and also identified a large
+number of comoving groups.  We chose the 2{,}134 stars that they
+reported were in groups with sizes of at least 3 stars.  Using their
+{\it Gaia}-DR1 source identifiers, we matched against the {\it Gaia}
+archive's \texttt{dr1\_neighbourhood} table, which gave 1{,}881
+nearest-neigbor stars in groups of at least three stars
+\citep{marrese_gaia_2019}.
+
+\subsection{Summary of selected stars}
+
+After collecting the results of all the studies described above, we
+merged them into a single table. We queried the
+\texttt{gaiadr2.gaia\_source} table to retrieve their photometric $G$,
+$G_{\rm R_p}$, and $G_{\rm B_p}$ magnitudes, as well as their
+five astrometric parameters $(\alpha, \delta, \mu_\alpha, \mu_\delta,
+\pi)$.
+We then imposed that $G_{\rm R_p} < 16$.
+The concatenated results are given in Table~N.
+
+All told, there are 1{,}308{,}706 unique stars, from 12 distinct
+membership catalogs.
+Stars that are reported in multiple catalogs have their reference
+information from each available catalog concatenated.
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -756,198 +1000,6 @@ To select template stars, we impose a
 The details of this selection procedure are 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Method: Star Selection}
-\label{sec:starselection}
-
-A major motivator for the CDIPS project is to increase the number of
-cluster stars for which continuous photometric timeseries are
-available, and thus facilitate studies of exoplanetary and stellar
-processes across different times and stellar environments.
-
-An essential aspect of the project is therefore to define a {\it
-cluster star sample}, consisting of stars that are thought to be
-members of clusters.
-
-Performing a homogeneous membership determination for every known
-cluster is beyond the scope of this work.  Instead, we collect various
-cluster membership catalogs from the literature.  We then use them to
-identify cluster members for which we have already made lightcurves
-from the TESS images.  Our goal in selecting stars is completeness,
-rather than precision.  If there has been a claim in the literature
-that a star should be considered as a cluster member, we aim to
-provide a lightcurve for that star.
-
-Table~N describes the cluster membership catalogs we have used to
-identify candidate cluster members.  Since our photometric reduction
-is based on positions reported in {\it Gaia DR2}, each of our
-lightcurve sources by default is associated with a Gaia identifier.
-Correspondingly, the cluster membership determinations performed by
-\citet{cantat-gaudin_gaia_2018} and \citet{gaia_hr_2018} are the
-easiest case for us to merge against our lightcurve database.
-For the TESS Sectors 1--5 lightcurves produced in this study, this
-yielded X and Y lightcurves respectively.
-
-
-
-%FIXME: make table
-
-\subsection{Open clusters (OCs)}
-\label{subsec:oc}
-
-\paragraph{{\it Gaia}-derived OC memberships}
-At the time of writing, two relatively large, homogeneous cluster
-memberships studies had been performed using {\it Gaia}-DR2: those by
-\citet{cantat-gaudin_gaia_2018} and \citet{gaia_hr_2018}.
-
-\citet{cantat-gaudin_gaia_2018} used an unsupervised membership
-assignment algorithm to identify clusters in the three-dimensional
-astrometric space of proper motion and parallax. They used {\it Gaia}
-photometry and radial velocities to then verify the claimed
-membership properties.  From their Table~2, we collect 401{,}448
-cluster members, in 1229 clusters, down to a limiting magnitude of
-$G=18$.
-
-\citet{gaia_hr_2018} reported memberships for stars in a smaller, more
-select group of well-studied open clusters. From their Table~A1, we
-collect 40{,}903 cluster members, in 41 open clusters, mostly within
-$500\,{\rm pc}$. While this work also included memberships for
-globular clusters, we omitted these from consideration.
-
-
-\paragraph{Pre-{\it Gaia} OC memberships}
-\citet{Kharchenko_et_al_2013} used proper motions calculated in PPMXL
-\citep[][a combination of USNO-B1{.}0 and 2MASS
-astrometry]{roeser_ppmxl_2010} and near-infrared photometry from 2MASS
-\citep{skrutskie_tmass_2006} and reported the existence of 2859 open
-clusters and stellar associations.
-We selected their ``$1\sigma$'' members according to the
-combined photometric, kinematic, and spatial criteria described by
-\citet{kharchenko_global_2012}.  Then, to obtain {\it Gaia}-DR2 source
-identifiers for the members, we performed a crossmatch for {\it
-Gaia}-DR2 sources within 5 arcseconds of the listed positions.  As an
-additional constraint, we used the 2MASS photometry to predict the
-$G$-band magnitudes\footnote{See
-\url{https://gea.esac.esa.int/archive/documentation/GDR2/Data_processing/chap_cu5pho/sec_cu5pho_calibr/ssec_cu5pho_PhotTransf.html},
-online, \texttt{2019-03-29}, or \citet{carrasco_gaia_2016}}, and
-required that the measured $G$-magnitude fall within 2 magnitudes of
-the predicted $G$-magnitude.  If multiple neighbors matched the
-position and magnitude constraints, we took the nearest spatial
-neighbor as the match.  From 373{,}226 stars, this yielded a unique
-best neighbor for 352{,}332 stars (94.4\% of the sample), and a choice
-between two neighbors for 17{,}774 stars. 
-
-The second (non-{\it Gaia} derived) open cluster membership catalog we
-used was the \citet{dias_proper_2014} catalog, which was based on
-UCAC4 proper motions.
-From their 1805 reported open clusters, we selected sources with
-quoted membership probability above 50\%.
-To obtain {\it Gaia}-DR2 source identifiers for the members, we
-performed a similar crossmatch as before, looking for sources within 5
-arcseconds of the listed positions, and within $\pm$2 $G$-band
-magnitudes of the prediction.
-From 2{,}034{,}269 stars, this yielded a unique
-best neighbor for 1{,}828{,}630 stars (89.9\% of the sample), and a choice
-between two neighbors for 8.7\% of the remaining sample. 
-
-\begin{figure*}[!ht]
-  \gridline{\fig{f5a.png}{0.95\textwidth}{}}
-  \vspace{-0.8cm}
-  \gridline{\fig{f5b.png}{0.95\textwidth}{}}
-  \caption{
-      {\it Top.} Cross-match statistics from \cite{Kharchenko_et_al_2013} {\it 
-      vs.} Gaia-DR2.
-      {\it Bottom.} Ditto, for \cite{dias_proper_2014} {\it vs.} Gaia-DR2.
-  }
-  \label{fig:xmatch_info}
-\end{figure*}
-
-The distributions of various cross-matching statistics are shown in
-Figure~\ref{fig:xmatch_info}.  The distances between matches is
-typically below 1 arcsecond.  The Dias catalog shows somewhat stronger
-crowding effects at the faint end compared to the Kharchenko catalog.
-The Kharchenko catalog also has a more lop-sided distribution of true
-{\it vs.} predicted $G$-band magnitudes.
-
-
-\subsection{Moving groups and stellar associations}
-\label{subsec:mg}
-
-Stars, moving groups and stellar associations are of interest for
-similar reasons as stars in open clusters.  Though fewer stars
-are known to exist in moving groups, they are of particular interest
-because moving groups are less crowded than open clusters, and are
-often closer to the Sun.
-
-We obtained Gaia DR2 identifiers from the results of the following
-studies:
-\citet{gagne_banyan_XI_2018},
-\citet{gagne_banyan_XII_2018},
-\citet{gagne_banyan_XIII_2018},
-\citet{kraus_tucanahor_2014},
-\citet{roser_deep_2011}, % OC, not MG...
-\citet{bell_32ori_2017},
-\citet{rizzuto_multidimensional_2011},
-and \citet{oh_comoving_2017}, The methods applied in these studies
-vary from kinematic analyses, to astrometric analyses included
-Gaia-DR1 parallaxes, to photometric searches for infrared excesses, to
-spectroscopic studies including RVs, H$\alpha$
-emission, and Li absorption.
-
-For the Gagne et al{.} catalogs, we searched the Gaia-DR2 archive for
-sources within 10 arcseconds of the listed positions.  If Gagne et
-al{.} gave a proper motion, we required that the sign of each the Gaia
-proper motion components match that of the Gagne values (the stated
-proper motion uncertainties seemed to have been underestimated).  We
-also imposed a $G<18$ cut on any putative matches.  Of 3012 moving
-group members collected from the three combined Gagne et al{.}
-catalogs, we found 2702 matches.
-
-The \citet{kraus_tucanahor_2014}, \citet{roser_deep_2011}, and
-\citet{bell_32ori_2017} studies reported members in Tucana-Horologium,
-the Hyades, and 32$\,$Ori respectively.  Applying the same procedure as
-for the Gagne catalogs gave 187, 684, and 119 best-neighbors
-respectively, compared to 205, 724, and 141 initially reported
-members.  Note that \citet{kraus_tucanahor_2014} found that only
-$\sim$70\% of their listed members have spectroscopic indicators
-consistent with their membership in Tucana-Horologium.
-
-\citet{rizzuto_multidimensional_2011} also focused on a single moving
-group: the Sco OB2 association. We used their reported Hipparcos
-identifiers, and matched against the {\it Gaia} archive's
-\texttt{hipparcos2_best_neighbour} table, which gave 319
-nearest-neigbor stars from 436 candidate members.
-
-Finally, \citet{oh_comoving_2017} searched for comoving stars in the
-$\approx$2 million stars that overlapped between Tycho-2 and {\it
-Gaia}-DR1.  They found many wide binaries, and also identified a large
-number of comoving groups.  We chose the 2{,}134 stars that they
-reported were in groups with sizes of at least 3 stars.  Using their
-{\it Gaia}-DR1 source identifiers, we matched against the {\it Gaia}
-archive's \texttt{dr1_neighbourhood} table, which gave 1{,}881
-nearest-neigbor stars in groups of at least three stars
-\citep{marrese_gaia_2019}.
-
-\subsection{Summary of selected stars}
-
-After collecting the results of all the studies described above, we
-merged them into a single table. We queried the
-\texttt{gaiadr2.gaia_source} table to retrieve their photometric $G$,
-$G_{\rm R_p}$, and $G_{\rm B_p}$ magnitudes, as well as their
-five astrometric parameters $(\alpha, \delta, \mu_\alpha, \mu_\delta,
-\pi)$.
-We then imposed that $G_{\rm R_p} < 16$.
-The concatenated results are given in Table~N.
-
-All told, there are 1{,}308{,}706 unique stars, from 12 distinct
-membership catalogs.
-Stars that are reported in multiple catalogs have their reference
-information from each available catalog concatenated.
-
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Results}
 \label{sec:results}
 
@@ -958,6 +1010,12 @@ SNR of retrieved HJs.
 Some stellar variability plots (perhaps of known stellar variables).
 
 Some focus on actual cluster fields.
+
+During the period search, we rejected $6\,{\rm hours}$ at the
+beginning and end of each spacecraft orbit, to mitigate the presence
+of correlated red noise in the results.
+This shrinks the data volume by about 5\%, but also lowers the number
+of systematic false positives in subsequent vetting.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

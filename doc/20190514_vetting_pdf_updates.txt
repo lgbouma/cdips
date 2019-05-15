@@ -1,0 +1,38 @@
+pg 3:
+* added a "transit vs occultation depth" statistic, found by a least-squares fit of two gaussians to the TFASR2 light curve (trend-filtered, signal reconstructed in the medium aperture, sized 1.5px).
+* If Teff and Rstar from Gaia DR2 are available, now I estimate Mstar from the Mamajek table (assumes it is a dwarf star). There is now a line that lists the corresponding transit duration for a b=0 transit at the observed period.
+* xmatchdist line now in arcseconds. (This is the xmatch distance between Gaia DR2 and whatever catalog said the star was a cluste rmember).
+
+pg 4:
+* fixed ylims to be same for all panels, facilitating ability to see whether the depth changes with aperture size.
+
+pg 5:
+* new page for cluster membership assessment. The base catalog for this page is Kharchenko et al (2013). The first step in producing it is trying to find a match between the claimed cluster (e.g., by Dias 2014) and the Kharchenko properties. The plots are as follows.
+* Top left plot: blue line is cluster parallax from Kharchenko 13.  Box has whiskers at 5th and 95th percentiles from Gaia DR2 measured parallax of star. Orange line is median value.  If the expected and measured parallaxes deviate by more than a factor of ~5 (usually measured parallax is very small), star is not a cluster member.
+* Middle top plot: proper motion of star from Gaia DR2, and PM of cluster from Kharchenko 13.  Minimal diagnostic value, IMO.
+* Bottom left plot: HR diagram, no reddening correction. Black points are from cluster members listed in Kharchenko 13.  Orange point is target star.
+* Middle bottom plot: spatial positions of cluster stars.
+* Text on right: first four lines (Cluster, Reference, Starname, xmatchdist) are information from the work claiming the cluster membership.  Next five lines (K13 match, 1sr2, logt, cluster type, parallaxes) are from Kharchenko.  Remaining lines are stellar info from Gaia DR2.
+
+pg 6:
+* new page for centroid and blend analysis.
+* Base dataset for the images (top left, top middle, middle left, middle middle) is cutouts of the TESS "calibrated" FFIs.  None of the image processing done in our difference image reduction has been applied. This is mainly to help interpretability.
+* To identify "out of transit (OOT)" and in-transit times, I used the epoch, period, and duration from the main peak in the TLS spectrum.  I followed Kostov+2019, who followed Bryson+2013. The procedure was as follows (pasting Kostov's description):
+
+    1) create the mean in-transit and out-of-transit images for each transit, where the latter are based on the same number of exposure cadences as the former, split evenly before and after the transit;
+    2) calculate the overall mean in-transit and out-of-transit images by averaging over all transits;
+    3) subtract the overall mean out-of-transit image from the overall in-transit image to produce the overall mean "OOT-in" image; and
+    4) measure the center-of-light for each image and out-of-transit image by calculating the corresponding x- and y-moments of the image.
+
+* Top left: mean OOT image (flux units are electrons/sec). Cyan circles are measured centroids for each individual OOT image. Red crosses are predicted positions of T<16 stars from TIC (prediction done using frame WCS). Star is predicted target position.
+* Top middle: mean intransit image. Cyan circles are measured centroids for each individual in-transit image.
+* Top right: neighboring stars information. X's shown are same stars as in all other plots. TICIDs and Tmags given in text.
+* Middle left: mean OOT image - mean intransit image. If the bright blob is far from the yellow star, the source of variability is unlikely to be the target star.
+* Middle middle: same as above, divided by uncertainty in flux.
+* Lower left: linear Digitized Sky Survey 2 star chart (~1 arcsec/px resolution). The epoch is different from the TESS images, but locations of stars should correspond to top right.  Overplotted are the small, detection, and big apertures (1, 1.5, and 2.25 px in radii respectively).
+* Lower middle: same, but logscale.
+
+* Text:
+- "ctd |OOT-intra|" tells you the distance between the mean centroid positions in the top two plots. This is usually small.
+- "ctlg - <OOT-intra>" tells you the distance between the predicted catalog position, and the mean centroid from the middle left plot. If this number is big (many sigma), can mean that source of variability is not the target star -- or at least that there is a variable star nearby that varies on the timescale of the transit ephemeris.
+

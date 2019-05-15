@@ -1,0 +1,70 @@
+=========================================
+POSSIBLE FIGURES
+
+----------
+* a "conceptual overview" of the pipeline, similar to Fig 28 of Pal
+  (2009) thesis.
+
+----------
+* histogram of "astrometric solution residual", where the x axis is the
+distance between project catalog coordinates and the detected source
+coordinates on the CCDs. (e.g., Huang+2016 paper)
+
+* you'll want to show these residuals for the released astrometric WCS file, as
+  well as the WCS you get from astrometry.net
+
+----------
+* movie showing normal images (left), and difference images right
+  (w/ sick color divergent scheme), 
+
+----------
+* lightcurves showing successive stages of detrending.
+  * as in Luger+2016 Fig 1, write the 1-hr scatter in a text-box 
+
+  * for each subplot, need to show: DATA. MODEL. RESIDUAL.
+  (in other words: EPD is just a model for the systematics.
+  ditto TFA. you need to recast your thinking in these terms).
+
+----------
+* noise in 1 hr, vs. TESS magnitude. do it with a scatter plot.
+
+----------
+* maybe some transit injection results?
+
+----------
+* a collection of ~9 lightcurves of interesting objects. (or more).
+highlight the ability to give STELLAR VARIABILITY. as well as other kinds...
+
+
+==========================================
+FIGURES IN ORDER (IF APJL, WHICH MIGHT BE GOOD)
+
+1. Clusters.
+   (a) all-sky map of clusters observed by TESS. (E.g., from
+       Kharchenko, within 2kpc, TESS footprint overplotted).
+   (b) smaller rectangular map of clusters observed in sector 6.
+       (labelled. perhaps w/ data from the LC dataset. Else from tessmaps).
+
+2. Stars in clusters. 
+  (a) HR diagram of "good" (close) subset
+  (b) CDF of stellar brightness (G_Rp cut) for whole sample.
+  (c) Distribution of contamination ratio from TICv8
+      * above distribution linked w/ image of e.g., M42 on crowded
+        end, and some dispersed cluster on other end.
+
+3. Machine to produce light curves of stars in clusters.
+  "Conceptual overview" of pipeline, similar to Fig 28 of Pal (2009).
+  (Maybe).
+
+4. RMS (30 minutes) vs catalog T mag, for Sector 6. Show residual as
+   subplot.
+  
+5. 3x3 collection of LCs of favorite objects. 3 PCs. 3 EBs. 3 stellar
+   rotn.
+
+
+==========================================
+NB. APJL requires 5 COMBINED tables + figures.
+A supplement would also be possible, if your work contained "extensive
+amounts of data or calculations with relatively little analysis or
+interpretations".
