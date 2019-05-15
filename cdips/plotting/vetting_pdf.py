@@ -69,6 +69,7 @@ def two_periodogram_checkplot(lc_sr, hdr, mask_orbit_edges=True,
     fig = checkplot.twolsp_checkplot_png(tlsp, spdm, time, flux, err,
                                          magsarefluxes=True,
                                          objectinfo=objectinfo,
+                                         varepoch='min',
                                          sigclip=[50.,5.], plotdpi=100,
                                          phasebin=3e-2, phasems=6.0,
                                          phasebinms=14.0, unphasedms=6.0,
@@ -505,7 +506,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     Star: DR2 {sourceid}
     $R_\star$ = {rstar:s} $R_\odot$, $M_\star$ = {mstar:s} $M_\odot$
     Teff = {teff:s} K
-    RA = {ra:.3f}, DEC = {dec:.3f}
+    RA,dec [deg] = {ra:.3f} {dec:.3f}
     G = {phot_g_mean_mag:.1f}, Rp = {phot_rp_mean_mag:.1f}, Bp = {phot_bp_mean_mag:.1f}
     pmRA = {pmra:.1f}, pmDEC = {pmdec:.1f}
     $\omega$ = {plx_mas:.2f} $\pm$ {plx_mas_err:.2f} mas
@@ -1030,8 +1031,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     return fig
 
 
-def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
-                   findercachedir='~/.astrobase/stamp-cache'):
+def centroid_plots(mdfs, cd, hdr, _pfdf, toidf, figsize=(30,20),
+                   Tmag_cutoff=16, findercachedir='~/.astrobase/stamp-cache'):
     """
     cd = {
         'm_oot_flux':m_oot_flux, # mean OOT image
@@ -1250,7 +1251,8 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
             ax.invert_yaxis()
 
     #
-    # ax5 : text
+    # ax5 : text. neighbors from catalog, matching ephemerides, and any TOI
+    # matches.
     #
 
     # calculate eta_ctd: catalog position - centroid of mean difference
@@ -1292,6 +1294,19 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
 
     # TEMPLATE: outstr is like "\nSome stuff\nMore stuff\n"
     outstr = textwrap.dedent(outstr)
+
+    # check TOI list for spatial matches
+    toicoords = SkyCoord(nparr(toidf['RA']), nparr(toidf['Dec']),
+                         unit=(u.deg), frame='icrs')
+    toiseps = toicoords.separation(targetcoord).to(u.arcsec).value
+    spatial_cutoff = 126 # arcseconds ~= 6 pixels
+
+    if len(toiseps[toiseps < spatial_cutoff]) >= 1:
+
+        seldf = toidf[toiseps < spatial_cutoff]
+        selcols = ['tic_id','toi_id','Disposition','comments']
+        outstr += '\nGot spatial TOI list match!\n{}\n'.format(
+            seldf[selcols].to_string(index=False))
 
     for ix, _px, _py, ticid, tmag in zip(np.arange(len(px)),
                                          px,py,ticids,tmags):

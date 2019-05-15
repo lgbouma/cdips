@@ -19,7 +19,7 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 
 def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
-                             supprow, suppfulldf, pfdf, sectornum,
+                             supprow, suppfulldf, pfdf, toidf, sectornum,
                              mask_orbit_edges=True,
                              nworkers=32):
     """
@@ -62,6 +62,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
 
         pfdf: dataframe with period finding results for everything from this
         sector. good to check on matching ephemerides.
+
+        toidf: dataframe with alerted TOI results
     """
 
     hdul_sr = fits.open(tfa_sr_path)
@@ -175,7 +177,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         else:
             _pfdf = None
 
-        fig = vp.centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,24))
+        fig = vp.centroid_plots(mdfs, cd, hdr, _pfdf, toidf, figsize=(30,24))
         pdf.savefig(fig)
         plt.close()
 
@@ -237,7 +239,7 @@ def _get_supprow(sourceid, supplementstatsdf):
     return mdf
 
 def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
-                  supplementstatsdf, pfdf, sectornum=6,
+                  supplementstatsdf, pfdf, toidf, sectornum=6,
                   cdipsvnum=1):
 
     for tfa_sr_path in tfa_sr_paths:
@@ -287,7 +289,7 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
             make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
                                      sourceid, supprow, suppfulldf, pfdf,
-                                     sectornum)
+                                     toidf, sectornum)
         else:
             print('found {}, continue'.format(outpath))
 
@@ -327,13 +329,18 @@ def main(sectornum=6, cdips_cat_vnum=0.2):
               'initial_period_finding_results_supplemented.csv')
     pfdf = pd.read_csv(pfpath)
 
+    toipath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
+              'cdips/data/toi-plus-2019-05-15.csv')
+    toidf = pd.read_csv(toipath)
+
+
     # reconstructive_tfa/RunTFASR.sh applied the SDE cutoff on TFA_SR
     # lightcurves. use whatever is in `tfasrdir` to determine which sources to
     # make pdfs for.
     tfa_sr_paths = glob(os.path.join(tfasrdir, '*_llc.fits'))
 
     make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
-                  supplementstatsdf, pfdf, sectornum=sectornum)
+                  supplementstatsdf, pfdf, toidf, sectornum=sectornum)
 
 
 if __name__ == "__main__":
