@@ -214,7 +214,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         (float(infodict['rp']) > 67.25) or
         ( (float(infodict['psdepthratio'] - infodict['psdepthratioerr']) > 1.2)
          &
-         (float(infodict['psdepthratio'] + infodict['psdepthratioerr']) < 7.0)
+         (float(infodict['psdepthratio'] + infodict['psdepthratioerr']) < 5.0)
         )
         ):
             isobviouslynottransit = True
