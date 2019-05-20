@@ -69,6 +69,7 @@ def two_periodogram_checkplot(lc_sr, hdr, mask_orbit_edges=True,
     fig = checkplot.twolsp_checkplot_png(tlsp, spdm, time, flux, err,
                                          magsarefluxes=True,
                                          objectinfo=objectinfo,
+                                         varepoch='min',
                                          sigclip=[50.,5.], plotdpi=100,
                                          phasebin=3e-2, phasems=6.0,
                                          phasebinms=14.0, unphasedms=6.0,
@@ -164,12 +165,12 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
                 stattxt = '$\sigma$ = {:.3f} mmag{}'.format(stdmmag, customstr)
                 ndigits = 4
             _ = ax.text(txt_x, txt_y, stattxt, horizontalalignment='right',
-                    verticalalignment='top', fontsize='medium', zorder=3,
+                    verticalalignment='top', fontsize='large', zorder=3,
                     transform=ax.transAxes)
         ax.get_yaxis().set_tick_params(which='both', direction='in',
-                                       labelsize='x-small')
+                                       labelsize='large')
         ax.get_xaxis().set_tick_params(which='both', direction='in',
-                                       labelsize='x-small')
+                                       labelsize='large')
 
         if isinstance(obsd_midtimes, np.ndarray):
             ylim = ax.get_ylim()
@@ -183,7 +184,7 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
             ylim = ax.get_ylim()
             ax.set_ylim((max(ylim), min(ylim)))
 
-    axs[-1].set_xlabel(xlabel, fontsize='small')
+    axs[-1].set_xlabel(xlabel, fontsize='large')
 
     # make the y label
     ax_hidden = fig.add_subplot(111, frameon=False)
@@ -191,7 +192,7 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
                           left=False, right=False)
     ax_hidden.set_ylabel(
         'bottom: background [ADU]. middle: TFASR2 [mag]. top: IRM2 [mag]',
-        fontsize='small', labelpad=5)
+        fontsize='large', labelpad=27)
 
     if not savpath:
         savpath = 'temp_{:s}.png'.format(apstr)
@@ -261,7 +262,7 @@ def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
                 stattxt = '$\sigma$ = {:.3f} mmag{}'.format(stdmmag, customstr)
                 ndigits = 4
             _ = ax.text(txt_x, txt_y, stattxt, horizontalalignment='right',
-                    verticalalignment='top', fontsize='medium', zorder=3,
+                    verticalalignment='top', fontsize='large', zorder=3,
                     transform=ax.transAxes)
 
         ax.get_yaxis().set_tick_params(which='both', direction='in',
@@ -292,7 +293,7 @@ def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
                       linestyle='--', zorder=1, lw=2, alpha=0.3)
             ax.set_ylim((ymin, ymax))
 
-    axs[-1].set_xlabel(xlabel, fontsize='small')
+    axs[-1].set_xlabel(xlabel, fontsize='large')
 
     # make the y label
     ax_hidden = fig.add_subplot(111, frameon=False)
@@ -300,7 +301,7 @@ def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
                           left=False, right=False)
     ax_hidden.set_title('flux vs time. top: smallest aperture. middle: '+
                         'detection (medium) aperture. bottom: biggest',
-                        fontsize='small')
+                        fontsize='large')
 
     fig.tight_layout(h_pad=1)
     if returnfig:
@@ -505,7 +506,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     Star: DR2 {sourceid}
     $R_\star$ = {rstar:s} $R_\odot$, $M_\star$ = {mstar:s} $M_\odot$
     Teff = {teff:s} K
-    RA = {ra:.3f}, DEC = {dec:.3f}
+    RA,dec [deg] = {ra:.3f} {dec:.3f}
     G = {phot_g_mean_mag:.1f}, Rp = {phot_rp_mean_mag:.1f}, Bp = {phot_bp_mean_mag:.1f}
     pmRA = {pmra:.1f}, pmDEC = {pmdec:.1f}
     $\omega$ = {plx_mas:.2f} $\pm$ {plx_mas_err:.2f} mas
@@ -560,9 +561,9 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
         print(outstr)
 
     txt_x, txt_y = 0.01, 0.99
-    ax1.text(txt_x, txt_y, textwrap.dedent(outstr),
-             ha='left', va='top', fontsize=40, zorder=2,
-             transform=ax1.transAxes)
+    #ax1.text(txt_x, txt_y, textwrap.dedent(outstr),
+    #         ha='left', va='top', fontsize=40, zorder=2,
+    #         transform=ax1.transAxes)
     ax1.set_axis_off()
 
     #
@@ -630,7 +631,13 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                 phasems=6.0, phasebinms=12.0, verbose=True,
                                 lowerleftstr='even')
 
+    outstr = textwrap.dedent(outstr).lstrip('\n')
+    ax1.text(0, 0.5, outstr,
+             ha='left', va='center', fontsize=32, zorder=2,
+             transform=ax1.transAxes)
+
     fig.tight_layout(h_pad=0)
+
     if returnfig:
         return fig, d
 
@@ -829,11 +836,15 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
 
         ax0.boxplot(dr2_samples, showfliers=False, whis=[5, 95], zorder=3)
 
-        ax0.axhline(k13_plx_mas, lw=2, alpha=0.3, color='C0', zorder=2)
+        ax0.axhline(k13_plx_mas, lw=2, alpha=0.3, color='C0', zorder=2,
+                    label='K13 cluster')
 
+
+        ax0.legend(loc='best')
         ax0.set_xticklabels('')
-        ax0.set_xlabel('DR2 (line is K13 cluster)')
-        ax0.set_ylabel('star parallax [mas]')
+        ax0.set_xlabel('box is target star parallax (5th to 95th pctile)',
+                       fontsize='large')
+        ax0.set_ylabel('star parallax [mas]', fontsize='large')
 
     #
     # ax1: proper motion. just use error bars in 2d.
@@ -851,8 +862,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
                      zorder=3)
 
         ax1.legend(loc='best')
-        ax1.set_xlabel('pmRA [mas/yr]')
-        ax1.set_ylabel('pmDEC [mas/yr]')
+        ax1.set_xlabel('pmRA [mas/yr]', fontsize='large')
+        ax1.set_ylabel('pmDEC [mas/yr]', fontsize='large')
 
     #
     # ax2: big text
@@ -994,8 +1005,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         ylim = ax3.get_ylim()
         ax3.set_ylim((max(ylim),min(ylim)))
         ax3.legend(loc='best')
-        ax3.set_ylabel('G + 5$\log_{{10}}\omega$ + 5') # - $A_G$
-        ax3.set_xlabel('Bp - Rp') #  - E(Bp-Rp)
+        ax3.set_ylabel('G + 5$\log_{{10}}\omega$ + 5', fontsize='large') # - $A_G$
+        ax3.set_xlabel('Bp - Rp', fontsize='large') #  - E(Bp-Rp)
 
     #
     # ax4: spatial positions
@@ -1021,17 +1032,23 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
                         rasterized=True, linewidths=0, label=l)
 
         ax4.legend(loc='best')
-        ax4.set_xlabel('RA [deg]')
-        ax4.set_ylabel('DEC [deg]')
+        ax4.set_xlabel('RA [deg]', fontsize='large')
+        ax4.set_ylabel('DEC [deg]', fontsize='large')
 
     ##########################################
 
-    fig.tight_layout(h_pad=0.)
+    for ax in [ax0,ax1,ax3,ax4]:
+        ax.get_yaxis().set_tick_params(which='both', direction='in',
+                                       labelsize='large')
+        ax.get_xaxis().set_tick_params(which='both', direction='in',
+                                       labelsize='large')
+
+    fig.tight_layout(h_pad=0.5)
     return fig
 
 
-def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
-                   findercachedir='~/.astrobase/stamp-cache'):
+def centroid_plots(mdfs, cd, hdr, _pfdf, toidf, figsize=(30,20),
+                   Tmag_cutoff=16, findercachedir='~/.astrobase/stamp-cache'):
     """
     cd = {
         'm_oot_flux':m_oot_flux, # mean OOT image
@@ -1134,7 +1151,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
     ax0.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
              markersize=25, marker='*', color='k', lw=0)
 
-    ax0.set_title('OOT (cyan o: centroid for e/ OOT window)')
+    ax0.set_title('OOT (cyan o: centroid for each OOT window)', fontsize='large')
 
     cb0 = fig.colorbar(cset0, ax=ax0, extend='neither', fraction=0.046, pad=0.04)
 
@@ -1154,7 +1171,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
     ax1.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
              markersize=25, marker='*', color='k', lw=0)
 
-    ax1.set_title('in transit  (cyan o: centroid for e/ transit)')
+    ax1.set_title('in transit  (cyan o: centroid for each transit)', fontsize='large')
 
     cb1 = fig.colorbar(cset1, ax=ax1, extend='neither', fraction=0.046, pad=0.04)
 
@@ -1188,7 +1205,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
     cset2 = ax2.imshow(np.zeros_like(cd['m_oot_minus_intra_flux']),
                        cmap=whitecmap, origin='lower', zorder=1)
 
-    ax2.set_title('nbhd info. (starid,Tmag)')
+    ax2.set_title('nbhd info. (starid,Tmag)', fontsize='large')
     cb2 = fig.colorbar(cset2, ax=ax2, extend='neither', fraction=0.046,
                        pad=0.04, drawedges=False)
 
@@ -1218,7 +1235,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
     ax3.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
              markersize=25, marker='*', color='k', lw=0)
 
-    ax3.set_title('OOT - in. (cyan *: centroid per transit)')
+    ax3.set_title('OOT - in. (cyan *: centroid per transit)', fontsize='large')
 
     cb3 = fig.colorbar(cset3, ax=ax3, extend='neither', fraction=0.046, pad=0.04)
 
@@ -1228,7 +1245,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
 
     cset4 = ax4.imshow(cd['m_oot_minus_intra_snr'], cmap='YlGnBu_r',
                        origin='lower', zorder= 1)
-    ax4.set_title('(OOT - in)/noise')
+    ax4.set_title('(OOT - in)/noise', fontsize='large')
 
     ax4.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
                 linewidths=1)
@@ -1250,7 +1267,8 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
             ax.invert_yaxis()
 
     #
-    # ax5 : text
+    # ax5 : text. neighbors from catalog, matching ephemerides, and any TOI
+    # matches.
     #
 
     # calculate eta_ctd: catalog position - centroid of mean difference
@@ -1292,6 +1310,19 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
 
     # TEMPLATE: outstr is like "\nSome stuff\nMore stuff\n"
     outstr = textwrap.dedent(outstr)
+
+    # check TOI list for spatial matches
+    toicoords = SkyCoord(nparr(toidf['RA']), nparr(toidf['Dec']),
+                         unit=(u.deg), frame='icrs')
+    toiseps = toicoords.separation(targetcoord).to(u.arcsec).value
+    spatial_cutoff = 126 # arcseconds ~= 6 pixels
+
+    if len(toiseps[toiseps < spatial_cutoff]) >= 1:
+
+        seldf = toidf[toiseps < spatial_cutoff]
+        selcols = ['tic_id','toi_id','Disposition','comments']
+        outstr += '\nGot spatial TOI list match!\n{}\n'.format(
+            seldf[selcols].to_string(index=False))
 
     for ix, _px, _py, ticid, tmag in zip(np.arange(len(px)),
                                          px,py,ticids,tmags):
@@ -1354,7 +1385,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
     cset6 = ax6.imshow(dss, origin='lower', cmap=plt.cm.gray_r)
 
     ax6.grid(ls='--', alpha=0.5)
-    ax6.set_title('DSS2 Red linear')
+    ax6.set_title('DSS2 Red linear', fontsize='large')
     cb6 = fig.colorbar(cset6, ax=ax6, extend='neither', fraction=0.046,
                        pad=0.04)
 
@@ -1375,7 +1406,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
     cset7 = ax7.imshow(dss, origin='lower', cmap=plt.cm.gray_r, norm=norm)
 
     ax7.grid(ls='--', alpha=0.5)
-    ax7.set_title('DSS2 Red logstretch')
+    ax7.set_title('DSS2 Red logstretch', fontsize='large')
     cb7 = fig.colorbar(cset7, ax=ax7, extend='neither', fraction=0.046,
                        pad=0.04)
 
@@ -1388,7 +1419,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, figsize=(30,20), Tmag_cutoff=16,
 
     ##########################################
 
-    fig.tight_layout(pad=2, h_pad=1.2)
+    fig.tight_layout(pad=2, h_pad=1.7)
 
     ax5.text(txt_x, txt_y, outstr, ha='left', va='top',
              fontsize=22, zorder=2, transform=ax5.transAxes)
