@@ -52,12 +52,13 @@ FIGURES IN ORDER (IF APJL, WHICH MIGHT BE GOOD)
       * above distribution linked w/ image of e.g., M42 on crowded
         end, and some dispersed cluster on other end.
 
-3. Machine to produce light curves of stars in clusters.
+3. Method to produce light curves of stars in clusters.
   "Conceptual overview" of pipeline, similar to Fig 28 of Pal (2009).
   (Maybe).
 
 4. RMS (30 minutes) vs catalog T mag, for Sector 6. Show residual as
-   subplot.
+   subpanel.
+   Maybe also include averaged ACFs as a sub-panel.
   
 5. 3x3 collection of LCs of favorite objects. 3 PCs. 3 EBs. 3 stellar
    rotn.
