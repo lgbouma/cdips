@@ -418,7 +418,7 @@ information from each available catalog concatenated.
 
 We reduced the TESS images to lightcurves by performing a sequence of
 steps using stand-alone programs.  A conceptual overview of our
-``pipeline'' is given in Figure~\ref{fig:pipeline}.  
+pipeline is given in Figure~\ref{fig:pipeline}.  
 Our overall method is in the spirit of the reduction approaches used
 by \citet{Pal_2009}, \citet{soares-furtado_image_2017} and
 \citet{oelkers_precision_2018}.
@@ -426,21 +426,20 @@ by \citet{Pal_2009}, \citet{soares-furtado_image_2017} and
 We begin with the calibrated full frame images produced by SPOC
 (\S~\ref{subsec:observations}).  We then perform a collection of
 preparatory steps, including source extraction of bright stars,
-astrometry using the resulting positions, and coarse simple aperture
+astrometric calibration, and coarse simple aperture
 photometry (\S~\ref{subsec:preparation}).  Using the shape values from
-the initial astrometry, we select an astrometric reference frame and
-transform all of the calibrated images to it.  We construct a
+the initial astrometry, we select an astrometric reference frame to
+which we transform all of the calibrated images.  We construct a
 photometric reference by stacking a collection of frames, and then
-convolve all the transformed frames to the photometric reference,
-and subtract (\S~\ref{subsec:imagesubtraction}).  We perform aperture
+convolve all the transformed frames to the photometric reference, and
+subtract (\S~\ref{subsec:imagesubtraction}).  We perform aperture
 photometry on the subtracted images using positions projected onto the
 frame from Gaia DR2.  We detrend the resulting lightcurves
-(\S~\ref{subsec:lcdetrending}).
-We then select stars that we believe are ``cluster members'',
-roughly X\% of the overall dataset (\S~\ref{sec:starselection}).
-Focusing on the lightcurves of these stars, their white noise and red
-noise properties, and point out a few interesting cases of
-variability (\S~\ref{sec:results}).
+(\S~\ref{subsec:lcdetrending}).  We then select stars that we believe
+are ``cluster members'', roughly X\% of the overall dataset
+(\S~\ref{sec:starselection}).  Focusing on the lightcurves of these
+stars, their white noise and red noise properties, and point out a few
+interesting cases of variability (\S~\ref{sec:results}).
 
 
 
@@ -777,23 +776,40 @@ transposition tool.
 
 The preceding steps produce lightcurves that include both instrumental
 systematics as well as astrophysical variability.  The detrending
-philosophy adopted by the HAT group typically proceeeds in two
+approach adopted by the HAT group typically proceeeds in a few
 sequential stages (see discussions from {\it e.g.}
-\citealt{bakos_2010,huang_high-precision_2015,zhang_precision_2016}) .
-The first stage is to decorrelate against external parameters that are
+\citealt{bakos_2010,huang_high-precision_2015,zhang_precision_2016}).
+Given the heritage of our pipeline, we briefly discuss these, and then
+explain why we omit most of the steps described.
+
+The first detrending step commonly performed on ground-based data is
+``magnitude-fitting'': the raw magnitudes measured from the difference
+images are fit by a polynomial that depends on a combination of CCD
+position, sub-pixel position, and optionally catalog magnitude and
+color.
+
+The second step is to decorrelate against external parameters that are
 known to affect the stellar flux measurements (EPD,
-\citealt{bakos_2010}). The second stage is to filter remaining
-systematic trends caused by unknown parameters by decorrelating the
-measured brightnesses of stars against each other (TFA,
-\citealt{kovacs_trend_2005}).  
+\citealt{bakos_2010}).  For ground-based data this may include zenith
+angle, or changing PSF parameters.  For TESS data, this might include
+CCD temperature, or perhaps a measure of the scatter in the spacecraft
+pointing (CITE: Vanderburg 2019).
+
+The final step is to then decorrelate the measured brightnesses of
+stars against each other (TFA, \citealt{kovacs_trend_2005}).  
+This accounts for variations due to unknown systematic effects that
+affect many stars.
+
 
 %FIXME TURGID PROSE
 In general though, one must adapt detrending procedures to the data at
 hand.  In \S~\ref{sec:flux_vs_external_parameters}, we show that the
 ``external parameter'' dependence visible in the TESS data is rather
 complex: ordinary linear model-fitting, as well as an initial attempts
-at non-linear model fitting, are poor descriptions of the data.  We go
-on to show (\S~\ref{sec:tfa_is_good_enough}) that a plausible
+at non-linear model fitting, are poor descriptions of the data.  
+In a similar vein ``magnitude-fitting'' is minimally justified, given
+how the TESS magnitudes correlate against these external parameters.
+We go on to show (\S~\ref{sec:tfa_is_good_enough}) that a plausible
 detrending approach for the purpose of transit discovery is to simply
 decorrelate against other nearby stars with standard TFA.
 
