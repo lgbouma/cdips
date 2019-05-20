@@ -7,18 +7,28 @@ from numpy import array as nparr
 import astropy.coordinates as coord
 from astropy import units as u, constants as c
 
-catalogpath = '../data/cluster_data/OC_MG_FINAL_GaiaRp_lt_16.csv'
+catalogpath = '../../data/cluster_data/OC_MG_FINAL_GaiaRp_lt_16_v0.2.csv'
+pfrespath = '../../results/cdips_lc_periodfinding/sector-6/initial_period_finding_results_supplemented.csv'
 
 def main():
+
     do_star_catalog_skymap = 1
     do_star_catalog_mag_histogram = 0
     do_star_catalog_cmd = 0
     do_star_catalog_hrd_scat = 0
 
+    overplot_s6_results = 1
+
+    ##########################################
+
     df = pd.read_csv(catalogpath, sep=';')
+    if overplot_s6_results:
+        pfdf = pd.read_csv(pfrespath)
+    else:
+        pfdf = None
 
     if do_star_catalog_skymap:
-        star_catalog_skymap(df, closesubset=True)
+        star_catalog_skymap(df, pfdf, closesubset=True)
         #star_catalog_skymap(df)
     if do_star_catalog_mag_histogram:
         star_catalog_mag_histogram(df, 'phot_g_mean_mag')
@@ -32,22 +42,28 @@ def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
 
-def star_catalog_skymap(df, closesubset=False):
+def star_catalog_skymap(df, pfdf, closesubset=False):
 
     if closesubset:
         df = df[df['parallax'] > 0]
         plx_as = df['parallax']/1000
         df = df[ 1/plx_as < 1000 ]
 
-    ra = coord.Angle(df['ra']*u.deg)
+    ra = coord.Angle(nparr(df['ra'])*u.deg)
     ra = ra.wrap_at(180*u.deg)
-    dec = coord.Angle(df['dec']*u.deg)
+    dec = coord.Angle(nparr(df['dec'])*u.deg)
 
     f = plt.figure(figsize=(4,3))
     ax = f.add_subplot(111, projection='mollweide')
 
     ax.scatter(ra.radian, dec.radian, rasterized=True, s=0.5, alpha=0.5,
-               linewidths=0, zorder=5)
+               linewidths=0, zorder=5, c='C0', label='CDIPS stars')
+    if isinstance(pfdf, pd.DataFrame):
+        ra = coord.Angle(nparr(pfdf['ra_x'])*u.deg)
+        ra = ra.wrap_at(180*u.deg)
+        dec = coord.Angle(nparr(pfdf['dec_x'])*u.deg)
+        ax.scatter(ra.radian, dec.radian, rasterized=True, s=0.5, alpha=0.5,
+                   linewidths=0, zorder=5, c='C1', label='Sector 6')
 
     ax.set_xticklabels(['14h','16h','18h','20h','22h',
                         '0h','2h','4h','6h','8h','10h'])
@@ -57,11 +73,13 @@ def star_catalog_skymap(df, closesubset=False):
 
     f.tight_layout()
     f.subplots_adjust(left=0.1, right=0.9, top=0.8, bottom=0.2)
-    if closesubset:
-        outname = '../results/star_catalog_skymap_closesubset.png'
-    else:
-        outname = '../results/star_catalog_skymap.png'
-    savefig(f, outname)
+
+    csstr = '_closesubset' if closesubset else ''
+    opstr = '_overplotlcs' if isinstance(pfdf, pd.DataFrame) else ''
+
+    outpath = '../../results/star_catalog_skymap{csstr}{opstr}.png'.format(
+        csstr=csstr, opstr=opstr)
+    savefig(f, outpath)
 
 def star_catalog_mag_histogram(df, magstr):
 
@@ -85,7 +103,7 @@ def star_catalog_mag_histogram(df, magstr):
     ax.set_yscale('log')
 
     f.tight_layout(pad=0.2)
-    savpath = '../results/star_catalog_mag_histogram_{}.png'.format(magstr)
+    savpath = '../../results/star_catalog_mag_histogram_{}.png'.format(magstr)
     savefig(f, savpath)
 
 
@@ -111,7 +129,7 @@ def star_catalog_cmd(df):
     ax.set_ylim((max(ylim),min(ylim)))
 
     f.tight_layout(pad=0.2)
-    savefig(f, '../results/star_catalog_cmd.png')
+    savefig(f, '../../results/star_catalog_cmd.png')
 
 
 def star_catalog_hrd_scat(df):
@@ -158,7 +176,7 @@ def star_catalog_hrd_scat(df):
     )
 
     f.tight_layout(pad=0.2)
-    savefig(f, '../results/star_catalog_hrd_scat.png')
+    savefig(f, '../../results/star_catalog_hrd_scat.png')
 
 if __name__=="__main__":
     main()
