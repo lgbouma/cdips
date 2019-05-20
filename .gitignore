@@ -14,3 +14,4 @@ logs*
 drivers/reconstructive_tfa/*.out
 drivers/reconstructive_tfa/*.txt
 doc/Jenkins*pdf
+sandbox*
