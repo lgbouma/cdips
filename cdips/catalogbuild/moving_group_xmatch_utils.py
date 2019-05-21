@@ -23,12 +23,15 @@ import sys, os, re, itertools, subprocess
 from glob import glob
 from numpy import array as arr
 
+datadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/moving_groups/'
+
 def make_Gagne18_BANYAN_XIII_GaiaDR2_crossmatch():
 
     # Downloaded direct from
     # http://iopscience.iop.org/0004-637X/862/2/138/suppdata/apjaaca2et2_mrt.txt
     # God I wish vizier were a thing.
-    tablepath = '../data/cluster_data/moving_groups/Gagne_2018_BANYAN_XIII_apjaaca2et2_mrt.txt'
+    tablepath = os.path.join(datadir,
+                             'Gagne_2018_BANYAN_XIII_apjaaca2et2_mrt.txt')
 
     make_Gagne18_BANYAN_any_DR2_crossmatch(
         tablepath, namestr='Gagne_2018_BANYAN_XIII_GaiaDR2_crossmatched',
@@ -39,7 +42,8 @@ def make_Gagne18_BANYAN_XII_GaiaDR2_crossmatch():
 
     # Downloaded direct from
     # http://iopscience.iop.org/0004-637X/860/1/43/suppdata/apjaac2b8t4_mrt.txt
-    tablepath = '../data/cluster_data/moving_groups/Gagne_2018_BANYAN_XII_apjaac2b8t4_mrt.txt'
+    tablepath = os.path.join(datadir,
+                             'Gagne_2018_BANYAN_XII_apjaac2b8t4_mrt.txt')
 
     make_Gagne18_BANYAN_any_DR2_crossmatch(
         tablepath, namestr='Gagne_2018_BANYAN_XII_GaiaDR2_crossmatched',
@@ -50,7 +54,7 @@ def make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch():
 
     # Downloaded direct from
     # http://iopscience.iop.org/0004-637X/856/1/23/suppdata/apjaaae09t5_mrt.txt
-    tablepath = '../data/cluster_data/moving_groups/Gagne_2018_apjaaae09t5_mrt.txt'
+    tablepath = os.path.join(datadir, 'Gagne_2018_apjaaae09t5_mrt.txt')
 
     make_Gagne18_BANYAN_any_DR2_crossmatch(
         tablepath, namestr='Gagne_2018_BANYAN_XI_GaiaDR2_crossmatched',
@@ -97,7 +101,7 @@ def make_Gagne18_BANYAN_any_DR2_crossmatch(
         tablepath,
         namestr=None,
         maxsep=10,
-        outdir='../data/cluster_data/moving_groups/',
+        outdir=datadir,
         homedir='/home/luke/'):
     """
     J. Gagne's tables have a particular format that requires some wrangling.
@@ -238,7 +242,7 @@ def make_Gagne18_BANYAN_any_DR2_crossmatch(
 
 
 def make_Rizzuto11_GaiaDR2_crossmatch(
-    outdir='../data/cluster_data/moving_groups/', homedir='/home/luke/'):
+    outdir=datadir, homedir='/home/luke/'):
     '''
     Aaron Rizzuto et al (2011) gave a list of 436 Sco OB2 members.
     http://vizier.cfa.harvard.edu/viz-bin/VizieR?-source=J/MNRAS/416/3108
@@ -247,7 +251,7 @@ def make_Rizzuto11_GaiaDR2_crossmatch(
     table_num = 0
     ra_str = '_RA'
     dec_str = '_DE'
-    outname = '../data/cluster_data/moving_groups/Rizzuto_11_table_1_ScoOB2_members.csv'
+    outname = os.path.join(datadir,'Rizzuto_11_table_1_ScoOB2_members.csv')
     assoc_name = 'ScoOB2'
     namestr = 'Rizzuto_11_table_1_ScoOB2_members'
 
@@ -323,7 +327,7 @@ def make_Rizzuto11_GaiaDR2_crossmatch(
 
 def make_Oh17_GaiaDR2_crossmatch(
     namestr='Oh_2017_clustering_GaiaDR2_crossmatched',
-    outdir='../data/cluster_data/moving_groups/', homedir='/home/luke/'):
+    outdir=datadir, homedir='/home/luke/'):
     '''
     Semyeong Oh et al (2017) discovered 10.6k stars with separations <10pc that
     are in likely comoving pairs / groups.
@@ -440,6 +444,7 @@ def make_Oh17_GaiaDR2_crossmatch(
     print('made {}'.format(outpath))
     print(79*'=')
 
+
 def make_Rizzuto15_GaiaDR2_crossmatch():
     '''
     Aaron Rizzuto et al (2015) picked out ~400 candidate USco members, then
@@ -483,7 +488,7 @@ def make_Rizzuto15_GaiaDR2_crossmatch():
     usco_disk.remove_column('RAJ2000')
     usco_disk.remove_column('DEJ2000')
     foo = usco_disk.to_pandas()
-    outname = '../data/cluster_data/moving_groups/Rizzuto_15_table_3_USco_hosts_disk.csv'
+    outname = os.path.join(datadir, 'Rizzuto_15_table_3_USco_hosts_disk.csv')
     foo.to_csv(outname,index=False)
     print('saved {:s}'.format(outname))
 
@@ -508,7 +513,8 @@ def make_Preibisch01_GaiaDR2_crossmatch():
     table_num = 0
     ra_str = '_RA'
     dec_str = '_DE'
-    outname = '../data/cluster_data/moving_groups/Preibisch_01_table_1_USco_LiRich_members.csv'
+    outname = os.path.join(datadir,
+                           'Preibisch_01_table_1_USco_LiRich_members.csv')
 
     make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
                                table_num=table_num, outname=outname)
@@ -532,7 +538,8 @@ def make_Casagrande_11_GaiaDR2_crossmatch():
     table_num = 0
     ra_str = 'RAJ2000'
     dec_str = 'DEJ2000'
-    outname = '../data/cluster_data/moving_groups/Casagrande_2011_table_1_GCS_ages_lt_1Gyr.csv'
+    outname = os.path.join(datadir,
+                           'Casagrande_2011_table_1_GCS_ages_lt_1Gyr.csv')
 
     Vizier.ROW_LIMIT = -1
     catalog_list = Vizier.find_catalogs(vizier_search_str)
@@ -588,7 +595,8 @@ def make_Kraus14_GaiaDR2_crossmatch():
     name_str = '_2MASS'
     assoc_name = 'Tuc-Hor'
 
-    outname = '../data/cluster_data/moving_groups/Kraus_14_table_2_TucanaHorologiumMG_members.csv'
+    outname = os.path.join(datadir,
+                           'Kraus_14_table_2_TucanaHorologiumMG_members.csv')
 
     make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
                                    pmra_str, pmdec_str, name_str, assoc_name,
@@ -611,7 +619,7 @@ def make_Roser11_GaiaDR2_crossmatch():
     name_str = 'Seq'
     assoc_name = 'Hyades'
 
-    outname = '../data/cluster_data/moving_groups/Roser11_table_1_Hyades_members.csv'
+    outname = os.path.join(datadir, 'Roser11_table_1_Hyades_members.csv')
 
     make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
                                    pmra_str, pmdec_str, name_str, assoc_name,
@@ -628,7 +636,7 @@ def make_Luhman12_GaiaDR2_crossmatch():
     table_num = 0
     ra_str = '_RA'
     dec_str = '_DE'
-    outname = '../data/cluster_data/moving_groups/Luhman_12_table_1_USco_IR_excess.csv'
+    outname = os.path.join(datadir, 'Luhman_12_table_1_USco_IR_excess.csv')
 
     make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
                                    table_num=table_num, outname=outname)
@@ -638,7 +646,7 @@ def make_Luhman12_GaiaDR2_crossmatch():
 def make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
                                    pmra_str, pmdec_str, name_str, assoc_name,
                                    table_num=0, outname='', maxsep=10,
-                                   outdir='../data/cluster_data/moving_groups/',
+                                   outdir=datadir,
                                    homedir='/home/luke/' ):
     '''
     general routine to xmatch catalog of <~100,000 members w/ coords and PMs
@@ -770,10 +778,10 @@ def make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
 
 
 def make_Bell17_GaiaDR2_crossmatch(maxsep=10,
-                                   outdir='../data/cluster_data/moving_groups/',
+                                   outdir=datadir,
                                    homedir='/home/luke/' ):
 
-    with open('../data/cluster_data/moving_groups/Bell_2017_32Ori_table_3.txt') as f:
+    with open(os.path.join(datadir,'Bell_2017_32Ori_table_3.txt')) as f:
         lines = f.readlines()
 
     lines = [l.replace('\n','') for l in lines if not l.startswith('#') and
@@ -822,7 +830,7 @@ def make_Bell17_GaiaDR2_crossmatch(maxsep=10,
     assoc = np.repeat(assoc_name, len(RA))
 
     print(42*'-')
-    outname = '../data/cluster_data/moving_groups/Bell17_table_32Ori.csv'
+    outname = os.path.join(datadir, 'Bell17_table_32Ori.csv')
     print('{}'.format(outname))
     print('initial number of members: {}'.format(len(RA)))
 

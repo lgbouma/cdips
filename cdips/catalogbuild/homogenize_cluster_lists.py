@@ -39,6 +39,9 @@ from cdips.catalogbuild.moving_group_xmatch_utils import (
     make_Roser11_GaiaDR2_crossmatch,
     make_Oh17_GaiaDR2_crossmatch
 )
+from cdips.catalogbuild.star_forming_rgn_xmatch_utils import (
+    Zari18_stars_to_csv
+)
 
 def main():
 
@@ -55,6 +58,8 @@ def main():
     do_Bell_17 = 0
     do_Oh17 = 0
     do_Rizzuto11 = 0
+    # Star forming regions
+    do_Zari18 = 0
 
     do_merge_MG_catalogs = 0
     do_merge_OC_catalogs = 0
@@ -83,6 +88,8 @@ def main():
         make_Oh17_GaiaDR2_crossmatch()
     if do_Rizzuto11:
         make_Rizzuto11_GaiaDR2_crossmatch()
+    if do_Zari18:
+        Zari18_stars_to_csv()
 
     if do_merge_MG_catalogs:
         merge_MG_catalogs()
@@ -109,7 +116,9 @@ def fname_to_reference(fname):
         'GaiaCollaboration2018_616_A10_tablea1a_within_250pc_cut_only_source_cluster.csv':'GaiaCollaboration2018_tab1a',
         'GaiaCollaboration2018_616_A10_tablea1b_beyond_250pc_cut_only_source_cluster.csv':'GaiaCollaboration2018_tab1b',
         'MWSC_Gaia_matched_concatenated.csv':'Kharchenko2013',
-        'Dias14_seplt5arcsec_Gdifflt2.csv':'Dias2014'
+        'Dias14_seplt5arcsec_Gdifflt2.csv':'Dias2014',
+        'Zari_2018_ums_tab_cut_only_source_cluster_MATCH.csv':'Zari_2018_UMS',
+        'Zari_2018_pms_tab_cut_only_source_cluster_MATCH.csv':'Zari_2018_PMS'
     }
 
     return d[fname]
@@ -207,7 +216,7 @@ def merge_MG_catalogs():
         dist: comma-separated string giving spatial distance of the match, if
             available, in degrees.
     """
-    datadir = '../data/cluster_data/moving_groups/'
+    datadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/moving_groups/'
     mgfiles = glob(os.path.join(datadir,'*MATCH*.csv'))
     outpath = os.path.join(datadir,'MOVING_GROUPS_MERGED.csv')
 
@@ -218,12 +227,20 @@ def merge_MG_catalogs():
 
         sdf = pd.DataFrame()
 
-        sdf['source_id'] = df['source_id']
+        if not 'Zari_2018' in mgfile:
+            sdf['source_id'] = df['source_id']
+        else:
+            sdf['source_id'] = df['source']
 
-        if 'assoc' not in df.columns and not 'Rizzuto_11' in mgfile:
+        if ('assoc' not in df.columns and
+            not 'Rizzuto_11' in mgfile and
+            not 'Zari_2018' in mgfile
+           ):
             raise AssertionError
         elif 'assoc' not in df.columns and 'Rizzuto_11' in mgfile:
             sdf['assoc'] = 'ScoOB2'
+        elif 'assoc' not in df.columns and 'Zari_2018' in mgfile:
+            sdf['assoc'] = 'N/A'
         elif 'Oh_2017' in mgfile:
             sdf['assoc'] = np.array(['Oh_'+str(a) for a in df['assoc']])
         else:
@@ -231,9 +248,15 @@ def merge_MG_catalogs():
 
         sdf['reference'] = fname_to_reference(os.path.basename(mgfile))
 
-        sdf['ext_catalog_name'] = df['name']
+        if not 'Zari_2018' in mgfile:
+            sdf['ext_catalog_name'] = df['name']
+        else:
+            sdf['ext_catalog_name'] = df['source']
 
-        sdf['dist'] = df['dist']
+        if not 'Zari_2018' in mgfile:
+            sdf['dist'] = df['dist']
+        else:
+            sdf['dist'] = 0
 
         dfl.append(sdf)
 
@@ -271,7 +294,7 @@ def merge_OC_catalogs():
         dist: comma-separated string giving spatial distance of the match, if
             available, in degrees.
     """
-    datadir = '../data/cluster_data/'
+    datadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
     ocfiles = [
         '../data/cluster_data/CantatGaudin_2018_table2_cut_only_source_cluster.csv',
         '../data/cluster_data/GaiaCollaboration2018_616_A10_tablea1a_within_250pc_cut_only_source_cluster.csv',
@@ -287,7 +310,7 @@ def merge_OC_catalogs():
 
         if 'Dias14' in ocfile:
             # need to get names b/c i messed up earlier
-            getfile = '/home/luke/local/tess-trex/catalogs/Dias_2014_prob_gt_50_pct_vizier.vot'
+            getfile = '/home/luke/local/cdips/catalogs/Dias_2014_prob_gt_50_pct_vizier.vot'
             vot = parse(getfile)
             tab = vot.get_first_table().to_table()
             ddf = tab.to_pandas()
@@ -378,7 +401,7 @@ def merge_OC_catalogs():
 
 def merge_OC_MG_catalogs():
 
-    datadir = '../data/cluster_data/'
+    datadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
 
     ocs = pd.read_csv(datadir+'OPEN_CLUSTERS_MERGED.csv',
                       sep=';')
@@ -388,25 +411,30 @@ def merge_OC_MG_catalogs():
 
     outdf = pd.concat((ocs, mgs))
 
-    # need to write to votable for gaia upload / xmatch...
-    outpath = '/home/luke/local/tess-trex/catalogs/OC_MG_MERGED.csv'
+    outpath = '/home/luke/local/cdips/catalogs/OC_MG_MERGED.csv'
     outdf.to_csv(outpath, sep=';', index=False)
     print('made {}'.format(outpath))
 
+    # upload this csv file to gaia archive, then use it to run a crossmatch
+    # that gets things like G_Rp band photometry.
+    outpath = '/home/luke/local/cdips/catalogs/oc_mg_sources.csv'
+    outdf['source_id'].to_csv(outpath, sep=',', index=False)
+    print('made {}'.format(outpath))
 
-def final_merge(vnum='0.2'):
+
+def final_merge(vnum='0.3'):
     """
     merge Gaia-DR2 info and source/reference info into one file.
     NOTE: for some reason ~half of the sources in OC_MG_MERGED.csv are lost
     in this step. scary, and unclear why...!
     """
 
-    #datadir = '/home/luke/local/tess-trex/catalogs/'
-    datadir = '/home/lbouma/local/tess-trex/catalogs/'
+    datadir = '/home/luke/local/cdips/catalogs/'
+    #datadir = '/home/lbouma/local/cdips/catalogs/'
 
     ocmg_df = pd.read_csv(datadir+'OC_MG_MERGED.csv', sep=';')
 
-    vot = parse(datadir+'OC_MG_match-result.vot.gz')
+    vot = parse(datadir+'cdips_v{}-result.vot.gz'.format(vnum))
     tab = vot.get_first_table().to_table()
     df = tab.to_pandas()
 
