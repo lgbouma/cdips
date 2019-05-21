@@ -17,7 +17,7 @@ from numpy import array as nparr
 from astropy import units as u
 from datetime import datetime
 
-def how_many_cdips_stars_on_silicon(sector=6, ver=0.2):
+def how_many_cdips_stars_on_silicon(sector=6, ver=0.3):
 
     fitsdir = (
         '/home/luke/local/cdips/fullframeimages/cal_imgs/sector-{}/'.

@@ -7,7 +7,7 @@ from numpy import array as nparr
 import astropy.coordinates as coord
 from astropy import units as u, constants as c
 
-catalogpath = '../../data/cluster_data/OC_MG_FINAL_GaiaRp_lt_16_v0.2.csv'
+catalogpath = '../../data/cluster_data/OC_MG_FINAL_GaiaRp_lt_16_v0.3.csv'
 pfrespath = '../../results/cdips_lc_periodfinding/sector-6/initial_period_finding_results_supplemented.csv'
 
 def main():

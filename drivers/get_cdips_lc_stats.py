@@ -16,7 +16,7 @@ from glob import glob
 
 def get_cdips_lc_stats(
     sectornum=6,
-    cdipssource_vnum=0.2,
+    cdipssource_vnum=0.3,
     nworkers=32
 ):
 
@@ -26,7 +26,7 @@ def get_cdips_lc_stats(
     )
     lcglob = 'cam?_ccd?/*_llc.fits'
 
-    # a cut on OC_MG_FINAL_GaiaRp_lt_16_v0.2.csv to be genfromtxt readable
+    # a cut on OC_MG_FINAL_GaiaRp_lt_16_v0.3.csv to be genfromtxt readable
     catalogfile = (
         '/nfs/phtess1/ar1/TESS/PROJ/lbouma/sourceid_and_photrpmeanmag_v{}.csv'.
         format(cdipssource_vnum)
@@ -60,7 +60,7 @@ def get_cdips_lc_stats(
 
 
 def supplement_stats_file(
-    cdipssource_vnum=0.2,
+    cdipssource_vnum=0.3,
     sectornum=6):
     """
       add crossmatching info per line:
@@ -186,11 +186,11 @@ if __name__ == "__main__":
     if get_stats:
         get_cdips_lc_stats(
             sectornum=6,
-            cdipssource_vnum=0.2,
+            cdipssource_vnum=0.3,
             nworkers=32
         )
         supplement_stats_file(
-            cdipssource_vnum=0.2,
+            cdipssource_vnum=0.3,
             sectornum=6
         )
     if print_metadata:

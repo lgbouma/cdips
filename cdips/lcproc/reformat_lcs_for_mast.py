@@ -9,7 +9,7 @@ from astropy.io import fits
 from datetime import datetime
 
 cdips_cat_file = ('/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
-                  'OC_MG_FINAL_GaiaRp_lt_16_v0.2.csv')
+                  'OC_MG_FINAL_GaiaRp_lt_16_v0.3.csv')
 
 def _map_timeseries_key_to_comment(k):
     kcd = {
