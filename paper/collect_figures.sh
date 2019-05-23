@@ -12,7 +12,7 @@ cp ${fdir}GI_figs/cluster_positions_ecliptic_scicase.pdf \
    ${pdir}f1_PLACEHOLDER.pdf
 
 # placeholder for what our pipeline does
-cp ${fdir}pipeline_figure.pdf ${pdir}f2.pdf
+cp ${fdir}trex_overview.pdf ${pdir}f2.pdf
 
 
 
