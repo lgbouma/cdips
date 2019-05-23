@@ -55,8 +55,8 @@ def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
 
     model = transitleastsquares(bls_times, bls_flux)
     results = model.power(use_threads=1, show_progress_bar=False,
-                          R_star_min=0.13, R_star_max=3.5, M_star_min=0.1,
-                          M_star_max=2.0, period_min=period_min,
+                          R_star_min=0.13, R_star_max=10, M_star_min=0.1,
+                          M_star_max=4.0, period_min=period_min,
                           period_max=period_max, n_transits_min=2,
                           transit_template='default', oversampling_factor=4)
 
