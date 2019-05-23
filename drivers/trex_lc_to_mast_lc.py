@@ -28,7 +28,7 @@ def trex_lc_to_mast_lc(
     ccds=None,
     symlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS/',
     outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/',
-    OC_MG_CAT_ver=0.2,
+    OC_MG_CAT_ver=0.3,
     cdipsvnum=1
 ):
 

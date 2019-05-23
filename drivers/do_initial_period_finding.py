@@ -123,7 +123,7 @@ def do_initial_period_finding(
     nworkers=52,
     maxworkertasks=1000,
     outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
-    OC_MG_CAT_ver=0.2
+    OC_MG_CAT_ver=0.3
 ):
 
     lcdirectory = (
