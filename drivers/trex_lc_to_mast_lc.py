@@ -73,9 +73,9 @@ if __name__ == "__main__":
 
     trex_lc_to_mast_lc(
         sectors=[6],
-        cams=[1,2,3,4],
+        cams=[1],
         ccds=[1,2,3,4],
-        make_symlinks=0,
+        make_symlinks=1,
         make_plots=0,
-        reformat_lcs=1
+        reformat_lcs=0
     )

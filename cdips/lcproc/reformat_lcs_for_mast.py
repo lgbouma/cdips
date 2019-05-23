@@ -7,6 +7,9 @@ import pandas as pd, numpy as np
 import os
 from astropy.io import fits
 from datetime import datetime
+from astroquery.mast import Catalogs
+from astropy import units as u, constants as const
+from astropy.coordinates import SkyCoord
 
 cdips_cat_file = ('/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
                   'OC_MG_FINAL_GaiaRp_lt_16_v0.3.csv')
@@ -197,19 +200,52 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
                    'GaiaDR2 source_id. ->lum_val from same')
 
     #
-    # TICv8 xmatch info, once it exists...
+    # TIC xmatch info:
+    # for TICv7,
+    # require Tmag within 1 mag of Stassun 2019 prediction.
+    # then take the closest such star to Gaia position.
     #
+    ra, dec = primaryhdr['RA_OBJ'], primaryhdr['DEC_OBJ']
+    targetcoord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
+    radius = 1.0*u.arcminute
+
+    stars = Catalogs.query_region(
+        "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
+        catalog="TIC",
+        radius=radius
+    )
+
+    Tmag_pred = (primaryhdr['phot_g_mean_mag']
+                - 0.00522555 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**3
+                + 0.0891337 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**2
+                - 0.633923 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])
+                + 0.0324473)
+
+    selstars = stars[np.abs(stars['Tmag'] - Tmag_pred)<1]
+    mrow = selstars[np.argmin(selstars['dstArcSec'])]
+
     primaryhdr.set('TICVER',
-                   8,
+                   mrow['version'],
                    'TIC version')
 
-    primaryhdr.set('TESSMAG',
-                   42, #FIXME
-                   '[mag] TESS magnitude')
+    primaryhdr.set('TICID',
+                   int(mrow['ID']),
+                   'TIC identifier of xmatch')
 
+    primaryhdr.set('TESSMAG',
+                   mrow['Tmag'],
+                   '[mag] TIC catalog magnitude of xmatch')
+
+    primaryhdr.set('TMAGPRED',
+                   Tmag_pred,
+                   '[mag] predicted Tmag via Stassun+19 Eq1')
     primaryhdr.set('TICCONT',
-                   42, #FIXME
-                   'ContamRatio from TIC')
+                   mrow['contratio'],
+                   'TIC contratio of xmatch ')
+
+    primaryhdr.set('TICDIST',
+                   mrow['dstArcSec'],
+                   '[arcsec] xmatch dist btwn Gaia & TIC')
 
     #
     # who dun it
@@ -283,9 +319,7 @@ def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum):
     cdips_df = pd.read_csv(cdips_cat_file, sep=';')
 
     for lcpath in lcpaths:
-        outpath = os.path.join(outdir, os.path.basename(lcpath))
-        if not os.path.exists(outpath):
-            _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum)
+        _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum)
 
 
 def mask_orbit_start_and_end(lcpaths):
