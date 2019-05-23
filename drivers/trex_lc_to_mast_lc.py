@@ -65,7 +65,8 @@ def trex_lc_to_mast_lc(
                                   )
 
                     if len(lcpaths) > 0:
-                        rlm.reformat_headers(lcpaths, camccddir, sector,
+
+                       rlm.reformat_headers(lcpaths, camccddir, sector,
                                              cdipsvnum)
 
 
@@ -75,7 +76,7 @@ if __name__ == "__main__":
         sectors=[6],
         cams=[1],
         ccds=[1,2,3,4],
-        make_symlinks=1,
+        make_symlinks=0,
         make_plots=0,
-        reformat_lcs=0
+        reformat_lcs=1
     )
