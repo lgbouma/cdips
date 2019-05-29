@@ -7,22 +7,45 @@
 fdir=../paper/figures/
 pdir=../paper/
 
-# placeholder for positions of clusters
+# positions of clusters
 cp ${fdir}GI_figs/cluster_positions_ecliptic_scicase.pdf \
-   ${pdir}f1_PLACEHOLDER.pdf
+   ${pdir}cluster_positions.pdf
 
-# placeholder for what our pipeline does
-cp ${fdir}trex_overview.pdf ${pdir}f2.pdf
+# what our pipeline does
+cp ${fdir}trex_overview.pdf ${pdir}pipelineoverview.pdf
+
+fdir=../results/
+# catalog matching statistics
+cp ${fdir}catalog_to_gaia_match_statistics_MWSC.png \
+   ${pdir}mwscmatchstats.png
+
+cp ${fdir}catalog_to_gaia_match_statistics_Dias14.png \
+   ${pdir}dias14matchstats.png
 
 
+# placeholding wcs
+fdir=../results/astrometric_residual
+cp ${fdir}/proj1510-s0006-cam3-ccd3-combinedphotref-onenight_apertures_on_frame_x_954t1094_y_954t1094.png \
+   ${pdir}astromresidual_apertures.png
+
+cp ${fdir}/proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_sep_hist.png \
+   ${pdir}astromresidual_hist.png
+
+cp ${fdir}/proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_quiver_meas_proj_sep.png \
+   ${pdir}astromresidual_quiver.png
+
+
+##########################################
 
 lcdir=../results/projid1088_cam2_ccd2_lcs/center_lcs/
 # plot of (mag,x,y,T,s,d,k,bkgd) vs time
-cp ${lcdir}EPDparams_vs_time_frac1.0_4979427719678442752_llc.png ${pdir}f3.png
+cp ${lcdir}EPDparams_vs_time_frac1.0_4979427719678442752_llc.png \
+   ${pdir}epdparams_vs_time.png
 
 # plot of mag vs (t,T,x,y,s,d,k) for four stars
 lcdir=../results/projid1088_cam2_ccd2_lcs/
-cp ${lcdir}IRM1_vs_EPD_parameters_fourstars_norbit1.png ${pdir}f4.png
+cp ${lcdir}IRM1_vs_EPD_parameters_fourstars_norbit1.png \
+   ${pdir}mag_vs_epdparams.png
 
 
 echo "collected figures -> /paper/f?.pdf -> /paper/f?.png"
