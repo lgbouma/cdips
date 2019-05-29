@@ -1,0 +1,148 @@
+solve-field --ra 86.6153 --dec 11.8674 --radius 20 --scale-low 15 --scale-high 25 --scale-units arcsecperpix --tweak-order 4 --wcs /home/lbouma/tess2018350135939-s0006-1-4-0126_cal_img_bkgdsub.wcs --downsample 2 --overwrite --fits-image --no-verify --pixel-error 0.4 --uniformize 10 /home/lbouma/tess2018350135939-s0006-1-4-0126_cal_img_bkgdsub.fits
+
+mean std med
+0.914 1.190 0.740
+
+this difference is worrying close to sqrt(2)/2, which I think is close to what's expected if we fucked up the 0-1 convention...
+
+and all arrow seem to point in one direction...
+
+----------
+
+try another frame:
+
+solve-field --ra 81.7485 --dec -48.4509 --radius 20 --scale-low 15 --scale-high 25 --scale-units arcsecperpix --tweak-order 4 --wcs /home/lbouma/proj1510-s0006-cam3-ccd3-combinedphotref-onenight.wcs --downsample 2 --overwrite --fits-image --no-verify --pixel-error 0.4 --uniformize 10 --quad-size-min 0.01 --quad-size-max 0.3 /home/lbouma/proj1510-s0006-cam3-ccd3-combinedphotref-onenight.fits
+
+all the arrows point in the same direction...
+
+mean std med
+0.905 0.613 0.869
+
+----------
+
+ok, so if i subtract 0.5 from the projected x and y coordinates, i get
+
+mean std med
+0.241, 0.650, 0.184
+
+by running
+
+solve-field --ra 81.7485 --dec -48.4509 --radius 20 --scale-low 15 --scale-high 25 --scale-units arcsecperpix --tweak-order 4 --wcs /home/lbouma/proj1510-s0006-cam3-ccd3-combinedphotref-onenight.wcs --downsample 2 --overwrite --fits-image --no-verify --pixel-error 0.4 --uniformize 10 --quad-size-min 0.01 --quad-size-max 0.3 /home/lbouma/proj1510-s0006-cam3-ccd3-combinedphotref-onenight.fits
+
+(and subtracting 0.5 from projected x and y coords)
+
+----------
+
+increasing tweak order to 6 gives slight improvement...
+
+mean std med
+0.219, 0.652, 0.154
+
+--------------------
+Mon May 27 13:28:01 2019
+
+cam2 ccd1 to start spoc comparison tests....
+
+solve-field --ra 85.1054 --dec -24.6352 --radius 20 --scale-low 15 --scale-high 25 --scale-units arcsecperpix --tweak-order 6 --wcs /home/lbouma/tess2018353175939-s0006-2-1-0126_cal_img_bkgdsub.wcs --downsample 2 --overwrite --fits-image --no-verify --pixel-error 0.4 --uniformize 10 --quad-size-min 0.005 --quad-size-max 0.1 /home/lbouma/tess2018353175939-s0006-2-1-0126_cal_img_bkgdsub.fits
+
+gives
+
+mean std med
+0.200  0.772 0.119
+
+(my derived WCS)
+
+
+compare to SPOC WCS for the frame:
+mean std med
+0.157 0.803 0.069
+
+--------------------
+Mon May 27 14:05:11 2019
+
+OK. NOTE:
+
+using --crpix-center leads to an extremely good WCS at the CENTER of the image. (like 0.01 pixel precision)
+
+However it adds a rotation-error (lookin like B-modes) in clockwise direction at the field edges.
+
+
+solve-field --ra 85.1054 --dec -24.6352 --radius 20 --scale-low 15 --scale-high 25 --scale-units arcsecperpix --tweak-order 6 --wcs /home/lbouma/tess2018353175939-s0006-2-1-0126_cal_img_bkgdsub.wcs --downsample 2 --overwrite --fits-image --no-verify --pixel-error 0.4 --uniformize 10 --quad-size-min 0.005 --quad-size-max 0.1 /home/lbouma/tess2018353175939-s0006-2-1-0126_cal_img_bkgdsub.fits
+
+gives
+
+mean std med
+0.200  0.772 0.119
+
+change pixel-error down to 0.2, get
+
+mean std med
+0.194  0.772 0.112
+
+
+down to 0.15, get
+
+solve-field --ra 85.1054 --dec -24.6352 --radius 20 --scale-low 15 --scale-high 25 --scale-units arcsecperpix --tweak-order 6 --wcs /home/lbouma/tess2018353175939-s0006-2-1-0126_cal_img_bkgdsub.wcs --downsample 2 --overwrite --fits-image --no-verify --pixel-error 0.15 --uniformize 10 --quad-size-min 0.005 --quad-size-max 0.1 /home/lbouma/tess2018353175939-s0006-2-1-0126_cal_img_bkgdsub.fits
+
+mean std med
+0.185 0.772 0.107
+
+... at worse log odds than the aboves ones, somehow (!)
+
+nonetheless, these tweaks do not seem promising to get the last factor of 1.5x precision desired...
+
+--------------------
+
+Mon May 27 15:11:41 2019
+
+Options include:
+
+1) switch to perhaps feeding solve-field positions measured by fistar. might be more accurate?
+
+2) try to see if the [0,1] pixel coordinate rescaling helps + is possible, since we're relying so strongly on the nonlinear SIP correction in the field corners
+
+3) just switch to using SPOC WCS for everything. would require checking that it still is v good for photref frames.
+
+4) it seems like pixel-error is the only parameter i've found that can IMPROVE the astrometric residual. if i did a grid search over that parameter, could get an "optimized" WCS.
+
+  * note tweak-order as 4 makes little difference, maybe a bit worse
+  * higher order downsampling doesnt help
+  * uniformize btwn 10 and 15 maybe can make minor improvements, unclear
+  * odds-to-stop-looking, and all similar log-odds based kwargs seem to do nothing
+  * (and i tried basically all of them)
+  * crpix-center seems to produce v good fits in the centers... but not at the edges.
+
+5) another path would be to split each CCD's FFI into say a 2x2 sub image. (or 3x3, whatever). solve for WCS in each. the coordinate projection could probably become more accurate this way.
+  (because you wouldn't be relying on as finely tuned polynomial coefficients at high orders!!)
+
+  this would give like 4 wcs solutions per image though.
+
+  how would this change things?
+  well i guess all `anrd2xy` type calls would need to be called 4 times. the output (ie. with the precise pixel-coordinate projections) would need to be all concatenated
+  together.
+
+-----
+
+seems like the only sure-fire ways to get to the astrometric precision desired (SPOC or better) are (3) or (5).
+
+(3) seems easiest.
+
+  
+
+--------------------
+Tue 28 May 2019 11:59:04 AM EDT
+
+proceeding with (3).
+
+on s6,cam4,ccd2, combinedphotref ---
+
+MY WCS
+mean std med
+0.197, 0.772, 0.105
+
+SPOC WCS
+mean std med
+0.147, 0.794, 0.057
+
+so basically ... this idea works.
+

@@ -846,11 +846,17 @@ are also worth exploring \citep{wang_pixel-level_2017}.
 
 With a kernel selected, and the convolution and subtraction performed, 
 we calculate the instrumental fluxes on each frame per 
-Equation~\ref{eq:ism_flux_measurement}. To finally convert from a list of 
+Equation~\ref{eq:ism_flux_measurement}. 
+We do this with three different aperture sizes: for this work, circles
+of radii 1 pixel, 1.5 pixels, and 2.25 pixels.
+These sizes were chosen to roughly span the range of optimal aperture
+sizes for stars in our sample, as calcuated in the pre-flight
+\citet{Sullivan_et_al_2015} work.
+To finally convert from a list of 
 sources on each frame to a list of flux values at any given time, we use the 
 \texttt{grcollect} transposition tool.
 
-\subsection{Light curve Detrending}
+\subsection{Light Curve Detrending}
 \label{subsec:lcdetrending}
 
 The preceding steps produce light curves that include both instrumental
