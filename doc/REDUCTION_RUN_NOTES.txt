@@ -54,3 +54,27 @@ what could put it into the raw magnitudes?
 - additionally there were some issues introduced by incorrect "badtimes". (for
   sector 1, at least).
   - i have dealt with this by fixing the time windows.
+
+--------------------
+
+2019/05/30
+
+completed :
+1500  (cam1 ccd1)
+1504  (cam2 ccd1)
+1507, 08, 09, 10, 11  (cam2ccd4, cam3ccd[1-4])
+
+
+failed :
+1501, 02, 03, 05, 06
+b/c of WCS fail!
+
+... b/c the stdvn = 1.0 pixel was too harsh. there are missing stars b/c of the
+masking, so no real surprise it is driven a bit high (while the distribtion as
+a whole is fine)
+
+-> raise it to 1.5 px
+
+-----
+
+The CTOI mechanism is live
