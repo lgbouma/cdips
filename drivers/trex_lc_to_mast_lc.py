@@ -19,6 +19,17 @@ from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.lcproc import reformat_lcs_for_mast as rlm
 from cdips.lcproc import mask_orbit_edges as moe
 
+def main():
+
+    trex_lc_to_mast_lc(
+        sectors=[6],
+        cams=[1],
+        ccds=[1,2,3,4],
+        make_symlinks=0,
+        make_plots=0,
+        reformat_lcs=1
+    )
+
 def trex_lc_to_mast_lc(
     make_symlinks=1,
     make_plots=0,
@@ -71,12 +82,4 @@ def trex_lc_to_mast_lc(
 
 
 if __name__ == "__main__":
-
-    trex_lc_to_mast_lc(
-        sectors=[6],
-        cams=[1],
-        ccds=[1,2,3,4],
-        make_symlinks=0,
-        make_plots=0,
-        reformat_lcs=1
-    )
+    main()
