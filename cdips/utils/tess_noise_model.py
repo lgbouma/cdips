@@ -224,6 +224,7 @@ def noise_model(
     # N_pix_sel = N_pix_in_aperture_Jenkins(T_mags)
     # use sullivan's instead
     N_pix_sel = N_pixels_in_aperture_Sullivan(T_mags)
+    N_pix_sel[(N_pix_sel < 3) | (N_pix_sel > 50)] = 3
     # leave N_pix_sel as float, for smooth display at the end
     N_pix_sel = np.round(
             np.maximum(3*np.ones_like(N_pix_sel),N_pix_sel)).astype(int)
@@ -239,6 +240,8 @@ def noise_model(
     e_star_sel_ap = []
     e_sky_sel_ap = []
     for ix, sel_ind in enumerate(sel_inds):
+        if sel_ind > 50 or sel_ind < 2:
+            sel_ind = 2
         e_star_sel_ap.append(e_star_all_ap[ix,sel_ind])
         e_sky_sel_ap.append(e_sky_all_ap[ix,sel_ind])
     e_star_sel_ap = np.array(e_star_sel_ap)
