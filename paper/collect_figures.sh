@@ -14,25 +14,31 @@ cp ${fdir}GI_figs/cluster_positions_ecliptic_scicase.pdf \
 # what our pipeline does
 cp ${fdir}trex_overview.pdf ${pdir}pipelineoverview.pdf
 
-fdir=../results/
 # catalog matching statistics
+fdir=../results/
 cp ${fdir}catalog_to_gaia_match_statistics_MWSC.png \
    ${pdir}mwscmatchstats.png
 
 cp ${fdir}catalog_to_gaia_match_statistics_Dias14.png \
    ${pdir}dias14matchstats.png
 
-
 # placeholding wcs
-fdir=../results/astrometric_residual
-cp ${fdir}/proj1510-s0006-cam3-ccd3-combinedphotref-onenight_apertures_on_frame_x_954t1094_y_954t1094.png \
+fdir=../results/astrometric_residual/
+cp ${fdir}proj1510-s0006-cam3-ccd3-combinedphotref-onenight_apertures_on_frame_x_954t1094_y_954t1094.png \
    ${pdir}astromresidual_apertures.png
 
-cp ${fdir}/proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_sep_hist.png \
+cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_sep_hist.png \
    ${pdir}astromresidual_hist.png
 
-cp ${fdir}/proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_quiver_meas_proj_sep.png \
+cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_quiver_meas_proj_sep.png \
    ${pdir}astromresidual_quiver.png
+
+# rms vs mag 
+fdir=../results/paper_figures/
+cp ${fdir}rms_vs_mag.png ${pdir}rms_vs_mag.png
+
+# positions of lightcurves
+cp ${fdir}cam1_cluster_field_star_positions.png ${pdir}cam1_cluster_field_star_positions.png
 
 
 ##########################################
