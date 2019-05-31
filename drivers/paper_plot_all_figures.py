@@ -23,20 +23,26 @@ from cdips.utils import tess_noise_model as tnm
 OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 
 def main():
-    #
     # fig N: positions of field and cluster stars
-    #
     plot_cluster_and_field_star_scatter(overwrite=0)
 
-    #
     # fig N: RMS vs catalog T mag
-    #
     plot_rms_vs_mag(overwrite=0)
 
-    #
-    # fig N: ? all-sky map of clusters observed by TESS, over the TESS footprint
-    #
+    # fig N: histogram (or CDF) of stellar magnitude (T mag)
+    plot_cdf_T_mag(overwrite=0)
 
+    # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
+    # calculated for CTL stars, so by definition it has limited use
+    plot_cdf_cont(overwrite=0)
+
+    # fig N: HRD for CDIPS stars.
+    plot_hrd_scat(overwrite=0, close_subset=1)
+    plot_hrd_scat(overwrite=0, close_subset=0)
+
+    # fig N: pmRA and pmDEC scatter for CDIPS stars.
+    plot_pm_scat(overwrite=1, close_subset=1)
+    plot_pm_scat(overwrite=1, close_subset=0)
 
     #
     # fig N: wcs quality verification
@@ -44,6 +50,224 @@ def main():
     plot_wcs_verification()
 
     pass
+
+def savefig(fig, figpath):
+    fig.savefig(figpath, dpi=450, bbox_inches='tight')
+    print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
+
+def _get_rms_vs_mag_df():
+
+    sectornum = 6
+    cam = 1
+    ccds = [1,2,3,4]
+    csvpaths = []
+
+    for ccd in ccds:
+
+        csvpath = os.path.join(
+            OUTDIR,'cam{}_ccd{}_rms_vs_mag_data.csv'.
+            format(cam, ccd)
+        )
+
+        csvpaths.append(csvpath)
+
+    df = pd.concat((pd.read_csv(f) for f in csvpaths))
+    if len(df) == 0:
+        raise AssertionError('need to run rms vs mag first!!')
+
+    return df
+
+def plot_cdf_T_mag(overwrite=0):
+
+    outpath = os.path.join(OUTDIR, 'cdf_T_mag.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    df = _get_rms_vs_mag_df()
+
+    f,ax = plt.subplots(figsize=(4,3))
+
+    magstr = 'TESSMAG'
+    bins = np.arange(np.floor(np.min(df[magstr])),
+                     np.ceil(np.max(df[magstr])),
+                     1)
+    ax.hist(df[magstr], bins=bins, cumulative=True)
+
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    ax.set_xlabel('TESS magnitude')
+    ax.set_ylabel('cumulative number of LCs')
+    ax.set_yscale('log')
+
+    f.tight_layout(pad=0.2)
+    savefig(f, outpath)
+
+
+def plot_cdf_cont(overwrite=0):
+
+    outpath = os.path.join(OUTDIR, 'cdf_ticcont_isCTL.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    df = _get_rms_vs_mag_df()
+
+    f,ax = plt.subplots(figsize=(4,3))
+
+    targetstr = 'TICCONT'
+    bins = np.logspace(-3,2,11)
+    ax.hist(df[targetstr], bins=bins, cumulative=True)
+
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    ax.set_xlabel('nhbr flux / target flux (TICCONT)')
+    ax.set_ylabel('cumulative number of LCs')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+
+    f.tight_layout(pad=0.2)
+    savefig(f, outpath)
+
+
+def plot_hrd_scat(overwrite=0, close_subset=1):
+
+    if close_subset:
+        outpath = os.path.join(OUTDIR, 'hrd_scat_close_subset.png')
+    else:
+        outpath = os.path.join(OUTDIR, 'hrd_scat_all_CDIPS_LCs.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    df = _get_rms_vs_mag_df()
+
+    # 2d SCATTER CASE
+    if close_subset:
+        df = df[df['Parallax[mas]'] > 0]
+    plx_as = df['Parallax[mas]']/1000
+    if close_subset:
+        df = df[ 1/plx_as < 1000 ]
+
+    f,ax = plt.subplots(figsize=(4,3))
+
+    color = df['phot_bp_mean_mag']-df['phot_rp_mean_mag']
+    M_omega = df['phot_g_mean_mag'] + 5*np.log10(df['Parallax[mas]']/1000) + 5
+
+    ax.scatter(color,
+               M_omega,
+               rasterized=True, s=0.1, alpha=1, linewidths=0, zorder=5)
+
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    ax.set_xlabel('$G_{\mathrm{BP}} - G_{\mathrm{RP}}$')
+    ax.set_ylabel('$M_\omega = G + 5\log_{10}(\omega_{\mathrm{as}}) + 5$')
+    ylim = ax.get_ylim()
+    ax.set_ylim((max(ylim),min(ylim)))
+
+    ax.set_xlim((-0.7, 4.3))
+
+    if close_subset:
+        txtstr= (
+            '$\omega>0$, $1/\omega_{\mathrm{as}} < 1000$, '+'{} stars'.
+            format(len(df))
+        )
+    else:
+        txtstr= (
+            '{} stars (no parallax cuts)'.format(len(df))
+        )
+    ax.text(
+        0.97, 0.97,
+        txtstr,
+        ha='right', va='top',
+        fontsize='x-small',
+        transform=ax.transAxes
+    )
+
+    f.tight_layout(pad=0.2)
+    savefig(f, outpath)
+
+
+def plot_pm_scat(overwrite=0, close_subset=0):
+
+    if close_subset:
+        outpath = os.path.join(OUTDIR, 'pm_scat_close_subset.png')
+    else:
+        outpath = os.path.join(OUTDIR, 'pm_scat_all_CDIPS_LCs.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    df = _get_rms_vs_mag_df()
+
+    # 2d SCATTER CASE
+    if close_subset:
+        df = df[df['Parallax[mas]'] > 0]
+    plx_as = df['Parallax[mas]']/1000
+    if close_subset:
+        df = df[ 1/plx_as < 1000 ]
+
+    f,ax = plt.subplots(figsize=(4,3))
+
+    xval = df['PM_RA[mas/yr]']
+    yval = df['PM_Dec[mas/year]']
+    ax.scatter(xval,
+               yval,
+               rasterized=True, s=0.1, alpha=1, linewidths=0, zorder=5)
+
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    ax.set_xlabel('pmRA[mas/yr]')
+    ax.set_ylabel('pmDEC[mas/yr]')
+
+    ax.set_xlim([-20,20])
+    ax.set_ylim([-20,20])
+
+    if close_subset:
+        txtstr= (
+            '$\omega>0$, $1/\omega_{\mathrm{as}} < 1000$, '+'{} stars'.
+            format(len(df))
+        )
+    else:
+        txtstr= (
+            '{} stars (no parallax cuts)'.format(len(df))
+        )
+    ax.text(
+        0.97, 0.97,
+        txtstr,
+        ha='right', va='top',
+        fontsize='x-small',
+        transform=ax.transAxes
+    )
+
+    f.tight_layout(pad=0.2)
+    savefig(f, outpath)
+
+
 
 
 def plot_cluster_and_field_star_scatter(overwrite=0):
@@ -185,6 +409,7 @@ def get_lc_stats(lcpaths, cdipslcdir, outpath, sectornum, cdipsvnum=1,
 
     hdrkeys = ['Gaia-ID','XCC','YCC','RA_OBJ','DEC_OBJ',
                'phot_g_mean_mag','phot_bp_mean_mag','phot_rp_mean_mag',
+               'Parallax[mas]', 'PM_RA[mas/yr]', 'PM_Dec[mas/year]',
                'TESSMAG', 'TMAGPRED', 'TICCONT']
     skeys = ['stdev_tf1','stdev_tf2','stdev_tf3',
              'mad_tf1','mad_tf2','mad_tf3',
@@ -306,7 +531,7 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
                                figsize=(4,5),
                                gridspec_kw= {'height_ratios':[3, 1.5]})
 
-    a0.scatter(mags, rms, c='k', alpha=0.12, zorder=-5, s=0.5,
+    a0.scatter(mags, rms, c='k', alpha=0.2, zorder=-5, s=0.5,
                rasterized=True, linewidths=0)
 
     if yaxisval=='RMS':
@@ -336,7 +561,7 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
     noise_star = out[2,:]
     noise_ro = out[4,:]
     noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2)
-    a1.scatter(mags, rms/noise_star_plus_ro, c='k', alpha=0.12, zorder=-5,
+    a1.scatter(mags, rms/noise_star_plus_ro, c='k', alpha=0.2, zorder=-5,
                s=0.5, rasterized=True, linewidths=0)
 
     a0.legend(loc='upper left', fontsize='xx-small')
