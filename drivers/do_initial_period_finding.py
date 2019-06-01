@@ -1,8 +1,8 @@
 """
 given >~10k LCs per galactic field, we want to skim the cream off the top.
 
-run as:
-$ python -u do_initial_period_finding.py &> ../logs/sector6_initial_period_finding.log &
+run as (from phtess2 usually):
+$ python -u do_initial_period_finding.py &> logs/sector6_initial_period_finding.log &
 """
 from astropy.stats import LombScargle
 from transitleastsquares import transitleastsquares
@@ -19,6 +19,15 @@ from astropy.io import fits
 
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.lcproc import mask_orbit_edges as moe
+
+def main():
+
+    do_initial_period_finding(
+        sectornum=6, nworkers=52, maxworkertasks=1000,
+        outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
+        OC_MG_CAT_ver=0.3
+    )
+
 
 def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
                      period_max=27, orbitgap=1, expected_norbits=2,
@@ -55,8 +64,8 @@ def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
 
     model = transitleastsquares(bls_times, bls_flux)
     results = model.power(use_threads=1, show_progress_bar=False,
-                          R_star_min=0.13, R_star_max=10, M_star_min=0.1,
-                          M_star_max=4.0, period_min=period_min,
+                          R_star_min=0.1, R_star_max=10, M_star_min=0.1,
+                          M_star_max=5.0, period_min=period_min,
                           period_max=period_max, n_transits_min=2,
                           transit_template='default', oversampling_factor=4)
 
@@ -233,4 +242,4 @@ def do_initial_period_finding(
 
 
 if __name__ == "__main__":
-    do_initial_period_finding(sectornum=6)
+    main()
