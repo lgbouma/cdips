@@ -255,8 +255,6 @@ easiest case for us to merge against our light curve database.
 For the TESS Sectors 1--5 light curves produced in this study, this
 yielded X and Y light curves respectively.
 
-
-
 %FIXME: make table
 
 \subsection{Big catalogs: open clusters}
@@ -317,20 +315,6 @@ magnitudes of the prediction.
 From 2{,}034{,}269 stars, this yielded a unique
 best neighbor for 1{,}828{,}630 stars (89.9\% of the sample), and a choice
 between two neighbors for 8.7\% of the remaining sample. 
-
-\begin{figure*}[!ht]
-  \gridline{\fig{astromresidual_hist.png}{0.5\textwidth}{}}
-  \vspace{-0.8cm}
-  \gridline{\fig{astromresidual_quiver.png}{0.5\textwidth}{}}
-  \vspace{-0.8cm}
-  \gridline{\fig{astromresidual_apertures.png}{0.5\textwidth}{}}
-  \caption{
-      {\it Top.} Histogram
-      {\it Middle.} Vector
-      {\it Bottom.} Apertures
-  }
-  \label{fig:xmatch_info}
-\end{figure*}
 
 The distributions of various cross-matching statistics are shown in
 Figure~\ref{fig:xmatch_info}.  The distances between matches is
@@ -413,6 +397,32 @@ forming regions justifies their inclusion in our search sample.
 
 \subsection{Summary of selected stars}
 
+\begin{figure}[t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.45\textwidth]{star_catalog_mag_histogram_phot_rp_mean_mag.png}
+	\end{center}
+	\vspace{-0.2cm}
+	\caption{
+    {\bf Cumulative counts of candidate cluster member stars a
+    function of Gaia $Rp$-band magnitude.}
+	\label{fig:cdips_targets}
+	}
+\end{figure}
+
+\begin{figure*}[!ht]
+	\gridline{\fig{mwscmatchstats.png}{0.95\textwidth}{}}
+	\vspace{-0.8cm}
+	\gridline{\fig{dias14matchstats.png}{0.95\textwidth}{}}
+	\caption{
+		{\it Top.} Cross-match statistics from \cite{Kharchenko_et_al_2013} {\it 
+			vs.} Gaia-DR2.
+		{\it Bottom.} Ditto, for \cite{dias_proper_2014} {\it vs.} Gaia-DR2.
+	}
+	\label{fig:xmatch_info}
+\end{figure*}
+
+
 After collecting the aforementioned lists, we
 merged them into a single table. We then queried the
 \texttt{gaiadr2.gaia\_source} table to retrieve their photometric $G$,
@@ -432,6 +442,9 @@ multiple authors.  The largest number of stars come from
 Stars reported in multiple catalogs have all available reference information
 concatenated.  
 The resulting CDIPS target star list is given in Table~N.
+The distribution of target star brightnesses is shown in
+Figure~\ref{fig:cdips_targets}.
+
 
 
 
@@ -531,16 +544,19 @@ These begin in Sector 6 (2018-12-12, spacecraft orbit \#19).
 \subsection{Image Preparation, Background Removal, \& Meta-Data Collection}
 \label{subsec:preparation}
 
+
 \begin{figure*}[!ht]
-  \gridline{\fig{mwscmatchstats.png}{0.95\textwidth}{}}
-  \vspace{-0.8cm}
-  \gridline{\fig{dias14matchstats.png}{0.95\textwidth}{}}
-  \caption{
-      {\it Top.} Cross-match statistics from \cite{Kharchenko_et_al_2013} {\it 
-      vs.} Gaia-DR2.
-      {\it Bottom.} Ditto, for \cite{dias_proper_2014} {\it vs.} Gaia-DR2.
-  }
-  \label{fig:xmatch_info}
+	\gridline{\fig{astromresidual_hist.png}{0.5\textwidth}{}}
+	\vspace{-0.8cm}
+	\gridline{\fig{astromresidual_quiver.png}{0.5\textwidth}{}}
+	\vspace{-0.8cm}
+	\gridline{\fig{astromresidual_apertures.png}{0.5\textwidth}{}}
+	\caption{
+		{\it Top.} Histogram
+		{\it Middle.} Vector
+		{\it Bottom.} Apertures
+	}
+	\label{fig:astromresid}
 \end{figure*}
 
 
@@ -1192,6 +1208,29 @@ separately.
     {\bf RMS vs mag for CDIPS light curves.}
 		\label{fig:rms_vs_mag}
 	}
+\end{figure}
+
+\begin{figure}[t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.45\textwidth]{cdf_T_mag.png}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+		{\bf Cumulative distribution of TESS-band magnitudes for CDIPS light curves.}
+		\label{fig:cdf_T_mag}
+	}
+\end{figure}
+
+\begin{figure}[!ht]
+	\gridline{\fig{hrd_scat_all_CDIPS_LCs.png}{0.45\textwidth}{}}
+	\vspace{-0.8cm}
+	\gridline{\fig{hrd_scat_close_subset.png}{0.45\textwidth}{}}
+	\caption{
+		{\it Top.} Stellar properties of CDIPS stars with light curves in this data release.
+		{\it Bottom.} Stellar properties of close CDIPS stars with light curves.
+	}
+	\label{fig:hrd}
 \end{figure}
 
 
