@@ -30,3 +30,5 @@
 
 10. `make_vetting_multipg_pdf`: make a multipage PDF with the information needed
    to make classifications for vetting.
+
+11. `paper_plot_all_figures`: plots figures for paper I.

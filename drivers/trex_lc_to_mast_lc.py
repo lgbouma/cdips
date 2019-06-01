@@ -23,7 +23,7 @@ def main():
 
     trex_lc_to_mast_lc(
         sectors=[6],
-        cams=[1],
+        cams=[1,2,3,4],
         ccds=[1,2,3,4],
         make_symlinks=0,
         make_plots=0,

@@ -23,22 +23,22 @@ from cdips.utils import tess_noise_model as tnm
 OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 
 def main():
-    # fig N: positions of field and cluster stars
+    # fig N: positions of field and cluster stars (currently just cam 1)
     plot_cluster_and_field_star_scatter(overwrite=0)
 
     # fig N: RMS vs catalog T mag
-    plot_rms_vs_mag(overwrite=0)
+    plot_rms_vs_mag(overwrite=1)
 
     # fig N: histogram (or CDF) of stellar magnitude (T mag)
-    plot_cdf_T_mag(overwrite=0)
+    plot_cdf_T_mag(overwrite=1)
 
     # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
     # calculated for CTL stars, so by definition it has limited use
-    plot_cdf_cont(overwrite=0)
+    plot_cdf_cont(overwrite=1)
 
     # fig N: HRD for CDIPS stars.
-    plot_hrd_scat(overwrite=0, close_subset=1)
-    plot_hrd_scat(overwrite=0, close_subset=0)
+    plot_hrd_scat(overwrite=1, close_subset=1)
+    plot_hrd_scat(overwrite=1, close_subset=0)
 
     # fig N: pmRA and pmDEC scatter for CDIPS stars.
     plot_pm_scat(overwrite=1, close_subset=1)
@@ -58,18 +58,19 @@ def savefig(fig, figpath):
 def _get_rms_vs_mag_df():
 
     sectornum = 6
-    cam = 1
+    cams = [1,2,3,4]
     ccds = [1,2,3,4]
     csvpaths = []
 
-    for ccd in ccds:
+    for cam in cams:
+        for ccd in ccds:
 
-        csvpath = os.path.join(
-            OUTDIR,'cam{}_ccd{}_rms_vs_mag_data.csv'.
-            format(cam, ccd)
-        )
+            csvpath = os.path.join(
+                OUTDIR,'cam{}_ccd{}_rms_vs_mag_data.csv'.
+                format(cam, ccd)
+            )
 
-        csvpaths.append(csvpath)
+            csvpaths.append(csvpath)
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
     if len(df) == 0:
@@ -470,35 +471,29 @@ def plot_rms_vs_mag(overwrite=0):
         return
 
     sectornum = 6
-    cam = 1 # TODO: add cameras
+    cams = [1,2,3,4]
     ccds = [1,2,3,4]
     csvpaths = []
     N_max = 100000
 
-    for ccd in ccds:
+    for cam in cams:
+        for ccd in ccds:
+            cdipslcdir = (
+                '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam{}_ccd{}'.
+                format(cam, ccd)
+            )
+            lcglob = '*_llc.fits'
+            alllcpaths = glob(os.path.join(cdipslcdir, lcglob))
 
-        # # all lightcurves
-        # lcdir = (
-        #     '/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s0006/ISP_{}-{}-15??/'.
-        #     format(cam, ccd)
-        # )
+            csvpath = os.path.join(
+                OUTDIR,'cam{}_ccd{}_rms_vs_mag_data.csv'.
+                format(cam, ccd)
+            )
 
-        cdipslcdir = (
-            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam{}_ccd{}'.
-            format(cam, ccd)
-        )
-        lcglob = '*_llc.fits'
-        alllcpaths = glob(os.path.join(cdipslcdir, lcglob))
+            csvpaths.append(csvpath)
 
-        csvpath = os.path.join(
-            OUTDIR,'cam{}_ccd{}_rms_vs_mag_data.csv'.
-            format(cam, ccd)
-        )
-
-        csvpaths.append(csvpath)
-
-        get_lc_stats(alllcpaths, cdipslcdir, csvpath, sectornum,
-                     N_desired=N_max)
+            get_lc_stats(alllcpaths, cdipslcdir, csvpath, sectornum,
+                         N_desired=N_max)
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
 
