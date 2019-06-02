@@ -1204,8 +1204,10 @@ separately.
 		\includegraphics[width=0.49\textwidth]{rms_vs_mag.png}
 	\end{center}
 	\vspace{-0.5cm}
-	\caption{
-    {\bf RMS vs mag for CDIPS light curves.}
+  \caption{ {\bf Standard deviation of light curves vs catalog
+  TESS-band magnitude for CDIPS light curves.}  Faint stars in heavily
+  crowded regions have bright neighbors which drive their light curve
+  scatter below the expected noise limits.
 		\label{fig:rms_vs_mag}
 	}
 \end{figure}
@@ -1258,16 +1260,18 @@ First, to identify periodic transit-like signals, we used
 The algorithm is the same as the canonical box least-squares
 \citep{kovacs_box-fitting_2002}, except in place of a box template, a transit 
 template is used  for a marginal improvement of the detection efficiency.
-In addition, the search grids in the \texttt{tls} 
-implementation\footnote{\url{https://github.com/hippke/tls}} are slightly more 
-efficient than in most BLS implementations, since it uses the 
-cubic-in-frequency sampling advocated for by \citet{ofir_optimizing_2014}, 
+In addition, the search grids in \texttt{tls} 
+\footnote{\url{https://github.com/hippke/tls}} are slightly more 
+efficient than in most BLS implementations, since \texttt{tls} uses the 
+cubic-in-frequency sampling advocated by \citet{ofir_optimizing_2014}, 
 rather than standard linear-in-frequency sampling.
 During the period search, we rejected $6\,{\rm hours}$ at the
 beginning and end of each spacecraft orbit, to mitigate the presence
 of correlated red noise in the results.
 This shrinks the data volume by about 5\%, but also lowers the number
 of systematic false positives in subsequent vetting.
+Our grids typically consisted of about 25 different durations, and
+about 2500 periods between 0.5 and 11 days.
 We also ran a generalized Lomb-Scargle periodogram (CITE), simply to 
 have additional periodicity information.
 
