@@ -1,6 +1,8 @@
 """
 use WCS in the given calibrated images to compute how many CDIPS stars are
 expected to fall on silicon. (in every sector, over all images)
+
+environment: brik
 """
 import os, textwrap
 import numpy as np, pandas as pd, matplotlib.pyplot as plt

@@ -7,7 +7,7 @@ usage:
 
     $ (trex_37) python get_cdips_lc_stats.py |& tee /nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats/sector-6/stats_overview_log.txt
 
-NOTE: depends on pipe-trex (--> run in trex_37 environment)
+NOTE: depends on pipe-trex (--> run in environment with aperturephot on path)
 """
 import pandas as pd, numpy as np
 import aperturephot as ap
@@ -31,6 +31,8 @@ def get_cdips_lc_stats(
         '/nfs/phtess1/ar1/TESS/PROJ/lbouma/sourceid_and_photrpmeanmag_v{}.csv'.
         format(cdipssource_vnum)
     )
+    if not os.path.exists(catalogfile):
+        raise AssertionError('didnt find catalogfile')
 
     projdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips'
     statsdir = os.path.join(projdir,

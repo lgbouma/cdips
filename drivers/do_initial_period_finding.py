@@ -19,6 +19,7 @@ from astropy.io import fits
 
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.lcproc import mask_orbit_edges as moe
+from skim_cream import plot_initial_period_finding_results
 
 def main():
 
@@ -147,57 +148,65 @@ def do_initial_period_finding(
 
     #lcpaths = np.random.choice(lcpaths,size=1000) #NOTE for debugging
 
-    tasks = [(x) for x in lcpaths]
-    N_lcs = len(lcpaths)
-
-    print('%sZ: %s files to run initial periodograms on' %
-          (datetime.utcnow().isoformat(), len(lcpaths)))
-
-    pool = mp.Pool(nworkers,maxtasksperchild=maxworkertasks)
-
-    # fire up the pool of workers
-    #results = pool.map(periodfindingworker, tasks)
-    #results = pool.map_async(periodfindingworker, tasks, make_log_result,)
-    results = []
-    for task in tasks:
-        pool.apply_async(periodfindingworker, args=[task],
-                         callback=make_log_result(results, N_lcs))
-
-    # wait for the processes to complete work
-    pool.close()
-    pool.join()
-
-    df = pd.DataFrame(
-        results,
-        columns=['source_id', 'ls_period', 'ls_fap', 'tls_period', 'tls_sde',
-                 'tls_t0', 'tls_depth', 'tls_duration', 'xcc', 'ycc', 'ra',
-                 'dec']
-    )
-    df = df.sort_values(by='source_id')
-
     outdir = os.path.join(outdir, 'sector-{}'.format(sectornum))
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     outpath = os.path.join(outdir, 'initial_period_finding_results.csv')
 
-    df.to_csv(outpath, index=False)
-    print('made {}'.format(outpath))
+    if not os.path.exists(outpath):
+        tasks = [(x) for x in lcpaths]
+        N_lcs = len(lcpaths)
+
+        print('%sZ: %s files to run initial periodograms on' %
+              (datetime.utcnow().isoformat(), len(lcpaths)))
+
+        pool = mp.Pool(nworkers,maxtasksperchild=maxworkertasks)
+
+        # fire up the pool of workers
+        #results = pool.map(periodfindingworker, tasks)
+        #results = pool.map_async(periodfindingworker, tasks, make_log_result,)
+        results = []
+        for task in tasks:
+            pool.apply_async(periodfindingworker, args=[task],
+                             callback=make_log_result(results, N_lcs))
+
+        # wait for the processes to complete work
+        pool.close()
+        pool.join()
+
+        df = pd.DataFrame(
+            results,
+            columns=['source_id', 'ls_period', 'ls_fap', 'tls_period', 'tls_sde',
+                     'tls_t0', 'tls_depth', 'tls_duration', 'xcc', 'ycc', 'ra',
+                     'dec']
+        )
+        df = df.sort_values(by='source_id')
+
+        df.to_csv(outpath, index=False)
+        print('made {}'.format(outpath))
+
+    else:
+        df = pd.read_csv(outpath)
 
     # you want some idea of what references, and what clusters are most
     # important.
-    cd = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
-
-    df['source_id'] = df['source_id'].astype(np.int64)
-    mdf = df.merge(cd, how='left', on='source_id')
-
     outpath = os.path.join(
         outdir, 'initial_period_finding_results_supplemented.csv'
     )
-    mdf.to_csv(outpath, index=False)
-    print('made {}'.format(outpath))
+    if not os.path.exists(outpath):
+        cd = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
+
+        df['source_id'] = df['source_id'].astype(np.int64)
+        mdf = df.merge(cd, how='left', on='source_id')
+
+        mdf.to_csv(outpath, index=False)
+        print('made {}'.format(outpath))
+    else:
+        mdf = pd.read_csv(outpath)
 
     u_ref, u_ref_count = np.unique(mdf['reference'], return_counts=True)
-    u_cluster, u_cluster_count = np.unique(mdf['cluster'], return_counts=True)
+    u_cluster, u_cluster_count = np.unique(
+        np.array(mdf['cluster']).astype(str), return_counts=True)
     outpath = os.path.join(outdir, 'which_references_and_clusters_matter.txt')
 
     with open(outpath, mode='w') as f:
@@ -238,6 +247,20 @@ def do_initial_period_finding(
         )
         f.write(textwrap.dedent(txt))
     print('made {}'.format(outpath))
+
+    # plot results distribution
+    resultsdir = (
+        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
+        'cdips_lc_periodfinding/'
+        'sector-{}'.format(sectornum)
+    )
+    initpfresultspath = (
+        os.path.join(resultsdir, 'initial_period_finding_results.csv')
+    )
+    df = pd.read_csv(initpfresultspath)
+
+    plot_initial_period_finding_results(df, resultsdir)
+
 
 
 

@@ -1,11 +1,11 @@
 #! /bin/bash
 
 baselcdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6
-statsdirbase=/nfs/phtess1/ar1/TESS/FFI/LC/FULL/s0006/ISP
+statsdirbase=/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s0006/ISP
 periodlist=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-6/initial_period_finding_results.csv
 outdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6_TFA_SR
 
-SDETHRESHOLD=12
+SDETHRESHOLD=10
 
 # Number of phase bins to use in the TFA_SR model
 TFASR_NBINS=200
