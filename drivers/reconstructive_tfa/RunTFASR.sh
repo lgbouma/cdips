@@ -54,7 +54,7 @@ tmp2=$(mktemp /tmp/RunTFASR.XXXXXX)
 for lclist in TFASR_inputlist_?-?.txt ; do
     camccd=$(echo $lclist | sed -e 's|TFASR_inputlist_||' -e 's|.txt||')
 
-    statsdir=${statsdirbase}_${camccd}-*/stats_files/
+    statsdir=${statsdirbase}_${camccd}-*/stats_files
     
     gawk '{n = split($1,s1,"/"); split(s1[n],s2,"_"); print s2[1], $0}' $lclist > $tmp1
     gawk '{n = split($1,s1,"/"); split(s1[n],s2,"_"); print s2[1], $0}' ${statsdir}/lc_list_tfa.txt > $tmp2
