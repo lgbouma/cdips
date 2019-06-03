@@ -25,9 +25,9 @@ def main():
         sectors=[6],
         cams=[1,2,3,4],
         ccds=[1,2,3,4],
-        make_symlinks=0,
+        make_symlinks=1,
         make_plots=0,
-        reformat_lcs=1
+        reformat_lcs=0
     )
 
 def trex_lc_to_mast_lc(
@@ -37,7 +37,7 @@ def trex_lc_to_mast_lc(
     sectors=None,
     cams=None,
     ccds=None,
-    symlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS/',
+    symlinkdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_SYMLINKS/',
     outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/',
     OC_MG_CAT_ver=0.3,
     cdipsvnum=1
