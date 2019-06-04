@@ -25,7 +25,7 @@ def how_many_cdips_stars_on_silicon(sector=6, ver=0.3):
         '/home/luke/local/cdips/fullframeimages/cal_imgs/sector-{}/'.
         format(sector)
     )
-    fnames = glob(os.path.join(fitsdir,'*cal_img.fits'))
+    fnames = np.sort(glob(os.path.join(fitsdir,'*cal_img.fits')))
 
     df = ccl.get_cdips_catalog(ver=ver)
     c = SkyCoord(nparr(df['ra']), nparr(df['dec']), unit=(u.deg,u.deg))
@@ -68,7 +68,11 @@ def how_many_cdips_stars_on_silicon(sector=6, ver=0.3):
     N_tot = np.sum([v for v in N_onchip.values()])
     dictstr = "\n\t".join("{}: {}".format(k, v) for k, v in N_onchip.items())
 
-    outpath = '../results/star_catalog/how_many_cdips_stars_on_silicon.txt'
+    outpath = (
+        '../results/star_catalog/'+
+        'how_many_cdips_stars_on_silicon_sector{}.txt'.
+        format(sector)
+    )
     with open(outpath,'w') as f:
         txt = (
         """
