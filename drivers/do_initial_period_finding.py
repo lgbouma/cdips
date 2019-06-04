@@ -1,5 +1,8 @@
 """
-given >~10k LCs per galactic field, we want to skim the cream off the top.
+given >~10k LCs per galactic field, do the period finding.
+
+do_initial_period_finding SETS THE SDE LIMITS. currently implemented is at
+least 12 everywhere, and 15 if you're in a ratty region of period space.
 
 run as (from phtess2 usually):
 $ python -u do_initial_period_finding.py &> logs/sector6_initial_period_finding.log &
@@ -258,6 +261,19 @@ def do_initial_period_finding(
         os.path.join(resultsdir, 'initial_period_finding_results.csv')
     )
     df = pd.read_csv(initpfresultspath)
+
+    # SET SNR LIMITS. at least 12 everywhere. 15 if you're in a ratty region of
+    # period space.
+    df['limit'] = np.ones(len(df))*12
+    df['limit'][df['tls_period']<1] = 15
+    df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.75)] = 15
+    df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
+
+    outpath = os.path.join(
+        resultsdir, 'initial_period_finding_results_with_limit.csv'
+    )
+    df.to_csv(outpath, index=False)
+    print('made {}'.format(outpath))
 
     plot_initial_period_finding_results(df, resultsdir)
 

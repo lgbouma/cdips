@@ -2,10 +2,11 @@
 
 baselcdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6
 statsdirbase=/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s0006/ISP
-periodlist=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-6/initial_period_finding_results.csv
+periodlist=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-6/initial_period_finding_results_with_limit.csv
 outdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6_TFA_SR
 
-SDETHRESHOLD=10
+# Previously, would apply SDE threshold
+#SDETHRESHOLD=12
 
 # Number of phase bins to use in the TFA_SR model
 TFASR_NBINS=200
@@ -18,7 +19,10 @@ TFASR_MAXITER=100
 
 if [ ! -f TFASR_inputlist.txt ] ; then
 
-gawk -v FS=, 'NR > 1 && $5 > '$SDETHRESHOLD' {print $1, $4}' $periodlist | \
+# Previously, would apply SDE threshold
+#gawk -v FS=, 'NR > 1 && $5 > '$SDETHRESHOLD' {print $1, $4}' $periodlist | \
+
+gawk -v FS=, 'NR > 1 && $14 == 1 {print $1, $4}' $periodlist | \
     while read starid P ; do
 	echo $(find $baselcdir -name '*'$starid'*') $P
     done | \
@@ -82,4 +86,3 @@ for lclist in TFASR_inputlist_?-?.txt ; do
 done
 
 rm $tmp1 $tmp2
-
