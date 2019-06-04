@@ -26,7 +26,7 @@ OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 
 def main():
     # fig N: RMS vs catalog T mag
-    plot_rms_vs_mag(overwrite=1)
+    plot_rms_vs_mag(overwrite=0)
 
     # fig N: histogram (or CDF) of stellar magnitude (T mag)
     plot_cdf_T_mag(overwrite=0)
@@ -36,8 +36,8 @@ def main():
     plot_cdf_cont(overwrite=0)
 
     # fig N: HRD for CDIPS stars.
-    plot_hrd_scat(overwrite=1, close_subset=1)
-    plot_hrd_scat(overwrite=1, close_subset=0)
+    plot_hrd_scat(overwrite=0, close_subset=1)
+    plot_hrd_scat(overwrite=0, close_subset=0)
 
     # fig N: pmRA and pmDEC scatter for CDIPS stars.
     plot_pm_scat(overwrite=0, close_subset=1)
@@ -45,7 +45,7 @@ def main():
 
     # fig N: positions of field and cluster stars (currently just cam 1)
     #FIXME
-    #plot_cluster_and_field_star_scatter(overwrite=0)
+    plot_cluster_and_field_star_scatter(overwrite=0)
 
     #
     # fig N: wcs quality verification
@@ -279,42 +279,46 @@ def plot_cluster_and_field_star_scatter(overwrite=0):
     need all LCs + CDIPS LCs, rather than only CDIPS LCs
     """
 
-    outpath = os.path.join(OUTDIR, 'cam1_cluster_field_star_positions.png')
-    if os.path.exists(outpath) and not overwrite:
-        print('found {} and not overwrite; return'.format(outpath))
-        return
-
     sectornum = 6
-    cam = 1
+    cams = [1,2,3,4]
     ccds = [1,2,3,4]
     csvpaths = []
     N_max = 100000
 
-    for ccd in ccds:
+    outpath = os.path.join(OUTDIR,
+                           'sector{}_cluster_field_star_positions.png'.
+                           format(sectornum))
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
 
-        # all lightcurves
-        lcdir = (
-            '/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s0006/ISP_{}-{}-15??/'.
-            format(cam, ccd)
-        )
-        lcglob = '*_llc.fits'
-        alllcpaths = glob(os.path.join(lcdir, lcglob))
+    for cam in cams:
+      for ccd in ccds:
 
-        # CDIPS LCs
-        cdipslcdir = (
-            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam{}_ccd{}'.
-            format(cam, ccd)
-        )
+          # all lightcurves
+          lcdir = (
+              '/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s{}/ISP_{}-{}-15??/'.
+              format(str(sectornum).zfill(4), cam, ccd)
+          )
+          lcglob = '*_llc.fits'
+          alllcpaths = glob(os.path.join(lcdir, lcglob))
 
-        csvpath = os.path.join(
-            OUTDIR,'cam{}_ccd{}_cluster_field_star_positions.csv'.
-            format(cam, ccd)
-        )
+          # CDIPS LCs
+          cdipslcdir = (
+              '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/cam{}_ccd{}'.
+              format(sectornum, cam, ccd)
+          )
 
-        csvpaths.append(csvpath)
+          csvpath = os.path.join(
+              OUTDIR,'sector{}_cam{}_ccd{}_cluster_field_star_positions.csv'.
+              format(sectornum, cam, ccd)
+          )
 
-        get_cluster_and_field_star_positions(alllcpaths, cdipslcdir, csvpath,
-                                             sectornum, N_desired=N_max)
+          csvpaths.append(csvpath)
+
+          get_cluster_and_field_star_positions(alllcpaths, cdipslcdir, csvpath,
+                                               cam, ccd,
+                                               sectornum, N_desired=N_max)
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
 
@@ -324,6 +328,7 @@ def plot_cluster_and_field_star_scatter(overwrite=0):
 
 
 def get_cluster_and_field_star_positions(lcpaths, cdipslcdir, outpath,
+                                         cam, ccd,
                                          sectornum, cdipsvnum=1,
                                          N_desired=200):
 
@@ -365,9 +370,13 @@ def get_cluster_and_field_star_positions(lcpaths, cdipslcdir, outpath,
     xs, ys, ras, decs = nparr(xs), nparr(ys), nparr(ras), nparr(decs)
     gaiaids = nparr(gaiaids)
     iscdips = nparr(iscdips)
+    cams = np.ones_like(ras)*cam
+    ccds = np.ones_like(ras)*ccd
+    sectors = np.ones_like(ras)*sectornum
 
     outdf = pd.DataFrame({'x':xs,'y':ys,'ra':ras,'dec':decs,
-                          'gaiaid':gaiaids, 'iscdips': iscdips})
+                          'gaiaid':gaiaids, 'iscdips': iscdips, 'cam':cam,
+                          'ccd':ccd, 'sector':sectors})
     outdf.to_csv(outpath, index=False)
     print('made {}'.format(outpath))
 
