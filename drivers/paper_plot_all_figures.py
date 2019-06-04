@@ -1,6 +1,8 @@
 """
 execution environment: cdips, + pipe-trex .pth file in
 /home/lbouma/miniconda3/envs/cdips/lib/python3.7/site-packages
+
+python -u paper_plot_all_figures.py &> logs/paper_plot_all.log &
 """
 from glob import glob
 import datetime, os, pickle, shutil
@@ -23,26 +25,26 @@ from cdips.utils import tess_noise_model as tnm
 OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 
 def main():
-    # fig N: positions of field and cluster stars (currently just cam 1)
-    plot_cluster_and_field_star_scatter(overwrite=0)
-
     # fig N: RMS vs catalog T mag
-    plot_rms_vs_mag(overwrite=1)
+    plot_rms_vs_mag(overwrite=0)
 
     # fig N: histogram (or CDF) of stellar magnitude (T mag)
-    plot_cdf_T_mag(overwrite=1)
+    plot_cdf_T_mag(overwrite=0)
 
     # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
     # calculated for CTL stars, so by definition it has limited use
-    plot_cdf_cont(overwrite=1)
+    plot_cdf_cont(overwrite=0)
 
     # fig N: HRD for CDIPS stars.
-    plot_hrd_scat(overwrite=1, close_subset=1)
-    plot_hrd_scat(overwrite=1, close_subset=0)
+    plot_hrd_scat(overwrite=0, close_subset=1)
+    plot_hrd_scat(overwrite=0, close_subset=0)
 
     # fig N: pmRA and pmDEC scatter for CDIPS stars.
-    plot_pm_scat(overwrite=1, close_subset=1)
-    plot_pm_scat(overwrite=1, close_subset=0)
+    plot_pm_scat(overwrite=0, close_subset=1)
+    plot_pm_scat(overwrite=0, close_subset=0)
+
+    # fig N: positions of field and cluster stars (currently just cam 1)
+    plot_cluster_and_field_star_scatter(overwrite=0)
 
     #
     # fig N: wcs quality verification
@@ -91,7 +93,7 @@ def plot_cdf_T_mag(overwrite=0):
 
     magstr = 'TESSMAG'
     bins = np.arange(np.floor(np.min(df[magstr])),
-                     np.ceil(np.max(df[magstr])),
+                     np.ceil(np.max(df[magstr]))+1,
                      1)
     ax.hist(df[magstr], bins=bins, cumulative=True)
 
@@ -272,6 +274,10 @@ def plot_pm_scat(overwrite=0, close_subset=0):
 
 
 def plot_cluster_and_field_star_scatter(overwrite=0):
+    """
+    note: being kept separate from other stats collection step b/c here you
+    need all LCs + CDIPS LCs, rather than only CDIPS LCs
+    """
 
     outpath = os.path.join(OUTDIR, 'cam1_cluster_field_star_positions.png')
     if os.path.exists(outpath) and not overwrite:
@@ -309,7 +315,6 @@ def plot_cluster_and_field_star_scatter(overwrite=0):
 
         get_cluster_and_field_star_positions(alllcpaths, cdipslcdir, csvpath,
                                              sectornum, N_desired=N_max)
-
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
 
