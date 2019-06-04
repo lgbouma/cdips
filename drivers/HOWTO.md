@@ -15,6 +15,7 @@
    and pass to reconstructive TFA.
    also writes `which_references_and_clusters_matter.txt` (to know how badly
    your results depend on the Dias 2014 catalog)
+   also makes plots that show the distribution of results.
 
 6. [optional] `skim_cream`: make BLS/SPDM two-panel checkplots for the "cream"
    determined by the TLS and LS checks above.
