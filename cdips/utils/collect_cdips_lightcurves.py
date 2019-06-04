@@ -98,7 +98,7 @@ def symlink_cdips_lcs(
     sectors=range(1,5+1,1),
     cams=range(1,4+1,1),
     ccds=range(1,4+1,1),
-    basedir='/nfs/phtess1/ar1/TESS/FFI/LC/FULL/',
+    basedir='/nfs/phtess2/ar0/TESS/FFI/LC/FULL/',
     cdipssymlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS',
     lcglob='*_llc.fits'):
 

@@ -10,6 +10,8 @@ CDIPS project. they include:
     the additional knowledge we have about them (i.e. what cluster are they in?
     according to who?). further, during this reformatting: add any niceties
     needed for public use.
+
+python -u trex_lc_to_mast_lc.py &> logs/reformat_trex_to_mast_s6_cam1to4_ccd1to4.log &
 """
 
 import os, shutil
@@ -25,9 +27,9 @@ def main():
         sectors=[6],
         cams=[1,2,3,4],
         ccds=[1,2,3,4],
-        make_symlinks=1,
+        make_symlinks=0,
         make_plots=0,
-        reformat_lcs=0
+        reformat_lcs=1
     )
 
 def trex_lc_to_mast_lc(
@@ -37,7 +39,7 @@ def trex_lc_to_mast_lc(
     sectors=None,
     cams=None,
     ccds=None,
-    symlinkdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_SYMLINKS/',
+    symlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS/',
     outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/',
     OC_MG_CAT_ver=0.3,
     cdipsvnum=1
@@ -76,6 +78,12 @@ def trex_lc_to_mast_lc(
                                   )
 
                     if len(lcpaths) > 0:
+
+                       # NOTE: nt actually faster
+                       #rlm.parallel_reformat_headers(lcpaths, camccddir,
+                       #                              sector, cdipsvnum,
+                       #                              nworkers=1,
+                       #                              maxworkertasks=1000)
 
                        rlm.reformat_headers(lcpaths, camccddir, sector,
                                              cdipsvnum)

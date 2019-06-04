@@ -10,6 +10,7 @@ from datetime import datetime
 from astroquery.mast import Catalogs
 from astropy import units as u, constants as const
 from astropy.coordinates import SkyCoord
+import multiprocessing as mp
 
 cdips_cat_file = ('/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
                   'OC_MG_FINAL_GaiaRp_lt_16_v0.3.csv')
@@ -342,6 +343,56 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
         datetime.utcnow().isoformat(), lcpath, outfile))
 
     outhdulist.close()
+
+
+def reformat_worker(task):
+
+    lcpath, cdips_df, outdir, sectornum, cdipsvnum = task
+
+    lcgaiaid = os.path.basename(lcpath).split('_')[0]
+
+    outname = (
+        'hlsp_cdips_tess_ffi_'
+        'gaiatwo{zsourceid}-{zsector}_'
+        'tess_v{zcdipsvnum}_llc.fits'
+    ).format(
+        zsourceid=str(lcgaiaid).zfill(22),
+        zsector=str(sectornum).zfill(4),
+        zcdipsvnum=str(cdipsvnum).zfill(2)
+    )
+
+    outfile = os.path.join(outdir, outname)
+
+    if not os.path.exists(outfile):
+        _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum)
+        return 1
+    else:
+        return 0
+
+
+def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
+                              nworkers=56, maxworkertasks=1000):
+
+    cdips_df = pd.read_csv(cdips_cat_file, sep=';')
+
+    tasks = [(x, cdips_df, outdir, sectornum, cdipsvnum) for x in lcpaths[:300]]
+
+    print('%sZ: %s files to reformat' %
+          (datetime.utcnow().isoformat(), len(lcpaths)))
+
+    pool = mp.Pool(nworkers, maxtasksperchild=maxworkertasks)
+
+    # fire up the pool of workers
+    results = pool.map(reformat_worker, tasks)
+
+    # wait for the processes to complete work
+    pool.close()
+    pool.join()
+
+    print('%sZ: finished reformatting' (datetime.utcnow().isoformat()))
+
+    return {result for result in results}
+
 
 
 def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum):
