@@ -3,11 +3,11 @@ import os, shutil
 from glob import glob
 
 tfasrdir = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6_TFA_SR"
-# outdir = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/sector-6_TFA_SR" # FIXME
-outdir = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/temp/"
+outdir = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/sector-6_TFA_SR/"
 
 if not os.path.exists(outdir):
     make_wget_script(tfasrdir, xlen_px=10, ylen_px=10, tesscutvernum=0.1)
+    raise Exception('need to manually run wget script')
 
 # To execute, run
 #
