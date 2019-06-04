@@ -123,10 +123,26 @@ def get_sky_bkgnd(coords, exptime):
 
     # Eqn (3) from Josh Winn's memo on sky backgrounds. This comes from
     # integrating a model ZL spectrum over the TESS bandpass.
-    e_pix_zodi = 10.0 ** (-0.4 * (vmag_zodi - 22.8)) * 2.39e-3 * \
-                                    effective_area * omega_pix * exptime
+    e_pix_zodi = (
+      10.0 ** (-0.4 * (vmag_zodi - 22.8)) * 2.39e-3
+      * effective_area * omega_pix * exptime
+    )
 
-    return e_pix_zodi
+    # You also need the diffuse background from unresolved stars. Eq (7) from
+    # the same memo
+    a0, a1, a2, a3 = 18.9733, 8.833, 4.007, 0.805
+    I_surface_brightness = (
+      a0 + a1 * np.abs(glat)/40 + a2 * (np.abs(glat)/180)**a3
+    )
+    e_pix_faintstars = (
+      10.0 ** (-0.4 * I_surface_brightness) * 1.7e6
+      * effective_area * omega_pix * exptime
+    )
+
+    # for CDIPS, zodi should be small, photon flux due to unresolved stars
+    # should dominate
+
+    return e_pix_faintstars
 
 
 def noise_model(

@@ -26,7 +26,7 @@ OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 
 def main():
     # fig N: RMS vs catalog T mag
-    plot_rms_vs_mag(overwrite=0)
+    plot_rms_vs_mag(overwrite=1)
 
     # fig N: histogram (or CDF) of stellar magnitude (T mag)
     plot_cdf_T_mag(overwrite=0)
@@ -36,15 +36,16 @@ def main():
     plot_cdf_cont(overwrite=0)
 
     # fig N: HRD for CDIPS stars.
-    plot_hrd_scat(overwrite=0, close_subset=1)
-    plot_hrd_scat(overwrite=0, close_subset=0)
+    plot_hrd_scat(overwrite=1, close_subset=1)
+    plot_hrd_scat(overwrite=1, close_subset=0)
 
     # fig N: pmRA and pmDEC scatter for CDIPS stars.
     plot_pm_scat(overwrite=0, close_subset=1)
     plot_pm_scat(overwrite=0, close_subset=0)
 
     # fig N: positions of field and cluster stars (currently just cam 1)
-    plot_cluster_and_field_star_scatter(overwrite=0)
+    #FIXME
+    #plot_cluster_and_field_star_scatter(overwrite=0)
 
     #
     # fig N: wcs quality verification
@@ -183,9 +184,8 @@ def plot_hrd_scat(overwrite=0, close_subset=1):
         tick.label.set_fontsize('small')
     ax.set_xlabel('$G_{\mathrm{BP}} - G_{\mathrm{RP}}$')
     ax.set_ylabel('$M_\omega = G + 5\log_{10}(\omega_{\mathrm{as}}) + 5$')
-    ylim = ax.get_ylim()
-    ax.set_ylim((max(ylim),min(ylim)))
 
+    ax.set_ylim((12.5, -4.5))
     ax.set_xlim((-0.7, 4.3))
 
     if close_subset:
@@ -539,28 +539,32 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
 
         # RA, dec. (90, -66) is southern ecliptic pole. these are "good
         # coords", but we aren't plotting sky bkgd anyway!
-        coords = np.array([90*np.ones_like(Tmag), -66*np.ones_like(Tmag)]).T
+        coords = np.array([90*np.ones_like(Tmag), 0*np.ones_like(Tmag)]).T
         out = tnm.noise_model(Tmag, coords=coords, exptime=1800)
 
         noise_star = out[2,:]
+        noise_sky = out[3,:]
         noise_ro = out[4,:]
-        noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2)
+        noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2)# + noise_sky**2)
 
         a0.plot(Tmag, noise_star_plus_ro, ls='-', zorder=-2, lw=1, color='C1',
                 label='Photon + read')
-        a0.plot(Tmag, noise_star, ls='--', zorder=-3, lw=1, color='C3',
+        a0.plot(Tmag, noise_star, ls='--', zorder=-3, lw=1, color='gray',
                 label='Photon')
-        a0.plot(Tmag, noise_ro, ls='--', zorder=-4, lw=1, color='C4',
+        a0.plot(Tmag, noise_ro, ls='-.', zorder=-4, lw=1, color='gray',
                 label='Read')
+        #a0.plot(Tmag, noise_sky, ls=':', zorder=-4, lw=1, color='gray',
+        #        label='Unresolved stars (sky)')
 
     a1.plot(Tmag, noise_star_plus_ro/noise_star_plus_ro, ls='-', zorder=-2,
             lw=1, color='C1', label='Photon + read')
 
-    coords = np.array([90*np.ones_like(mags), -66*np.ones_like(mags)]).T
+    coords = np.array([90*np.ones_like(mags), 0*np.ones_like(mags)]).T
     out = tnm.noise_model(mags, coords=coords, exptime=1800)
     noise_star = out[2,:]
+    noise_sky = out[3,:]
     noise_ro = out[4,:]
-    noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2)
+    noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2)# + noise_sky**2)
     a1.scatter(mags, rms/noise_star_plus_ro, c='k', alpha=0.2, zorder=-5,
                s=0.5, rasterized=True, linewidths=0)
 
@@ -568,10 +572,11 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
     a0.set_yscale('log')
     a1.set_xlabel('TESS magnitude', labelpad=0.8)
     a0.set_ylabel('RMS [30 minutes]', labelpad=0.8)
-    a1.set_ylabel('RMS / (Photon+Read)', labelpad=1)
+    a1.set_ylabel('RMS / (Photon + Read)', labelpad=1)
 
     a0.set_ylim([1e-5, 1e-1])
-    a1.set_ylim([-0.05, 2.05])
+    a1.set_ylim([0.5,10])
+    a1.set_yscale('log')
     for a in (a0,a1):
         a.set_xlim([5.8,16.2])
         a.yaxis.set_ticks_position('both')
