@@ -17,3 +17,4 @@ doc/Jenkins*pdf
 sandbox*
 build*
 dist*
+*.pyc
