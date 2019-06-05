@@ -5,7 +5,7 @@ supplement the statsfile by matching against Gaia DR2 and CDIPS  catalogs.
 
 usage:
 
-    $ (trex_37) python get_cdips_lc_stats.py |& tee /nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats/sector-6/stats_overview_log.txt
+    $ (trex_37) python -u get_cdips_lc_stats.py |& tee /nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats/sector-6/stats_overview_log.txt
 
 NOTE: depends on pipe-trex (--> run in environment with aperturephot on path)
 """

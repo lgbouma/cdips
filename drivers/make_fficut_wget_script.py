@@ -26,5 +26,6 @@ for fp in fficutpaths:
         print('append .zip to {}'.format(fp))
 
 #
-# Then (manually) extract everything in the directory from shell.
+# Then (manually) extract everything in the directory from shell. Note there
+# will be some frames from multiple sectors. This is OK.
 #
