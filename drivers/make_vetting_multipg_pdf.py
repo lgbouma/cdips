@@ -238,6 +238,7 @@ def _get_supprow(sourceid, supplementstatsdf):
 
     return mdf
 
+
 def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
                   supplementstatsdf, pfdf, toidf, sectornum=6,
                   cdipsvnum=1):

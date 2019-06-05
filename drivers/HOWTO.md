@@ -6,7 +6,8 @@
 
 3. for an initial look at the rms vs mag for the LCs, run
    `get_cdips_lc_stats`. this can also tell you how many NaNs were in the
-   run.
+   run.  also writes `supplemented_cdips_lc_statistics.txt`, which is used for
+   the vetting pdfs.
 
 4. to learn how many stars were expected on silicon, run
    `how_many_cdips_stars_on_silicon`
