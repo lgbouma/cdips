@@ -211,6 +211,18 @@ concludes.
 \end{figure*}
 
 \begin{figure}[t]
+    \begin{center}
+        \leavevmode
+        \includegraphics[width=0.49\textwidth]{sector6_cluster_field_star_positions.png}
+    \end{center}
+    \vspace{-0.5cm}
+    \caption{
+        {\bf Celestial positions of light curves from Sector 6}
+        \label{fig:lcradecsector6}
+    }
+\end{figure}
+
+\begin{figure}[t]
 	\begin{center}
 		\leavevmode
 		\includegraphics[width=0.49\textwidth]{cam1_cluster_field_star_positions.png}
@@ -1197,6 +1209,7 @@ separately.
 \label{sec:results}
 
 \subsection{Light Curve Statistics}
+\label{subsec:lcstatistics}
 
 \begin{figure}[t]
 	\begin{center}
@@ -1204,10 +1217,13 @@ separately.
 		\includegraphics[width=0.49\textwidth]{rms_vs_mag.png}
 	\end{center}
 	\vspace{-0.5cm}
-  \caption{ {\bf Standard deviation of light curves vs catalog
-  TESS-band magnitude for CDIPS light curves.}  Faint stars in heavily
-  crowded regions have bright neighbors which drive their light curve
-  scatter below the expected noise limits.
+  \caption{ {\bf Standard deviation vs catalog TESS-band magnitude for
+  trend-filtered CDIPS light curves.} The minimum RMS across all three
+  aperture sizes was selected.  The photon and read noise are
+  calculated using the updated figures from \citet{vanderspek_2018}.
+  The noise from unresolved background stars is expected to be more
+  important than read noise at the faint end, but is omitted from the
+  plot due to model uncertainties (see \S~\ref{subsec:lcstatistics}).
 		\label{fig:rms_vs_mag}
 	}
 \end{figure}
@@ -1219,7 +1235,8 @@ separately.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Cumulative distribution of TESS-band magnitudes for CDIPS light curves.}
+    {\bf Cumulative distribution of TESS-band magnitudes for CDIPS
+    light curves.}
 		\label{fig:cdf_T_mag}
 	}
 \end{figure}
@@ -1229,12 +1246,53 @@ separately.
 	\vspace{-0.8cm}
 	\gridline{\fig{hrd_scat_close_subset.png}{0.45\textwidth}{}}
 	\caption{
-		{\it Top.} Stellar properties of CDIPS stars with light curves in this data release.
-		{\it Bottom.} Stellar properties of close CDIPS stars with light curves.
+    {\it Top.} HR diagram of CDIPS stars with light curves in this
+    data release.  {\it Bottom.} HR diagram of close CDIPS stars with
+    light curves. The wedge separating the pre-MS sample from the MS
+    stars was discussed by \citet{zari_3d_2018}, who introduced it in
+    order to avoid contamination by photometric binaries.
 	}
 	\label{fig:hrd}
 \end{figure}
 
+\begin{figure}[!ht]
+	\gridline{\fig{pm_scat_all_CDIPS_LCs.png}{0.45\textwidth}{}}
+	\vspace{-0.8cm}
+	\gridline{\fig{pm_scat_close_subset.png}{0.45\textwidth}{}}
+	\caption{
+    {\it Top.} Proper motions of CDIPS stars with light curves in this
+    data release.  {\it Bottom.} Proper motions of close CDIPS stars
+    with light curves. A few additional clusters are visible.
+	}
+	\label{fig:propermotions}
+\end{figure}
+
+
+The standard deviation of the light curves is plotted as a function of the 
+catalog $T$-band magnitude for CDIPS light curves in 
+Figure~\ref{fig:rms_vs_mag}.
+Ignoring the expected noise contribution from the zodiacal and faint star 
+background, the light curves generally seem to follow the model one would 
+predict.
+The bright end is somewhat noisier than the performance reported by SPOC 
+(CITE), as well as the pipelines of 
+Chelsea (CITE) and Ben (CITE), and maybe Ryan (CITE).
+Simple aperture photometry should out-perform image subtraction techniques in 
+the bright regime, so this is not particularly unexpected.
+
+A few points concerning the noise model predictions are relevant.
+First, the effects of crowding are not apparent in 
+Figure~\ref{fig:rms_vs_mag}. 
+If the reference fluxes were being measured directly from the photometric 
+reference frame, the faint stars would be driven below the expected noise 
+floor, because the reference fluxes would be systematically overestimated.
+Our procedure for determining the reference magnitudes uses our knowledge of 
+the catalog magnitudes to eliminate this effect (REFERENCE).
+
+Second, our plot omits the noise from unresolved background stars.
+If we include it, then our RMS at the faint end is about 0.7x below the model.
+This suggests that the model over-predicts the background, or that we overfit 
+the majority of our light curves. Both are probably a little true.
 
 ACF statistics before and after detrending(?)
 
@@ -1301,7 +1359,7 @@ of correlated red noise in the results.
 This shrinks the data volume by about 5\%, but also lowers the number
 of systematic false positives in subsequent vetting.
 Our grids typically consisted of about 25 different durations, and
-about 2500 periods between 0.5 and 11 days.
+about 2500 periods between 0.5 and 11 days. 
 We also ran a generalized Lomb-Scargle periodogram (CITE), simply to 
 have additional periodicity information.
 
@@ -1438,7 +1496,7 @@ Agreement.
   \texttt{pandas} \citep{mckinney-proc-scipy-2010},
   \texttt{scipy} \citep{jones_scipy_2001},
   \texttt{TagSpaces} (CITE),
-  \texttt{tesscut} (CITE)
+  \texttt{tesscut} \citep{brasseur_astrocut_2019}
 }
 
 \bibliographystyle{yahapj}                            

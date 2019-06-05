@@ -44,6 +44,9 @@ cp ${fdir}rms_vs_mag.png ${pdir}rms_vs_mag.png
 # positions of lightcurves
 cp ${fdir}cam1_cluster_field_star_positions.png ${pdir}cam1_cluster_field_star_positions.png
 
+# positions of lightcurves
+cp ${fdir}sector6_cluster_field_star_positions.png ${pdir}sector6_cluster_field_star_positions.png
+
 # CDF of T mags of LCs
 cp ${fdir}cdf_T_mag.png ${pdir}cdf_T_mag.png
 
@@ -51,6 +54,9 @@ cp ${fdir}cdf_T_mag.png ${pdir}cdf_T_mag.png
 cp ${fdir}hrd_scat_all_CDIPS_LCs.png ${pdir}hrd_scat_all_CDIPS_LCs.png
 cp ${fdir}hrd_scat_close_subset.png ${pdir}hrd_scat_close_subset.png
 
+# HRDs of close and entire LC subsets
+cp ${fdir}pm_scat_all_CDIPS_LCs.png ${pdir}pm_scat_all_CDIPS_LCs.png
+cp ${fdir}pm_scat_close_subset.png ${pdir}pm_scat_close_subset.png
 
 
 ##########################################
