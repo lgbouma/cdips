@@ -2,10 +2,13 @@
 
 baselcdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6
 statsdirbase=/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s0006/ISP
-periodlist=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-6/initial_period_finding_results.csv
+periodlist=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-6/initial_period_finding_results_with_limit.csv
 outdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6_TFA_SR
 
-SDETHRESHOLD=10
+NCPU=42
+
+# Previously, would apply SDE threshold
+#SDETHRESHOLD=12
 
 # Number of phase bins to use in the TFA_SR model
 TFASR_NBINS=200
@@ -18,7 +21,10 @@ TFASR_MAXITER=100
 
 if [ ! -f TFASR_inputlist.txt ] ; then
 
-gawk -v FS=, 'NR > 1 && $5 > '$SDETHRESHOLD' {print $1, $4}' $periodlist | \
+# Previously, would apply SDE threshold
+#gawk -v FS=, 'NR > 1 && $5 > '$SDETHRESHOLD' {print $1, $4}' $periodlist | \
+
+gawk -v FS=, 'NR > 1 && $14 == 1 {print $1, $4}' $periodlist | \
     while read starid P ; do
 	echo $(find $baselcdir -name '*'$starid'*') $P
     done | \
@@ -56,10 +62,15 @@ for lclist in TFASR_inputlist_?-?.txt ; do
 
     statsdir=${statsdirbase}_${camccd}-*/stats_files
     
-    gawk '{n = split($1,s1,"/"); split(s1[n],s2,"_"); print s2[1], $0}' $lclist > $tmp1
+    # NOTE: outdated regex
+    # gawk '{n = split($1,s1,"/"); split(s1[n],s2,"_"); print s2[1], $0}' $lclist > $tmp1
+    # gawk '{n = split($1,s1,"/"); split(s1[n],s2,"_"); print s2[1], $0}' ${statsdir}/lc_list_tfa.txt > $tmp2
+
+    gawk '{n = split($1,s1,"/"); m = split(s1[n],s2,"gaiatwo"); split(s2[m],s3,"-"); gsub ("^0*", "", s3[1]); print s3[1], $0}' $lclist > $tmp1
     gawk '{n = split($1,s1,"/"); split(s1[n],s2,"_"); print s2[1], $0}' ${statsdir}/lc_list_tfa.txt > $tmp2
+
     grmatch -r $tmp1 -i $tmp2 --match-id --col-inp-id 1 --col-ref-id 1 -o - | \
-	gawk '{print $2, $6, $7, $3}' > TFASR_inputlist_${camccd}_xy_period.txt
+      gawk '{print $2, $6, $7, $3}' > TFASR_inputlist_${camccd}_xy_period.txt
 
     templatelists=( ${statsdir}/trendlist_tfa_ap*.txt )
     datelist=${statsdir}/dates_tfa.txt
@@ -76,10 +87,9 @@ for lclist in TFASR_inputlist_?-?.txt ; do
 	 -changevariable mag TFASR3 \
 	 -changevariable err IRE3 \
 	 -TFA_SR ${templatelists[2]} readformat 0 RSTFC IRM3 ${datelist} 20 xycol 2 3 1 0 0 0 ${TFASR_ITERTHRESH} ${TFASR_MAXITER} bin ${TFASR_NBINS} period list column 4 \
-	 -o $outdir columnformat 'RSTFC:Image,TMID_BJD:BJDTDB midexp time,TFASR1:mag,TFASR2:mag,TFASR3:mag' fits copyheader logcommandline -header -numbercolumns -parallel 16 \
+	 -o $outdir columnformat 'RSTFC:Image,TMID_BJD:BJDTDB midexp time,TFASR1:mag,TFASR2:mag,TFASR3:mag' fits copyheader logcommandline -header -numbercolumns -parallel $NCPU \
 	 > TFA_SR_${camccd}.vartools.out
 
 done
 
 rm $tmp1 $tmp2
-

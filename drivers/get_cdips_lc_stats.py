@@ -32,7 +32,15 @@ def get_cdips_lc_stats(
         format(cdipssource_vnum)
     )
     if not os.path.exists(catalogfile):
-        raise AssertionError('didnt find catalogfile')
+        cfile = (
+            '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.
+            format(cdipssource_vnum)
+        )
+        cdipsdf = pd.read_csv(cfile, sep=';')
+
+        outdf = cdipsdf[['source_id','phot_rp_mean_mag']]
+
+        outdf.to_csv(catalogfile, sep=' ', index=False, header=False)
 
     projdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips'
     statsdir = os.path.join(projdir,

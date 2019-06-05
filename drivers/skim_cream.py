@@ -15,6 +15,7 @@ e.g., python skim_cream.py -tfasr &> ../logs/skim_cream_sector6_tfasr.log &
 import pandas as pd, numpy as np, matplotlib.pyplot as plt
 import os, argparse
 from glob import glob
+from copy import deepcopy
 
 from cdips.lcproc import period_find_for_cluster as pfc
 
@@ -37,7 +38,9 @@ def plot_initial_period_finding_results(
 
     plt.close('all')
     plt.figure(figsize=(4,3))
-    plt.hist(np.log10(df['ls_fap']), bins=50, density=True)
+    foo = df[~pd.isnull(df['ls_fap']) & np.isfinite(np.array(df['ls_fap']))]
+    log10fap = np.log10(foo['ls_fap'])
+    plt.hist(log10fap[np.isfinite(log10fap)], bins=50, density=True)
     plt.xlabel('log10_LS_FAP')
     plt.ylabel('fraction of total')
     plt.title('total: {} stars'.format(n_tot))
@@ -47,16 +50,24 @@ def plot_initial_period_finding_results(
     print('made {}'.format(outpath))
 
     f,ax = plt.subplots(figsize=(4,3))
-    ax.scatter(df['tls_period'], df['tls_sde'], c='k', alpha=1, s=0.5,
+    ax.scatter(df['tls_period'], df['tls_sde'], c='k', alpha=1, s=0.2,
                rasterized=True, linewidths=0)
+
+    ax.scatter(df['tls_period'], df['limit'], c='C1', alpha=1, rasterized=True,
+               linewidths=0, zorder=2, s=0.2)
+
+    ax.set_title('N_above: {}. N_below: {}'.
+                 format(len(df[df['tls_sde']>df['limit']]),
+                        len(df[df['tls_sde']<df['limit']])), size='small')
     ax.set_xlabel('tls_period')
     ax.set_ylabel('tls_sde')
+    ax.set_xscale('log')
     outpath = os.path.join(resultsdir, 'scatter_tls_sde_vs_tls_period.png')
     f.savefig(outpath, dpi=300, bbox_inches='tight')
     print('made {}'.format(outpath))
 
     f,ax = plt.subplots(figsize=(4,3))
-    ax.scatter(df['ls_period'], np.log10(df['ls_fap']), c='k', alpha=1, s=0.5,
+    ax.scatter(df['ls_period'], np.log10(df['ls_fap']), c='k', alpha=1, s=0.2,
                rasterized=True, linewidths=0)
     ax.set_xlabel('ls_period')
     ax.set_ylabel('log10(ls_fap)')
