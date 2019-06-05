@@ -336,7 +336,11 @@ def _get_full_infodict(tlsp, hdr, mdf):
     h = {
         'teff':hdr['teff_val'],
         'rstar':hdr['radius_val'],
-        'AstExcNoiseSig':hdr['AstExcNoiseSig'] # N-sigma of astrometric detection
+        'AstExcNoiseSig':hdr['AstExcNoiseSig'], # N-sigma of astrometric detection
+        'TICID':hdr['TICID'],
+        'TESSMAG':hdr['TESSMAG'],
+        'TICDIST':hdr['TICDIST'],
+        'TICCONT':hdr['TICCONT']
     }
 
     if h['rstar'] != 'NaN':
@@ -349,6 +353,8 @@ def _get_full_infodict(tlsp, hdr, mdf):
         h['teff'] = '{:.0f}'.format(h['teff'])
     if h['rstar'] != 'NaN':
         h['rstar'] = '{:.2f}'.format(h['rstar'])
+    if h['TICCONT'] != 'nan':
+        h['TICCONT'] = '{:.2f}'.format(h['TICCONT'])
 
     # if you have Gaia Rstar, use that to estimate stellar mass, and the
     # circular transit duration timescale
@@ -400,6 +406,9 @@ def _get_full_infodict(tlsp, hdr, mdf):
         h['circduration'] = 'NaN'
 
     megad = {**d, **c, **h}
+
+    if megad['cluster'] == np.nan:
+        megad['cluster'] = 'N/A'
 
     return megad
 
@@ -454,6 +463,9 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     d['psdepthratioerr'] = psdepthratioerr
 
 
+    # TODO: you might save combination of d, ebfitd, and the MLE fit dictionary...
+
+
     ##########################################
 
     plt.close('all')
@@ -494,7 +506,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     """
     P = {period:.3f} day
     $t_0$ = {t0:.3f} BJD
-    $R_p$ = {rp:s} $R_\oplus$
+    $R_p$ = {rp:s} $R_\oplus$ (TICCONT {ticcont:s} not applied)
     $R_p/R_\star$ = {rp_rs:.3f}
     $T_{{14}}/P$ = {tdur_by_period:.3f}
     $T_{{14}}$ = {duration:.2f} hr
@@ -504,10 +516,11 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     $\delta_{{tra}}/\delta_{{occ}}$ = {psdepthratio:.2f} $\pm$ {psdepthratioerr:.2f}
 
     Star: DR2 {sourceid}
+    TIC {ticid:s} - ticdist {ticdist:.2f}"
     $R_\star$ = {rstar:s} $R_\odot$, $M_\star$ = {mstar:s} $M_\odot$
     Teff = {teff:s} K
     RA,dec [deg] = {ra:.3f} {dec:.3f}
-    G = {phot_g_mean_mag:.1f}, Rp = {phot_rp_mean_mag:.1f}, Bp = {phot_bp_mean_mag:.1f}
+    G = {phot_g_mean_mag:.1f}, Rp = {phot_rp_mean_mag:.1f}, Bp = {phot_bp_mean_mag:.1f}, T = {tessmag:.1f}
     pmRA = {pmra:.1f}, pmDEC = {pmdec:.1f}
     $\omega$ = {plx_mas:.2f} $\pm$ {plx_mas_err:.2f} mas
     d = 1/$\omega_{{as}}$ = {dist_pc:.0f} pc
@@ -522,6 +535,10 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     )
     try:
         outstr = txt.format(
+            ticid=str(d['TICID']),
+            ticdist=float(d['TICDIST']),
+            ticcont=d['TICCONT'],
+            tessmag=d['TESSMAG'],
             period=d['period'],
             t0=d['t0'],
             rp=str(d['rp']),
@@ -549,7 +566,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
             plx_mas_err=float(supprow['Parallax_error[mas][7]']),
             dist_pc=1/(1e-3 * float(hdr['Parallax[mas]'])),
             AstExcNoiseSig=d['AstExcNoiseSig'],
-            cluster=d['cluster'],
+            cluster='N/A' if pd.isnull(d['cluster']) else d['cluster'],
             reference=d['reference'],
             ext_catalog_name=d['ext_catalog_name'],
             xmatchdist=','.join(
@@ -559,6 +576,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     except Exception as e:
         outstr = 'transitcheckdetails: got bug {}'.format(e)
         print(outstr)
+        import IPython; IPython.embed()
 
     txt_x, txt_y = 0.01, 0.99
     #ax1.text(txt_x, txt_y, textwrap.dedent(outstr),
@@ -792,12 +810,23 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     if 'Oh' in supprow['reference'].iloc[0]:
         is_oh_mg = True
 
+    is_zari_ums = False
+    if 'Zari_2018_UMS' in supprow['reference'].iloc[0]:
+        is_zari_ums = True
+
+    is_zari_pms = False
+    if 'Zari_2018_PMS' in supprow['reference'].iloc[0]:
+        is_zari_pms = True
+
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
     elif have_mwsc_id_match:
         _k13 = k13.loc[k13['MWSC'].astype(str) == str(mwsc_id_match)]
         name_match = str(_k13['Name'].iloc[0])
-    elif is_known_asterism or is_gagne_mg or is_oh_mg:
+    elif (
+        is_known_asterism or is_gagne_mg or
+        is_oh_mg or is_zari_pms or is_zari_ums
+    ):
         pass
     else:
         #FIXME: there are probably hella edge cases for this
@@ -832,18 +861,47 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         dr2_plx = supprow['Parallax[mas][6]'].iloc[0]
         dr2_plx_err = supprow['Parallax_error[mas][7]'].iloc[0]
 
+
+        # ax0.errorbar(0, k13_plx_mas, yerr=0,
+        #              xerr=0, fmt='o', ecolor='C0', capthick=2,
+        #              color='C0', label='K13 cluster', zorder=3)
+
+
         dr2_samples = np.random.normal(loc=dr2_plx, scale=dr2_plx_err, size=300)
 
-        ax0.boxplot(dr2_samples, showfliers=False, whis=[5, 95], zorder=3)
+        ax0.scatter(
+            0.333*np.ones_like(dr2_samples) +
+                    np.random.normal(0,0.03,len(dr2_samples)),
+            dr2_samples,
+            c='C1', label='DR2 target star', zorder=3
+        )
+        # ax0.errorbar(0.5, dr2_plx, yerr=dr2_plx_err,
+        #              xerr=0, fmt='o', ecolor='C1', capthick=2,
+        #              color='C1', label='DR2 target star', zorder=3)
+        # ax0.boxplot(dr2_samples, showfliers=False, whis=[5, 95], zorder=3)
 
-        ax0.axhline(k13_plx_mas, lw=2, alpha=0.3, color='C0', zorder=2,
+        ax0.axhline(k13_plx_mas, lw=3, alpha=0.3, color='C0', zorder=2,
                     label='K13 cluster')
 
+        cluster = str(supprow['cluster'].iloc[0])
+        if have_name_match:
+            cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
+        elif have_mwsc_id_match:
+            name_match = str(_k13["Name"].iloc[0])
+            cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
+
+        ax0.scatter(
+            0.666*np.ones_like(cluster_df['Parallax[mas][6]'])
+            + np.random.normal(0,0.03,len(cluster_df)),
+            cluster_df['Parallax[mas][6]'],
+            c='k', alpha=0.9, zorder=2, s=30, rasterized=True, linewidths=0,
+            label='K13 cluster Gaia xmatches'
+        )
 
         ax0.legend(loc='best')
         ax0.set_xticklabels('')
-        ax0.set_xlabel('box is target star parallax (5th to 95th pctile)',
-                       fontsize='large')
+        ax0.set_xlabel('[horizontally separated for readability]',
+                       fontsize='medium')
         ax0.set_ylabel('star parallax [mas]', fontsize='large')
 
     #
@@ -852,14 +910,27 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     if have_name_match or have_mwsc_id_match:
         ax1.errorbar(_k13['pmRA'], _k13['pmDE'], yerr=_k13['e_pm'],
                      xerr=_k13['e_pm'], fmt='o', ecolor='C0', capthick=2,
-                     color='C0', label='K13 cluster', zorder=2)
+                     color='C0', label='K13 cluster', zorder=3)
 
         ax1.errorbar(supprow['PM_RA[mas/yr][8]'].iloc[0],
                      supprow['PM_Dec[mas/year][9]'].iloc[0],
                      xerr=supprow['PMRA_error[mas/yr][10]'].iloc[0],
                      yerr=supprow['PMDec_error[mas/yr][11]'].iloc[0], fmt='o',
-                     ecolor='C1', capthick=2, color='C1', label='GaiaDR2 star',
-                     zorder=3)
+                     ecolor='C1', capthick=2, color='C1', label='DR2 target star',
+                     zorder=4)
+
+        cluster = str(supprow['cluster'].iloc[0])
+        if have_name_match:
+            cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
+        elif have_mwsc_id_match:
+            name_match = str(_k13["Name"].iloc[0])
+            cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
+        ax1.scatter(
+            cluster_df['PM_RA[mas/yr][8]'],
+            cluster_df['PM_Dec[mas/year][9]'],
+            c='k', alpha=0.9, zorder=2, s=30, rasterized=True, linewidths=0,
+            label='K13 cluster Gaia xmatches'
+        )
 
         ax1.legend(loc='best')
         ax1.set_xlabel('pmRA [mas/yr]', fontsize='large')
@@ -890,6 +961,14 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         n1sr2 = np.nan
         logt = np.nan
         k13type = 'MG (Gagne, Oh)'
+        k13dist = np.nan
+        k13_plx_mas = np.nan
+    elif is_zari_pms or is_zari_ums:
+        mwscid = 'N/A'
+        name_match = 'ZariPMS' if is_zari_pms else 'ZariUMS'
+        n1sr2 = np.nan
+        logt = np.nan
+        k13type = 'Pre-MS' if is_zari_pms else 'Upper-MS'
         k13dist = np.nan
         k13_plx_mas = np.nan
     else:
@@ -949,7 +1028,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             plx_mas=float(supprow['Parallax[mas][6]']),
             plx_mas_err=float(supprow['Parallax_error[mas][7]']),
             dist_pc=1/(1e-3 * float(hdr['Parallax[mas]'])),
-            cluster=d['cluster'],
+            cluster='N/A' if pd.isnull(d['cluster']) else d['cluster'],
             reference=d['reference'],
             ext_catalog_name=d['ext_catalog_name'],
             xmatchdist=','.join(
@@ -999,7 +1078,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
                 #- df['e_bp_min_rp_val[41]']
             )
 
-            ax3.scatter(_xval, _yval, c=color, alpha=0.9, zorder=zorder, s=s,
+            ax3.scatter(_xval, _yval, c=color, alpha=1., zorder=zorder, s=s,
                         rasterized=True, linewidths=0, label=l)
 
         ylim = ax3.get_ylim()

@@ -103,8 +103,8 @@ def _match_lcs_and_cutouts(df, sectornum, cutdir):
         decstr = '{:.4f}'.format(dec)
 
         globs.append(
-                'tess-s{snum:s}-?-?_{ra:s}_{dec:s}_10x10_astrocut.fits'.
-                format(snum=szfill,ra=rastr.rstrip('0'),dec=decstr.rstrip('0'))
+                'tess-s{snum:s}-?-?_{ra:s}00_{dec:s}00_10x10_astrocut.fits'.
+                format(snum=szfill,ra=rastr,dec=decstr)
         )
 
     globpaths = [os.path.join(cutdir,g) for g in globs]
@@ -151,8 +151,9 @@ def initialize_centroid_analysis(
     df = _match_lcs_and_cutouts(df, sectornum, cutdir)
     # e.g.,
     # /nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6_TFA_SR/3217072174202699264_llc.fits
+
     df['source_id'] = nparr(list(map(
-        lambda x: x.split('/')[-1].split('_llc')[0],
+        lambda x: x.split('gaiatwo')[1].split('-')[0].lstrip('0'),
         nparr(df['lcpath'])
     ))).astype(np.int64)
 
