@@ -820,7 +820,12 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
 
     is_gaia_member = False
     if not pd.isnull(supprow['cluster'].iloc[0]):
-        if 'Gulliver' in supprow['cluster'].iloc[0]:
+        if ( ('Gulliver' in supprow['cluster'].iloc[0] and 'CantatGaudin_2018'
+              in supprow['reference'].iloc[0])
+            or
+             ('Teutsch_12' in supprow['cluster'].iloc[0] and
+              'CantatGaudin_2018' in supprow['reference'].iloc[0])
+           ):
             is_gaia_member = True
 
     if have_name_match:
@@ -836,9 +841,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         pass
     else:
         #FIXME: there are probably hella edge cases for this
-        print('didnt get name match')
-        import IPython; IPython.embed()
-        assert 0
+        print('ERR! didnt get name match for {}'.format(hdr['Gaia-ID']))
 
 
     ##########################################
@@ -982,7 +985,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         name_match = 'N/A'
         n1sr2 = np.nan
         logt = np.nan
-        k13type = 'Gulliver object (new from CG18)'
+        k13type = 'cluster from CG18'
         k13dist = np.nan
         k13_plx_mas = np.nan
     else:

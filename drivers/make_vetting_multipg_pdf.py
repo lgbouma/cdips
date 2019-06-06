@@ -1,5 +1,7 @@
 """
 Make multipage PDFs needed to vet CDIPS objects of interest. (TCEs. Whatever).
+
+python -u make_vetting_multipg_pdf.py &> logs/vetting_pdf.log &
 """
 from glob import glob
 import datetime, os, pickle, shutil
@@ -21,7 +23,7 @@ from astropy import units as u
 def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                              supprow, suppfulldf, pfdf, toidf, sectornum,
                              mask_orbit_edges=True,
-                             nworkers=32):
+                             nworkers=40):
     """
     args:
 
