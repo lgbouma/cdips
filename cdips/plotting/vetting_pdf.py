@@ -818,6 +818,11 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     if 'Zari_2018_PMS' in supprow['reference'].iloc[0]:
         is_zari_pms = True
 
+    is_gaia_member = False
+    if not pd.isnull(supprow['cluster'].iloc[0]):
+        if 'Gulliver' in supprow['cluster'].iloc[0]:
+            is_gaia_member = True
+
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
     elif have_mwsc_id_match:
@@ -826,6 +831,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     elif (
         is_known_asterism or is_gagne_mg or
         is_oh_mg or is_zari_pms or is_zari_ums
+        or is_gaia_member
     ):
         pass
     else:
@@ -969,6 +975,14 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         n1sr2 = np.nan
         logt = np.nan
         k13type = 'Pre-MS' if is_zari_pms else 'Upper-MS'
+        k13dist = np.nan
+        k13_plx_mas = np.nan
+    elif is_gaia_member:
+        mwscid = 'N/A'
+        name_match = 'N/A'
+        n1sr2 = np.nan
+        logt = np.nan
+        k13type = 'Gulliver object (new from CG18)'
         k13dist = np.nan
         k13_plx_mas = np.nan
     else:
