@@ -34,6 +34,6 @@
    to make classifications for vetting.
 
     * Check `logs/vetting_pdf.log` for name-matching errors. (First pass, they
-      will always show up!)
+      will always show up! Grep for "ERR!")
 
 11. `paper_plot_all_figures`: plots figures for paper I.

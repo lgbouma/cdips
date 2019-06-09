@@ -21,6 +21,7 @@ from datetime import datetime
 from astropy.io import fits
 
 from cdips.utils import collect_cdips_lightcurves as ccl
+from cdips.utils import lcutils as lcu
 from cdips.lcproc import mask_orbit_edges as moe
 from skim_cream import plot_initial_period_finding_results
 
@@ -87,26 +88,12 @@ def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
 
 def get_lc_data(lcpath, tfa_aperture='TFA2'):
 
-    hdul = fits.open(lcpath)
-
-    tfa_time = hdul[1].data['TMID_BJD']
-    tfa_mag = hdul[1].data[tfa_aperture]
-
-    xcc, ycc = hdul[0].header['XCC'], hdul[0].header['YCC']
-    ra, dec = hdul[0].header['RA_OBJ'], hdul[0].header['DEC_OBJ']
-
-    hdul.close()
-
-    # e.g.,
-    # */cam2_ccd1/hlsp_cdips_tess_ffi_gaiatwo0002916360554371119104-0006_tess_v01_llc.fits
-    source_id = lcpath.split('gaiatwo')[1].split('-')[0].lstrip('0')
-
-    return source_id, tfa_time, tfa_mag, xcc, ycc, ra, dec
+    return lcu.get_lc_data(lcpath, tfa_aperture='TFA2')
 
 
 def periodfindingworker(lcpath):
 
-    source_id, tfa_time, tfa_mag, xcc, ycc, ra, dec = get_lc_data(lcpath)
+    source_id, tfa_time, tfa_mag, xcc, ycc, ra, dec, _ = get_lc_data(lcpath)
 
     if np.all(pd.isnull(tfa_mag)):
         r = [source_id, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
