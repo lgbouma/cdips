@@ -1,0 +1,88 @@
+Sat Jun  8 11:22:30 2019
+
+The CDIPS search turned up Gaia DR2 4827527233363019776 = TIC 77951245 = TOI
+450.
+
+Current SG2 status is listed as:
+
+"unknown stellar (and candidate) radius. Possible small centroid shift to NW.
+EXOFASTv2 results suspicous. Potential blend in SED photometry (optical doesn't
+match well), Trimodal stellar mass, prefers metalicity off the MIST grid
+([Fe/H] > +0.5). mstar=1.2, rstar=2, rp=1.1 Rj.
+SG1 finds event on target, consistent between Ic, rp, and TESS."
+
+I write to note that Gagne+2018 (BANYAN XIII) identified this star as a
+high-likelihood candidate member of the Columba association, which is ~40 Myr
+old.
+
+The Gagne work selected stars within 100pc, and ran the parallaxes and proper
+motions through BANYAN sigma to derive membership probabilities within 27 known
+young nearby associations.  The algorithm can also take radial velocities, but
+for this star none was available. 
+
+This procedure gave 3510 entries with bayesian membership probablity above 90%,
+that were separated by less than 5 km/s from their best-matching associations
+in UVW space.  (727 of these entries had DR2 RVs).
+The 90% threshold was apparently chosen "to identify only the most unambiguous
+members of young associations... while minimizing the rate of contamination
+from random field interlopers."
+
+1399 entries from the 3510 entry list were then dropped because they were
+already known.
+12 more K dwarfs were dropped because they were the subject of another paper in
+prep.
+
+Because parallax solutions in the galactic plane suffer from cross-matching
+confusion, the properties (i.e. colors and existence) of the stars were then
+verified by making finder charts from SDSS, 2MASS, WISE, Pan-STARRS, VHS, and
+UKIDSS images.
+This manual inspection led to 504 unphysical entries being dropped.
+
+Finally, 327 additional candidates were rejected based on inspected the Gaia
+absolute G-band magnitude vs G-GRp color. If the candidates were near the
+main sequence in color-magnitude space, they were rejeted.
+
+Most of these rejected candidates were in "the ABDMG (114), betaPMG (79) and
+COL (37). This is consistent with the deter- mination of Gagne et al. (2018)
+that these associations are the most subject to contamination by unrelated
+field interlopers in kinematic-based searches, mostly because of their
+proximity (i.e., their members cover a larger fraction of the sky)."
+
+Other assessment of the youth (performed by Gagne, still) include the xray
+luminosity and the NUV-G color versus the Gaia G-GRp color (Gagne+2018's
+Figures 10 and 11).
+
+For this target star, I went to Vizier and got the full gaia dr2 page:
+
+http://vizier.u-strasbg.fr/viz-bin/VizieR-5?-ref=VIZ5cfbc9465837&-out.add=.&-source=I/345/gaia2&-c=079.00508771755%20-31.41269396838,eq=ICRS,rs=2&-out.orig=o
+
+I then took the J2000 RA and dec, and searched over the ~20k tables present in
+vizier.
+
+The GALEX-DR5 result is 
+
+NUV = 22.265
+
+(though it has a quality flag set for being a bright star near the field edge).
+
+Gaia G mag = 13.8042,
+G_Rp = 12.5260
+
+NUV - G = 8.5,
+G - G_Rp = 1.28.
+
+The above NUV-G, compared to Figure 11, is somewhat blue, but not WHOPPINGLY
+blue. This kind of is consistent with the small, 1% amplitude variability and
+only 1 or 2 flares in the TESS data.
+
+Ah also I checked ESO archive and there were no RVs.  GJ 3341b is like ~5
+arcminutes away though.
+
+Relevant links:
+
+https://exofop.ipac.caltech.edu/tess/target.php?id=257605131
+
+For VIZIER AWESOME MATCH, http://vizier.u-strasbg.fr/viz-bin/VizieR, and enter
+
+ra, dec
+79.00491494610 -31.41269080450  in J2000, 2 arcmin box.
