@@ -33,4 +33,7 @@
 10. `make_vetting_multipg_pdf`: make a multipage PDF with the information needed
    to make classifications for vetting.
 
+    * Check `logs/vetting_pdf.log` for name-matching errors. (First pass, they
+      will always show up!)
+
 11. `paper_plot_all_figures`: plots figures for paper I.

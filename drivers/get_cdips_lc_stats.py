@@ -5,7 +5,7 @@ supplement the statsfile by matching against Gaia DR2 and CDIPS  catalogs.
 
 usage:
 
-    $ (trex_37) python get_cdips_lc_stats.py |& tee /nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats/sector-6/stats_overview_log.txt
+    $ (trex_37) python -u get_cdips_lc_stats.py |& tee /nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats/sector-6/stats_overview_log.txt
 
 NOTE: depends on pipe-trex (--> run in environment with aperturephot on path)
 """
@@ -17,8 +17,21 @@ from glob import glob
 def get_cdips_lc_stats(
     sectornum=6,
     cdipssource_vnum=0.3,
-    nworkers=32
+    nworkers=32,
+    overwrite=False
 ):
+
+    projdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips'
+    statsdir = os.path.join(projdir,
+                            'results',
+                            'cdips_lc_stats',
+                            'sector-{}'.format(sectornum))
+    if not os.path.exists(statsdir):
+        os.mkdir(statsdir)
+    statsfile = os.path.join(statsdir,'cdips_lc_statistics.txt')
+    if os.path.exists(statsfile) and not overwrite:
+        print("found statsfile and not overwrite. skip")
+        return
 
     lcdirectory = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/'.
@@ -41,15 +54,6 @@ def get_cdips_lc_stats(
         outdf = cdipsdf[['source_id','phot_rp_mean_mag']]
 
         outdf.to_csv(catalogfile, sep=' ', index=False, header=False)
-
-    projdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips'
-    statsdir = os.path.join(projdir,
-                            'results',
-                            'cdips_lc_stats',
-                            'sector-{}'.format(sectornum))
-    if not os.path.exists(statsdir):
-        os.mkdir(statsdir)
-    statsfile = os.path.join(statsdir,'cdips_lc_statistics.txt')
 
     ap.parallel_lc_statistics(lcdirectory, lcglob,
                               catalogfile, tfalcrequired=True,

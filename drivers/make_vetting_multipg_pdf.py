@@ -1,5 +1,7 @@
 """
 Make multipage PDFs needed to vet CDIPS objects of interest. (TCEs. Whatever).
+
+python -u make_vetting_multipg_pdf.py &> logs/vetting_pdf.log &
 """
 from glob import glob
 import datetime, os, pickle, shutil
@@ -21,7 +23,7 @@ from astropy import units as u
 def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                              supprow, suppfulldf, pfdf, toidf, sectornum,
                              mask_orbit_edges=True,
-                             nworkers=32):
+                             nworkers=40):
     """
     args:
 
@@ -245,7 +247,7 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
 
     for tfa_sr_path in tfa_sr_paths:
 
-        sourceid = int(os.path.basename(tfa_sr_path).split('_')[0])
+        sourceid = int(tfa_sr_path.split('gaiatwo')[1].split('-')[0].lstrip('0'))
         mdf = cdips_df[cdips_df['source_id']==sourceid]
         if len(mdf) != 1:
             errmsg = 'expected exactly 1 source match in CDIPS cat'
@@ -334,8 +336,7 @@ def main(sectornum=6, cdips_cat_vnum=0.3):
               'cdips/data/toi-plus-2019-05-15.csv')
     toidf = pd.read_csv(toipath)
 
-
-    # reconstructive_tfa/RunTFASR.sh applied the SDE cutoff on TFA_SR
+    # reconstructive_tfa/RunTFASR.sh applied the threshold cutoff on TFA_SR
     # lightcurves. use whatever is in `tfasrdir` to determine which sources to
     # make pdfs for.
     tfa_sr_paths = glob(os.path.join(tfasrdir, '*_llc.fits'))
