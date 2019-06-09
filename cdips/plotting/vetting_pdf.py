@@ -51,9 +51,14 @@ def two_periodogram_checkplot(lc_sr, hdr, mask_orbit_edges=True,
 
     spdm = periodbase.stellingwerf_pdm(time, flux, err, magsarefluxes=True,
                                        startp=0.1, endp=19, nworkers=nworkers)
+
     tlsp = periodbase.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
-                                         startp=0.1, endp=19, tls_oversample=7,
-                                         tls_mintransits=2, sigclip=[50.,5.],
+                                         startp=0.1, endp=19,
+                                         tls_rstar_min=0.1, tls_rstar_max=10,
+                                         tls_mstar_min=0.1, tls_mstar_max=5.0,
+                                         tls_oversample=8, tls_mintransits=1,
+                                         tls_transit_template='default'
+                                         nbestpeaks=5, sigclip=[50.,5.],
                                          nworkers=nworkers)
 
     objectinfo = {}

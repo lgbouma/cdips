@@ -71,8 +71,8 @@ def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
     results = model.power(use_threads=1, show_progress_bar=False,
                           R_star_min=0.1, R_star_max=10, M_star_min=0.1,
                           M_star_max=5.0, period_min=period_min,
-                          period_max=period_max, n_transits_min=2,
-                          transit_template='default', oversampling_factor=4)
+                          period_max=period_max, n_transits_min=1,
+                          transit_template='default', oversampling_factor=5)
 
     tls_sde = results.SDE
     tls_period = results.period
