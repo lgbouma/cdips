@@ -63,8 +63,8 @@ def main():
     # most (> 98%) of the flux integral is preserved. So anything between w=0.25 days
     # to w=0.5 days should be good...
     dtr_dict = {
-        'method':'hspline',    # none, hspline, or biweight
-        'window_length':0.3,   # for the detrending method
+        'method':'none',    # none, hspline, or biweight
+        'window_length':0.3,   # for the detrending method (ignored if none)
         'break_tolerance':0.3  # make same as window_length
     }
 
@@ -105,7 +105,12 @@ def main():
     pool.join()
 
     # merge and save results
-    csvpaths = glob(os.path.join(resultsdirectory,'worker_output','*.csv'))
+    # 3334295094569278976_period-2.58577_method-hspline_windowlength-0.3.csv
+    csvpaths = glob(os.path.join(
+        resultsdirectory,'worker_output',
+        '*_method-{}_windowlength-{}.csv'.
+        format(dtr_dict['method'],dtr_dict['window_length']))
+    )
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
     outpath = os.path.join(resultsdirectory,
                            'detrend_check_method-{}_window_length-{}.csv'.
@@ -173,97 +178,129 @@ def inj_recov_worker(task):
     #
     # otherwise, begin the injection recovery + detrending experiment.
     #
+    try:
+        # inject
+        inj_time, inj_flux, t0 = inject_signal(tfa_time, tfa_mag, inj_dict)
+        inj_dict['epoch'] = t0
 
-    # inject
-    inj_time, inj_flux, t0 = inject_signal(tfa_time, tfa_mag, inj_dict)
-    inj_dict['epoch'] = t0
+        # detrend
+        flat_flux = detrend_lightcurve(inj_time, inj_flux, dtr_dict)
 
-    # detrend
-    flat_flux = detrend_lightcurve(inj_time, inj_flux, dtr_dict)
+        # period find
+        err = np.ones_like(flat_flux)*1e-4
+        tlsp = periodbase.tls_parallel_pfind(inj_time, flat_flux, err,
+                                             magsarefluxes=True,
+                                             tls_rstar_min=0.1, tls_rstar_max=10,
+                                             tls_mstar_min=0.1, tls_mstar_max=5.0,
+                                             tls_oversample=8, tls_mintransits=1,
+                                             tls_transit_template='default',
+                                             nbestpeaks=5, sigclip=[50.,5.],
+                                             nworkers=1)
 
-    # period find
-    err = np.ones_like(flat_flux)*1e-4
-    tlsp = periodbase.tls_parallel_pfind(inj_time, flat_flux, err,
-                                         magsarefluxes=True,
-                                         tls_rstar_min=0.1, tls_rstar_max=10,
-                                         tls_mstar_min=0.1, tls_mstar_max=5.0,
-                                         tls_oversample=8, tls_mintransits=1,
-                                         tls_transit_template='default',
-                                         nbestpeaks=5, sigclip=[50.,5.],
-                                         nworkers=1)
+        nbestperiods = tlsp['nbestperiods']
+        lspbestperiods = nbestperiods[::]
 
-    nbestperiods = tlsp['nbestperiods']
-    lspbestperiods = nbestperiods[::]
+        d = {
+            # best power recovery specific stats
+            'bestperiod_1':tlsp['tlsresult']['period'],
+            't0_1':tlsp['tlsresult']['T0'],
+            'duration_1':tlsp['tlsresult']['duration'],
+            'depth_1':tlsp['tlsresult']['depth'],
+            'rp_rs_1':tlsp['tlsresult']['rp_rs'], #Rp/Rstar, different bc LD
+            'snr_1':tlsp['tlsresult']['snr'],
+            'odd_even_mismatch_1':tlsp['tlsresult']['odd_even_mismatch'],
+            'sde_1':tlsp['tlsresult']['SDE'],
+            # next two best peaks...
+            'bestperiod_2':lspbestperiods[1],
+            'bestperiod_3':lspbestperiods[2],
+            # the epochs are not actually found. NOTE to solve this would need to
+            # implement something like transitleastsquares.stats.final_T0_fit for
+            # each peak.
+            't0_2':tlsp['tlsresult']['T0'],
+            't0_3':tlsp['tlsresult']['T0']
+        }
 
-    d = {
-        # best power recovery specific stats
-        'bestperiod_1':tlsp['tlsresult']['period'],
-        't0_1':tlsp['tlsresult']['T0'],
-        'duration_1':tlsp['tlsresult']['duration'],
-        'depth_1':tlsp['tlsresult']['depth'],
-        'rp_rs_1':tlsp['tlsresult']['rp_rs'], #Rp/Rstar, different bc LD
-        'snr_1':tlsp['tlsresult']['snr'],
-        'odd_even_mismatch_1':tlsp['tlsresult']['odd_even_mismatch'],
-        'sde_1':tlsp['tlsresult']['SDE'],
-        # next two best peaks...
-        'bestperiod_2':lspbestperiods[1],
-        'bestperiod_3':lspbestperiods[2],
-        # the epochs are not actually found. NOTE to solve this would need to
-        # implement something like transitleastsquares.stats.final_T0_fit for
-        # each peak.
-        't0_2':tlsp['tlsresult']['T0'],
-        't0_3':tlsp['tlsresult']['T0']
-    }
+        # If BLS recovers the injected period within +/- 0.1 days of the injected
+        # period, and recovers t0 (mod P) within +/- 5% of the injected values, the
+        # injected signal is "recovered". Otherwise, it is not.
 
-    # If BLS recovers the injected period within +/- 0.1 days of the injected
-    # period, and recovers t0 (mod P) within +/- 5% of the injected values, the
-    # injected signal is "recovered". Otherwise, it is not.
+        atol = 0.1 # days
+        rtol = 0.05
 
-    atol = 0.1 # days
-    rtol = 0.05
+        reldiff_1 = np.abs(d['t0_1'] - inj_dict['epoch']) % inj_dict['period']
+        reldiff_2 = np.abs(d['t0_2'] - inj_dict['epoch']) % inj_dict['period']
+        reldiff_3 = np.abs(d['t0_3'] - inj_dict['epoch']) % inj_dict['period']
 
-    reldiff_1 = np.abs(d['t0_1'] - inj_dict['epoch']) % inj_dict['period']
-    reldiff_2 = np.abs(d['t0_2'] - inj_dict['epoch']) % inj_dict['period']
-    reldiff_3 = np.abs(d['t0_3'] - inj_dict['epoch']) % inj_dict['period']
+        recovered_as_best_peak = False
+        recovered_in_topthree_peaks = False
 
-    recovered_as_best_peak = False
-    recovered_in_topthree_peaks = False
+        if (
+            np.abs(d['bestperiod_1'] - inj_dict['period']) < atol and
+            reldiff_1 < rtol
+        ):
+            recovered_as_best_peak = True
+            recovered_in_topthree_peaks = True
 
-    if (
-        np.abs(d['bestperiod_1'] - inj_dict['period']) < atol and
-        reldiff_1 < rtol
-    ):
-        recovered_as_best_peak = True
-        recovered_in_topthree_peaks = True
+        elif (
+            ( np.abs(d['bestperiod_2'] - inj_dict['period']) < atol and
+            reldiff_2 < rtol )
+            or
+            ( np.abs(d['bestperiod_3'] - inj_dict['period']) < atol and
+            reldiff_3 < rtol )
+        ):
+            recovered_in_topthree_peaks = True
 
-    elif (
-        ( np.abs(d['bestperiod_2'] - inj_dict['period']) < atol and
-        reldiff_2 < rtol )
-        or
-        ( np.abs(d['bestperiod_3'] - inj_dict['period']) < atol and
-        reldiff_3 < rtol )
-    ):
-        recovered_in_topthree_peaks = True
+        print(
+        "inj_t0: {:.3f}, inj_period: {:.5f}, got_t0: {:.3f}, got_period: {:.3f}, reldiff_1: {:.3f}".
+        format(inj_dict['epoch'], inj_dict['period'], d['t0_1'], d['bestperiod_1'], reldiff_1)
+        )
 
-    print(
-    "inj_t0: {:.3f}, inj_period: {:.5f}, got_t0: {:.3f}, got_period: {:.3f}, reldiff_1: {:.3f}".
-    format(inj_dict['epoch'], inj_dict['period'], d['t0_1'], d['bestperiod_1'], reldiff_1)
-    )
+        t = {
+            'source_id':source_id,
+            'tmag':tmag,
+            'allnan':False,
+            'recovered_as_best_peak':recovered_as_best_peak,
+            'recovered_in_topthree_peaks':recovered_in_topthree_peaks
+        }
+        outd = {**t, **inj_dict, **dtr_dict, **d}
+        outdf = pd.DataFrame(outd, index=[0])
 
-    t = {
-        'source_id':source_id,
-        'tmag':tmag,
-        'allnan':False,
-        'recovered_as_best_peak':recovered_as_best_peak,
-        'recovered_in_topthree_peaks':recovered_in_topthree_peaks
-    }
-    outd = {**t, **inj_dict, **dtr_dict, **d}
-    outdf = pd.DataFrame(outd, index=[0])
+        outdf.to_csv(outpath, index=False)
+        print('made {}'.format(outpath))
 
-    outdf.to_csv(outpath, index=False)
-    print('made {}'.format(outpath))
+        return
 
-    return
+    except Exception as e:
+        print('ERR!: {}'.format(repr(e)))
+        t = {
+            'source_id':source_id,
+            'tmag':tmag,
+            'allnan':True,
+            'recovered_as_best_peak':False,
+            'recovered_in_topthree_peaks':False
+        }
+        d = {
+            'bestperiod_1':np.nan,
+            't0_1':np.nan,
+            'duration_1':np.nan,
+            'depth_1':np.nan,
+            'rp_rs_1':np.nan,
+            'snr_1':np.nan,
+            'odd_even_mismatch_1':np.nan,
+            'sde_1':np.nan,
+            'bestperiod_2':np.nan,
+            'bestperiod_3':np.nan,
+            't0_2':np.nan,
+            't0_3':np.nan
+        }
+        outd = {**t, **inj_dict, **dtr_dict, **d}
+        outdf = pd.DataFrame(outd, index=[0])
+
+        outdf.to_csv(outpath, index=False)
+        print('made {}'.format(outpath))
+
+        return
+
 
 
 def detrend_lightcurve(time, flux, dtr_dict):
