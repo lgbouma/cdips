@@ -196,18 +196,20 @@ if __name__ == "__main__":
 
     get_stats=1
     print_metadata=1
+    sectornum=7
+    cdipssource_vnum=0.3
 
     if get_stats:
         get_cdips_lc_stats(
-            sectornum=6,
-            cdipssource_vnum=0.3,
-            nworkers=32
+            sectornum=sectornum,
+            cdipssource_vnum=cdipssource_vnum,
+            nworkers=40
         )
         supplement_stats_file(
-            cdipssource_vnum=0.3,
-            sectornum=6
+            cdipssource_vnum=cdipssource_vnum,
+            sectornum=sectornum
         )
     if print_metadata:
         print_metadata_stats(
-            sectornum=6
+            sectornum=sectornum
         )

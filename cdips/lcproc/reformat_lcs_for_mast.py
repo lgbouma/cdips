@@ -417,6 +417,8 @@ def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum):
 
         if not os.path.exists(outfile):
             _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum)
+        else:
+            print('found {}'.format(outfile))
 
 
 def mask_orbit_start_and_end(lcpaths):
