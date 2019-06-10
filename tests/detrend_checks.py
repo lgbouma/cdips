@@ -22,6 +22,7 @@ import os, textwrap, re
 from glob import glob
 from datetime import datetime
 from astropy.io import fits
+from numpy import array as nparr
 
 import batman
 import astropy.units as u, astropy.constants as c
@@ -79,19 +80,38 @@ def main():
         """
         type: {}
         {} inj-recov experiments
-        {} allnan
+        {} unique sourceids
+        {} failed b/c allnan or other
         {} recovered as best peak
         {} recovered in top three peaks
         """
         ).format(
-            d, len(df), len(df[df['allnan']]),
+            d, len(df), len(np.unique(df['source_id'])),
+            len(df[df['allnan']]),
             len(df[df['recovered_as_best_peak']]),
             len(df[df['recovered_in_topthree_peaks']])
         )
         print(textwrap.dedent(outstr))
 
-    print('done')
+    mdf = df_pspline.merge(df_none, how='left', on=['source_id', 'period'],
+                           suffixes=['_pspline','_none'])
 
+    pok_nbad = mdf[mdf['recovered_in_topthree_peaks_pspline'] &
+                   ~mdf['recovered_in_topthree_peaks_none']].sort_values(
+                       by=['source_id','period'])
+    nok_pbad = mdf[mdf['recovered_in_topthree_peaks_none'] &
+                   ~mdf['recovered_in_topthree_peaks_pspline']].sort_values(
+                       by=['source_id','period'])
+
+    print('pspline found, but none didnt find for:\n{}'.format(
+        pok_nbad[['source_id','period','sde_1_none','sde_1_pspline']]
+    ))
+
+    print('none found, but pspline didnt find for:\n{}'.format(
+        nok_pbad[['source_id','period','sde_1_none','sde_1_pspline']]
+    ))
+
+    print('\ndone\n')
 
 
 def get_inj_recov_results(dtr_dict):
