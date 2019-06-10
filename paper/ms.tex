@@ -19,10 +19,16 @@
 \submitjournal{AAS journals.}
 
 \shortauthors{Bouma et al.}
-\shorttitle{CDIPS I: Method \& Sectors 6--8}
+\shorttitle{CDIPS I: Method, Sectors 6 \& 7}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % BEGIN CUSTOM SHORT-CUT COMMANDS
+
+% BEGIN NUMBERS
+\newcommand{\numberpcs}{10\ }
+\newcommand{\numberlcs}{42{,}424\ }
+\newcommand{\numberclusters}{424\ }
+
 
 % BEGIN CLUSTER TABLE
 %FIXME: write code that will write these values
@@ -89,8 +95,8 @@
 \begin{document}
 
 \title{
-  The Cluster Difference Imaging Photometric Survey (CDIPS).
-  I. Method, Light Curves, and Planet Candidates from Sectors 6--8
+  The Cluster Difference Imaging Photometric Survey (CDIPS).  I.
+  Light Curves \& Planet Candidates in Open Clusters from TESS Sectors 6 \& 7
 }
 
 \correspondingauthor{L. G. Bouma}
@@ -117,7 +123,40 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 
 \begin{abstract}
-  Lorem ipsum.
+  % Context
+  The Transiting Exoplanet Survey Satellite (TESS) has begun to
+  photometrically monitor almost every nearby star cluster in
+  the Galaxy.
+  % Aims
+  As part of the CDIPS project, we have begun processing the TESS
+  full-frame images to make high-precision light curves for candidate
+  members of stellar associations, moving groups, and open clusters.
+  %
+  Our eventual hope is to discover giant transiting planets, and probe
+  the exoplanet size and separation distributions for planets younger
+  than 1 Gyr.
+  %
+  For this study, we made \numberlcs light curves of candidate young
+  stars in \numberclusters clusters.
+  Each light curve repesents between 20 and 25 days of observations
+  of a star brighter than $G_{Rp}=16$, sampled at 30 minute cadence.
+  % Methods
+  We describe in detail the image subtraction and light curve
+  processing techniques we used to create the light curves, which
+  have noise properties in-line with theoretical expectations.
+  % Results
+  We then highlight the \numberpcs planet candidates identified from
+  an initial search, describe the vetting procedures that they have
+  survived, and emphasize the need for additional
+  spectroscopic and photometric observations.
+  %
+  We also comment on the possible use of the light curve sample for
+  studies of stellar rotation evolution, and binary eccentricity
+  damping.
+  %
+  The data products include both the light curves and also vetting
+  reports, all of which are available at
+  \url{archive.stsci.edu/prepds/cdips}.
 \end{abstract}
 
 \keywords{
