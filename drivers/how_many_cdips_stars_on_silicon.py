@@ -3,6 +3,9 @@ use WCS in the given calibrated images to compute how many CDIPS stars are
 expected to fall on silicon. (in every sector, over all images)
 
 environment: brik
+
+preparation step:
+    $ scp lbouma@phn12:/nfs/phtess2/ar0/TESS/FFI/RED/sector-7/cam?_ccd?/tess2019013135936*_cal_img.fits .
 """
 import os, textwrap
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
@@ -35,6 +38,7 @@ def how_many_cdips_stars_on_silicon(sector=7, ver=0.3):
 
         print('{}...'.format(fname))
         hdul = fits.open(fname)
+        # nb. this ignores the trim, but for statistics it's ok
         w = wcs.WCS(hdul[0].header)
 
         try:

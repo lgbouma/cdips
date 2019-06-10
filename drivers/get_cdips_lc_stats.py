@@ -67,9 +67,11 @@ def get_cdips_lc_stats(
                               rfcols=None, correctioncoeffs=None,
                               sigclip=5.0, fovcathasgaiaids=True)
 
-    ap.plot_stats_file(statsfile, statsdir, 'sector-6 cdips', binned=False,
-                       logy=True, logx=False, correctmagsafter=None,
-                       rangex=(5.9,16), observatory='tess', fovcathasgaiaids=True,
+    ap.plot_stats_file(statsfile, statsdir,
+                       'sector-{} cdips'.format(sectornum),
+                       binned=False, logy=True, logx=False,
+                       correctmagsafter=None, rangex=(5.9,16),
+                       observatory='tess', fovcathasgaiaids=True,
                        yaxisval='RMS')
 
 
