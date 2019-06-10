@@ -17,8 +17,8 @@ usage: $ python -u detrend_checks.py &> dtr.log &
        $ tail -f dtr.log | grep 'inj_'
 """
 
-import numpy as np, pandas as pd
-import os, textwrap
+import numpy as np, pandas as pd, matplotlib.pyplot as plt
+import os, textwrap, re
 from glob import glob
 from datetime import datetime
 from astropy.io import fits
@@ -28,6 +28,7 @@ import astropy.units as u, astropy.constants as c
 from wotan import flatten
 
 from astrobase import periodbase
+from astrobase.lcmath import sigclip_magseries
 
 from cdips.lcproc import mask_orbit_edges as moe
 from cdips.utils import lcutils as lcu
@@ -44,7 +45,56 @@ resultsdirectory = (
     '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/detrend_checks'
 )
 
+
 def main():
+
+    # For case (b), first-pass try using the robust Huber spline (with w = 0.3 d) and
+    # also the sliding biweight (w = 0.3 d). For a sliding biweight, if w/T14 > 2.2,
+    # most (> 98%) of the flux integral is preserved. So anything between w=0.25 days
+    # to w=0.5 days should be good...
+
+    #df_cosine = get_inj_recov_results({'method':'cosine',
+    #                                   'break_tolerance':0.5,
+    #                                   'window_length':0.5,
+    #                                   'robust':'True'})
+
+    df_pspline = get_inj_recov_results({'method':'pspline',
+                                        'break_tolerance':0.5,
+                                        'window_length':0.5})
+
+    df_biweight = get_inj_recov_results({'method':'biweight',
+                                        'window_length':0.5,
+                                        'break_tolerance':0.5})
+    df_none = get_inj_recov_results({'method':'none',
+                                     'window_length':0.3,
+                                     'break_tolerance':0.3})
+    df_hspline = get_inj_recov_results({'method':'hspline',
+                                        'window_length':0.5,
+                                        'break_tolerance':0.5})
+
+    descrps = ['none','pspline', 'biweight','hspline']
+    dfs = [df_none, df_pspline, df_biweight, df_hspline]
+    for df, d in zip(dfs, descrps):
+        outstr = (
+        """
+        type: {}
+        {} inj-recov experiments
+        {} allnan
+        {} recovered as best peak
+        {} recovered in top three peaks
+        """
+        ).format(
+            d, len(df), len(df[df['allnan']]),
+            len(df[df['recovered_as_best_peak']]),
+            len(df[df['recovered_in_topthree_peaks']])
+        )
+        print(textwrap.dedent(outstr))
+
+    print('done')
+
+
+
+def get_inj_recov_results(dtr_dict):
 
     ##########################################
     np.random.seed(42)
@@ -58,19 +108,16 @@ def main():
     P_upper = 10       # 10 days
     inj_depth = 0.005 # 5 mmag, 0.5% central transit
 
-    # For case (b), first-pass try using the robust Huber spline (with w = 0.3 d) and
-    # also the sliding biweight (w = 0.25 d). For a sliding biweight, if w/T14 > 2.2,
-    # most (> 98%) of the flux integral is preserved. So anything between w=0.25 days
-    # to w=0.5 days should be good...
-    dtr_dict = {
-        'method':'none',    # none, hspline, or biweight
-        'window_length':0.3,   # for the detrending method (ignored if none)
-        'break_tolerance':0.3  # make same as window_length
-    }
-
     nworkers = 52
     maxworkertasks = 1000
     ##########################################
+
+    outpath = os.path.join(resultsdirectory,
+                           'detrend_check_method-{}_window_length-{}.csv'.
+                           format(dtr_dict['method'],dtr_dict['window_length']))
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and no overwrite'.format(outpath))
+        return pd.read_csv(outpath)
 
     if overwrite:
         csvpaths = glob(os.path.join(resultsdirectory,'worker_output','*.csv'))
@@ -96,7 +143,7 @@ def main():
         }
 
         tasks.append(
-            (lcpath, inj_dict, dtr_dict)
+            (lcpath, inj_dict, dtr_dict, True)
         )
 
     pool = mp.Pool(nworkers,maxtasksperchild=maxworkertasks)
@@ -112,17 +159,16 @@ def main():
         format(dtr_dict['method'],dtr_dict['window_length']))
     )
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
-    outpath = os.path.join(resultsdirectory,
-                           'detrend_check_method-{}_window_length-{}.csv'.
-                           format(dtr_dict['method'],dtr_dict['window_length']))
     df.to_csv(outpath, index=False)
     print('made {}'.format(outpath))
+
+    return df
 
 
 
 def inj_recov_worker(task):
 
-    lcpath, inj_dict, dtr_dict = task
+    lcpath, inj_dict, dtr_dict, plot_detrend_check = task
 
     # output is a csv file with (a) injected params, (b) whether injected
     # signals was recovered in first peak, (c) whether it was in first three
@@ -183,8 +229,32 @@ def inj_recov_worker(task):
         inj_time, inj_flux, t0 = inject_signal(tfa_time, tfa_mag, inj_dict)
         inj_dict['epoch'] = t0
 
+        # sig clip asymmetric [50,5]
+        inj_time, inj_flux, _ = sigclip_magseries(inj_time, inj_flux,
+                                                  np.ones_like(inj_flux)*1e-4,
+                                                  magsarefluxes=True,
+                                                  sigclip=[50,5])
+
         # detrend
-        flat_flux = detrend_lightcurve(inj_time, inj_flux, dtr_dict)
+        flat_flux, trend_flux = detrend_lightcurve(inj_time, inj_flux, dtr_dict)
+
+        if plot_detrend_check:
+            f,axs = plt.subplots(nrows=2, sharex=True)
+            axs[0].scatter(inj_time, inj_flux, c='black', s=1)
+            axs[0].plot(inj_time, trend_flux, c='red')
+            axs[1].scatter(inj_time, flat_flux, c='black', s=1)
+            axs[0].set_ylabel('raw flux')
+            axs[1].set_ylabel('flattened flux')
+            axs[1].set_xlabel('time [bjd]')
+            outpng = os.path.join(
+                resultsdirectory,'worker_output',
+                str(source_id)+
+                "_period-{:.5f}".format(inj_dict['period'])+
+                "_method-{}".format(dtr_dict['method'])+
+                '_windowlength-{}'.format(dtr_dict['window_length'])+
+                ".png"
+            )
+            f.savefig(outpng, dpi=300)
 
         # period find
         err = np.ones_like(flat_flux)*1e-4
@@ -194,7 +264,7 @@ def inj_recov_worker(task):
                                              tls_mstar_min=0.1, tls_mstar_max=5.0,
                                              tls_oversample=8, tls_mintransits=1,
                                              tls_transit_template='default',
-                                             nbestpeaks=5, sigclip=[50.,5.],
+                                             nbestpeaks=5, sigclip=None,
                                              nworkers=1)
 
         nbestperiods = tlsp['nbestperiods']
@@ -307,17 +377,31 @@ def detrend_lightcurve(time, flux, dtr_dict):
 
     if dtr_dict['method'] == 'none':
         flatten_lc = flux
+        trend_lc = None
 
-    else:
-        flatten_lc, _ = flatten(time, flux,
-                                window_length=dtr_dict['window_length'],
-                                method=dtr_dict['method'],
-                                return_trend=True,
-                                edge_cutoff=False,
-                                break_tolerance=dtr_dict['window_length']
-                               )
+    elif dtr_dict['method'] in ['biweight','hspline']:
+        flatten_lc, trend_lc = flatten(time, flux,
+                                       window_length=dtr_dict['window_length'],
+                                       method=dtr_dict['method'],
+                                       return_trend=True, edge_cutoff=False,
+                                       break_tolerance=dtr_dict['break_tolerance'])
 
-    return flatten_lc
+    elif dtr_dict['method'] in ['pspline']:
+        flatten_lc, trend_lc = flatten(time, flux,
+                                       method=dtr_dict['method'],
+                                       return_trend=True,
+                                       break_tolerance=dtr_dict['break_tolerance'])
+
+    elif dtr_dict['method'] in ['cosine']:
+        flatten_lc, trend_lc = flatten(time, flux,
+                                       method=dtr_dict['method'],
+                                       return_trend=True,
+                                       robust=dtr_dict['robust'],
+                                       window_length=dtr_dict['window_length'],
+                                       break_tolerance=dtr_dict['break_tolerance'])
+
+
+    return flatten_lc, trend_lc
 
 
 def get_lc_paths(N_lcs=100):
