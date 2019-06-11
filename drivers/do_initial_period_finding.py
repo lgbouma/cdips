@@ -24,7 +24,10 @@ from astropy.io import fits
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils import lcutils as lcu
 from cdips.lcproc import mask_orbit_edges as moe
+from cdips.lcproc import detrend as dtr
 from skim_cream import plot_initial_period_finding_results
+
+from astrobase.lcmath import sigclip_magseries
 
 DEBUG = False
 
@@ -89,19 +92,20 @@ def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
     bls_times, bls_flux = moe.mask_orbit_start_and_end(tfa_time, tfa_flux)
 
     #
+    # sig clip asymmetric [50,5]
+    #
+    bls_time, bls_flux, _ = sigclip_magseries(bls_time, bls_flux,
+                                              np.ones_like(bls_flux)*1e-4,
+                                              magsarefluxes=True,
+                                              sigclip=[50,5])
+
+    #
     # detrend if required.
     #
     detrended = False
     if detrend_if_variable and ls_fap < ls_fap_cutoff:
 
-        from wotan import flatten
-
-        break_tolerance = 0.5 # days
-        flat_flux, trend_flux = flatten(bls_times, bls_flux,
-                                        method='pspline',
-                                        return_trend=True,
-                                        break_tolerance=break_tolerance)
-        bls_flux = flat_flux
+        bls_flux = dtr.detrend_flux(bls_times, bls_flux)
         detrended = True
 
     model = transitleastsquares(bls_times, bls_flux)
