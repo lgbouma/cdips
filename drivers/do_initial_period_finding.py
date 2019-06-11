@@ -1,5 +1,6 @@
 """
-given >~10k LCs per galactic field, do the period finding.
+Given >~10k LCs per galactic field, do the period finding (and optionally
+detrend if the LCs are variable).
 
 do_initial_period_finding SETS THE SDE LIMITS. currently implemented is at
 least 12 everywhere, and 15 if you're in a ratty region of period space.
@@ -25,26 +26,43 @@ from cdips.utils import lcutils as lcu
 from cdips.lcproc import mask_orbit_edges as moe
 from skim_cream import plot_initial_period_finding_results
 
+DEBUG = False
+
 def main():
 
     do_initial_period_finding(
-        sectornum=6, nworkers=52, maxworkertasks=1000,
+        sectornum=7, nworkers=52, maxworkertasks=1000,
         outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
         OC_MG_CAT_ver=0.3
     )
 
 
-def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
-                     period_max=27, orbitgap=1, expected_norbits=2,
-                     orbitpadding=6/(24)):
+def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
+                                 period_max=27, orbitgap=1, expected_norbits=2,
+                                 orbitpadding=6/(24), detrend_if_variable=True,
+                                 ls_fap_cutoff=1e-5):
     """
     kwargs:
 
         orbitpadding (float): amount of time to clip near TESS perigee to
         remove ramp signals. 12 data points = 6 hours = 0.25 days (and must
         give in units of days).
-    """
 
+        detrend_if_variable (bool): if Lomb-Scargle finds a peak with FAP <
+        1e-5 in the TFA, the star is "variable". Detrend LC with robust
+        penalized spline (Eilers & Marx 1996), which is a spline with knot
+        length automatically determined via cross-validation. (Additional knots
+        give smaller residuals on the training data, but bigger errors when
+        tested on the entire dataset).  I use the Wotan implementation
+        (Hippke+2019), which is a wrapper to the pyGAM spline fitter (Serven &
+        Brummitt 2018), with iterative $2\sigma$ clipping of outliers from the
+        trend at each iteration.
+
+        In injection-recovery tests (/tests/detrend_checks.py),  the main
+        results was that the additional trending was only helpful in detecting
+        planets whenever substantial non-gaussian variability existed in the
+        TFA light curve.
+    """
     #
     # Lomb scargle w/ uniformly weighted points.
     #
@@ -55,7 +73,7 @@ def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
     ls_period = 1/freq[np.argmax(power)]
 
     #
-    # Transit least squares, ditto.
+    # prepare flux for transit least squares.
     #
     f_x0 = 1e4
     m_x0 = 10
@@ -66,6 +84,22 @@ def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
     # ignore the times near the edges of orbits for TLS.
     #
     bls_times, bls_flux = moe.mask_orbit_start_and_end(tfa_time, tfa_flux)
+
+    #
+    # detrend if required.
+    #
+    detrended = False
+    if detrend_if_variable and ls_fap < ls_fap_cutoff:
+
+        from wotan import flatten
+
+        break_tolerance = 0.5 # days
+        flat_flux, trend_flux = flatten(bls_times, bls_flux,
+                                        method='pspline',
+                                        return_trend=True,
+                                        break_tolerance=break_tolerance)
+        bls_flux = flat_flux
+        detrended = True
 
     model = transitleastsquares(bls_times, bls_flux)
     results = model.power(use_threads=1, show_progress_bar=False,
@@ -81,7 +115,7 @@ def run_periodograms(source_id, tfa_time, tfa_mag, period_min=0.5,
     tls_duration = results.duration
 
     r = [source_id, ls_period, ls_fap, tls_period, tls_sde, tls_t0, tls_depth,
-        tls_duration]
+        tls_duration, detrended]
 
     return r
 
@@ -97,10 +131,10 @@ def periodfindingworker(lcpath):
 
     if np.all(pd.isnull(tfa_mag)):
         r = [source_id, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
-             xcc, ycc, ra, dec]
+             False, xcc, ycc, ra, dec]
 
     else:
-        r = run_periodograms(source_id, tfa_time, tfa_mag)
+        r = run_periodograms_and_detrend(source_id, tfa_time, tfa_mag)
         r.append(xcc)
         r.append(ycc)
         r.append(ra)
@@ -136,7 +170,9 @@ def do_initial_period_finding(
     lcpaths = glob(os.path.join(lcdirectory, lcglob))
     np.random.shuffle(lcpaths)
 
-    #lcpaths = np.random.choice(lcpaths,size=1000) #NOTE for debugging
+    if DEBUG:
+        # when debugging, period find on fewer LCs
+        lcpaths = np.random.choice(lcpaths,size=500)
 
     outdir = os.path.join(outdir, 'sector-{}'.format(sectornum))
     if not os.path.exists(outdir):
@@ -167,8 +203,8 @@ def do_initial_period_finding(
         df = pd.DataFrame(
             results,
             columns=['source_id', 'ls_period', 'ls_fap', 'tls_period', 'tls_sde',
-                     'tls_t0', 'tls_depth', 'tls_duration', 'xcc', 'ycc', 'ra',
-                     'dec']
+                     'tls_t0', 'tls_depth', 'tls_duration',
+                     'pspline_detrended', 'xcc', 'ycc', 'ra', 'dec']
         )
         df = df.sort_values(by='source_id')
 
@@ -251,10 +287,17 @@ def do_initial_period_finding(
 
     # SET SNR LIMITS. at least 12 everywhere. 15 if you're in a ratty region of
     # period space.
-    df['limit'] = np.ones(len(df))*12
-    df['limit'][df['tls_period']<1] = 15
-    df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.75)] = 15
-    df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
+    if sectornum == 6:
+        df['limit'] = np.ones(len(df))*12
+        df['limit'][df['tls_period']<1] = 15
+        df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.75)] = 15
+        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
+    else:
+        df['limit'] = np.ones(len(df))*12
+        df['limit'][df['tls_period']<1] = 15
+        df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.75)] = 15
+        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
+
 
     outpath = os.path.join(
         resultsdir, 'initial_period_finding_results_with_limit.csv'
@@ -264,7 +307,8 @@ def do_initial_period_finding(
 
     plot_initial_period_finding_results(df, resultsdir)
 
-
+    if sectornum not in [6]:
+        raise NotImplementedError('need to manually set SNR limits')
 
 
 if __name__ == "__main__":
