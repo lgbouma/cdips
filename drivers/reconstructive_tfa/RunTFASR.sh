@@ -2,13 +2,10 @@
 
 baselcdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6
 statsdirbase=/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s0006/ISP
-periodlist=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-6/initial_period_finding_results_with_limit.csv
+periodfindingresults=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-6/initial_period_finding_results_with_limit.csv
 outdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6_TFA_SR
 
 NCPU=42
-
-# Previously, would apply SDE threshold
-#SDETHRESHOLD=12
 
 # Number of phase bins to use in the TFA_SR model
 TFASR_NBINS=200
@@ -19,17 +16,49 @@ TFASR_ITERTHRESH=0.001
 # Maximum number of TFA_SR iterations to run
 TFASR_MAXITER=100
 
+#
+# # Previously, applied hard SDE cutoff
+# SDETHRESHOLD=12
+# # with a line like...
+# gawk -v FS=, 'NR > 1 && $5 > '$SDETHRESHOLD' {print $1, $4}' $periodfindingresults | \
+#
+
+#
+# column 15 is "abovelimit", boolean which tells you if given the SDE and
+# period it's above the limits set in `do_initial_period_finding.py`.
+# column 9 is "pspline_detrended", which is a boolean that tells you if a
+# pspline was used to detrend before period-finding.  if so, then do not run
+# TFASR for them.
+#
 if [ ! -f TFASR_inputlist.txt ] ; then
-
-# Previously, would apply SDE threshold
-#gawk -v FS=, 'NR > 1 && $5 > '$SDETHRESHOLD' {print $1, $4}' $periodlist | \
-
-gawk -v FS=, 'NR > 1 && $14 == 1 {print $1, $4}' $periodlist | \
-    while read starid P ; do
-	echo $(find $baselcdir -name '*'$starid'*') $P
+  #
+  # for pspline_detrended files above the limit, just direct-copy them
+  # TODO: verify this gawk string-parsing works
+  #
+  gawk -v FS=, 'NR > 1 && $15 == 1 && $9 == True {print $1}' \
+    $periodfindingresults | \
+    while read starid  ; do
+      echo $(find $baselcdir -name '*'$starid'*')
     done | \
-	gawk '{for(i=1; i <= NF; i += 1) {if($i ~ /.png$/) $i="";} print $0}' \
-	     > TFASR_inputlist.txt
+    gawk '{for(i=1; i <= NF; i += 1) {if($i ~ /.png$/) $i="";} print $0}' \
+         > DETRENDED_TOCOPY_list.txt
+
+  cat DETRENDED_TOCOPY_list.txt | \
+    while read thispath; do
+      cp $thispath $outdir/.
+      echo "copied to "$outdir" : " $thispath
+    done
+
+  #
+  # for LCs above the limit that have not been detrended, put them into
+  # TFASR_inputlist.txt
+  #
+  gawk -v FS=, 'NR > 1 && $15 == 1 && $9 == False {print $1, $4}' $periodfindingresults | \
+      while read starid P ; do
+    echo $(find $baselcdir -name '*'$starid'*') $P
+      done | \
+    gawk '{for(i=1; i <= NF; i += 1) {if($i ~ /.png$/) $i="";} print $0}' \
+         > TFASR_inputlist.txt
 fi
 
 rm TFASR_inputlist_?-?.txt
