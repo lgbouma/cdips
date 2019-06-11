@@ -25,27 +25,28 @@ from cdips.utils import tess_noise_model as tnm
 OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 
 def main():
+    sectors = [6,7]
+
     # fig N: RMS vs catalog T mag
-    plot_rms_vs_mag(overwrite=0)
+    plot_rms_vs_mag(sectors, overwrite=0)
 
     # fig N: histogram (or CDF) of stellar magnitude (T mag)
-    plot_cdf_T_mag(overwrite=0)
+    plot_cdf_T_mag(sectors, overwrite=0)
 
     # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
     # calculated for CTL stars, so by definition it has limited use
-    plot_cdf_cont(overwrite=0)
+    plot_cdf_cont(sectors, overwrite=0)
 
     # fig N: HRD for CDIPS stars.
-    plot_hrd_scat(overwrite=0, close_subset=1)
-    plot_hrd_scat(overwrite=0, close_subset=0)
+    plot_hrd_scat(sectors, overwrite=0, close_subset=1)
+    plot_hrd_scat(sectors, overwrite=0, close_subset=0)
 
     # fig N: pmRA and pmDEC scatter for CDIPS stars.
-    plot_pm_scat(overwrite=0, close_subset=1)
-    plot_pm_scat(overwrite=0, close_subset=0)
+    plot_pm_scat(sectors, overwrite=0, close_subset=1)
+    plot_pm_scat(sectors, overwrite=0, close_subset=0)
 
-    # fig N: positions of field and cluster stars (currently just cam 1)
-    #FIXME
-    plot_cluster_and_field_star_scatter(overwrite=0)
+    # fig N: positions of field and cluster stars (currently all cams)
+    plot_cluster_and_field_star_scatter(sectors, overwrite=1)
 
     #
     # fig N: wcs quality verification
@@ -58,22 +59,22 @@ def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
 
-def _get_rms_vs_mag_df():
+def _get_rms_vs_mag_df(sectors):
 
-    sectornum = 6
     cams = [1,2,3,4]
     ccds = [1,2,3,4]
     csvpaths = []
 
-    for cam in cams:
-        for ccd in ccds:
+    for sector in sectors:
+        for cam in cams:
+            for ccd in ccds:
 
-            csvpath = os.path.join(
-                OUTDIR,'cam{}_ccd{}_rms_vs_mag_data.csv'.
-                format(cam, ccd)
-            )
+                csvpath = os.path.join(
+                    OUTDIR,'sector{}_cam{}_ccd{}_rms_vs_mag_data.csv'.
+                    format(sector, cam, ccd)
+                )
 
-            csvpaths.append(csvpath)
+                csvpaths.append(csvpath)
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
     if len(df) == 0:
@@ -81,14 +82,16 @@ def _get_rms_vs_mag_df():
 
     return df
 
-def plot_cdf_T_mag(overwrite=0):
+def plot_cdf_T_mag(sectors, overwrite=0):
 
-    outpath = os.path.join(OUTDIR, 'cdf_T_mag.png')
+    prestr = 'sector{}_'.format(sectors[0]) if len(sectors)==1 else ''
+
+    outpath = os.path.join(OUTDIR, prestr+'cdf_T_mag.png')
     if os.path.exists(outpath) and not overwrite:
         print('found {} and not overwrite; return'.format(outpath))
         return
 
-    df = _get_rms_vs_mag_df()
+    df = _get_rms_vs_mag_df(sectors)
 
     f,ax = plt.subplots(figsize=(4,3))
 
@@ -114,14 +117,16 @@ def plot_cdf_T_mag(overwrite=0):
     savefig(f, outpath)
 
 
-def plot_cdf_cont(overwrite=0):
+def plot_cdf_cont(sectors, overwrite=0):
 
-    outpath = os.path.join(OUTDIR, 'cdf_ticcont_isCTL.png')
+    prestr = 'sector{}_'.format(sectors[0]) if len(sectors)==1 else ''
+
+    outpath = os.path.join(OUTDIR, prestr+'cdf_ticcont_isCTL.png')
     if os.path.exists(outpath) and not overwrite:
         print('found {} and not overwrite; return'.format(outpath))
         return
 
-    df = _get_rms_vs_mag_df()
+    df = _get_rms_vs_mag_df(sectors)
 
     f,ax = plt.subplots(figsize=(4,3))
 
@@ -146,17 +151,19 @@ def plot_cdf_cont(overwrite=0):
     savefig(f, outpath)
 
 
-def plot_hrd_scat(overwrite=0, close_subset=1):
+def plot_hrd_scat(sectors, overwrite=0, close_subset=1):
+
+    prestr = 'sector{}_'.format(sectors[0]) if len(sectors)==1 else ''
 
     if close_subset:
-        outpath = os.path.join(OUTDIR, 'hrd_scat_close_subset.png')
+        outpath = os.path.join(OUTDIR, prestr+'hrd_scat_close_subset.png')
     else:
-        outpath = os.path.join(OUTDIR, 'hrd_scat_all_CDIPS_LCs.png')
+        outpath = os.path.join(OUTDIR, prestr+'hrd_scat_all_CDIPS_LCs.png')
     if os.path.exists(outpath) and not overwrite:
         print('found {} and not overwrite; return'.format(outpath))
         return
 
-    df = _get_rms_vs_mag_df()
+    df = _get_rms_vs_mag_df(sectors)
 
     # 2d SCATTER CASE
     if close_subset:
@@ -209,17 +216,19 @@ def plot_hrd_scat(overwrite=0, close_subset=1):
     savefig(f, outpath)
 
 
-def plot_pm_scat(overwrite=0, close_subset=0):
+def plot_pm_scat(sectors, overwrite=0, close_subset=0):
+
+    prestr = 'sector{}_'.format(sectors[0]) if len(sectors)==1 else ''
 
     if close_subset:
-        outpath = os.path.join(OUTDIR, 'pm_scat_close_subset.png')
+        outpath = os.path.join(OUTDIR, prestr+'pm_scat_close_subset.png')
     else:
-        outpath = os.path.join(OUTDIR, 'pm_scat_all_CDIPS_LCs.png')
+        outpath = os.path.join(OUTDIR, prestr+'pm_scat_all_CDIPS_LCs.png')
     if os.path.exists(outpath) and not overwrite:
         print('found {} and not overwrite; return'.format(outpath))
         return
 
-    df = _get_rms_vs_mag_df()
+    df = _get_rms_vs_mag_df(sectors)
 
     # 2d SCATTER CASE
     if close_subset:
@@ -273,52 +282,53 @@ def plot_pm_scat(overwrite=0, close_subset=0):
 
 
 
-def plot_cluster_and_field_star_scatter(overwrite=0):
+def plot_cluster_and_field_star_scatter(sectors, overwrite=0):
     """
     note: being kept separate from other stats collection step b/c here you
     need all LCs + CDIPS LCs, rather than only CDIPS LCs
     """
 
-    sectornum = 6
     cams = [1,2,3,4]
     ccds = [1,2,3,4]
     csvpaths = []
     N_max = 100000
 
+    prestr = 'sector{}_'.format(sectors[0]) if len(sectors)==1 else ''
+
     outpath = os.path.join(OUTDIR,
-                           'sector{}_cluster_field_star_positions.png'.
-                           format(sectornum))
+                           prestr+'cluster_field_star_positions.png')
     if os.path.exists(outpath) and not overwrite:
         print('found {} and not overwrite; return'.format(outpath))
         return
 
-    for cam in cams:
-      for ccd in ccds:
+    for sector in sectors:
+        for cam in cams:
+          for ccd in ccds:
 
-          # all lightcurves
-          lcdir = (
-              '/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s{}/ISP_{}-{}-15??/'.
-              format(str(sectornum).zfill(4), cam, ccd)
-          )
-          lcglob = '*_llc.fits'
-          alllcpaths = glob(os.path.join(lcdir, lcglob))
+              # all lightcurves
+              lcdir = (
+                  '/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s{}/ISP_{}-{}-15??/'.
+                  format(str(sector).zfill(4), cam, ccd)
+              )
+              lcglob = '*_llc.fits'
+              alllcpaths = glob(os.path.join(lcdir, lcglob))
 
-          # CDIPS LCs
-          cdipslcdir = (
-              '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/cam{}_ccd{}'.
-              format(sectornum, cam, ccd)
-          )
+              # CDIPS LCs
+              cdipslcdir = (
+                  '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/cam{}_ccd{}'.
+                  format(sector, cam, ccd)
+              )
 
-          csvpath = os.path.join(
-              OUTDIR,'sector{}_cam{}_ccd{}_cluster_field_star_positions.csv'.
-              format(sectornum, cam, ccd)
-          )
+              csvpath = os.path.join(
+                  OUTDIR,'sector{}_cam{}_ccd{}_cluster_field_star_positions.csv'.
+                  format(sector, cam, ccd)
+              )
 
-          csvpaths.append(csvpath)
+              csvpaths.append(csvpath)
 
-          get_cluster_and_field_star_positions(alllcpaths, cdipslcdir, csvpath,
-                                               cam, ccd,
-                                               sectornum, N_desired=N_max)
+              get_cluster_and_field_star_positions(alllcpaths, cdipslcdir, csvpath,
+                                                   cam, ccd, sector,
+                                                   N_desired=N_max)
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
 
@@ -328,9 +338,8 @@ def plot_cluster_and_field_star_scatter(overwrite=0):
 
 
 def get_cluster_and_field_star_positions(lcpaths, cdipslcdir, outpath,
-                                         cam, ccd,
-                                         sectornum, cdipsvnum=1,
-                                         N_desired=200):
+                                         cam, ccd, sector,
+                                         cdipsvnum=1, N_desired=200):
 
     if len(lcpaths) > N_desired:
         selpaths = np.random.choice(lcpaths, size=N_desired, replace=False)
@@ -344,7 +353,15 @@ def get_cluster_and_field_star_positions(lcpaths, cdipslcdir, outpath,
         return
 
     gaiaids, xs, ys, ras, decs, iscdips = [], [], [], [], [], []
-    for selpath in selpaths:
+    N_paths = np.round(len(selpaths),-4)
+
+    for ix, selpath in enumerate(selpaths):
+
+        if (100 * ix/N_paths) % 1 == 0:
+            print('{}: s{}cam{}ccd{} {:.0%} done'.format(
+              datetime.utcnow().isoformat(), sector, cam, ccd, ix/N_paths)
+            )
+
         hdul = fits.open(selpath)
         lcgaiaid = hdul[0].header['Gaia-ID']
         gaiaids.append(lcgaiaid)
@@ -359,7 +376,7 @@ def get_cluster_and_field_star_positions(lcpaths, cdipslcdir, outpath,
             'tess_v{zcdipsvnum}_llc.fits'
         ).format(
             zsourceid=str(lcgaiaid).zfill(22),
-            zsector=str(sectornum).zfill(4),
+            zsector=str(sector).zfill(4),
             zcdipsvnum=str(cdipsvnum).zfill(2)
         )
         if os.path.exists(os.path.join(cdipslcdir,cdipsname)):
@@ -372,7 +389,7 @@ def get_cluster_and_field_star_positions(lcpaths, cdipslcdir, outpath,
     iscdips = nparr(iscdips)
     cams = np.ones_like(ras)*cam
     ccds = np.ones_like(ras)*ccd
-    sectors = np.ones_like(ras)*sectornum
+    sectors = np.ones_like(ras)*sector
 
     outdf = pd.DataFrame({'x':xs,'y':ys,'ra':ras,'dec':decs,
                           'gaiaid':gaiaids, 'iscdips': iscdips, 'cam':cam,
@@ -408,8 +425,12 @@ def plot_cluster_and_field_star_positions(df, outpath):
     print('made {}'.format(outpath))
 
 
-def get_lc_stats(lcpaths, cdipslcdir, outpath, sectornum, cdipsvnum=1,
+def get_lc_stats(lcpaths, cdipslcdir, outpath, sector, cdipsvnum=1,
                  N_desired=200):
+    """
+    given lcpaths (not necessarily CDIPS LCs) get stats and assign whether it
+    is a CDIPS LC or not.
+    """
 
     if len(lcpaths) > N_desired:
         selpaths = np.random.choice(lcpaths, size=N_desired, replace=False)
@@ -439,7 +460,15 @@ def get_lc_stats(lcpaths, cdipslcdir, outpath, sectornum, cdipsvnum=1,
         hd[skey] = []
     hd['iscdips'] = []
 
-    for selpath in selpaths:
+    N_paths = np.round(len(selpaths),-4)
+
+    for ix, selpath in enumerate(selpaths):
+
+        if (100 * ix/N_paths) % 1 == 0:
+            print('{}: {:.0%} done'.format(
+              datetime.utcnow().isoformat(), ix/N_paths)
+            )
+
         hdul = fits.open(selpath)
 
         # get all the position and target star info from the LC header
@@ -463,7 +492,7 @@ def get_lc_stats(lcpaths, cdipslcdir, outpath, sectornum, cdipsvnum=1,
             'tess_v{zcdipsvnum}_llc.fits'
         ).format(
             zsourceid=str(lcgaiaid).zfill(22),
-            zsector=str(sectornum).zfill(4),
+            zsector=str(sector).zfill(4),
             zcdipsvnum=str(cdipsvnum).zfill(2)
         )
         if os.path.exists(os.path.join(cdipslcdir,cdipsname)):
@@ -477,37 +506,39 @@ def get_lc_stats(lcpaths, cdipslcdir, outpath, sectornum, cdipsvnum=1,
     print('made {}'.format(outpath))
 
 
-def plot_rms_vs_mag(overwrite=0):
+def plot_rms_vs_mag(sectors, overwrite=0):
 
-    outpath = os.path.join(OUTDIR, 'rms_vs_mag.png')
-    if os.path.exists(outpath) and not overwrite:
-        print('found {} and not overwrite; return'.format(outpath))
-        return
-
-    sectornum = 6
     cams = [1,2,3,4]
     ccds = [1,2,3,4]
     csvpaths = []
     N_max = 100000
 
-    for cam in cams:
-        for ccd in ccds:
-            cdipslcdir = (
-                '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam{}_ccd{}'.
-                format(cam, ccd)
-            )
-            lcglob = '*_llc.fits'
-            alllcpaths = glob(os.path.join(cdipslcdir, lcglob))
+    prestr = 'sector{}_'.format(sectors[0]) if len(sectors)==1 else ''
 
-            csvpath = os.path.join(
-                OUTDIR,'cam{}_ccd{}_rms_vs_mag_data.csv'.
-                format(cam, ccd)
-            )
+    outpath = os.path.join(OUTDIR, prestr+'rms_vs_mag.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
 
-            csvpaths.append(csvpath)
+    for sector in sectors:
+      for cam in cams:
+          for ccd in ccds:
+              cdipslcdir = (
+                  '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/cam{}_ccd{}'.
+                  format(sector, cam, ccd)
+              )
+              lcglob = '*_llc.fits'
+              cdipslcpaths = glob(os.path.join(cdipslcdir, lcglob))
 
-            get_lc_stats(alllcpaths, cdipslcdir, csvpath, sectornum,
-                         N_desired=N_max)
+              csvpath = os.path.join(
+                  OUTDIR,'sector{}_cam{}_ccd{}_rms_vs_mag_data.csv'.
+                  format(sector, cam, ccd)
+              )
+
+              csvpaths.append(csvpath)
+
+              get_lc_stats(cdipslcpaths, cdipslcdir, csvpath, sector,
+                           N_desired=N_max)
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
 
