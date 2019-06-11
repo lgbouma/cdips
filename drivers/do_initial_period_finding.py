@@ -50,13 +50,16 @@ def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
 
         detrend_if_variable (bool): if Lomb-Scargle finds a peak with FAP <
         1e-5 in the TFA, the star is "variable". Detrend LC with robust
-        penalized spline (Eilers & Marx 1996), which is a spline with knot
+        penalized B-splines (Eilers & Marx 1996), which are B-splines with knot
         length automatically determined via cross-validation. (Additional knots
         give smaller residuals on the training data, but bigger errors when
         tested on the entire dataset).  I use the Wotan implementation
         (Hippke+2019), which is a wrapper to the pyGAM spline fitter (Serven &
-        Brummitt 2018), with iterative $2\sigma$ clipping of outliers from the
-        trend at each iteration.
+        Brummitt 2018), with $2\sigma$ clipping of outliers from the fit
+        residuals at each iteration.  The maximum number of splines by default
+        is 50, which for TESS data (total time ~=25 days) is commensurate with
+        0.5 day periodic signal.
+
 
         In injection-recovery tests (/tests/detrend_checks.py),  the main
         results was that the additional trending was only helpful in detecting
