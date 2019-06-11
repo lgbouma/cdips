@@ -74,15 +74,22 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
     lc_sr = hdul_sr[1].data
     lc, hdr = hdul[1].data, hdul[0].header
 
+    # define "detrended mag". by default, this is the TFASR signal.  however,
+    # if residual stellar variability was found after TFA detrending, then,
+    # this is defined as the TFA LC + penalized spline detrending.
+
+    is_pspline_dtr = bool(supprow['pspline_detrended'].iloc[0])
+
     # Create the PdfPages object to which we will save the pages...
     with PdfPages(outpath) as pdf:
 
         ##########
         # page 1
         ##########
+        fluxap = 'TFA2' if is_pspline_dtr else 'TFASR2'
         fig, tlsp, spdm = vp.two_periodogram_checkplot(
-            lc_sr, hdr, mask_orbit_edges=mask_orbit_edges, fluxap='TFASR2',
-            nworkers=nworkers)
+            lc_sr, hdr, supprow, mask_orbit_edges=mask_orbit_edges,
+            fluxap=fluxap, nworkers=nworkers)
         pdf.savefig(fig)
         plt.close()
 
@@ -93,17 +100,22 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         time, rawmag, tfasrmag, bkgdval, tfatime = (
             lc['TMID_BJD'],
             lc['IRM2'],
-            lc_sr['TFASR2'],
+            lc_sr[fluxap],
             lc['BGV'],
             lc_sr['TMID_BJD']
         )
+
         t0, per = tlsp['tlsresult'].T0, tlsp['tlsresult'].period
         midtimes = np.array([t0 + ix*per for ix in range(-100,100)])
         obsd_midtimes = midtimes[ (midtimes > np.nanmin(time)) &
                                  (midtimes < np.nanmax(time)) ]
+        tmag = hdr['TESSMAG']
+        customstr = 'T = {:.1f}'.format(float(tmag))
+
         fig = vp.plot_raw_tfa_bkgd(time, rawmag, tfasrmag, bkgdval, ap_index,
+                                   supprow,
                                    obsd_midtimes=obsd_midtimes,
-                                   xlabel='BJDTDB', customstr='',
+                                   xlabel='BJDTDB', customstr=customstr,
                                    tfatime=tfatime, is_tfasr=True,
                                    figsize=(30,20))
         pdf.savefig(fig)
@@ -122,8 +134,9 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 4 
         ##########
-        fig = vp.scatter_increasing_ap_size(lc_sr, infodict=infodict,
+        fig = vp.scatter_increasing_ap_size(lc_sr, supprow, infodict=infodict,
                                             obsd_midtimes=obsd_midtimes,
+                                            customstr=customstr,
                                             xlabel='BJDTDB', figsize=(30,20))
         pdf.savefig(fig)
         plt.close()
@@ -274,9 +287,9 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
             lcname
         )
 
-        # logic: even if you know it's nottransit, it's a TCE. therefore, the pdf will
-        # be made. i just dont want to have to look at it. put it in a separate
-        # directory.
+        # logic: even if you know it's nottransit, it's a TCE. therefore, the
+        # pdf will be made. i just dont want to have to look at it. put it in a
+        # separate directory.
         outpath = os.path.join(
             resultsdir,'pdfs',
             'vet_'+os.path.basename(tfa_sr_path).replace('.fits','.pdf')

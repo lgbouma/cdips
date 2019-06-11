@@ -10,6 +10,7 @@ from astrobase.lcmath import sigclip_magseries
 from astrobase.lcfit.eclipses import gaussianeb_fit_magseries
 from astrobase.plotbase import skyview_stamp
 
+from cdips.lcproc import detrend as dtr
 from cdips.lcproc import mask_orbit_edges as moe
 
 from astropy.io import fits
@@ -36,8 +37,10 @@ def _given_mag_get_flux(mag):
 
     return flux
 
-def two_periodogram_checkplot(lc_sr, hdr, mask_orbit_edges=True,
-                              fluxap='TFASR2', nworkers=32):
+
+def two_periodogram_checkplot(lc_sr, hdr, supprow,
+                              mask_orbit_edges=True, fluxap='TFASR2',
+                              nworkers=32):
 
     time, mag = lc_sr['TMID_BJD'], lc_sr[fluxap]
     try:
@@ -49,11 +52,17 @@ def two_periodogram_checkplot(lc_sr, hdr, mask_orbit_edges=True,
     flux = _given_mag_get_flux(mag)
     err = np.ones_like(flux)*1e-4
 
+    time, flux, err = sigclip_magseries(time, flux, err, magsarefluxes=True,
+                                        sigclip=[50,5])
+
+    is_pspline_dtr = bool(supprow['pspline_detrended'].iloc[0])
+    if is_pspline_dtr:
+        flux, _ = dtr.detrend_flux(time, flux)
+
     spdm = periodbase.stellingwerf_pdm(time, flux, err, magsarefluxes=True,
                                        startp=0.1, endp=19, nworkers=nworkers)
 
     tlsp = periodbase.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
-                                         startp=0.1, endp=19,
                                          tls_rstar_min=0.1, tls_rstar_max=10,
                                          tls_mstar_min=0.1, tls_mstar_max=5.0,
                                          tls_oversample=8, tls_mintransits=1,
@@ -85,14 +94,14 @@ def two_periodogram_checkplot(lc_sr, hdr, mask_orbit_edges=True,
 
 
 
-def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
-                      obsd_midtimes=None, xlabel='BJDTDB', customstr='',
-                      tfatime=None, returnfig=True, is_tfasr=True,
-                      figsize=(30,24)):
+def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
+                      savpath=None, obsd_midtimes=None, xlabel='BJDTDB',
+                      customstr='', tfatime=None, returnfig=True,
+                      is_tfasr=True, figsize=(30,24)):
     """
     Plot 3 row, 1 column plot with rows of:
-        * raw mags vs time
-        * TFA mags vs time.
+        * raw flux vs time
+        * TFA flux vs time.
         * bkgd val vs time.
 
     args:
@@ -112,6 +121,9 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
         them.
     """
 
+    is_pspline_dtr = bool(supprow['pspline_detrended'].iloc[0])
+
+    # trim to orbit gaps
     if isinstance(tfatime,np.ndarray):
         try:
             tfatime, tfamag = moe.mask_orbit_start_and_end(tfatime, tfamag)
@@ -127,24 +139,41 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
         # got more gaps than expected. ignore.
         pass
 
+    rawflux = _given_mag_get_flux(rawmag)
+    tfaflux = _given_mag_get_flux(tfamag)
+
+    tfatime, tfaflux, _ = sigclip_magseries(tfatime, tfaflux,
+                                            np.ones_like(tfaflux)*1e-4,
+                                            magsarefluxes=True, sigclip=[50,5])
+
+    if is_pspline_dtr:
+        flat_flux, trend_flux = dtr.detrend_flux(tfatime, tfaflux)
+
+    ##########################################
 
     plt.close('all')
-    nrows = 3
+    nrows = 3 if not is_pspline_dtr else 4
     fig, axs = plt.subplots(nrows=nrows, ncols=1, sharex=True, figsize=figsize)
 
     axs = axs.flatten()
 
     apstr = 'AP{:d}'.format(ap_index)
-    if is_tfasr:
+    if is_tfasr and not is_pspline_dtr:
         stagestrs = ( ['RM{:d}'.format(ap_index),
                        'TF{:d}SR'.format(ap_index),
                        'BKGD{:d}'.format(ap_index)] )
-    else:
+    elif is_tfasr and is_pspline_dtr:
         stagestrs = ( ['RM{:d}'.format(ap_index),
                        'TF{:d}'.format(ap_index),
+                       'DTR{:d}'.format(ap_index),
                        'BKGD{:d}'.format(ap_index)] )
+    else:
+        raise NotImplementedError('this case is never called')
 
-    yvals = [rawmag,tfamag,bkgdval]
+    if not is_pspline_dtr:
+        yvals = [rawflux,tfaflux,bkgdval]
+    else:
+        yvals = [rawflux,tfaflux,flat_flux,bkgdval]
     nums = list(range(len(yvals)))
 
     for ax, yval, txt, num in zip(axs, yvals, stagestrs, nums):
@@ -154,6 +183,10 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
                        rasterized=True, linewidths=0)
         else:
             ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
+                       rasterized=True, linewidths=0)
+
+        if 'DTR' in txt:
+            ax.scatter(tfatime, trend_flux, c='red', alpha=0.9, zorder=1, s=20,
                        rasterized=True, linewidths=0)
 
         if num in [0]:
@@ -179,15 +212,14 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
 
         if isinstance(obsd_midtimes, np.ndarray):
             ylim = ax.get_ylim()
-            ax.set_ylim((max(ylim), min(ylim)))
-            ax.vlines(obsd_midtimes, max(ylim), min(ylim), color='orangered',
+            ax.vlines(obsd_midtimes, min(ylim), max(ylim), color='orangered',
                       linestyle='--', zorder=1, lw=2, alpha=0.3)
-            ax.set_ylim((max(ylim), min(ylim)))
+            ax.set_ylim((min(ylim), max(ylim)))
 
     if not isinstance(obsd_midtimes, np.ndarray):
         for ax in axs:
             ylim = ax.get_ylim()
-            ax.set_ylim((max(ylim), min(ylim)))
+            ax.set_ylim((min(ylim), max(ylim)))
 
     axs[-1].set_xlabel(xlabel, fontsize='large')
 
@@ -195,9 +227,16 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, savpath=None,
     ax_hidden = fig.add_subplot(111, frameon=False)
     ax_hidden.tick_params(labelcolor='none', top=False, bottom=False,
                           left=False, right=False)
-    ax_hidden.set_ylabel(
-        'bottom: background [ADU]. middle: TFASR2 [mag]. top: IRM2 [mag]',
-        fontsize='large', labelpad=27)
+
+    if not is_pspline_dtr:
+        axs[0].set_ylabel('raw flux IRM2', fontsize='large', labelpad=27)
+        axs[1].set_ylabel('detrended flux TFASR2', fontsize='large', labelpad=27)
+        axs[2].set_ylabel('background [ADU]', fontsize='large', labelpad=27)
+    else:
+        axs[0].set_ylabel('raw flux IRM2', fontsize='large', labelpad=27)
+        axs[1].set_ylabel('tfa flux TFA2', fontsize='large', labelpad=27)
+        axs[2].set_ylabel('detrended flux DTR2', fontsize='large', labelpad=27)
+        axs[3].set_ylabel('background [ADU]', fontsize='large', labelpad=27)
 
     if not savpath:
         savpath = 'temp_{:s}.png'.format(apstr)
@@ -229,7 +268,11 @@ def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
 
     axs = axs.flatten()
 
-    stagestrs = ['TFASR1','TFASR2','TFASR3']
+    is_pspline_dtr = bool(supprow['pspline_detrended'].iloc[0])
+    if not is_pspline_dtr:
+        stagestrs = ['TFASR1','TFASR2','TFASR3']
+    else:
+        stagestrs = ['TFA1','TFA2','TFA3']
 
     time = lc_sr['TMID_BJD']
     yvals = [_given_mag_get_flux(lc_sr[i]) for i in stagestrs]
@@ -432,12 +475,16 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
         time, tfasrmag = moe.mask_orbit_start_and_end(tfatime, tfasrmag)
     except AssertionError:
         # got more gaps than expected. ignore.
-
         time, tfasrmag = tfatime, tfasrmag
+
     flux = _given_mag_get_flux(tfasrmag)
 
     stime, sflux, _ = sigclip_magseries(time, flux, np.ones_like(flux)*1e-4,
                                         magsarefluxes=True, sigclip=sigclip)
+
+    is_pspline_dtr = bool(supprow['pspline_detrended'].iloc[0])
+    if is_pspline_dtr:
+        sflux, _ = dtr.detrend_flux(stime, sflux)
 
     d = _get_full_infodict(tlsp, hdr, mdf)
 
@@ -445,7 +492,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     # psdepthratio, secondaryphase]
     initebparams = [d['period'], d['t0'], 1-d['depth'],
                     d['duration']/d['period'], 0.2, 0.5 ]
-    ebfitd = gaussianeb_fit_magseries(time, flux, np.ones_like(flux)*1e-4,
+    ebfitd = gaussianeb_fit_magseries(stime, sflux, np.ones_like(sflux)*1e-4,
                                       initebparams, sigclip=None,
                                       plotfit=False, magsarefluxes=True,
                                       verbose=True)
@@ -495,7 +542,10 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     ax0.scatter(stime, sflux, c='black', alpha=0.9, zorder=2, s=50,
                 rasterized=True, linewidths=0)
     ax0.set_xlabel('BJDTDB')
-    ax0.set_ylabel('TFASR2')
+    if not is_pspline_dtr:
+        ax0.set_ylabel('TFASR2')
+    else:
+        ax0.set_ylabel('DTR2 (TFA then PSPLINE)')
 
     if isinstance(obsd_midtimes, np.ndarray):
         ylim = ax0.get_ylim()
