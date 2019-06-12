@@ -45,7 +45,7 @@ cp ${fdir}rms_vs_mag.png ${pdir}rms_vs_mag.png
 cp ${fdir}cam1_cluster_field_star_positions.png ${pdir}cam1_cluster_field_star_positions.png
 
 # positions of lightcurves
-cp ${fdir}sector6_cluster_field_star_positions.png ${pdir}sector6_cluster_field_star_positions.png
+cp ${fdir}cluster_field_star_positions.png ${pdir}cluster_field_star_positions.png
 
 # CDF of T mags of LCs
 cp ${fdir}cdf_T_mag.png ${pdir}cdf_T_mag.png
