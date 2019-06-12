@@ -1,12 +1,14 @@
 #! /bin/bash
 
+# tested on phn12
+
 sector=7
 baselcdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-$sector
 statsdirbase=/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s000$sector/ISP
 periodfindingresults=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-$sector/initial_period_finding_results_with_limit.csv
 outdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-${sector}_TFA_SR
 
-NCPU=52
+NCPU=40
 
 # Number of phase bins to use in the TFA_SR model
 TFASR_NBINS=200
@@ -16,6 +18,11 @@ TFASR_ITERTHRESH=0.001
 
 # Maximum number of TFA_SR iterations to run
 TFASR_MAXITER=100
+
+# Begin
+if [ ! -d $outdir ] ; then
+    mkdir $outdir
+fi
 
 #
 # # Previously, applied hard SDE cutoff
