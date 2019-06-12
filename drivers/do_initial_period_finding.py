@@ -29,12 +29,16 @@ from skim_cream import plot_initial_period_finding_results
 
 from astrobase.lcmath import sigclip_magseries
 
+# dependencies are hidden; this makes them explicit
+import pygam
+import wotan
+
 DEBUG = False
 
 def main():
 
     do_initial_period_finding(
-        sectornum=6, nworkers=40, maxworkertasks=1000,
+        sectornum=7, nworkers=52, maxworkertasks=1000,
         outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
         OC_MG_CAT_ver=0.3
     )
