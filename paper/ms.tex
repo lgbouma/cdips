@@ -169,67 +169,160 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% The exoplanet field is evolving.
+% At the beginning, Doppler spectroscopy by the Geneva and California groups
+% led to the first exoplanet detections (CITE: Mayor 95, Butler, Marcy).
+% Some of these planets transited (CITE: Henry, Charbonneau).
+% Despite the geometric rarity of transits, photometric monitoring can
+% be performed in parallel; with precise spectroscopy this has not
+% yet been achieved.
+% Parallel photometric monitoring enabled thousands of planet detections
+% with the Kepler spacecraft (CITE: Borucki, Morton).
+% The abundance of planets from Kepler taught us about statistics
+% (CITE: Howard, Fressin, Petigura).
+% By nature of its design, Kepler left open two major avenues for
+% improvement: (i) brighter stars, (ii) rare weirdos.
+% TESS (CITE: Ricker), by nature of its small, wide-field cameras, and
+% nearly all-sky coverage, can capitalize on both.
+
+% One class of rare weirdo to which TESS is sensitive is stars in
+% clusters.  For brevity, we use the term ``cluster'' to refer to open
+% clusters, moving groups, associations, and star-forming regions.
+% Each of the $\sim$1000 star clusters of the Milky Way is a gift to
+% astrophysics, providing a sample of stars that vary widely in mass
+% but all have approximately the same age and composition. 
+
+
 \section{Introduction}
 \label{sec:intro}
 
-The exoplanet field is evolving.
-At the beginning, Doppler spectroscopy by the Geneva and California groups
-led to the first exoplanet detections (CITE: Mayor 95, Butler, Marcy).
-Some of these planets transited (CITE: Henry, Charbonneau).
-Despite the geometric rarity of transits, photometric monitoring can
-be performed in parallel; with precise spectroscopy this has not
-yet been achieved.
-Parallel photometric monitoring enabled thousands of planet detections
-with the Kepler spacecraft (CITE: Borucki, Morton).
-The abundance of planets from Kepler taught us about statistics
-(CITE: Howard, Fressin, Petigura).
-By nature of its design, Kepler left open two major avenues for
-improvement: (i) brighter stars, (ii) rare weirdos.
-TESS (CITE: Ricker), by nature of its small, wide-field cameras, and
-nearly all-sky coverage, can capitalize on both.
+Many evolutionary processes are expected to occur over the lives of
+stars and exoplanets; it would be interesting to statistically observe
+these changes as functions of time.
+However, since dwarf stars do not appreciably change in size or luminosity
+until evolving off the main sequence, creative approaches must be used to
+infer ages \citep{soderblom_ages_2010}.
+In the study of exoplanets, one approach beginning to bear fruit
+is to search for planets in open clusters and moving groups.
+The ages of these stellar ensembles are inferred through isochrone
+analysis, and are typically most constrained by the location of the
+main-sequence turnoff and/or the red giant branch (CITE IF TRUE).
+Once calibrated, gyrochronology can also be used to verify
+the age of a stellar ensemble \citep[{\it
+e.g.},][]{barnes_color-period_2015,meibom_spin-down_2015,curtis_tess_2019}.
+The ages of planets discovered around these cluster stars are then
+assumed to equal those of the star.
 
-One class of rare weirdo to which TESS is sensitive is stars in
-clusters.  For brevity, we use the term ``cluster'' to refer to open
-clusters, moving groups, associations, and star-forming regions.
-Each of the $\sim$1000 star clusters of the Milky Way is a gift to
-astrophysics, providing a sample of stars that vary widely in mass
-but all have approximately the same age and composition. 
+The first planet detections in open clusters
+came from radial velocity measurements of evolved stars in the Hyades
+\citep{Sato_et_al_2007}, and in NGC~2423 \citep{lovis_mayor_2007}.
+Subsequent spectroscopic searches in Praesepe led to the detection of the first
+hot Jupiters in a cluster \citep{Quinn_et_al_2012}, and also the first
+multi-planet system \citep{Malavota_et_al_2016}.
+There were also additional detections reported in the Taurus
+star-forming region (CITE V830 Tau b; Donati et al. 2016, and Cl Tau
+b; Johns-Krull et al. 2016, Flagg et al. 2019).
+An additional radial velocity survey was conducted by Brucalassi et al
+(2017, CITE), following 88 stars in M~67 over 7 years.  They
+reported the detections of three hot Jupiters around main sequence
+stars, and one giant planet around an evolved star.
 
-Cluster stars have been photometered from the ground for a while
-(CITE: Joel thesis, Cambridge group).
-A few clusters, NAME1 and NAME2, were observed by Kepler in its prime
-mission (CITE: Meibom).
-And a few more, most notably X,Y, and Z, were observed in K2's
-ecliptic mission (CITE).
+The transit method was slow to catch up, despite deep searches of the
+M~37 open cluster by \citet{hartman_MMT_IV_2009}, as well as
+multi-year searches of nine young clusters in the solar neighborhood
+by the Monitor project
+\citep{aigrain_monitor_2007,irwin_monitordata_2007,miller_monitor_2008}.
+While these studies led to interesting measurements of stellar
+rotation \citep{hartman_rotation_2009,Irwin_NGC2516_2007} as well as
+the discovery of pre-main-sequence (PMS) eclipsing binaries (EBs)
+\citep{irwin_monitor_PMSEB_2007}, no planet in open clusters were
+uncovered.  Transit searches in globular clusters were similarly met
+with null results \citep{gilliland_lack_2000,
+weldrake_searching_2006}.
 
-TESS holds the promise to deliver the most homogeneous and
-comprehensive cluster photometric survey in history.  Based on the
-cluster membership database of \citet{Kharchenko_et_al_2013} and the
-TESS apparent magnitude calculator of \citet{Jaffe_Barclay_2017}, we
-estimate that $10^5$ cluster members brighter than $T=16$ will be
-observed in the northern ecliptic hemisphere's full-frame images.
+Kepler \citep{borucki_kepler_2010} was the first machine to observe a
+sufficient number of stars for long enough and with sufficient
+precision to detect transiting planets in open clusters:  Kepler-66b
+and 67b, in the gigayear-old NGC6811 \citep{Meibom_et_al_2013}.
+Though a broken reaction wheel ended the prime Kepler mission, the
+repurposed K2 mission \citep{howell_k2_2014} switched between
+fields along the ecliptic every quarter-year, and was able to observe
+far more clusters and young stars.
+In particular, K2's detections through its surveys of the Pleiades,
+Hyades, Praesepe, and Upper Sco were a major inspiration for the
+present work.
 
-However, there are formidable obstacles to deriving precise photometry
-from the {\it TESS} images because of the relatively poor angular
-resolution.  Almost all of the clusters are within 10 degrees of the
-Galactic plane (see Figure~1), where the problems with crowding and
-complex backgrounds are so severe that the {\it TESS}\, Science Team
-has neglected that portion of the sky in their planet simulations
+K2-25b, discovered in the Hyades, had a radius ($3.43\,R_\oplus$) that
+was larger than older Kepler planets at similar insolation levels
+\citep{Mann_K2_25_2016}.  This inflated radius is perhaps a hint that
+the planet is contracting, or losing its atmosphere (e.g., CITE).
+The super-Neptune sized K2-33b ($P\approx 5.4\,{\rm d}$), found in
+Upper Sco, showed that at least some close-in planets must form within
+about 10 Myr, excluding long-timescale migration as an explanation for
+its origin \citep{Mann_K2_33b_2016,David_et_al_2017}.
+Further discoveries included six transiting planets in Praesepe (CITE
+Obermeier, Mann 2016 or 2017), a long-period candidate super-Earth in
+the Hyades (CITE Vanderburg 2017), K2-136b in the Hyades (CITE
+Ciardi+2018, Livingston+2018), the transiting multi-planet system
+K2-264bc in Praesepe (CITE Rizzuto+2018, Livingston+2019), as well as
+a Jupiter-sized planet orbiting every 24 days around V1298 Tau (CITE
+David+2019).
+A final related detection was that of three small planets transiting
+K2-233 (CITE David 2018).  Though the star was not in a cluster, its
+age was determined to be $360_{-140}^{+490}\,{\rm Myr}$ based on
+rotation, activity, and kinematic indicators.
+
+Clearly, a significant amount of effort has been and continues to be
+devoted towards the discovery and characterization of planets around
+young stars.
+It would be nice to begin occurrence rate testing, with a machinery
+similar to that described by Rizzuto 2017 (CITE).
+However, due to the geometric rarity of transits, many tens of
+thousands of stars with known ages must be monitored at high precision
+for such studies to be statistically robust.
+
+The TESS mission \citep{ricker_transiting_2015} holds the promise to
+deliver the most homogeneous and comprehensive cluster photometric
+survey in history.  Based on the cluster membership database of
+\citet{Kharchenko_et_al_2013} and the TESS apparent magnitude
+calculator of \citet{Jaffe_Barclay_2017}, we estimated that $\approx
+2\times10^5$ cluster members brighter than $T=16$ will be observed in
+the full-frame images over the first two years of TESS observations.
+The actual number may be even larger, as cluster membership catalogs
+are by no means complete, even at these relatively bright magnitudes
+(CITE recent Gaia discoveries of nearby OCs).
+
+We have begun to produce time-series photometry from the TESS images
+for stars in ``clusters''~--~a collective term we adopt for open
+clusters, moving groups, stellar associations, and star-forming
+regions.
+We are also including some stars that we suspect are young due to
+combined photometric and astrometric indicators (see
+\S~\ref{sec:starselection}).
+Our eventual hope is to discover giant transiting planets, and probe
+the exoplanet size and separation distributions for planets younger
+than 1 Gyr.
+
+%FIXME: this paragraph needs improvement.
+Unfortunately, there are formidable obstacles to deriving precise
+photometry from the {\it TESS} images because of the relatively poor
+angular resolution.  Almost all of the clusters are within 10 degrees
+of the Galactic plane (see FIGURE~1), where the problems with crowding
+and complex backgrounds are so severe that the {\it TESS}\, Science
+Team has neglected that portion of the sky in their planet simulations
 \citep{Sullivan_et_al_2015}. Similarly, the {\it TESS}\, Candidate
-Target List deprioritizes all objects within $15^\circ$ of the
-galactic plane~\citep{stassun_TIC_2018}, which includes 90\% of all
-star clusters.  The large pixel size and the high stellar surface
-density will make aperture photometry unreliable.  Yet, aperture
-photometry is the basis of the official {\it TESS} data reduction
-pipeline and almost all reduction methods that have been applied to
-{\it Kepler} and {\it K2} data.
-
-
-We have begun to produce photometry from the TESS images.
-For the time being, we are adopting the difference imaging (or
-optionally, ``image subtraction'') technique, because of its
-benefits in modelling complex backgrouds in crowded regions.
-
+Target List deprioritizes all objects close to the galactic
+plane~\citep{stassun_TIC_2018,stassun_TIC8_2019}, which includes 90\%
+of all star clusters.  The large pixel size and the high stellar
+surface density will make aperture photometry unreliable.  Yet,
+aperture photometry is the basis of the official {\it TESS} data
+reduction pipeline and almost all reduction methods that have been
+applied to {\it Kepler} and {\it K2} data.
+We have therefore adopted the difference imaging technique (also
+dubbed ``image subtraction''), because of its benefits in modelling
+complex backgrouds in crowded regions.
 
 In what follows, \S~\ref{sec:method} presents BLAH, and
 \S~\ref{sec:results} describes BLAH BLAH.
