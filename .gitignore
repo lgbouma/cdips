@@ -18,3 +18,4 @@ sandbox*
 build*
 dist*
 *.pyc
+drivers/DETRENDED*txt
