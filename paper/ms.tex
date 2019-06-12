@@ -124,13 +124,13 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 
 \begin{abstract}
   % Context
-  The Transiting Exoplanet Survey Satellite (TESS) has begun to
-  photometrically monitor almost every nearby star cluster in
-  the Galaxy.
+  The Transiting Exoplanet Survey Satellite (TESS) has started to
+  photometrically monitor almost every star cluster in
+  the solar neighborhood.
   % Aims
-  As part of the CDIPS project, we have begun processing the TESS
-  full-frame images to make high-precision light curves for candidate
-  members of stellar associations, moving groups, and open clusters.
+  As part of the CDIPS project, we have been processing the TESS
+  full-frame images to make high-precision light curves stars that
+  could be members of stellar associations, moving groups, and open clusters.
   %
   Our eventual hope is to discover giant transiting planets, and probe
   the exoplanet size and separation distributions for planets younger
@@ -138,24 +138,24 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   %
   For this study, we made \numberlcs light curves of candidate young
   stars in \numberclusters clusters.
-  Each light curve repesents between 20 and 25 days of observations
+  Each light curve represents between 20 and 25 days of observations
   of a star brighter than $G_{Rp}=16$, sampled at 30 minute cadence.
   % Methods
-  We describe in detail the image subtraction and light curve
-  processing techniques we used to create the light curves, which
-  have noise properties in-line with theoretical expectations.
+  We describe in detail the image subtraction and time-series analysis 
+  techniques we used to create the light curves, which
+  have noise properties in agreement with theoretical expectations.
   % Results
-  We then highlight the \numberpcs planet candidates identified from
+  We then highlight the \numberpcs planet candidates we identified in
   an initial search, describe the vetting procedures that they have
-  survived, and emphasize the need for additional
-  spectroscopic and photometric observations.
+  survived, and emphasize the value that additional
+  spectroscopic, photometric, and imaging observations will have in
+  verify that these candidates are in fact planets.
   %
   We also comment on the possible use of the light curve sample for
   studies of stellar rotation evolution, and binary eccentricity
   damping.
   %
-  The data products include both the light curves and also vetting
-  reports, all of which are available at
+  The light curves and vetting are available at
   \url{archive.stsci.edu/prepds/cdips}.
 \end{abstract}
 
@@ -278,43 +278,51 @@ concludes.
 \section{Method: Star Selection}
 \label{sec:starselection}
 
-A major motivator for the CDIPS project is to increase the number of
-cluster stars for which continuous photometric timeseries are
-available, and thus facilitate studies of exoplanetary and stellar
+A major aim of the CDIPS project is to increase the number of
+cluster stars for which photometric time-series are
+available, to facilitate studies of exoplanetary and stellar
 processes across different times and stellar environments.
-An essential aspect of the project is therefore to define a {\it
-cluster star sample}, made of stars that are thought to be
-members of clusters.
+An essential step is therefore to define a sample of
+stars that are thought to be young, or members or clusters, or both.
 
-Performing a homogeneous membership determination for every known
-cluster is beyond the scope of the current work.  Instead, we collect
-various cluster membership catalogs from the literature.  We then use
-them to identify cluster members within the TESS images.  In initially
-selecting stars, we aim for completeness, not accuracy.  If there has
+However, a homogeneous membership calculation for every known
+cluster is outside our scope.  So too is a homogeneous search for
+young stars across the galaxy.
+Instead, we opt to collect
+and concatenate appropriate catalogs from across the literature.  
+We then use the resulting meta-catalog to identify our target stars within the 
+TESS images.
+
+In our initial stellar selection our aim is therefore completeness, not 
+accuracy.  If there has
 been a claim in the literature that a star should be considered a
-cluster member, we would like to report a light curve for the star.
+cluster member, or a young star, we would like to report a light curve for the 
+star.
 For stars that are photometrically interesting, we can perform post-hoc
-cluster membership quality checks using Gaia DR2 astrometry and photometry.
+quality checks using Gaia DR2 astrometry and photometry to assess cluster 
+membership and youth.
 
-Table~N describes the cluster membership catalogs we have used to
-identify candidate cluster members.  Since our photometric reduction
-is based on positions reported in {\it Gaia DR2}, each of our
-light curve sources by default is associated with a Gaia identifier.
-Correspondingly, the cluster membership determinations performed by
-\citet{cantat-gaudin_gaia_2018} and \citet{gaia_hr_2018} are the
-easiest case for us to merge against our light curve database.
-For the TESS Sectors 1--5 light curves produced in this study, this
-yielded X and Y light curves respectively.
+\S~\ref{subsec:oc} describes the large catalogs we used to 
+identify candidate members of open clusters.
+\S~\ref{subsec:mg} describes the smaller catalogs we used to identify 
+candidate members of moving groups, stellar associations, as well as young 
+stars identified through combined Gaia photometry and astrometry.
+\S~\ref{subsec:ocmgsummary} then reports summary statistics for the entire 
+sample of about one million target stars.
 
 %FIXME: make table
 
 \subsection{Big catalogs: open clusters}
 \label{subsec:oc}
 
-\paragraph{{\it Gaia}-derived OC memberships}
 At the time of writing, two relatively large, homogeneous cluster
 memberships studies had been performed using {\it Gaia}-DR2: those by
 \citet{cantat-gaudin_gaia_2018} and \citet{gaia_hr_2018}.
+There were also two large membership studies based on proper motion and 
+photometric catalogs that were of interest: the studies of
+\citet{Kharchenko_et_al_2013} and \citet{dias_proper_2014}.
+
+\paragraph{{\it Gaia}-derived OC memberships}
 
 \citet{cantat-gaudin_gaia_2018} used an unsupervised membership
 assignment algorithm to identify clusters in the three-dimensional
@@ -329,6 +337,17 @@ select group of well-studied open clusters. From their Table~A1, we
 collect 40{,}903 cluster members, in 41 open clusters, mostly within
 $500\,{\rm pc}$. While this work also included memberships for
 globular clusters, we omitted these from consideration.
+
+In our photometric reduction,  our default identifier for all sources
+is the Gaia DR2 \texttt{source\_id}.
+The TIC identifiers are found through a spatial cross-match after the light 
+curves have been made
+\citep{stassun_TIC_2018,stassun_TIC8_2019}
+This is because Gaia DR2 is the base-catalog used to project
+sources from celestial coordinates to the imaging plane (\S~\ref{sec:method}).
+It also has the advantage that for any Gaia-derived cluster memberships, 
+we preform cross-matching directly via the source identifiers.
+
 
 
 \paragraph{Pre-{\it Gaia} OC memberships}
@@ -447,6 +466,7 @@ forming regions justifies their inclusion in our search sample.
 
 
 \subsection{Summary of selected stars}
+\label{subsec:ocmgsummary}
 
 \begin{figure}[t]
 	\begin{center}
