@@ -34,7 +34,7 @@ DEBUG = False
 def main():
 
     do_initial_period_finding(
-        sectornum=7, nworkers=52, maxworkertasks=1000,
+        sectornum=6, nworkers=40, maxworkertasks=1000,
         outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
         OC_MG_CAT_ver=0.3
     )
@@ -89,7 +89,7 @@ def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
     #
     # ignore the times near the edges of orbits for TLS.
     #
-    bls_times, bls_flux = moe.mask_orbit_start_and_end(tfa_time, tfa_flux)
+    bls_time, bls_flux = moe.mask_orbit_start_and_end(tfa_time, tfa_flux)
 
     #
     # sig clip asymmetric [50,5]
@@ -105,10 +105,11 @@ def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
     detrended = False
     if detrend_if_variable and ls_fap < ls_fap_cutoff:
 
-        bls_flux = dtr.detrend_flux(bls_times, bls_flux)
+        print('fap<cutoff for sourceid : {} '.format(source_id))
+        bls_flux, _ = dtr.detrend_flux(bls_time, bls_flux)
         detrended = True
 
-    model = transitleastsquares(bls_times, bls_flux)
+    model = transitleastsquares(bls_time, bls_flux)
     results = model.power(use_threads=1, show_progress_bar=False,
                           R_star_min=0.1, R_star_max=10, M_star_min=0.1,
                           M_star_max=5.0, period_min=period_min,
@@ -179,7 +180,7 @@ def do_initial_period_finding(
 
     if DEBUG:
         # when debugging, period find on fewer LCs
-        lcpaths = np.random.choice(lcpaths,size=500)
+        lcpaths = np.random.choice(lcpaths,size=200)
 
     outdir = os.path.join(outdir, 'sector-{}'.format(sectornum))
     if not os.path.exists(outdir):
@@ -193,17 +194,12 @@ def do_initial_period_finding(
         print('%sZ: %s files to run initial periodograms on' %
               (datetime.utcnow().isoformat(), len(lcpaths)))
 
+        # pool and run jobs
         pool = mp.Pool(nworkers,maxtasksperchild=maxworkertasks)
-
-        # fire up the pool of workers
-        #results = pool.map(periodfindingworker, tasks)
-        #results = pool.map_async(periodfindingworker, tasks, make_log_result,)
         results = []
         for task in tasks:
             pool.apply_async(periodfindingworker, args=[task],
                              callback=make_log_result(results, N_lcs))
-
-        # wait for the processes to complete work
         pool.close()
         pool.join()
 
