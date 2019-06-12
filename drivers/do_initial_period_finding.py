@@ -299,12 +299,19 @@ def do_initial_period_finding(
         df['limit'][df['tls_period']<1] = 15
         df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.75)] = 15
         df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
+    elif sectornum == 7:
+        df['limit'] = np.ones(len(df))*12
+        df['limit'][df['tls_period']<1] = 16
+        df['limit'][(df['tls_period']<1.95) & (df['tls_period']>1.85)] = 18
+        df['limit'][(df['tls_period']>21) & (df['tls_period']<25)] = 18
+        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
     else:
         df['limit'] = np.ones(len(df))*12
         df['limit'][df['tls_period']<1] = 15
         df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.75)] = 15
         df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
 
+    df['pspline_detrended'] = df['pspline_detrended'].astype(int)
 
     outpath = os.path.join(
         resultsdir, 'initial_period_finding_results_with_limit.csv'
@@ -314,7 +321,7 @@ def do_initial_period_finding(
 
     plot_initial_period_finding_results(df, resultsdir)
 
-    if sectornum not in [6]:
+    if sectornum not in [6,7]:
         raise NotImplementedError('need to manually set SNR limits')
 
 

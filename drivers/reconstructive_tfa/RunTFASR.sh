@@ -1,11 +1,12 @@
 #! /bin/bash
 
-baselcdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6
-statsdirbase=/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s0006/ISP
-periodfindingresults=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-6/initial_period_finding_results_with_limit.csv
-outdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6_TFA_SR
+sector=7
+baselcdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-$sector
+statsdirbase=/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s000$sector/ISP
+periodfindingresults=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-$sector/initial_period_finding_results_with_limit.csv
+outdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-${sector}_TFA_SR
 
-NCPU=42
+NCPU=52
 
 # Number of phase bins to use in the TFA_SR model
 TFASR_NBINS=200
@@ -33,9 +34,8 @@ TFASR_MAXITER=100
 if [ ! -f TFASR_inputlist.txt ] ; then
   #
   # for pspline_detrended files above the limit, just direct-copy them
-  # TODO: verify this gawk string-parsing works
   #
-  gawk -v FS=, 'NR > 1 && $15 == 1 && $9 == True {print $1}' \
+  gawk -v FS=, 'NR > 1 && $15 == 1 && $9 == 1 {print $1}' \
     $periodfindingresults | \
     while read starid  ; do
       echo $(find $baselcdir -name '*'$starid'*')
@@ -53,7 +53,7 @@ if [ ! -f TFASR_inputlist.txt ] ; then
   # for LCs above the limit that have not been detrended, put them into
   # TFASR_inputlist.txt
   #
-  gawk -v FS=, 'NR > 1 && $15 == 1 && $9 == False {print $1, $4}' $periodfindingresults | \
+  gawk -v FS=, 'NR > 1 && $15 == 1 && $9 == 0 {print $1, $4}' $periodfindingresults | \
       while read starid P ; do
     echo $(find $baselcdir -name '*'$starid'*') $P
       done | \
