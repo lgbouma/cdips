@@ -149,6 +149,8 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
 
     if is_pspline_dtr:
         flat_flux, trend_flux = dtr.detrend_flux(tfatime, tfaflux)
+        if len(tfatime) != len(trend_flux):
+            raise ValueError('got length of array error')
 
     ##########################################
 
@@ -179,10 +181,10 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
 
     for ax, yval, txt, num in zip(axs, yvals, stagestrs, nums):
 
-        if isinstance(tfatime, np.ndarray) and 'TF' in txt:
+        if 'TF' in txt or 'DTR' in txt:
             ax.scatter(tfatime, yval, c='black', alpha=0.9, zorder=2, s=50,
                        rasterized=True, linewidths=0)
-        else:
+        elif 'BKGD' in txt or 'RM' in txt:
             ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
                        rasterized=True, linewidths=0)
 
@@ -1528,6 +1530,14 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
                                      cachedir='~/.astrobase/stamp-cache',
                                      verbose=True, savewcsheader=True)
     except OSError as e:
+        print('downloaded FITS appears to be corrupt, retrying...')
+        dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
+                                     scaling='Linear', convolvewith=None,
+                                     sizepix=sizepix, flip=False,
+                                     cachedir='~/.astrobase/stamp-cache',
+                                     verbose=True, savewcsheader=True,
+                                     forcefetch=True)
+    except IndexError as e:
         print('downloaded FITS appears to be corrupt, retrying...')
         dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
                                      scaling='Linear', convolvewith=None,
