@@ -1,6 +1,7 @@
 #! /bin/bash
 
-# tested on phn12
+# tested on phn12 and phtess2.
+# NOTE: you need to have a clean directory for this to work
 
 sector=7
 baselcdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-$sector
@@ -8,7 +9,7 @@ statsdirbase=/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s000$sector/ISP
 periodfindingresults=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-$sector/initial_period_finding_results_with_limit.csv
 outdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-${sector}_TFA_SR
 
-NCPU=40
+NCPU=52
 
 # Number of phase bins to use in the TFA_SR model
 TFASR_NBINS=200
