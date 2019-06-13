@@ -38,7 +38,7 @@ def _given_mag_get_flux(mag):
     return flux
 
 
-def two_periodogram_checkplot(lc_sr, hdr, supprow,
+def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
                               mask_orbit_edges=True, fluxap='TFASR2',
                               nworkers=32):
 
@@ -55,7 +55,7 @@ def two_periodogram_checkplot(lc_sr, hdr, supprow,
     time, flux, err = sigclip_magseries(time, flux, err, magsarefluxes=True,
                                         sigclip=[50,5])
 
-    is_pspline_dtr = bool(supprow['pspline_detrended'].iloc[0])
+    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
     if is_pspline_dtr:
         flux, _ = dtr.detrend_flux(time, flux)
 
@@ -66,7 +66,7 @@ def two_periodogram_checkplot(lc_sr, hdr, supprow,
                                          tls_rstar_min=0.1, tls_rstar_max=10,
                                          tls_mstar_min=0.1, tls_mstar_max=5.0,
                                          tls_oversample=8, tls_mintransits=1,
-                                         tls_transit_template='default'
+                                         tls_transit_template='default',
                                          nbestpeaks=5, sigclip=[50.,5.],
                                          nworkers=nworkers)
 
@@ -95,6 +95,7 @@ def two_periodogram_checkplot(lc_sr, hdr, supprow,
 
 
 def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
+                      pfrow,
                       savpath=None, obsd_midtimes=None, xlabel='BJDTDB',
                       customstr='', tfatime=None, returnfig=True,
                       is_tfasr=True, figsize=(30,24)):
@@ -121,7 +122,7 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
         them.
     """
 
-    is_pspline_dtr = bool(supprow['pspline_detrended'].iloc[0])
+    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
 
     # trim to orbit gaps
     if isinstance(tfatime,np.ndarray):
@@ -185,7 +186,7 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
             ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
                        rasterized=True, linewidths=0)
 
-        if 'DTR' in txt:
+        if 'TF' in txt and len(stagestrs)==4:
             ax.scatter(tfatime, trend_flux, c='red', alpha=0.9, zorder=1, s=20,
                        rasterized=True, linewidths=0)
 
@@ -249,7 +250,7 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
         print('%sZ: made plot: %s' % (datetime.utcnow().isoformat(), savpath))
 
 
-def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
+def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
                                xlabel='BJDTDB', customstr='', figsize=(30,24),
                                returnfig=True):
     """
@@ -268,7 +269,7 @@ def scatter_increasing_ap_size(lc_sr, infodict=None, obsd_midtimes=None,
 
     axs = axs.flatten()
 
-    is_pspline_dtr = bool(supprow['pspline_detrended'].iloc[0])
+    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
     if not is_pspline_dtr:
         stagestrs = ['TFASR1','TFASR2','TFASR3']
     else:
@@ -468,6 +469,7 @@ def _get_a_given_P_and_Mstar(period, mstar):
 
 
 def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
+                        pfrow,
                         obsd_midtimes=None, figsize=(30,24), returnfig=True,
                         sigclip=[50,5]):
 
@@ -482,7 +484,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     stime, sflux, _ = sigclip_magseries(time, flux, np.ones_like(flux)*1e-4,
                                         magsarefluxes=True, sigclip=sigclip)
 
-    is_pspline_dtr = bool(supprow['pspline_detrended'].iloc[0])
+    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
     if is_pspline_dtr:
         sflux, _ = dtr.detrend_flux(stime, sflux)
 
@@ -1198,7 +1200,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     return fig
 
 
-def centroid_plots(mdfs, cd, hdr, _pfdf, toidf, figsize=(30,20),
+def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
                    Tmag_cutoff=16, findercachedir='~/.astrobase/stamp-cache'):
     """
     cd = {
@@ -1225,12 +1227,10 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, toidf, figsize=(30,20),
     # wcs information parsing
     # follow Clara Brasseur's https://github.com/ceb8/tessworkshop_wcs_hack
     #
-    ra, dec = mdfs['ra_x'], mdfs['dec_x']
-    targetcoord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
     radius = 2.0*u.arcminute
 
     nbhr_stars = Catalogs.query_region(
-        "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
+        "{} {}".format(float(c_obj.ra.value), float(c_obj.dec.value)),
         catalog="TIC",
         radius=radius
     )
@@ -1249,6 +1249,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, toidf, figsize=(30,20),
     px,py = px[sel], py[sel]
     ticids, tmags = ticids[sel], tmags[sel]
 
+    ra, dec = float(c_obj.ra.value), float(c_obj.dec.value)
     target_x, target_y = cutout_wcs.all_world2pix(ra,dec,0)
 
     # geometry: there are TWO coordinate axes. (x,y) and (ra,dec). To get their
@@ -1430,7 +1431,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, toidf, figsize=(30,20),
         0
     )
     _coord = SkyCoord(_coord[0], _coord[1], unit=(u.deg), frame='icrs')
-    sep = float(_coord.separation(targetcoord).to(u.arcsec).value)
+    sep = float(_coord.separation(c_obj).to(u.arcsec).value)
 
     # for error, assume error on the centroid dominates that of the catalog
     # position
@@ -1465,7 +1466,7 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, toidf, figsize=(30,20),
     # check TOI list for spatial matches
     toicoords = SkyCoord(nparr(toidf['RA']), nparr(toidf['Dec']),
                          unit=(u.deg), frame='icrs')
-    toiseps = toicoords.separation(targetcoord).to(u.arcsec).value
+    toiseps = toicoords.separation(c_obj).to(u.arcsec).value
     spatial_cutoff = 126 # arcseconds ~= 6 pixels
 
     if len(toiseps[toiseps < spatial_cutoff]) >= 1:
@@ -1507,8 +1508,8 @@ def centroid_plots(mdfs, cd, hdr, _pfdf, toidf, figsize=(30,20),
     #
     # ax6: DSS linear (rotated to TESS WCS)
     #
-    ra = targetcoord.ra.value
-    dec = targetcoord.dec.value
+    ra = c_obj.ra.value
+    dec = c_obj.dec.value
     sizepix = 220
     try:
         dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',

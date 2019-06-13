@@ -1,6 +1,5 @@
 """
-First, run drivers/make_fficut_wget_script.py
-Then, run this.
+called from drivers/make_vetting_multipg_pdf.py
 """
 from glob import glob
 import datetime, os, pickle, shutil
@@ -19,190 +18,9 @@ from astropy.coordinates import SkyCoord
 from transitleastsquares import transit_mask
 from astrobase import lcmath
 
+from astroquery.mast import Tesscut
+
 DEBUG = False
-
-def make_wget_script(tfasrdir, xlen_px=10, ylen_px=10, tesscutvernum=0.1):
-    """
-    From astrocut/TESScut API, make shell script used to get FFI cutouts for
-    all the TCEs.  Example curl line ::
-
-        curl -O "https://mast.stsci.edu/tesscut/api/v0.1/astrocut?ra=345.3914&dec=-22.0765&y=15&x=10&units=px&sector=All"
-
-    the corresponding driver is drivers/fficut_wget_script.py
-
-    ############
-    Args:
-
-    tfasrdir: str
-        The directory with signal-reconstructed TFA lightcurves for TCEs, e.g.,
-        "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6_TFA_SR"
-
-    """
-
-    lcpaths = glob(os.path.join(tfasrdir,'*.fits'))
-
-    outlines = []
-    ras, decs= [], []
-    for lcpath in lcpaths:
-
-        hdul = fits.open(lcpath)
-        hdr = hdul[0].header
-
-        try:
-            ra = hdr["RA[deg]"]
-            dec = hdr["Dec[deg]"]
-        except:
-            ra = hdr["RA_OBJ"]
-            dec = hdr["DEC_OBJ"]
-
-        outtemplate = (
-        '\ncurl -O "https://mast.stsci.edu/tesscut/api/'
-        'v{tesscutvernum:.1f}'
-        '/astrocut?'
-        'ra={ra:.4f}&dec={dec:.4f}&y={ylen_px:d}&x={xlen_px:d}'
-        '&units=px&sector=All"'
-        )
-
-        outline = outtemplate.format(
-            tesscutvernum=tesscutvernum,
-            ra=ra,
-            dec=dec,
-            ylen_px=ylen_px,
-            xlen_px=xlen_px
-        )
-
-        outlines.append(outline)
-        ras.append(ra)
-        decs.append(dec)
-
-    outlines.insert(0,'#!/usr/bin/env bash\n')
-
-    outdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts'
-    outdir = os.path.join(outdir,tfasrdir.rstrip('/').split('/')[-1])
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-    outpath = os.path.join(outdir, 'wget_the_TCE_cutouts.sh')
-    with open(outpath, 'w') as f:
-        f.writelines(outlines)
-    print('made {}'.format(outpath))
-
-    outpath = os.path.join(outdir, 'ra_dec_to_lcpath_dict.csv')
-    df = pd.DataFrame({'lcpath':lcpaths,'ra':ras,'dec':decs})
-    df.to_csv(outpath, index=False)
-    print('made {}'.format(outpath))
-
-
-def _match_lcs_and_cutouts(df, sectornum, cutdir):
-
-    szfill = str(sectornum).zfill(4)
-
-    globs = []
-    for ra,dec in zip(nparr(df['ra']),nparr(df['dec'])):
-
-        rastr = '{:.4f}'.format(ra)
-        decstr = '{:.4f}'.format(dec)
-
-        globs.append(
-                'tess-s{snum:s}-?-?_{ra:s}00_{dec:s}00_10x10_astrocut.fits'.
-                format(snum=szfill,ra=rastr,dec=decstr)
-        )
-
-    globpaths = [os.path.join(cutdir,g) for g in globs]
-    globpathexists = nparr([len(glob(g)) for g in globpaths]).astype(bool)
-
-    if not np.all(globpathexists):
-        raise AssertionError('not np.all(globpathexists)')
-
-    df['cutpath'] = [glob(g)[0] for g in globpaths]
-
-    return df
-
-
-def initialize_centroid_analysis(
-    sectornum,
-    cutdir=None
-):
-    """
-    drivers/make_fficut_wget_script.py needs to have been run manually before
-    this, in order to download the TESSCut FFI cutouts for each TCE.
-
-    Args:
-
-        sectornum (int) : sector number
-
-        cutdir (str) : path to directory full of files like
-
-            tess-s0006-1-1_84.0898_-2.1764_10x10_astrocut.fits
-
-        which are extracted from the wget script referenced above.
-
-    Returns:
-
-        mdf (pd.DataFrame) : dataframe with lcpath (to lightcurve), cutpath (to
-        FFI cutout), and the TLS ephemeris used to do centroid analyses.
-    """
-
-    fficutpaths = os.path.join(cutdir, 'tess*.fits')
-
-    dfpath = os.path.join(cutdir, 'ra_dec_to_lcpath_dict.csv')
-    df = pd.read_csv(dfpath)
-
-    # df now contains lcpath,ra,dec,cutpath
-    df = _match_lcs_and_cutouts(df, sectornum, cutdir)
-    # e.g.,
-    # /nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-6_TFA_SR/3217072174202699264_llc.fits
-
-    df['source_id'] = nparr(list(map(
-        lambda x: x.split('gaiatwo')[1].split('-')[0].lstrip('0'),
-        nparr(df['lcpath'])
-    ))).astype(np.int64)
-
-    # will match in the period-finding information, and do the image averaging.
-    # pfdf has: source_id,ls_period,ls_fap,tls_period,tls_sde,
-    #           tls_t0,tls_depth,tls_duration,xcc,ycc,ra,dec
-    periodfinddir = (
-        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
-        'cdips_lc_periodfinding/sector-{}'.format(sectornum)
-    )
-    pfpath = os.path.join(periodfinddir,'initial_period_finding_results.csv')
-    pfdf = pd.read_csv(pfpath, sep=',')
-    pfdf['source_id'] = pfdf['source_id'].astype(np.int64)
-
-    mdf = df.merge(pfdf, how='left', on='source_id')
-    mdfpath = os.path.join(cutdir, 'merged_cutpaths_and_periodogram_info.csv')
-    mdf.to_csv(mdfpath,index=False)
-    print('saved {}'.format(mdfpath))
-
-    if np.any(pd.isnull(mdf['tls_sde'])):
-        if DEBUG:
-            pass
-        else:
-            errmsg = 'TLS SDE is null, and it should not be'
-            raise AssertionError(errmsg)
-
-    if DEBUG:
-        mdf = mdf[~pd.isnull(mdf['tls_sde'])]
-
-    return mdf
-
-
-def do_centroid_analysis(sectornum=6):
-
-    cutdir = ("/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/"
-              "sector-{}_TFA_SR/".format(sectornum))
-    mdf = initialize_centroid_analysis(sectornum, cutdir=cutdir)
-
-    for t0,per,dur,lcpath,cutpath,sourceid in zip(
-        nparr(mdf['tls_t0']),
-        nparr(mdf['tls_period']),
-        nparr(mdf['tls_duration']),
-        nparr(mdf['lcpath']),
-        nparr(mdf['cutpath']),
-        nparr(mdf['source_id'])
-    ):
-
-        outd = measure_centroid(t0,per,dur,lcpath,cutpath,sourceid)
-
 
 def _get_desired_oot_times(time, thistra_time):
 
@@ -263,7 +81,7 @@ def compute_centroid_from_first_moment(data):
     return ctds
 
 
-def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
+def measure_centroid(t0,per,dur,sector,sourceid,c_obj,outdir):
     """
     Quoting Kostov+2019, who I followed:
 
@@ -293,9 +111,11 @@ def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
         t0,per,dur : float, days. Epoch, period, duration.  Used to isolate
         transit windows.
 
-        lcpath, cutpath: Path to lightcurve, path to FFI cutout.
+        sector (int)
 
         sourceid (int)
+
+        c_obj (SkyCoord): location of target star
 
     returns:
 
@@ -319,7 +139,12 @@ def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
         }
     """
 
-    cuthdul = fits.open(cutpath)
+    print('beginning tesscut for {}'.format(repr(c_obj)))
+    cuthdul = Tesscut.get_cutouts(c_obj, size=10, sector=sector)
+    if len(cuthdul) != 1:
+        raise AssertionError('something wrong in tesscut! FIXME')
+    else:
+        cuthdul = cuthdul[0]
     data, data_hdr = cuthdul[1].data, cuthdul[1].header
     cutout_wcs = wcs.WCS(cuthdul[2].header)
 
@@ -459,9 +284,8 @@ def measure_centroid(t0,per,dur,lcpath,cutpath,sourceid):
     }
 
     outpath = os.path.join(
-        os.path.dirname(cutpath),
-        os.path.basename(cutpath).replace(
-            '.fits','{}_ctds.pkl'.format(str(sourceid)))
+        outdir,
+        '{}_ctds.pkl'.format(str(sourceid))
     )
     with open(outpath,'wb') as f:
         pickle.dump(outdict, f)

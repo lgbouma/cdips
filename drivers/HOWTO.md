@@ -18,22 +18,13 @@
    your results depend on the Dias 2014 catalog)
    also makes plots that show the distribution of results.
 
-6. [optional] `skim_cream`: make BLS/SPDM two-panel checkplots for the "cream"
-   determined by the TLS and LS checks above.
-
 7. `reconstructive_tfa/RunTFASR.sh` does signal reconstruction for TFA
    lightcurves
 
-8. `drivers/make_fficut_wget_script.py`: makes wget script to grab the FFI
-   cutouts needed for centroid analysis. (There are manual steps).
-
-9.  [optional] `skim_cream`: make BLS/SPDM two-panel checkplots for the "cream"
-    determined by the TLS and LS checks above.
-
-10. `make_vetting_multipg_pdf`: make a multipage PDF with the information needed
+8. `make_vetting_multipg_pdf`: make a multipage PDF with the information needed
    to make classifications for vetting.
 
     * Check `logs/vetting_pdf.log` for name-matching errors. (First pass, they
       will always show up! Grep for "ERR!")
 
-11. `paper_plot_all_figures`: plots figures for paper I.
+9. `paper_plot_all_figures`: plots figures for paper I.

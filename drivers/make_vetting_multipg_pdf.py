@@ -21,7 +21,7 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 
 def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
-                             supprow, suppfulldf, pfdf, toidf, sectornum,
+                             supprow, suppfulldf, pfdf, pfrow, toidf, sector,
                              mask_orbit_edges=True,
                              nworkers=40):
     """
@@ -78,7 +78,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
     # if residual stellar variability was found after TFA detrending, then,
     # this is defined as the TFA LC + penalized spline detrending.
 
-    is_pspline_dtr = bool(supprow['pspline_detrended'].iloc[0])
+    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
 
     # Create the PdfPages object to which we will save the pages...
     with PdfPages(outpath) as pdf:
@@ -88,7 +88,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         fluxap = 'TFA2' if is_pspline_dtr else 'TFASR2'
         fig, tlsp, spdm = vp.two_periodogram_checkplot(
-            lc_sr, hdr, supprow, mask_orbit_edges=mask_orbit_edges,
+            lc_sr, hdr, supprow, pfrow, mask_orbit_edges=mask_orbit_edges,
             fluxap=fluxap, nworkers=nworkers)
         pdf.savefig(fig)
         plt.close()
@@ -110,10 +110,10 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         obsd_midtimes = midtimes[ (midtimes > np.nanmin(time)) &
                                  (midtimes < np.nanmax(time)) ]
         tmag = hdr['TESSMAG']
-        customstr = 'T = {:.1f}'.format(float(tmag))
+        customstr = '\nT = {:.1f}'.format(float(tmag))
 
         fig = vp.plot_raw_tfa_bkgd(time, rawmag, tfasrmag, bkgdval, ap_index,
-                                   supprow,
+                                   supprow, pfrow,
                                    obsd_midtimes=obsd_midtimes,
                                    xlabel='BJDTDB', customstr=customstr,
                                    tfatime=tfatime, is_tfasr=True,
@@ -125,7 +125,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # page 3 -- it's a QLP ripoff
         ##########
         fig, infodict = vp.transitcheckdetails(
-            tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
+            tfasrmag, tfatime, tlsp, mdf, hdr, supprow, pfrow,
             obsd_midtimes=obsd_midtimes, figsize=(30,20)
         )
         pdf.savefig(fig)
@@ -134,7 +134,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 4 
         ##########
-        fig = vp.scatter_increasing_ap_size(lc_sr, supprow, infodict=infodict,
+        fig = vp.scatter_increasing_ap_size(lc_sr, pfrow, infodict=infodict,
                                             obsd_midtimes=obsd_midtimes,
                                             customstr=customstr,
                                             xlabel='BJDTDB', figsize=(30,20))
@@ -152,30 +152,32 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 6
         ##########
-        # NOTE: a much much better approach upon rewrite would be to use
-        # from astroquery.mast import Tesscut; Tesscut.get_cutouts(coord)
-        cutdir = ("/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/"
-                  "sector-{}_TFA_SR/".format(sectornum))
-        mdf = cdva.initialize_centroid_analysis(sectornum, cutdir)
-        mdfs = mdf.loc[mdf['source_id'].astype(np.int64) == np.int64(sourceid)]
-        t0,per,dur,lcpath,cutpath,sourceid = (float(mdfs['tls_t0']),
-                                              float(mdfs['tls_period']),
-                                              float(mdfs['tls_duration']),
-                                              mdfs['lcpath'].iloc[0],
-                                              mdfs['cutpath'].iloc[0],
-                                              int(mdfs['source_id'].iloc[0]) )
-        cd = cdva.measure_centroid(t0,per,dur,lcpath,cutpath,sourceid)
 
-        tls_period, tls_t0 = nparr(pfdf['tls_period']), nparr(pfdf['tls_t0'])
-        ras, decs = nparr(pfdf['ra_x']), nparr(pfdf['dec_x'])
         ra_obj, dec_obj = hdr['RA_OBJ'], hdr['DEC_OBJ']
         c_obj = SkyCoord(ra_obj, dec_obj, unit=(u.deg), frame='icrs')
+
+        t0,per,dur,sourceid = (float(pfrow['tls_t0']),
+                               float(pfrow['tls_period']),
+                               float(pfrow['tls_duration']),
+                               int(pfrow['source_id'].iloc[0]) )
+
+        outdir = ("/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_cutouts/"
+                 "sector-{}_TFA_SR_pkl".format(sector))
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+        cd = cdva.measure_centroid(t0,per,dur,sector,sourceid,c_obj,outdir)
+
+        #
+        # check whether the measured ephemeris matches other TCEs.  cutoffs
+        # below came by looking at distribution of errors on the QLP quoted
+        # parameters.
+        #
+        tls_period, tls_t0 = nparr(pfdf['tls_period']), nparr(pfdf['tls_t0'])
+        ras, decs = nparr(pfdf['ra_x']), nparr(pfdf['dec_x'])
         coords = SkyCoord(ras, decs, unit=(u.deg), frame='icrs')
 
         seps_px = c_obj.separation(coords).to(u.arcsec).value/21
 
-        # these cutoffs came by looking at distribution of errors on the QLP
-        # quoted parameters
         period_cutoff = 2e-3 # about 3 minutes
         t0_cutoff = 5e-3 # 7 minutes
 
@@ -192,7 +194,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         else:
             _pfdf = None
 
-        fig = vp.centroid_plots(mdfs, cd, hdr, _pfdf, toidf, figsize=(30,24))
+        fig = vp.centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,24))
         pdf.savefig(fig)
         plt.close()
 
@@ -255,7 +257,7 @@ def _get_supprow(sourceid, supplementstatsdf):
 
 
 def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
-                  supplementstatsdf, pfdf, toidf, sectornum=6,
+                  supplementstatsdf, pfdf, toidf, sector=6,
                   cdipsvnum=1):
 
     for tfa_sr_path in tfa_sr_paths:
@@ -277,7 +279,7 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
             'tess_v{zcdipsvnum}_llc.fits'
         ).format(
             zsourceid=str(sourceid).zfill(22),
-            zsector=str(sectornum).zfill(4),
+            zsector=str(sector).zfill(4),
             zcdipsvnum=str(cdipsvnum).zfill(2)
         )
 
@@ -302,20 +304,26 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
         supprow = _get_supprow(sourceid, supplementstatsdf)
         suppfulldf = supplementstatsdf
 
+        pfrow = pfdf.loc[pfdf['source_id']==sourceid]
+        if len(pfrow) != 1:
+            errmsg = 'expected exactly 1 source match in period find df'
+            raise AssertionError(errmsg)
+
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
             make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
                                      sourceid, supprow, suppfulldf, pfdf,
-                                     toidf, sectornum)
+                                     pfrow,
+                                     toidf, sector)
         else:
             print('found {}, continue'.format(outpath))
 
 
-def main(sectornum=6, cdips_cat_vnum=0.3):
+def main(sector=6, cdips_cat_vnum=0.3):
 
     resultsdir = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
         'vetting/'
-        'sector-{}'.format(sectornum)
+        'sector-{}'.format(sector)
     )
     dirs = [resultsdir, os.path.join(resultsdir,'pdfs'),
             os.path.join(resultsdir,'pkls'),
@@ -326,27 +334,27 @@ def main(sectornum=6, cdips_cat_vnum=0.3):
             os.mkdir(_d)
 
     tfasrdir = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-                'CDIPS_LCS/sector-{}_TFA_SR'.format(sectornum))
+                'CDIPS_LCS/sector-{}_TFA_SR'.format(sector))
     lcbasedir =  ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-                  'CDIPS_LCS/sector-{}/'.format(sectornum))
+                  'CDIPS_LCS/sector-{}/'.format(sector))
 
     cdipscatpath = ('/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
                     'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(cdips_cat_vnum))
     cdips_df = pd.read_csv(cdipscatpath, sep=';')
 
     supppath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
-                'cdips_lc_stats/sector-{}/'.format(sectornum)+
+                'cdips_lc_stats/sector-{}/'.format(sector)+
                 'supplemented_cdips_lc_statistics.txt')
     supplementstatsdf = pd.read_csv(supppath, sep=';')
 
     pfpath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
               'cdips/results/cdips_lc_periodfinding/'
-              'sector-{}/'.format(sectornum)+
+              'sector-{}/'.format(sector)+
               'initial_period_finding_results_supplemented.csv')
     pfdf = pd.read_csv(pfpath)
 
     toipath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-              'cdips/data/toi-plus-2019-05-15.csv')
+              'cdips/data/toi-plus-2019-06-13.csv')
     toidf = pd.read_csv(toipath)
 
     # reconstructive_tfa/RunTFASR.sh applied the threshold cutoff on TFA_SR
@@ -355,9 +363,9 @@ def main(sectornum=6, cdips_cat_vnum=0.3):
     tfa_sr_paths = glob(os.path.join(tfasrdir, '*_llc.fits'))
 
     make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
-                  supplementstatsdf, pfdf, toidf, sectornum=sectornum)
+                  supplementstatsdf, pfdf, toidf, sector=sector)
 
 
 if __name__ == "__main__":
 
-    main(sectornum=6)
+    main(sector=6, cdips_cat_vnum=0.3)
