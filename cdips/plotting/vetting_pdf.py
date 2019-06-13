@@ -612,8 +612,18 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
             teff=str(d['teff']),
             ra=float(d['ra']),
             dec=float(d['dec']),
-            psdepthratio=float(d['psdepthratio']),
-            psdepthratioerr=float(d['psdepthratioerr']),
+            psdepthratio=(
+                float(d['psdepthratio'])
+                if
+                float(d['psdepthratio'])/float(d['psdepthratioerr'])>1
+                else
+                np.nan),
+            psdepthratioerr=(
+                float(d['psdepthratioerr'])
+                if
+                float(d['psdepthratio'])/float(d['psdepthratioerr'])>1
+                else
+                np.nan),
             phot_g_mean_mag=d['phot_g_mean_mag'],
             phot_rp_mean_mag=d['phot_rp_mean_mag'],
             phot_bp_mean_mag=d['phot_bp_mean_mag'],
