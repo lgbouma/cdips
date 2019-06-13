@@ -2,7 +2,7 @@
 called from drivers/make_vetting_multipg_pdf.py
 """
 from glob import glob
-import datetime, os, pickle, shutil
+import datetime, os, pickle, shutil, requests
 import numpy as np, pandas as pd
 
 from numpy import array as nparr
@@ -140,7 +140,12 @@ def measure_centroid(t0,per,dur,sector,sourceid,c_obj,outdir):
     """
 
     print('beginning tesscut for {}'.format(repr(c_obj)))
-    cuthdul = Tesscut.get_cutouts(c_obj, size=10, sector=sector)
+    try:
+        cuthdul = Tesscut.get_cutouts(c_obj, size=10, sector=sector)
+    except requests.exceptions.HTTPError as e:
+        print('got {}, try again'.format(repr(e)))
+        cuthdul = Tesscut.get_cutouts(c_obj, size=10, sector=sector)
+
     if len(cuthdul) != 1:
         raise AssertionError('something wrong in tesscut! FIXME')
     else:

@@ -318,7 +318,7 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
             print('found {}, continue'.format(outpath))
 
 
-def main(sector=6, cdips_cat_vnum=0.3):
+def main(sector=None, cdips_cat_vnum=None):
 
     resultsdir = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'

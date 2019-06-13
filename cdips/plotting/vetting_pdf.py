@@ -1529,15 +1529,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
                                      sizepix=sizepix, flip=False,
                                      cachedir='~/.astrobase/stamp-cache',
                                      verbose=True, savewcsheader=True)
-    except OSError as e:
-        print('downloaded FITS appears to be corrupt, retrying...')
-        dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
-                                     scaling='Linear', convolvewith=None,
-                                     sizepix=sizepix, flip=False,
-                                     cachedir='~/.astrobase/stamp-cache',
-                                     verbose=True, savewcsheader=True,
-                                     forcefetch=True)
-    except IndexError as e:
+    except OSError, IndexError, TypeError as e:
         print('downloaded FITS appears to be corrupt, retrying...')
         dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
                                      scaling='Linear', convolvewith=None,
