@@ -38,7 +38,7 @@ DEBUG = False
 def main():
 
     do_initial_period_finding(
-        sectornum=7, nworkers=52, maxworkertasks=1000,
+        sectornum=6, nworkers=40, maxworkertasks=1000,
         outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
         OC_MG_CAT_ver=0.3
     )
@@ -297,7 +297,11 @@ def do_initial_period_finding(
     if sectornum == 6:
         df['limit'] = np.ones(len(df))*12
         df['limit'][df['tls_period']<1] = 15
-        df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.75)] = 15
+        df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.925)] = 20
+        df['limit'][(df['tls_period']<5.925) & (df['tls_period']>5.75)] = 15
+        df['limit'][(df['tls_period']<9) & (df['tls_period']>8.75)] = 15
+        df['limit'][(df['tls_period']<12.05) & (df['tls_period']>11.8)] = 15
+        df['limit'][(df['tls_period']>20) & (df['tls_period']<25)] = 18
         df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
     elif sectornum == 7:
         df['limit'] = np.ones(len(df))*12
