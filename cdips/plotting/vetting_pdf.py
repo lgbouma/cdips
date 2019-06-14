@@ -1266,9 +1266,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
         )
     except Exception as e:
         print('ERR! wcs all_world2pix got {}'.format(repr(e)))
-        px = np.ones_like(nbhr_stars[nbhr_stars['Tmag'] <
-                                     Tmag_cutoff]['ra'])*np.nan
-        py = px
+        return
 
     ticids = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['ID']
     tmags = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['Tmag']
