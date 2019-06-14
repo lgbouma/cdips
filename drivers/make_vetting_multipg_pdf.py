@@ -195,7 +195,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             _pfdf = None
 
         fig = vp.centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,24))
-        pdf.savefig(fig)
+        if fig is not None:
+            pdf.savefig(fig)
         plt.close()
 
 
