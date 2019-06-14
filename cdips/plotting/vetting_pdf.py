@@ -503,6 +503,10 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     fitparams = ebfitd['fitinfo']['finalparams']
     fitparamerrs = ebfitd['fitinfo']['finalparamerrs']
 
+    if fitparams is None:
+        fitparams = [np.nan]*42
+    if fitparamerrs is None:
+        fitparamerrs = [np.nan]*42
     psdepthratio = 1/fitparams[4]
     psdepthratioerr = psdepthratio*(fitparamerrs[4]/fitparams[4])
 
@@ -1254,11 +1258,17 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     )
 
     cutout_wcs = cd['cutout_wcs']
-    px,py = cutout_wcs.all_world2pix(
-        nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['ra'],
-        nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['dec'],
-        0
-    )
+    try:
+        px,py = cutout_wcs.all_world2pix(
+            nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['ra'],
+            nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['dec'],
+            0
+        )
+    except Exception as e:
+        print('ERR! wcs all_world2pix got {}'.format(repr(e)))
+        px = np.ones_like(nbhr_stars[nbhr_stars['Tmag'] <
+                                     Tmag_cutoff]['ra'])*np.nan
+        py = px
 
     ticids = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['ID']
     tmags = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['Tmag']
