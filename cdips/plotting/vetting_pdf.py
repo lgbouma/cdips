@@ -650,9 +650,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
             )
         )
     except Exception as e:
-        outstr = 'transitcheckdetails: got bug {}'.format(e)
+        outstr = 'ERR! transitcheckdetails: got bug {}'.format(e)
         print(outstr)
-        import IPython; IPython.embed()
 
     txt_x, txt_y = 0.01, 0.99
     #ax1.text(txt_x, txt_y, textwrap.dedent(outstr),
