@@ -877,6 +877,12 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
             elif c.startswith('NGC'):
                 c = c.lstrip('NGC')
 
+            # https://en.wikipedia.org/wiki/NGC_2451
+            if c.endswith('A'):
+                c = c.rstrip('A')
+            if c.endswith('B'):
+                c = c.rstrip('B')
+
             if int(c) in ngc_asterisms:
                 is_known_asterism = True
                 break
