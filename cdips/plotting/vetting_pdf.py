@@ -708,25 +708,33 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     odd_mask = ~even_mask
 
     plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
-    _make_phased_magseries_plot(ax4, 0, stime[odd_mask], sflux[odd_mask],
-                                np.ones_like(sflux[odd_mask])/1e4,
-                                d['period'], d['t0'], True, True, phasebin,
-                                minbinelems, plotxlim, 'tls',
-                                xliminsetmode=False, magsarefluxes=True,
-                                phasems=6.0, phasebinms=12.0, verbose=True,
-                                lowerleftstr='odd')
+    try:
+        _make_phased_magseries_plot(ax4, 0, stime[odd_mask], sflux[odd_mask],
+                                    np.ones_like(sflux[odd_mask])/1e4,
+                                    d['period'], d['t0'], True, True, phasebin,
+                                    minbinelems, plotxlim, 'tls',
+                                    xliminsetmode=False, magsarefluxes=True,
+                                    phasems=6.0, phasebinms=12.0, verbose=True,
+                                    lowerleftstr='odd')
+    except TypeError as e:
+        print('ERR! phased magseries ax4 failed {}'.format(repr(e)))
+        pass
 
     #
     # ax5: even
     #
     plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
-    _make_phased_magseries_plot(ax5, 0, stime[even_mask], sflux[even_mask],
-                                np.ones_like(sflux[even_mask])/1e4,
-                                d['period'], d['t0'], True, True, phasebin,
-                                minbinelems, plotxlim, 'tls',
-                                xliminsetmode=False, magsarefluxes=True,
-                                phasems=6.0, phasebinms=12.0, verbose=True,
-                                lowerleftstr='even')
+    try:
+        _make_phased_magseries_plot(ax5, 0, stime[even_mask], sflux[even_mask],
+                                    np.ones_like(sflux[even_mask])/1e4,
+                                    d['period'], d['t0'], True, True, phasebin,
+                                    minbinelems, plotxlim, 'tls',
+                                    xliminsetmode=False, magsarefluxes=True,
+                                    phasems=6.0, phasebinms=12.0, verbose=True,
+                                    lowerleftstr='even')
+    except TypeError as e:
+        print('ERR! phased magseries ax4 failed {}'.format(repr(e)))
+        pass
 
     outstr = textwrap.dedent(outstr).lstrip('\n')
     ax1.text(0, 0.5, outstr,
