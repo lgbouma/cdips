@@ -670,23 +670,31 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     minbinelems=2
     tdur_by_period=d['duration']/d['period']
     plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
-    _make_phased_magseries_plot(ax2, 0, stime, sflux, np.ones_like(sflux)/1e4,
-                                d['period'], d['t0'], True, True, phasebin,
-                                minbinelems, plotxlim, 'tls',
-                                xliminsetmode=False, magsarefluxes=True,
-                                phasems=6.0, phasebinms=12.0, verbose=True,
-                                lowerleftstr='primary')
+    try:
+        _make_phased_magseries_plot(ax2, 0, stime, sflux, np.ones_like(sflux)/1e4,
+                                    d['period'], d['t0'], True, True, phasebin,
+                                    minbinelems, plotxlim, 'tls',
+                                    xliminsetmode=False, magsarefluxes=True,
+                                    phasems=6.0, phasebinms=12.0, verbose=True,
+                                    lowerleftstr='primary')
+    except (TypeError, ValueError) as e:
+        print('ERR! phased magseries ax2 failed {}'.format(repr(e)))
+        pass
 
     #
     # ax3: occultation
     #
     plotxlim=(-2.0*tdur_by_period+0.5,2.0*tdur_by_period+0.5)
-    _make_phased_magseries_plot(ax3, 0, stime, sflux, np.ones_like(sflux)/1e4,
-                                d['period'], d['t0'], True, True, phasebin,
-                                minbinelems, plotxlim, 'tls',
-                                xliminsetmode=False, magsarefluxes=True,
-                                phasems=6.0, phasebinms=12.0, verbose=True,
-                                lowerleftstr='secondary')
+    try:
+        _make_phased_magseries_plot(ax3, 0, stime, sflux, np.ones_like(sflux)/1e4,
+                                    d['period'], d['t0'], True, True, phasebin,
+                                    minbinelems, plotxlim, 'tls',
+                                    xliminsetmode=False, magsarefluxes=True,
+                                    phasems=6.0, phasebinms=12.0, verbose=True,
+                                    lowerleftstr='secondary')
+    except (TypeError, ValueError) as e:
+        print('ERR! phased magseries ax3 failed {}'.format(repr(e)))
+        pass
 
     #
     # ax4: odd
@@ -716,7 +724,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                     xliminsetmode=False, magsarefluxes=True,
                                     phasems=6.0, phasebinms=12.0, verbose=True,
                                     lowerleftstr='odd')
-    except TypeError as e:
+    except (TypeError, ValueError) as e:
         print('ERR! phased magseries ax4 failed {}'.format(repr(e)))
         pass
 
@@ -732,7 +740,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                     xliminsetmode=False, magsarefluxes=True,
                                     phasems=6.0, phasebinms=12.0, verbose=True,
                                     lowerleftstr='even')
-    except TypeError as e:
+    except (TypeError, ValueError) as e:
         print('ERR! phased magseries ax4 failed {}'.format(repr(e)))
         pass
 
