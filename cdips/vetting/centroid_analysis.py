@@ -142,7 +142,8 @@ def measure_centroid(t0,per,dur,sector,sourceid,c_obj,outdir):
     print('beginning tesscut for {}'.format(repr(c_obj)))
     try:
         cuthdul = Tesscut.get_cutouts(c_obj, size=10, sector=sector)
-    except requests.exceptions.HTTPError as e:
+    except (requests.exceptions.HTTPError,
+            requests.exceptions.ConnectionError) as e:
         print('got {}, try again'.format(repr(e)))
         cuthdul = Tesscut.get_cutouts(c_obj, size=10, sector=sector)
 
