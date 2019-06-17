@@ -15,7 +15,7 @@ import os, subprocess, shlex
 from glob import glob
 
 def get_cdips_lc_stats(
-    sectornum=6,
+    sector=6,
     cdipssource_vnum=0.3,
     nworkers=32,
     overwrite=False
@@ -25,7 +25,7 @@ def get_cdips_lc_stats(
     statsdir = os.path.join(projdir,
                             'results',
                             'cdips_lc_stats',
-                            'sector-{}'.format(sectornum))
+                            'sector-{}'.format(sector))
     if not os.path.exists(statsdir):
         os.mkdir(statsdir)
     statsfile = os.path.join(statsdir,'cdips_lc_statistics.txt')
@@ -35,7 +35,7 @@ def get_cdips_lc_stats(
 
     lcdirectory = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/'.
-        format(sectornum)
+        format(sector)
     )
     lcglob = 'cam?_ccd?/*_llc.fits'
 
@@ -68,7 +68,7 @@ def get_cdips_lc_stats(
                               sigclip=5.0, fovcathasgaiaids=True)
 
     ap.plot_stats_file(statsfile, statsdir,
-                       'sector-{} cdips'.format(sectornum),
+                       'sector-{} cdips'.format(sector),
                        binned=False, logy=True, logx=False,
                        correctmagsafter=None, rangex=(5.9,16),
                        observatory='tess', fovcathasgaiaids=True,
@@ -77,7 +77,7 @@ def get_cdips_lc_stats(
 
 def supplement_stats_file(
     cdipssource_vnum=0.3,
-    sectornum=6):
+    sector=6):
     """
       add crossmatching info per line:
       * all gaia mags. also gaia extinction and parallax. (also parallax upper
@@ -92,7 +92,7 @@ def supplement_stats_file(
 
     statsfile = os.path.join(
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats',
-        'sector-{}'.format(sectornum),
+        'sector-{}'.format(sector),
         'cdips_lc_statistics.txt'
     )
     outpath = statsfile.replace('cdips_lc_statistics',
@@ -140,6 +140,12 @@ def supplement_stats_file(
     df['lcobj'] = df['lcobj'].astype(np.int64)
 
     mdf = df.merge(cgdf, how='left', left_on='lcobj', right_on='#Gaia-ID[1]')
+    if np.all(pd.isnull(mdf['RA[deg][2]'])):
+        errmsg = (
+            'ERR! probably merging against bad temp files!! check gaia2read '
+            'call, perhaps.'
+        )
+        raise AssertionError(errmsg)
 
     del df, cgdf, gdf
 
@@ -166,7 +172,7 @@ def supplement_stats_file(
 
 
 
-def print_metadata_stats(sectornum=6):
+def print_metadata_stats(sector=6):
     """
     how many LCs?
     how many all nan LCs?
@@ -174,14 +180,14 @@ def print_metadata_stats(sectornum=6):
 
     statsfile = os.path.join(
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats',
-        'sector-{}'.format(sectornum),
+        'sector-{}'.format(sector),
         'cdips_lc_statistics.txt'
     )
 
     stats = ap.read_stats_file(statsfile, fovcathasgaiaids=True)
     N_lcs = len(stats)
 
-    print('CDIPS LIGHTCURVES STATS FOR SECTOR {}'.format(sectornum))
+    print('CDIPS LIGHTCURVES STATS FOR SECTOR {}'.format(sector))
     print(42*'-')
     print('total N_lcs: {}'.format(N_lcs))
 
@@ -198,20 +204,20 @@ if __name__ == "__main__":
 
     get_stats=1
     print_metadata=1
-    sectornum=7
+    sector=7
     cdipssource_vnum=0.3
 
     if get_stats:
         get_cdips_lc_stats(
-            sectornum=sectornum,
+            sector=sector,
             cdipssource_vnum=cdipssource_vnum,
             nworkers=40
         )
         supplement_stats_file(
             cdipssource_vnum=cdipssource_vnum,
-            sectornum=sectornum
+            sector=sector
         )
     if print_metadata:
         print_metadata_stats(
-            sectornum=sectornum
+            sector=sector
         )
