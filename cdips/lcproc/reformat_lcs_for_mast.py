@@ -168,7 +168,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
                    'MAST HLSP required keyword')
 
     primaryhdr.set('OBJECT',
-                   int(lcgaiaid),
+                   str(lcgaiaid),
                    'Gaia DR2 source_id')
 
     primaryhdr.set('SECTOR',
@@ -233,7 +233,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
                        'TIC version')
 
         primaryhdr.set('TICID',
-                       int(mrow['ID']),
+                       str(mrow['ID']),
                        'TIC identifier of xmatch')
 
         primaryhdr.set('TESSMAG',

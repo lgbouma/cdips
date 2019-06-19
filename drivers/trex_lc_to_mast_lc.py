@@ -24,7 +24,7 @@ from cdips.lcproc import mask_orbit_edges as moe
 def main():
 
     trex_lc_to_mast_lc(
-        sectors=[7],
+        sectors=[6,7],
         cams=[1,2,3,4],
         ccds=[1,2,3,4],
         make_symlinks=0,
