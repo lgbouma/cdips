@@ -12,8 +12,8 @@ import pandas as pd
 
 ##########################################
 # modify these
-sector = 6
-today = '20190616'
+sector = 7
+today = '20190618'
 classified_dir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/sector_{}_{}_LGB_DONE/'.format(sector,today)
 outdir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/'
 outtocollabdir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/{}_sector-{}_{}'
@@ -26,6 +26,9 @@ pdfpaths = glob(os.path.join(classified_dir,'*pdf'))
 
 if not len(pdfpaths) > 1:
     raise AssertionError('bad pdfpaths. no glob matches.')
+for p in pdfpaths:
+    if '[' not in p:
+        raise AssertionError('got {} with no classification'.format(p))
 
 classes = [p.split('[')[1].replace('].pdf','') for p in pdfpaths]
 pdfnames = list(map(os.path.basename,
@@ -53,7 +56,10 @@ else:
     print('found {}'.format(outpath))
 
 collabdir = outtocollabdir.format(today, sector, 'PC_cut')
-for n in df['Name']:
+if not os.path.exists(collabdir):
+    os.mkdir(collabdir)
+
+for n in outdf['Name']:
     shutil.copyfile(
         '/home/luke/local/cdips/vetting/sector-{}/pdfs/vet_'.format(sector)+str(n)+'_llc.pdf',
         os.path.join(collabdir,'vet_'+str(n)+'_llc.pdf')
@@ -75,7 +81,10 @@ else:
 
 
 collabdir = outtocollabdir.format(today, sector, 'interesting_cut')
-for n in df['Name']:
+if not os.path.exists(collabdir):
+    os.mkdir(collabdir)
+
+for n in outdf['Name']:
     shutil.copyfile(
         '/home/luke/local/cdips/vetting/sector-{}/pdfs/vet_'.format(sector)+str(n)+'_llc.pdf',
         os.path.join(collabdir,'vet_'+str(n)+'_llc.pdf')
