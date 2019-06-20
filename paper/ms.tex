@@ -1418,23 +1418,26 @@ The clusters with the largest claimed numbers of sources are ...
 
 
 \subsubsection{Light curve noise properties}
+\label{subsubsec:rmsvsmag}
 
 \begin{figure}[t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.49\textwidth]{rms_vs_mag.png}
+		\includegraphics[width=0.47\textwidth]{rms_vs_mag.png}
 	\end{center}
 	\vspace{-0.5cm}
   \caption{ {\bf Standard deviation vs catalog TESS-band magnitude for
   trend-filtered CDIPS light curves.} 
-  The minimum RMS across all three
-  aperture sizes was selected.  The photon and read noise are
-  calculated using the effective area from \citet{vanderspek_2018}.
-  The noise from unresolved background stars is a function of
-  galactic latitude, and dominates over zodiacal light and read noise
-  for faint stars near the galactic plane; the dotted line assumes a
+  Black points correspond to the minimum RMS across the available three
+  aperture sizes.  
+  The model (orange and gray lines) uses the optimal aperture sizes reported 
+  by \citet{Sullivan_et_al_2015}, and the effective area from 
+  \citet{vanderspek_2018}.
+  The noise from unresolved background stars (dotted gray line) is a function 
+  of galactic latitude, and dominates over zodiacal light and read noise
+  for faint stars near the galactic plane; the line shown assumes a
   sight-line towards the center of Sector 6, Camera 1 (further details
-  are in \S~\ref{subsec:lcstatistics}).
+  are in \S~\ref{subsubsec:rmsvsmag}).
 		\label{fig:rms_vs_mag}
 	}
 \end{figure}
