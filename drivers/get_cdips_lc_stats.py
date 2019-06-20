@@ -1,17 +1,19 @@
 """
-get simple rms vs mag stats for CDIPS LCs. plot them. assess how many all-nan
-LCs there are.
-supplement the statsfile by matching against Gaia DR2 and CDIPS  catalogs.
+* get simple rms vs mag stats for CDIPS LCs
+* plot them.
+* assess how many all-nan LCs there are.
+* move allnan light curves to a graveyard directory to collect dust
+* supplement the statsfile by matching against Gaia DR2 and CDIPS catalogs.
 
 usage:
 
-    $ (trex_37) python -u get_cdips_lc_stats.py |& tee /nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats/sector-6/stats_overview_log.txt
+    $ (cdips) python -u get_cdips_lc_stats.py |& tee logs/s6_stats_overview_log.txt
 
 NOTE: depends on pipe-trex (--> run in environment with aperturephot on path)
 """
 import pandas as pd, numpy as np
 import aperturephot as ap
-import os, subprocess, shlex
+import os, subprocess, shlex, shutil
 from glob import glob
 
 def get_cdips_lc_stats(
@@ -200,12 +202,95 @@ def print_metadata_stats(sector=6):
           format(len(stats[stats['stdev_tf1'] > 0])))
 
 
+def move_allnan_lcs(sector=None, cdipsvnum=None):
+
+    statsfile = os.path.join(
+        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats',
+        'sector-{}'.format(sector),
+        'cdips_lc_statistics.txt'
+    )
+
+    stats = ap.read_stats_file(statsfile, fovcathasgaiaids=True)
+    N_lcs = len(stats)
+
+    print('CDIPS LIGHTCURVES STATS FOR SECTOR {}'.format(sector))
+    print(42*'-')
+    print('total N_lcs: {}'.format(N_lcs))
+
+    for apn in [1,2,3]:
+        N_nan = len(stats[stats['ndet_tf{}'.format(apn)]==0])
+        print('for ap {}, {} ({:.1f}%) are all nan, leaving {} ok lcs'.
+              format(apn, N_nan, N_nan/N_lcs*100, N_lcs-N_nan))
+
+    print(42*'-')
+    print('BEGINNING MOVE OF ALLNAN LIGHT CURVES')
+
+    sel = (
+        (stats['ndet_tf1']==0) &
+        (stats['ndet_tf2']==0) &
+        (stats['ndet_tf3']==0)
+    )
+    nanobjs = stats[sel]['lcobj']
+
+    lcdirectory = (
+        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/cam?_ccd?'.
+        format(sector)
+    )
+
+    lcnames = [(
+        'hlsp_cdips_tess_ffi_'
+        'gaiatwo{zsourceid}-{zsector}_'
+        'tess_v{zcdipsvnum}_llc.fits'
+        ).format(
+            zsourceid=str(lcgaiaid).zfill(22),
+            zsector=str(sector).zfill(4),
+            zcdipsvnum=str(cdipsvnum).zfill(2)
+        )
+        for lcgaiaid in nanobjs
+    ]
+
+    lcglobs = [
+        os.path.join(lcdirectory, lcname) for lcname in lcnames
+    ]
+
+    lcpaths = []
+    for l in lcglobs:
+        try:
+            lcpaths.append(glob(l)[0])
+        except:
+            pass
+
+    dstpaths = [os.path.join(os.path.dirname(l),
+                             'allnanlcs',
+                             os.path.basename(l))
+                for l in lcpaths]
+
+    for src,dst in zip(lcpaths,dstpaths):
+        dstdir = os.path.dirname(dst)
+        if not os.path.exists(dstdir):
+            os.mkdir(dstdir)
+        try:
+            shutil.move(src,dst)
+            print('moved {} -> {}'.format(src,dst))
+        except FileNotFoundError as e:
+            if os.path.exists(dst):
+                pass
+            else:
+                print(repr(e))
+                raise FileNotFoundError
+
+
+
 if __name__ == "__main__":
 
-    get_stats=1
-    print_metadata=1
     sector=7
     cdipssource_vnum=0.3
+    cdipsvnum=1
+
+    get_stats=0
+    make_supp_stats=0
+    print_metadata=0
+    move_allnan=1
 
     if get_stats:
         get_cdips_lc_stats(
@@ -213,6 +298,7 @@ if __name__ == "__main__":
             cdipssource_vnum=cdipssource_vnum,
             nworkers=40
         )
+    if make_supp_stats:
         supplement_stats_file(
             cdipssource_vnum=cdipssource_vnum,
             sector=sector
@@ -220,4 +306,8 @@ if __name__ == "__main__":
     if print_metadata:
         print_metadata_stats(
             sector=sector
+        )
+    if move_allnan:
+        move_allnan_lcs(
+            sector=sector, cdipsvnum=cdipsvnum
         )
