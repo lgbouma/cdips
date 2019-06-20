@@ -26,64 +26,10 @@
 
 % BEGIN NUMBERS
 \newcommand{\numberpcs}{42\ }
-\newcommand{\numberlcs}{99{,}999\ }
+\newcommand{\sVInumberlcs}{67{,}601\ }  % 2019/06/20 not allnan
+\newcommand{\sVIInumberlcs}{91{,}736\ }  % 2019/06/20 not allnan
+\newcommand{\numberlcs}{159{,}337\ } % 2019/06/20 sum
 \newcommand{\numberclusters}{XXX\ }
-
-
-% BEGIN CLUSTER TABLE
-%FIXME: write code that will write these values
-\newcommand{\cgXVIIInstartot}{}
-\newcommand{\cgXVIIInstarcdipsI}{}
-\newcommand{\gaiaXVIIInstartot}{}
-\newcommand{\gaiaXVIIInstarcdipsI}{}
-
-\newcommand{\kXIIInstartot}{}
-\newcommand{\kXIIInstarcdipsI}{}
-\newcommand{\dXIVnstartot}{}
-\newcommand{\dXIVnstarcdipsI}{}
-\newcommand{\bellXVIInstartot}{}
-\newcommand{\bellXVIInstarcdipsI}{}
-\newcommand{\banyanXIIInstartot}{}
-\newcommand{\banyanXIIInstarcdipsI}{}
-\newcommand{\banyanXIInstartot}{}
-\newcommand{\banyanXIInstarcdipsI}{}
-\newcommand{\banyanXInstartot}{}
-\newcommand{\banyanXInstarcdipsI}{}
-\newcommand{\krausXIVnstartot}{}
-\newcommand{\krausXIVnstarcdipsI}{}
-\newcommand{\ohXVIInstartot}{}
-\newcommand{\ohXVIInstarcdipsI}{}
-\newcommand{\rizzutoXInstartot}{}
-\newcommand{\rizzutoXInstarcdipsI}{}
-\newcommand{\roserXInstartot}{}
-\newcommand{\roserXInstarcdipsI}{}
-
-\newcommand{\cgXVIIInclustertot}{}
-\newcommand{\cgXVIIInclustercdipsI}{}
-\newcommand{\gaiaXVIIInclustertot}{}
-\newcommand{\gaiaXVIIInclustercdipsI}{}
-
-\newcommand{\kXIIInclustertot}{}
-\newcommand{\kXIIInclustercdipsI}{}
-\newcommand{\dXIVnclustertot}{}
-\newcommand{\dXIVnclustercdipsI}{}
-\newcommand{\bellXVIInclustertot}{}
-\newcommand{\bellXVIInclustercdipsI}{}
-\newcommand{\banyanXIIInclustertot}{}
-\newcommand{\banyanXIIInclustercdipsI}{}
-\newcommand{\banyanXIInclustertot}{}
-\newcommand{\banyanXIInclustercdipsI}{}
-\newcommand{\banyanXInclustertot}{}
-\newcommand{\banyanXInclustercdipsI}{}
-\newcommand{\krausXIVnclustertot}{}
-\newcommand{\krausXIVnclustercdipsI}{}
-\newcommand{\ohXVIInclustertot}{}
-\newcommand{\ohXVIInclustercdipsI}{}
-\newcommand{\rizzutoXInclustertot}{}
-\newcommand{\rizzutoXInclustercdipsI}{}
-\newcommand{\roserXInclustertot}{}
-\newcommand{\roserXInclustercdipsI}{}
-% END CLUSTER TABLE
 
 % END CUSTOM SHORT-CUT COMMANDS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -124,19 +70,19 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 
 \begin{abstract}
   % Context
-  The Transiting Exoplanet Survey Satellite (TESS) has started to
+  The Transiting Exoplanet Survey Satellite (TESS) has begun to
   photometrically monitor almost every star cluster in
   the solar neighborhood.
   % Aims
-  As part of the CDIPS project, we have been processing the TESS
-  full-frame images to make light curves of stars that
-  could be members of stellar associations, moving groups, and open clusters.
+  The CDIPS project is processing the TESS
+  full-frame images and making light curves of stars that could be
+  members of stellar associations, moving groups, or open clusters.
   %
-  Our eventual hope is to discover giant transiting planets, and probe
-  the exoplanet size and separation distributions for planets younger
-  than 1 Gyr.
+  Our eventual hope is to discover giant transiting planets with known
+  ages, and probe the exoplanet size and separation distributions for
+  planets younger than 1 Gyr.
   %
-  For this study, we made \numberlcs light curves of candidate young
+  In this study, we made \numberlcs light curves of candidate young
   stars in \numberclusters clusters.
   Each light curve represents between 20 and 25 days of observations
   of a star brighter than $G_{Rp}=16$, sampled at 30 minute cadence.
@@ -147,9 +93,9 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   % Results
   We then highlight the \numberpcs planet candidates we identified in
   an initial search, describe the vetting procedures that they have
-  survived, and emphasize the value that additional
-  spectroscopic, photometric, and imaging observations will have in
-  verify that these candidates are in fact planets.
+  survived, and emphasize the additional spectroscopic, photometric,
+  and imaging observations that are needed to verify that these
+  candidates are in fact planets.
   %
   We also comment on the possible use of the light curve sample for
   studies of stellar rotation evolution, and binary eccentricity
@@ -160,11 +106,10 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 \end{abstract}
 
 \keywords{
+  planets and satellites: detection  --
   methods: data analysis ---
   techniques: photometric ---
-  %TODO: could be individual, and enumerate each cluster as well.
   (Galaxy:) open clusters and associations: general ---
-  planets and satellites: detection 
 }
 
 
@@ -204,19 +149,20 @@ these changes as functions of time.  However, since most dwarf star
 properties do not appreciably change until the stars evolve off the
 main sequence, creative approaches must be used to infer stellar ages
 \citep{soderblom_ages_2010}.  One approach beginning to bear fruit in
-the study of exoplanets is to search for planets in coeval groups of
-stars, {\it i.e.} in clusters.  This includes the open clusters of
-yore, as well as the moving groups and stellar associations that began
-to be uncovered in the late 1990s \citep{zuckerman_young_2004}.  The
-ages of these stellar ensembles are inferred through isochrone
-analyses on color-magnitude diagrams, using an appropriate combination
-main-sequence turnoff locations, pre-MS turnon locations, and/or MS
-isochrones for the known cluster members \citep[{\it e.g.},][Section
-3.4.3]{kharchenko_global_2012}.  Once calibrated, gyrochronology can
-also be used to verify the age of a stellar ensemble \citep[{\it
+exoplanet studies is to search for planets in coeval groups of stars,
+hereafter ``clusters''.  This includes the open clusters of yore, as
+well as the moving groups and stellar associations that began to be
+uncovered in the late 1990s \citep{zuckerman_young_2004}.  The ages of
+these stellar ensembles are inferred through isochrone analyses of
+color-magnitude diagrams, using an appropriate combination of
+main-sequence turnoff locations, pre-main-sequence turnon locations,
+and possibly averaged MS isochronal ages across known cluster members
+\citep[{\it e.g.},][Section 3.4.3]{kharchenko_global_2012}.  Once
+calibrated, gyrochronology can also be used to verify the age of a
+stellar ensemble \citep[{\it
 e.g.},][]{barnes_color-period_2015,meibom_spin-down_2015,curtis_tess_2019}.
-The ages of planets discovered in these cluster stars are then
-assumed to equal the age of the larger stellar ensemble.
+The ages of planets discovered in these cluster stars are then assumed
+to equal the age of the larger stellar ensemble.
 
 The first planets in open clusters were detected through radial
 velocity (RV) measurements of evolved stars in the Hyades
@@ -287,104 +233,104 @@ robust, imposed by the geometric rarity of transits, is that many tens
 of thousands of stars with known ages must be monitored at high
 precision.
 
-%FIXME probably rework the following two paragraphs?
-The TESS mission \citep{ricker_transiting_2015} holds the promise to
-deliver the most homogeneous and comprehensive cluster photometric
-survey in history.  As an order of magnitude estimate, the 
-\citet{Kharchenko_et_al_2013} combined with the TESS apparent magnitude
-calculator of \citet{Jaffe_Barclay_2017} indicated that $\approx
-2\times10^5$ cluster members brighter than $T=16$ will be observed in
-the full-frame images over the first two years of TESS observations.
-The actual number will be larger, as cluster membership catalogs
-are not yet complete, even at these relatively bright magnitudes
-\citep[{\it e.g.},][]{cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019}.
-% For example, using Gaia-DR2 \citet{cantat-gaudin_newOCs_2019}
-% discovered a few tens of previously undetected open clusters in
-% the direction of Perseus. Earlier, \citet{cantat-gaudin_gaia_2018}
-% fortuitously discovered 60 open clusters as well; however a
-% homogeneous all-sky search with Gaia data has yet to be performed.
-
-For moving groups and stellar assocations, it is typically a simple thing to do
-aperture photometry.  A number of promising targets from TESS are in various
-stages of follow-up for this, notably DS Tuc Ab (TOI 200,
-\citealt{benatti_dstuc_2019}, Newton+2019), as well as TOI-450 and TOI-451.
-This is good, and these will remain benchmark systems because they are close
-and bright.  However, to do statistics, we need more stars -- we need to
-investigate the full range of cluster properties (densities, ages,
-metallicities).  This motivates the need to go crowded.
+The TESS mission \citep{ricker_transiting_2015}, though designed for
+other purposes, holds the promise to deliver the most homogeneous and
+comprehensive cluster photometric survey in history.  More
+quantitatively, the \citet{Kharchenko_et_al_2013} cluster member
+database indicates that $\approx 2\times10^5$ open cluster members
+brighter than $T=16$ will be observed in the full-frame images over
+the first two years of TESS observations.  The actual number will be
+larger, as cluster membership catalogs are not yet complete, even at
+these relatively bright magnitudes \citep[{\it
+e.g.},][]{cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019}.
+% Our target list currently sits at $\approx 1.0\times10^6$ candidate
+% young stars, perhaps one-third of which are bonafide cluster members
+% (see \S~\ref{sec:starselection}).
 
 One of the major challenges in deriving precise photometry from the
-TESS images is the relatively poor angular resolution ($\approx
-21''$).  Almost all clusters are within 10 degrees of the Galactic
-plane (see FIGURE~1). The problems with crowding and complex
-backgrounds are so severe near the galactic plane that the {\it
-TESS}\, Candidate Target List has deprioritized all objects at
-galactic latitudes less than $\approx
+TESS images is the relatively poor angular resolution ($\approx 21''$
+per pixel).  Almost all clusters are within 10 degrees of the Galactic
+plane. The problems with crowding and complex backgrounds are so
+severe near the galactic plane that the TESS Candidate Target List has
+deprioritized all objects at galactic latitudes less than $\approx
 15^\circ$~\citep{stassun_TIC_2018,stassun_TIC8_2019}, which includes
-90\% of all star clusters\footnote{TICv8 updates this to $10^\circ$,
+90\% of all star clusters\footnote{TICv8 has updated this to $10^\circ$,
 but for the first year of TESS observations, the number used when
-selecting target stars was $15^\circ$.}.
-This is sensible, given that the large pixel size and the high stellar
-surface density will make aperture photometry unreliable.  However, it
-also means that a large number of stars in clusters that could yield
-planet candidates may go unprocessed by the official {\it TESS} data
-reduction pipeline.
+selecting target stars was $15^\circ$.}.  This is sensible, given that
+the large pixel size and the high stellar surface density will make
+aperture photometry unreliable.  However, it also means that a large
+number of stars in clusters that could yield planet candidates may go
+unprocessed by the official {\it TESS} data reduction pipeline.
+
+If one's concern is to discover and characterize benchmark systems
+with known ages,
+hunting for transiting planets in nearby stellar assocations is a path
+that seems to be working.  A number of promising targets from TESS are
+in various stages of follow-up from this approach, notably DS Tuc Ab
+(TOI 200, \citealt{benatti_dstuc_2019}, Newton+2019), as well as
+TOI-450 and TOI-451.  This is good, and these will remain benchmark
+systems because they are close and bright.  However, to do statistics,
+we need more stars -- we might also benefit from investigating the full range of cluster
+properties (densities, ages, metallicities).  This motivates the need
+to go crowded, and fainter.
 
 We have therefore opted to produce time-series photometry from the
-TESS images for stars in ``clusters''~--~a collective term we adopt
-for open clusters, moving groups, stellar associations, and
-star-forming regions.
-We are also including some stars that we suspect are young due to
-combined photometric and astrometric indicators.
-We are using the difference imaging technique because of its benefits
-in modelling complex backgrouds in crowded regions.
-Our eventual hope is to discover giant transiting planets, and probe
-the exoplanet size and separation distributions for planets younger
-than 1 Gyr.
+TESS images of any star that could be a member of a coeval group.  We
+are also including some stars that we suspect are young due to
+combined photometric and astrometric indicators.  We are using the
+difference imaging technique because of its benefits in modelling
+complex backgrouds in crowded regions.  While we hope to
+discover at least a few giant transiting planets, a separate hope
+is that the dataset might be useful to those wishing to study the
+time evolution of stellar processes.
 
-%FIXME improve
-In what follows, \S~\ref{sec:starselection} describes the process of
-selecting stars.  \S~\ref{sec:method} presents the photometric and
-image processing methods, and
-\S~\ref{sec:results} describes results.
+In the following, \S~\ref{sec:starselection} describes the process of
+selecting target stars.  \S~\ref{sec:method} presents the photometric and
+image processing methods, and \S~\ref{sec:results} describes results.
 \S~\ref{sec:discussion} discusses, and \S~\ref{sec:conclusion}
 concludes.
 
-\begin{figure*}[t]
-	\begin{center}
-		\leavevmode
-		\includegraphics[width=0.7\textwidth]{cluster_positions.pdf}
-	\end{center}
-	\vspace{-0.5cm}
-	\caption{
-    {\bf TESS looks at many clusters.} Placeholder skymap.
-		\label{fig:clustermap}
-	}
-\end{figure*}
+%\begin{figure*}[t]
+%	\begin{center}
+%		\leavevmode
+%		\includegraphics[width=0.7\textwidth]{cluster_positions.pdf}
+%	\end{center}
+%	\vspace{-0.5cm}
+%	\caption{
+%    {\bf TESS looks at many clusters.} Placeholder skymap.
+%		\label{fig:clustermap}
+%	}
+%\end{figure*}
 
-\begin{figure}[t]
-    \begin{center}
-        \leavevmode
-        \includegraphics[width=0.49\textwidth]{cluster_field_star_positions.png}
-    \end{center}
+
+\begin{figure*}[!ht]
+    \gridline{
+      \fig{cluster_field_star_positions.png}{0.49\textwidth}{}
+      \fig{cam1_cluster_field_star_positions.png}{0.49\textwidth}{}
+    }
+    %\begin{center}
+    %    \leavevmode
+    %    \includegraphics[width=0.49\textwidth]{cluster_field_star_positions.png}
+    %\end{center}
     \vspace{-0.5cm}
     \caption{
-        {\bf Celestial positions of light curves from Sectors 6 and 7.}
+        {\it Left}. Celestial positions of light curves from Sectors 6 and 7.
+        {\it Right}. Celestial positions of light curves from Sector 6, Camera 1.
         \label{fig:lcradecsector6}
     }
-\end{figure}
+\end{figure*}
 
-\begin{figure}[t]
-	\begin{center}
-		\leavevmode
-		\includegraphics[width=0.49\textwidth]{cam1_cluster_field_star_positions.png}
-	\end{center}
-	\vspace{-0.5cm}
-	\caption{
-    {\bf Celestial positions of light curves from Sector 6, Camera 1.}
-		\label{fig:lcradec}
-	}
-\end{figure}
+% \begin{figure}[t]
+% 	\begin{center}
+% 		\leavevmode
+% 		\includegraphics[width=0.49\textwidth]{cam1_cluster_field_star_positions.png}
+% 	\end{center}
+% 	\vspace{-0.5cm}
+% 	\caption{
+%     {\bf Celestial positions of light curves from Sector 6, Camera 1.}
+% 		\label{fig:lcradec}
+% 	}
+% \end{figure}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -655,7 +601,7 @@ Figure~\ref{fig:cdips_targets}.
 We reduced the TESS images to light curves by performing a sequence of
 steps using stand-alone programs.
 Our overall method is in the spirit of the reduction approaches described
-by \citet{Pal_2009}, \citet{soares-furtado_image_2017} and
+by \citet{Pal_2009}, \citet{huang_high-precision_2015}, \citet{soares-furtado_image_2017} and
 \citet{oelkers_precision_2018}; a conceptual overview is given in
 Figure~\ref{fig:pipeline}.
 
@@ -716,14 +662,15 @@ so that at any instant of time there are 16 independent images
 undergoing analysis.
 
 While we performed numerous initial tests on the first sectors of data,
-by geometric coincidence Sectors 1--5 fell away from the galactic plane.
+by geometric coincidence Sectors 1--5 were pointed away from the galactic plane.
 Less than 2\% of the CDIPS target star sample
-is therefore observed in the first five TESS sectors.
+was therefore observed in the first five TESS sectors.
 Though a few interesting clusters are present ({\it e.g.}, Blanco~1, NGC~2516, NGC~1901),
 for the time being we opted to focus on sectors in which there were stars
 of interest for our intended science.
 These begin in Sector 6 (2018-12-12, spacecraft orbit \#19).
-
+For this run of processing, they conclude at the end of Sector 7
+(2019-02-01, spacecraft orbit \#22).
 
 \subsection{Image Preparation, Background Removal, \& Meta-Data Collection}
 \label{subsec:preparation}
@@ -980,7 +927,7 @@ The second reference frame is the
 photometric reference, which is used both to calculate the
 convolution kernel, and to obtain a
 reference flux for each star.  
-To minimize Poisson errors, our photometric refernce is a median average of
+To minimize Poisson errors, our photometric reference is a median average of
 $N=50$ selected frames.
 The sub-frames are chosen to have low scatter in their photometry,
 and low background measurements, using the metadata collected
@@ -1380,25 +1327,12 @@ separately.
 \section{Results}
 \label{sec:results}
 
+
+
 \subsection{Light Curve Statistics}
 \label{subsec:lcstatistics}
 
-\begin{figure}[t]
-	\begin{center}
-		\leavevmode
-		\includegraphics[width=0.49\textwidth]{rms_vs_mag.png}
-	\end{center}
-	\vspace{-0.5cm}
-  \caption{ {\bf Standard deviation vs catalog TESS-band magnitude for
-  trend-filtered CDIPS light curves.} The minimum RMS across all three
-  aperture sizes was selected.  The photon and read noise are
-  calculated using the effective area from \citet{vanderspek_2018}.
-  The noise from unresolved background stars is expected to be more
-  important than read noise at the faint end, but is omitted from the
-  plot due to model uncertainties (see \S~\ref{subsec:lcstatistics}).
-		\label{fig:rms_vs_mag}
-	}
-\end{figure}
+\subsubsection{Stellar properties}
 
 \begin{figure}[t]
 	\begin{center}
@@ -1439,45 +1373,16 @@ separately.
 	\label{fig:propermotions}
 \end{figure}
 
+Describe
+Figure~\ref{fig:cdf_T_mag}
+Figure~\ref{fig:hrd}
+Figure~\ref{fig:propermotions}
 
-The standard deviation of the light curves is plotted as a function of the 
-catalog $T$-band magnitude for CDIPS light curves in 
-Figure~\ref{fig:rms_vs_mag}.
-Ignoring the expected noise contribution from the zodiacal and faint star 
-background, the light curves generally seem to follow the model one would 
-predict.
-The bright end is somewhat noisier than the performance reported by SPOC 
-(CITE), as well as the pipelines of 
-Chelsea (CITE) and Ben (CITE), and maybe Ryan (CITE).
-Simple aperture photometry should out-perform image subtraction techniques in 
-the bright regime, so this is not particularly unexpected.
 
-A few points concerning the noise model predictions are relevant.
-First, the effects of crowding are not apparent in 
-Figure~\ref{fig:rms_vs_mag}. 
-If the reference fluxes were being measured directly from the photometric 
-reference frame, the faint stars would be driven below the expected noise 
-floor, because the reference fluxes would be systematically overestimated.
-Our procedure for determining the reference magnitudes uses our knowledge of 
-the catalog magnitudes to eliminate this effect (REFERENCE).
+\subsubsection{Cluster membership provenance}.
 
-Second, our plot omits the noise from unresolved background stars.
-If we include it, then our RMS at the faint end is about 0.7x below the model.
-This suggests that the model over-predicts the background, or that we overfit 
-the majority of our light curves. Both are probably a little true.
-
-ACF statistics before and after detrending(?)
-
-SNR of retrieved HJs.
-
-Maybe movies of subtracted images?
-
-Some stellar variability plots (perhaps of known stellar variables).
-
-Some focus on particular clusters.
-
-\paragraph{Light curve provenance}.
-In Sector 6, about 49{,}000 light curves of candidate cluster stars
+\paragraph{Sector 6}
+In Sector 6, \sVInumberlcs light curves of candidate cluster stars
 were made. The provenance of the claimed cluster origin of these
 sources is \citet{dias_proper_2014} for 59\% of the sources;
 \citet{zari_3d_2018} for 16\% of sources from their upper
@@ -1504,18 +1409,176 @@ use of the \texttt{CDEXTCAT} header keyword, which can be
 cross-matched against the original source catalog to obtain the
 membership probabilities claimed by the original catalog.
 
+\paragraph{Sector 7}
+In Sector 7, \sVIInumberlcs light curves of candidate cluster stars
+were made. The provenance of the claimed cluster origin of these
+sources is  ...
 
+The clusters with the largest claimed numbers of sources are ...
+
+
+\subsubsection{Light curve noise properties}
+
+\begin{figure}[t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.49\textwidth]{rms_vs_mag.png}
+	\end{center}
+	\vspace{-0.5cm}
+  \caption{ {\bf Standard deviation vs catalog TESS-band magnitude for
+  trend-filtered CDIPS light curves.} 
+  The minimum RMS across all three
+  aperture sizes was selected.  The photon and read noise are
+  calculated using the effective area from \citet{vanderspek_2018}.
+  The noise from unresolved background stars is a function of
+  galactic latitude, and dominates over zodiacal light and read noise
+  for faint stars near the galactic plane; the dotted line assumes a
+  sight-line towards the center of Sector 6, Camera 1 (further details
+  are in \S~\ref{subsec:lcstatistics}).
+		\label{fig:rms_vs_mag}
+	}
+\end{figure}
+
+\paragraph{Observed RMS vs magnitude.}
+The standard deviation of the TFA-detrended light curves is plotted as
+a function of the catalog $T$-band magnitude for CDIPS light curves in
+Figure~\ref{fig:rms_vs_mag}.
+For the $y$-axis of this plot, we have taken
+\begin{equation}
+  {\rm RMS} = \left[
+    \frac{1}{N-M-1}
+    \sum_{i=1}^{N} (f_i - \bar{f})^2
+  \right]^{1/2},
+\end{equation}
+where $f_i$ is the value of the flux at the $i^{\rm th}$ point in the
+time-series, $\bar{f}$ is the mean flux, $N$ is the
+number of points in the time-series, and $M$ is the number
+of template light curves used during TFA detrending.
+The correction in the denominator penalizes the natural degree of
+overfitting inherent to the TFA algorithm.
+
+The observed RMS (black points) follows the expected shape,
+with photon noise dominating from $T=9$ to $T=12$, beyond which the
+onset of the ``sky'' background changes the overall slope of the
+curve to a slightly steeper scaling.
+For the brightest stars ($T\lesssim 9$), a ``systematic floor'' was an
+expected part of the mission's error budget \citep{ricker_transiting_2015}, 
+but 
+has not been observed in early
+reports of the photometric performance of various aperture photometry
+pipelines ({\it e.g.,} the SPOC pipeline \citealt{jenkins_spoc_2010},
+the MIT-QLP \citealt{huang_tess_2018}, and \texttt{eleanor}
+\citealt{feinstein_eleanor_2019}).
+The fact that our light curves for the brightests stars are above this
+purported ``floor'', rather than below it, suggests that our
+image subtraction techniques could be introducing some small degree of
+noise to the light curves of the brightest stars.
+It is also true however that our largest aperture contains only about
+16 pixels, which is sub-optimal for stars brighter than $T\approx9$
+\citep[see][Figure~14]{Sullivan_et_al_2015}.
+Since the brightest stars are not the focus of the present work, we
+leave this as a point to improve in future work.
+
+Importantly, the faint stars do not noticeably exhibit
+the typical effects of crowding at the faint end 
+\citep[{\it e.g.},][Figure~5]{feinstein_eleanor_2019}.
+In aperture photometry pipelines, star in very crowded regions typically 
+have their flux overestimated relative to what would be predicted from their
+catalog magnitudes.
+This leads to systematic underestimates of the uncertainty in the relative 
+fluxes, as well as ``flux contamination'' (the reduction in amplitude of say, 
+transit signals, due to diluting flux).
+Our method to work around this problem -- using the catalog magnitudes to 
+predict the reference flux values, and measuring deviations from these 
+reference fluxes on the subtracted images -- seems to be performing as we had 
+hoped.
+
+
+\paragraph{Expected RMS vs magnitude.}
+
+The noise model shown in Figure~\ref{fig:rms_vs_mag} is quite similar
+to that of \citet{Sullivan_et_al_2015}, save for two changes.
+The first change is minor: the effective area of the telescope is
+updated to be $86.6\,{\rm cm}^2$, per the measurements of
+\citet{vanderspek_2018}.
+
+The second point is more important: we explicitly include the
+estimated noise contribution from unresolved faint stars.  The
+brightness of the diffuse sky is dominated by different sources at
+different wavelengths.  For instance, the CMB is most important in
+the microwave, and thermal radiation from dust grains in the solar
+system (zodiacal light) is dominant in the far infra-red
+\citep{leinert_1997_1998}.  In the TESS-band, both zodiacal light and
+faint stars can play a role, depending on the line of sight under
+consideration. The zodiacal light is brightest near the ecliptic
+plane, and the faint star background is brightest near the galactic
+plane (and towards the galactic center).  \citet{winn_background_2013}
+estimated the photon-counts from each component that would be observed 
+by TESS.
+His zodiacal light model was presented by \citet{Sullivan_et_al_2015},
+but the faint star model was not emphasized since the Sullivan
+simulations were performed away from the galactic plane.
+
+A few words are therefore pertinent about the diffuse sky model we
+have used for Figure~\ref{fig:rms_vs_mag}, which is adopted explicitly
+because most of our target stars are near the galactic plane.
+Stars are judged to be ``unresolved'' and part of the background if
+their surface density exceeds the angular resolution of the telescope.
+TESS has an angular resolution of $\Delta \theta \sim 1'$, set by a
+combination of the pixel size as well as the typical stellar FWHM.
+Sources with sky surface density exceeding $\Delta \theta^{-2}$
+therefore contribute to the background.
+
+The relevant quantity needed to calculate the integrated 
+photon counts from faint sources
+is  $N(<m,l,b)$ --- the number of stars per square arcsecond
+brighter than magnitude $m$, along a line of sight with galactic
+longitude and latitude $(l,b)$.
+\citet{winn_background_2013} queried the Besan\c con model 
+\citep{robin_synthetic_2003}  along a grid of galactic sight-lines, and 
+converted the resulting $N(<m,l,b)$ surface densities into $I$-band surface 
+brightnesses.
+Fitting a smooth function to the results, \citet{winn_background_2013} found
+\begin{equation}
+I\ {\rm mag\ arcsec}^{-2} =
+    a_0 + a_1 \left(\frac{|b|}{40^\circ}\right)
+    + a_2 \left(\frac{|l|}{180^\circ}\right)^{a_3},
+\end{equation}
+where the galactic longitude $l$ is measured from $-180^\circ$ to 
+$180^\circ$, and the empirical coefficients were found to be $a_0 = 18.9733$, 
+$a_1=8.833$, $a_2=4.007$, and $a_3=0.805$.
+This fit was cautioned to be {\it very approximate}.
+It is sensitive to the threshold used to select ``unresolved'' stars, and 
+likely no more accurate than 0.5 mag on average.
+In regions with exceptionally high extinction ({\it e.g.}, star forming 
+regions) it is expected to systematic underestimate the background brightness 
+by an even larger degree.
+
+
+\paragraph{ACF statistics}
+ACF statistics before and after detrending(?)
+
+SNR of retrieved HJs.
+
+Maybe movies of subtracted images?
+
+Some stellar variability plots (perhaps of known stellar variables).
+
+Some focus on particular clusters.
 
 \subsection{Objects of Interest}
 \label{subsec:ctois}
 
-As an initial search for transiting planets, strong stellar rotators, and 
-eclipsing binaries, we performed a few steps of post-processing. For 
-simplicity,
-we chose a single aperture size~--~``aperture 2''~--~with a radius of 1.5 
-pixels, to perform the period search.
+To identify an initial set of transiting planets, strong stellar rotators, and 
+eclipsing binaries, we performed a few steps of post-processing on the light 
+curve described in the preceding sections. 
+This processing was entirely independent of the data release, since it was 
+quite specific to our own scientific interests.
 
-First, to identify periodic transit-like signals, we used 
+For simplicity,
+we first chose a single aperture size~--~``aperture 2''~--~with a radius of 
+1.5  pixels.
+Then, to identify periodic transit-like signals, we used 
 \citet{hippke_TLS_2019}'s transit least-squares (TLS) tool.
 The algorithm is the same as the canonical box least-squares
 \citep{kovacs_box-fitting_2002}, except in place of a box template, a transit 
@@ -1525,31 +1588,90 @@ In addition, the search grids in \texttt{tls}
 efficient than in most BLS implementations, since \texttt{tls} uses the 
 cubic-in-frequency sampling advocated by \citet{ofir_optimizing_2014}, 
 rather than standard linear-in-frequency sampling.
-During the period search, we rejected $6\,{\rm hours}$ at the
-beginning and end of each spacecraft orbit, to mitigate the presence
-of correlated red noise in the results.
-This shrinks the data volume by about 5\%, but also lowers the number
-of systematic false positives in subsequent vetting.
 Our grids typically consisted of about 30 different durations, and
 about 5000 periods between 0.5 and 21 days. 
-We also ran a generalized Lomb-Scargle periodogram (CITE), simply to 
-have additional periodicity information.
 
-We then performed a cut on the TLS signal detection efficiency:
-${\rm SDE} > 12$.
-This yielded XXX light curves, and we then
-performed TFA signal reconstruction on these lightcurves using 
+Before performing the period search, we rejected $6\,{\rm hours}$ at the
+beginning and end of each spacecraft orbit, to mitigate the presence
+of correlated red noise in the results.
+This shrank the data volume by about 5\%, but also lowered the number
+of systematic false positives in subsequent vetting.
+We then performed an asymmetric sigma-clipping of $(50\sigma,5\sigma)$ to 
+preserve transits while omitting flares and other positive flux excursions. 
+
+A number of the light curves show residual variability, often of stellar 
+origin.
+This expected for a sample of young stars; the issue of finding transits in 
+the face of large stellar rotation signals 
+has been explored by both \citet{rizzuto_zeitV_2017} and also 
+\citet{hippke_wotan_2019}.
+The former adopted an approach that we have yet to explore, which is to 
+pass a sliding window over the light curve that, within each step, performs a 
+Bayesian model comparison between a spline and a spline-plus-notch model.  If 
+the spline-plus-notch model is favored, the transits are preserved for 
+subsequent discovery.
+\citet{hippke_wotan_2019}, conversely, described a large number of possible 
+detrending methods, and found that many performed more or less the same at 
+recovering planetary transits for a sample of young stars with strong rotation 
+signals.
+
+Our approach in this work is essentially identical to one of the methods 
+described by \citet{hippke_wotan_2019}.
+First, we run a generalized Lomb-Scargle periodogram (CITE) on each TFA light 
+curve.
+If a peak is found with false alarm probability below $10^{-5}$, we consider 
+the star ``variable'', and opt to 
+detrend the light curve with robust penalized B-splines, which are splines 
+with knot-length automatically determined via cross-validation 
+\citep{eilers_flexible_1996}. The idea behind the cross-validation is that a 
+larger  number of knots leads to smaller residuals on training data, but 
+larger errors 
+when tested on the entire dataset.
+We used the \texttt{wotan} implementation, which is a wrapper to the 
+\texttt{pyGAM} spline fitter, with $2\sigma$ clipping of outliers from the fit 
+residuals at each iteration 
+\citep{serven_pygam_2018_1476122,hippke_wotan_2019}.
+The maximum number of spline knots is set to 50, which for each TESS sector 
+($\approx 25\,{\rm days}$) is commensurate with a $\approx0.5\,{\rm day}$ 
+window.
+
+\begin{figure}[!ht]
+    \gridline{\fig{tlsresult_sector6.png}{0.45\textwidth}{}}
+    \vspace{-0.8cm}
+    \gridline{\fig{tlsresult_sector7.png}{0.45\textwidth}{}}
+    \caption{
+        Significance thresholds empirically defined for the transiting planet 
+        search described in \S~\ref{subsec:ctois}. Each point represents the 
+        TLS periodogram peak signal detection efficiency from one light curve.
+        {\it Top.} Sector 6.  {\it Bottom.} Sector 7.
+    }
+    \label{fig:tlsresults}
+\end{figure}
+
+After (optionally) detrending, we run the TLS search. To select 
+``significant'' signals for visual inspection, we 
+performed a cut on the TLS signal detection efficiency defined piecewise over 
+the signal periods.
+The overall lower limit is ${\rm SDE} > 12$, with higher limits imposed in 
+regions with heavy contamination from systematic signals.
+The signals for sectors 6 and 7 are shown in the space of SDE vs period in 
+Figure~\ref{fig:tlsresults}.
+
+This yielded a few thousand light curves.  About two-thirds already had been 
+detrended with splines, and were not processed further.
+For the remaining third we
+performed TFA signal reconstruction using 
 \texttt{vartools}.
 In this process, the model lightcurve $A(i)$ in 
 Equation~\ref{eq:tfa_to_minimize} is set to the phase-binned signal from the 
 most powerful peak in the TLS spectrum, rather than being a constant function. 
-Generally speaking, this helps improve the quality of the resulting light 
-curve.
+This helps improve lower the scatter of the light curve at frequencies near 
+the TLS peak.
 
-We then make a multi-page \texttt{.pdf} document with the information 
+We then make a multi-page \texttt{.pdf} document report with the information 
 necessary to make classifications for vetting.
-These documents are released along with the light curves, as a useful summary
- for anyone interested in the subset of objects that we have analyzed.
+These documents are released along with the light curves, and are a useful 
+summary for anyone interested in the subset of objects that we have analyzed.
 A full description of each page of the summary \texttt{.pdf} is given in the 
 Appendix.
 
@@ -1655,10 +1777,10 @@ Agreement.
   \texttt{astrobase} \citep{bhatti_astrobase_2018},
   \texttt{astropy} \citep{the_astropy_collaboration_astropy_2018},
   \texttt{astroquery} \citep{astroquery_2018},
-  \texttt{astroquery.gaia}
-  \texttt{astroquery.simbad}
-  \texttt{astroquery.mast}
-  \texttt{astroquery.nasaexopanetarchive}  
+  \texttt{astroquery.gaia} CITE,
+  \texttt{astroquery.simbad} CITE,
+  \texttt{astroquery.mast} CITE,
+  \texttt{astroquery.nasaexopanetarchive} CITE,
   \texttt{BATMAN} \citep{kreidberg_batman_2015},
   \texttt{corner} \citep{corner_2016},
   \texttt{emcee} \citep{foreman-mackey_emcee_2013},
@@ -1667,9 +1789,11 @@ Agreement.
   \texttt{matplotlib} \citep{hunter_matplotlib_2007}, 
   \texttt{numpy} \citep{walt_numpy_2011}, 
   \texttt{pandas} \citep{mckinney-proc-scipy-2010},
+  \texttt{pyGAM} \citep{serven_pygam_2018_1476122}
   \texttt{scipy} \citep{jones_scipy_2001},
   \texttt{TagSpaces} (CITE),
-  \texttt{tesscut} \citep{brasseur_astrocut_2019}
+  \texttt{tesscut} \citep{brasseur_astrocut_2019},
+  \texttt{wotan} \citep{hippke_wotan_2019}
 }
 
 \bibliographystyle{yahapj}                            
