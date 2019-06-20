@@ -28,25 +28,25 @@ def main():
     sectors = [6,7]
 
     # fig N: RMS vs catalog T mag
-    plot_rms_vs_mag(sectors, overwrite=0)
+    plot_rms_vs_mag(sectors, overwrite=1)
 
     # fig N: histogram (or CDF) of stellar magnitude (T mag)
-    plot_cdf_T_mag(sectors, overwrite=0)
+    plot_cdf_T_mag(sectors, overwrite=1)
 
     # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
     # calculated for CTL stars, so by definition it has limited use
-    plot_cdf_cont(sectors, overwrite=0)
+    plot_cdf_cont(sectors, overwrite=1)
 
     # fig N: HRD for CDIPS stars.
-    plot_hrd_scat(sectors, overwrite=0, close_subset=1)
-    plot_hrd_scat(sectors, overwrite=0, close_subset=0)
+    plot_hrd_scat(sectors, overwrite=1, close_subset=1)
+    plot_hrd_scat(sectors, overwrite=1, close_subset=0)
 
     # fig N: pmRA and pmDEC scatter for CDIPS stars.
-    plot_pm_scat(sectors, overwrite=0, close_subset=1)
-    plot_pm_scat(sectors, overwrite=0, close_subset=0)
+    plot_pm_scat(sectors, overwrite=1, close_subset=1)
+    plot_pm_scat(sectors, overwrite=1, close_subset=0)
 
-    # fig N: positions of field and cluster stars (currently all cams)
-    plot_cluster_and_field_star_scatter(sectors, overwrite=1)
+    # # fig N: positions of field and cluster stars (currently all cams)
+    # plot_cluster_and_field_star_scatter(sectors, overwrite=1)
 
     #
     # fig N: wcs quality verification
@@ -99,7 +99,8 @@ def plot_cdf_T_mag(sectors, overwrite=0):
     bins = np.arange(np.floor(np.min(df[magstr])),
                      np.ceil(np.max(df[magstr]))+1,
                      1)
-    ax.hist(df[magstr], bins=bins, cumulative=True)
+    ax.hist(df[magstr], bins=bins, cumulative=True, color='black', fill=False,
+            linewidth=0.5)
 
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
@@ -132,7 +133,8 @@ def plot_cdf_cont(sectors, overwrite=0):
 
     targetstr = 'TICCONT'
     bins = np.logspace(-3,2,11)
-    ax.hist(df[targetstr], bins=bins, cumulative=True)
+    ax.hist(df[targetstr], bins=bins, cumulative=True, color='black',
+            fill=False, linewidth=0.5)
 
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
@@ -179,7 +181,8 @@ def plot_hrd_scat(sectors, overwrite=0, close_subset=1):
 
     ax.scatter(color,
                M_omega,
-               rasterized=True, s=0.1, alpha=1, linewidths=0, zorder=5)
+               rasterized=True, s=0.1, alpha=1, linewidths=0, zorder=5,
+               color='black')
 
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
@@ -243,7 +246,8 @@ def plot_pm_scat(sectors, overwrite=0, close_subset=0):
     yval = df['PM_Dec[mas/year]']
     ax.scatter(xval,
                yval,
-               rasterized=True, s=0.1, alpha=1, linewidths=0, zorder=5)
+               rasterized=True, s=0.1, alpha=1, linewidths=0, zorder=5,
+               color='black')
 
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
@@ -599,16 +603,20 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
         noise_star = out[2,:]
         noise_sky = out[3,:]
         noise_ro = out[4,:]
-        noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2 + noise_sky**2)
+        noise_sys = out[5,:]
+        noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2 + noise_sky**2
+                                     + noise_sys**2)
 
         a0.plot(Tmag, noise_star_plus_ro, ls='-', zorder=-2, lw=1, color='C1',
-                label='Model = photon + read + sky')
+                label='Model = photon + read + sky + floor')
         a0.plot(Tmag, noise_star, ls='--', zorder=-3, lw=1, color='gray',
                 label='Photon')
         a0.plot(Tmag, noise_ro, ls='-.', zorder=-4, lw=1, color='gray',
                 label='Read')
         a0.plot(Tmag, noise_sky, ls=':', zorder=-4, lw=1, color='gray',
                 label='Unresolved stars (sky)')
+        a0.plot(Tmag, noise_sys, ls='-', zorder=-4, lw=0.5, color='gray',
+                label='Systematic floor')
 
     a1.plot(Tmag, noise_star_plus_ro/noise_star_plus_ro, ls='-', zorder=-2,
             lw=1, color='C1', label='Photon + read')
@@ -618,15 +626,18 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
     noise_star = out[2,:]
     noise_sky = out[3,:]
     noise_ro = out[4,:]
-    noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2 + noise_sky**2)
+    noise_sys = out[5,:]
+    noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2 + noise_sky**2 +
+                                 noise_sys**2)
     a1.scatter(mags, rms/noise_star_plus_ro, c='k', alpha=0.2, zorder=-5,
                s=0.5, rasterized=True, linewidths=0)
 
-    a0.legend(loc='upper left', fontsize='xx-small')
+    a0.legend(loc='lower right', fontsize='xx-small')
+    #a0.legend(loc='upper left', fontsize='xx-small')
     a0.set_yscale('log')
     a1.set_xlabel('TESS magnitude', labelpad=0.8)
-    a0.set_ylabel('Corrected RMS [30 minutes]', labelpad=0.8)
-    a1.set_ylabel('Corrected RMS / Model', labelpad=1)
+    a0.set_ylabel('RMS [30 minutes]', labelpad=0.8)
+    a1.set_ylabel('RMS / Model', labelpad=1)
 
     a0.set_ylim([1e-5, 1e-1])
     a1.set_ylim([0.5,10])
