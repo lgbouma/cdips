@@ -28,25 +28,25 @@ def main():
     sectors = [6,7]
 
     # fig N: RMS vs catalog T mag
-    plot_rms_vs_mag(sectors, overwrite=0)
+    plot_rms_vs_mag(sectors, overwrite=1)
 
-    # fig N: histogram (or CDF) of stellar magnitude (T mag)
-    plot_cdf_T_mag(sectors, overwrite=0)
+    # # fig N: histogram (or CDF) of stellar magnitude (T mag)
+    # plot_cdf_T_mag(sectors, overwrite=0)
 
-    # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
-    # calculated for CTL stars, so by definition it has limited use
-    plot_cdf_cont(sectors, overwrite=0)
+    # # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
+    # # calculated for CTL stars, so by definition it has limited use
+    # plot_cdf_cont(sectors, overwrite=0)
 
-    # fig N: HRD for CDIPS stars.
-    plot_hrd_scat(sectors, overwrite=0, close_subset=1)
-    plot_hrd_scat(sectors, overwrite=0, close_subset=0)
+    # # fig N: HRD for CDIPS stars.
+    # plot_hrd_scat(sectors, overwrite=0, close_subset=1)
+    # plot_hrd_scat(sectors, overwrite=0, close_subset=0)
 
-    # fig N: pmRA and pmDEC scatter for CDIPS stars.
-    plot_pm_scat(sectors, overwrite=0, close_subset=1)
-    plot_pm_scat(sectors, overwrite=0, close_subset=0)
+    # # fig N: pmRA and pmDEC scatter for CDIPS stars.
+    # plot_pm_scat(sectors, overwrite=0, close_subset=1)
+    # plot_pm_scat(sectors, overwrite=0, close_subset=0)
 
-    # fig N: positions of field and cluster stars (currently all cams)
-    plot_cluster_and_field_star_scatter(sectors, overwrite=1)
+    # # fig N: positions of field and cluster stars (currently all cams)
+    # plot_cluster_and_field_star_scatter(sectors, overwrite=1)
 
     #
     # fig N: wcs quality verification
