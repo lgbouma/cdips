@@ -449,6 +449,7 @@ def get_lc_stats(lcpaths, cdipslcdir, outpath, sector, cdipsvnum=1,
                'TESSMAG', 'TMAGPRED', 'TICCONT']
     skeys = ['stdev_tf1','stdev_tf2','stdev_tf3',
              'mad_tf1','mad_tf2','mad_tf3',
+             'ndet_tf1','ndet_tf2','ndet_tf3',
              'stdev_sigclip_tf1','stdev_sigclip_tf2','stdev_sigclip_tf3',
              'mad_sigclip_tf1','mad_sigclip_tf2','mad_sigclip_tf3',
             ]
@@ -566,6 +567,18 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
          nparr(df['stdev_tf3'])]
     ).min(axis=0)
 
+    N_pt = nparr(df['ndet_tf2'])
+    N_TFA = 200 # number of template stars used in TFA
+
+    # TFA overfits by default -- instead of standard deviation need to have
+    # "N-1" be "N_pt - N_TFA - 1".
+    sel = N_pt >= 202 # need LCs with points
+    mags = mags[sel]
+    rms = rms[sel]
+    N_pt = N_pt[sel]
+    corr = (N_pt - 1)/(N_pt -1 - N_TFA)
+    rms = rms*np.sqrt(corr.astype(float))
+
     plt.close('all')
     fig, (a0, a1) = plt.subplots(nrows=2, ncols=1, sharex=True,
                                figsize=(4,5),
@@ -579,40 +592,41 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
 
         # RA, dec. (90, -66) is southern ecliptic pole. these are "good
         # coords", but we aren't plotting sky bkgd anyway!
-        coords = np.array([90*np.ones_like(Tmag), 0*np.ones_like(Tmag)]).T
+        fra, fdec = 120, 0  # sector 6 cam 1 center
+        coords = np.array([fra*np.ones_like(Tmag), fdec*np.ones_like(Tmag)]).T
         out = tnm.noise_model(Tmag, coords=coords, exptime=1800)
 
         noise_star = out[2,:]
         noise_sky = out[3,:]
         noise_ro = out[4,:]
-        noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2)# + noise_sky**2)
+        noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2 + noise_sky**2)
 
         a0.plot(Tmag, noise_star_plus_ro, ls='-', zorder=-2, lw=1, color='C1',
-                label='Photon + read')
+                label='Model = photon + read + sky')
         a0.plot(Tmag, noise_star, ls='--', zorder=-3, lw=1, color='gray',
                 label='Photon')
         a0.plot(Tmag, noise_ro, ls='-.', zorder=-4, lw=1, color='gray',
                 label='Read')
-        #a0.plot(Tmag, noise_sky, ls=':', zorder=-4, lw=1, color='gray',
-        #        label='Unresolved stars (sky)')
+        a0.plot(Tmag, noise_sky, ls=':', zorder=-4, lw=1, color='gray',
+                label='Unresolved stars (sky)')
 
     a1.plot(Tmag, noise_star_plus_ro/noise_star_plus_ro, ls='-', zorder=-2,
             lw=1, color='C1', label='Photon + read')
 
-    coords = np.array([90*np.ones_like(mags), 0*np.ones_like(mags)]).T
+    coords = np.array([fra*np.ones_like(mags), fdec*np.ones_like(mags)]).T
     out = tnm.noise_model(mags, coords=coords, exptime=1800)
     noise_star = out[2,:]
     noise_sky = out[3,:]
     noise_ro = out[4,:]
-    noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2)# + noise_sky**2)
+    noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2 + noise_sky**2)
     a1.scatter(mags, rms/noise_star_plus_ro, c='k', alpha=0.2, zorder=-5,
                s=0.5, rasterized=True, linewidths=0)
 
     a0.legend(loc='upper left', fontsize='xx-small')
     a0.set_yscale('log')
     a1.set_xlabel('TESS magnitude', labelpad=0.8)
-    a0.set_ylabel('RMS [30 minutes]', labelpad=0.8)
-    a1.set_ylabel('RMS / (Photon + Read)', labelpad=1)
+    a0.set_ylabel('Corrected RMS [30 minutes]', labelpad=0.8)
+    a1.set_ylabel('Corrected RMS / Model', labelpad=1)
 
     a0.set_ylim([1e-5, 1e-1])
     a1.set_ylim([0.5,10])

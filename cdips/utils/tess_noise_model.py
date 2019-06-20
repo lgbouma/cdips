@@ -42,7 +42,6 @@ subexptime = 2.0      # subexposure time [seconds] (n_exp = exptime/subexptime)
 e_pix_ro = 10.0       # rms in no. photons/pixel from readout noise
 # https://archive.stsci.edu/files/live/sites/mast/files/home/missions-and-data/active-missions/tess/_documents/TESS_Instrument_Handbook_v0.1.pdf
 effective_area = 86.6 # geometric collecting area. it's in the handbook. v0.1, figure 3.4
-effective_area = 89.6 # geometric collecting area. it's in the handbook. v0.1, figure 3.4
 sys_limit = 60.0      # minimum uncertainty in 1 hr of data, in ppm
 pix_scale = 21.1      # arcsec per pixel
 
@@ -113,6 +112,8 @@ def get_sky_bkgnd(coords, exptime):
     elon = coords.barycentrictrueecliptic.lon.value
     glat = coords.galactic.b.value
     glon = coords.galactic.l.value
+    glon -= 180 # Winn's eq 7 (below) requires longitude from -180 to 180
+    assert np.all(glon > 0) and np.all(glon < 180)
 
     # Solid area of a pixel (arcsec^2).
     omega_pix = pix_scale ** 2.
