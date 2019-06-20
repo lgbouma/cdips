@@ -30,20 +30,20 @@ def main():
     # fig N: RMS vs catalog T mag
     plot_rms_vs_mag(sectors, overwrite=1)
 
-    # # fig N: histogram (or CDF) of stellar magnitude (T mag)
-    # plot_cdf_T_mag(sectors, overwrite=0)
+    # fig N: histogram (or CDF) of stellar magnitude (T mag)
+    plot_cdf_T_mag(sectors, overwrite=1)
 
-    # # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
-    # # calculated for CTL stars, so by definition it has limited use
-    # plot_cdf_cont(sectors, overwrite=0)
+    # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
+    # calculated for CTL stars, so by definition it has limited use
+    plot_cdf_cont(sectors, overwrite=1)
 
-    # # fig N: HRD for CDIPS stars.
-    # plot_hrd_scat(sectors, overwrite=0, close_subset=1)
-    # plot_hrd_scat(sectors, overwrite=0, close_subset=0)
+    # fig N: HRD for CDIPS stars.
+    plot_hrd_scat(sectors, overwrite=1, close_subset=1)
+    plot_hrd_scat(sectors, overwrite=1, close_subset=0)
 
-    # # fig N: pmRA and pmDEC scatter for CDIPS stars.
-    # plot_pm_scat(sectors, overwrite=0, close_subset=1)
-    # plot_pm_scat(sectors, overwrite=0, close_subset=0)
+    # fig N: pmRA and pmDEC scatter for CDIPS stars.
+    plot_pm_scat(sectors, overwrite=1, close_subset=1)
+    plot_pm_scat(sectors, overwrite=1, close_subset=0)
 
     # # fig N: positions of field and cluster stars (currently all cams)
     # plot_cluster_and_field_star_scatter(sectors, overwrite=1)
@@ -99,7 +99,8 @@ def plot_cdf_T_mag(sectors, overwrite=0):
     bins = np.arange(np.floor(np.min(df[magstr])),
                      np.ceil(np.max(df[magstr]))+1,
                      1)
-    ax.hist(df[magstr], bins=bins, cumulative=True)
+    ax.hist(df[magstr], bins=bins, cumulative=True, color='black', fill=False,
+            linewidth=0.5)
 
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
@@ -132,7 +133,8 @@ def plot_cdf_cont(sectors, overwrite=0):
 
     targetstr = 'TICCONT'
     bins = np.logspace(-3,2,11)
-    ax.hist(df[targetstr], bins=bins, cumulative=True)
+    ax.hist(df[targetstr], bins=bins, cumulative=True, color='black',
+            fill=False, linewidth=0.5)
 
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
@@ -179,7 +181,8 @@ def plot_hrd_scat(sectors, overwrite=0, close_subset=1):
 
     ax.scatter(color,
                M_omega,
-               rasterized=True, s=0.1, alpha=1, linewidths=0, zorder=5)
+               rasterized=True, s=0.1, alpha=1, linewidths=0, zorder=5,
+               color='black')
 
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
@@ -243,7 +246,8 @@ def plot_pm_scat(sectors, overwrite=0, close_subset=0):
     yval = df['PM_Dec[mas/year]']
     ax.scatter(xval,
                yval,
-               rasterized=True, s=0.1, alpha=1, linewidths=0, zorder=5)
+               rasterized=True, s=0.1, alpha=1, linewidths=0, zorder=5,
+               color='black')
 
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
