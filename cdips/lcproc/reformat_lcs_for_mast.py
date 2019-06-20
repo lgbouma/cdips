@@ -4,7 +4,7 @@ presentable, and apply minor changes to improve their BLS-searchability.
 """
 
 import pandas as pd, numpy as np
-import os
+import os, requests, time
 from astropy.io import fits
 from datetime import datetime
 from astroquery.mast import Catalogs
@@ -210,11 +210,20 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
     targetcoord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
     radius = 1.0*u.arcminute
 
-    stars = Catalogs.query_region(
-        "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
-        catalog="TIC",
-        radius=radius
-    )
+    try:
+        stars = Catalogs.query_region(
+            "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
+            catalog="TIC",
+            radius=radius
+        )
+    except requests.exceptions.ConnectionError:
+        print('ERR! TIC query failed. trying again...')
+        time.sleep(60)
+        stars = Catalogs.query_region(
+            "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
+            catalog="TIC",
+            radius=radius
+        )
 
     Tmag_pred = (primaryhdr['phot_g_mean_mag']
                 - 0.00522555 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**3
