@@ -19,3 +19,5 @@ build*
 dist*
 *.pyc
 drivers/DETRENDED*txt
+tess-*astrocut.fits
+astrocut*zip
