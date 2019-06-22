@@ -1,3 +1,5 @@
+THINGS THRU CANDIDATE PRODUCTION
+
 1. make lightcurves using pipe-trex.
 
 2. run `trex_lc_to_mast_lc` (symlinks CDIPS matches into a good directory
@@ -27,4 +29,17 @@
     * Check `logs/vetting_pdf.log` for name-matching errors. (First pass, they
       will always show up! Grep for "ERR!")
 
-9. `paper_plot_all_figures`: plots figures for paper I.
+COLLECT VETTING CLASSIFICATIONS
+
+1. `classification_postprocessing`
+    (both for my main classification runs)
+    (and to postprocess joel and jnw's classifications)
+
+PAPER-PROCESSING
+
+1. `paper_plot_all_figures`: plots figures for paper I.
+
+2. `paper_get_CDIPS_star_stats`: analyze stats of cdips stars.  how many are
+   there total?  what fraction come from which sources?  how many are
+   single-source claims?  how many are multi-source claims?
+
