@@ -5,12 +5,16 @@ from functools import reduce
 
 def main():
     isfull = 0
-    iscollabsubclass = 1
+    iscollabsubclass = 0
+    getgold = 1
 
     if isfull:
         given_full_classifications_organize(sector=7, today='20190618')
     if iscollabsubclass:
         given_collab_subclassifications_merge(sector=7)
+    if getgold:
+        given_merged_gold_organize_PCs(sector=7)
+
 
 def ls_to_df(classfile, classifier='LGB'):
     indf = pd.read_csv(classfile, names=['lsname'])
@@ -53,16 +57,15 @@ def given_collab_subclassifications_merge(sector=6):
             os.path.join(datadir, '20190621_sector-6_PCs_JH_class.txt'),
             os.path.join(datadir, '20190621_sector-6_PCs_JNW_class.txt')
         ]
-        outpath = os.path.join(datadir,
-                               'sector-6_PCs_MERGED_SUBCLASSIFICATIONS.csv')
     elif sector==7:
         classfiles = [
             os.path.join(datadir, '20190621_sector-7_PCs_LGB_class.txt'),
             os.path.join(datadir, '20190621_sector-7_PCs_JH_class.txt')
         ]
-        outpath = os.path.join(datadir,
-                               'sector-7_PCs_MERGED_SUBCLASSIFICATIONS.csv')
 
+    outpath = os.path.join(
+        datadir, 'sector-{}_PCs_MERGED_SUBCLASSIFICATIONS.csv'.format(sector)
+    )
     print('merging {}'.format(repr(classfiles)))
 
     dfs = []
@@ -79,6 +82,67 @@ def given_collab_subclassifications_merge(sector=6):
 
     mdf.to_csv(outpath, sep=';', index=False)
     print('wrote {}'.format(outpath))
+
+
+def given_merged_gold_organize_PCs(sector=None):
+    """
+    using output from given_collab_subclassifications_merge, select unanimous
+    "gold" that will be the PCs.
+    """
+
+    datadir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/'
+    inpath = os.path.join(
+        datadir, 'sector-{}_PCs_MERGED_SUBCLASSIFICATIONS.csv'.format(sector)
+    )
+    df = pd.read_csv(inpath, sep=';')
+
+    tag_colnames = [c for c in df.columns if 'Tags' in c]
+
+    allisgold = np.ones_like(df['Name'])
+    for tag_colname in tag_colnames:
+        newcol = tag_colname.split('_')[0]+'_isgold'
+
+        classifier_isgold = np.array(
+            df[tag_colname].str.lower().str.contains('gold')
+        )
+
+        df[newcol] = classifier_isgold
+
+        allisgold &= classifier_isgold
+
+    df['unanimous_gold'] = allisgold
+
+    df_gold = df[df['unanimous_gold']==1]
+
+    outpath = os.path.join(
+        datadir, 'sector-{}_UNANIMOUS_GOLD.csv'.format(sector)
+    )
+    df_gold.to_csv(outpath, sep=';', index=False)
+    print('made {}'.format(outpath))
+
+    # now copy to new directory
+    golddir = os.path.join(datadir, 'sector-{}_UNANIMOUS_GOLD'.format(sector))
+    if not os.path.exists(golddir):
+        os.mkdir(golddir)
+
+    if sector==6:
+        srcdir = '../results/vetting_classifications/20190617_sector-6_PC_cut'
+    elif sector==7:
+        srcdir = '../results/vetting_classifications/20190618_sector-7_PC_cut'
+
+    for n in df_gold['Name']:
+        src = os.path.join(srcdir, str(n))
+        dst = os.path.join(golddir, str(n))
+        if not os.path.exists(dst):
+            shutil.copyfile(src, dst)
+            print('copied {} -> {}'.format(src, dst))
+        else:
+            print('found {}'.format(dst))
+
+
+    import IPython; IPython.embed()
+
+
 
 
 def given_full_classifications_organize(
