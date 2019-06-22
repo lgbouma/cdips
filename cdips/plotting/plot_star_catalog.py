@@ -81,14 +81,16 @@ def star_catalog_skymap(df, pfdf, closesubset=False):
         csstr=csstr, opstr=opstr)
     savefig(f, outpath)
 
-def star_catalog_mag_histogram(df, magstr):
+
+def star_catalog_mag_histogram(df, magstr, savpath=None):
 
     f,ax = plt.subplots(figsize=(4,3))
 
     bins = np.arange(np.floor(np.min(df[magstr])),
                      np.ceil(np.max(df[magstr]))+0.5,
                      1)
-    ax.hist(df[magstr], bins=bins, cumulative=True)
+    ax.hist(df[magstr], bins=bins, cumulative=True, color='black', fill=False,
+            linewidth=0.5)
 
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
@@ -98,12 +100,16 @@ def star_catalog_mag_histogram(df, magstr):
         tick.label.set_fontsize('small')
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize('small')
-    ax.set_xlabel(magstr)
-    ax.set_ylabel('cumulative number')
+    if magstr == 'phot_rp_mean_mag':
+        ax.set_xlabel('$G_\mathrm{{Rp}}$')
+    if magstr == 'phot_bp_mean_mag':
+        ax.set_xlabel('$G_\mathrm{{Bp}}$')
+    ax.set_ylabel('Cumulative number')
     ax.set_yscale('log')
 
     f.tight_layout(pad=0.2)
-    savpath = '../../results/star_catalog_mag_histogram_{}.png'.format(magstr)
+    if not isinstance(savpath, str):
+        savpath = '../../results/star_catalog_mag_histogram_{}.png'.format(magstr)
     savefig(f, savpath)
 
 

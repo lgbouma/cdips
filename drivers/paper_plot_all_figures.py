@@ -22,9 +22,116 @@ from aperturephot import get_lc_statistics
 
 from cdips.utils import tess_noise_model as tnm
 
+from cdips.plotting import plot_star_catalog as psc
+from cdips.plotting import plot_catalog_to_gaia_match_statistics as xms
+
 OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
+CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
+
+def plot_catalog_to_gaia_match_statistics(overwrite=1):
+
+    ##########################################
+    # Kharchenko+ 2013 catalog
+    mwscconcatpath = os.path.join(
+        CLUSTERDATADIR, 'MWSC_Gaia_matched_concatenated.csv')
+    if not os.path.exists(mwscconcatpath):
+        bigdf = xms.get_mwsc_gaia_xmatch_statistics()
+        bigdf.to_csv(mwscconcatpath, index=False)
+    else:
+        bigdf = pd.read_csv(mwscconcatpath)
+
+    # Made via open_cluster_xmatch_utils.Kharchenko2013_position_mag_match_Gaia
+    # which annoyingly did not include the G_Rp < 16 cut. which is what we care
+    # about...
+    sourcepath = os.path.join(CLUSTERDATADIR,
+                              'MWSC_Gaia_matched_concatenated_sources.csv')
+    bigdf['gaia_dr2_match_id'].to_csv(sourcepath,index=False)
+
+    targetpath = os.path.join(CLUSTERDATADIR,
+                              'MWSC_Gaia_matched_Gaiainfo.csv')
+
+    if not os.path.exists(targetpath):
+        raise RuntimeError('run the gaia2read on mwsc the sourcepath list, '
+                           'manually')
+        gaia2readcmd = "gaia2read --header --extra --idfile MWSC_Gaia_matched_concatenated_sources.csv > MWSC_Gaia_matched_Gaiainfo.csv"
+
+    # merge bigdf against relevant columns of gaia dr2
+    gdf = pd.read_csv(targetpath, delim_whitespace=True)
+
+    import IPython; IPython.embed()
+    assert 0
+
+
+    outpath = os.path.join(
+        OUTDIR,'catalog_to_gaia_match_statistics_MWSC.png'
+    )
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; skip'.format(outpath))
+    else:
+        xms.plot_catalog_to_gaia_match_statistics(df, outpath, isD14=False)
+
+    ##########################################
+    # Dias 2014 catalog
+    d14_df = pd.read_csv(os.path.join(
+        CLUSTERDATADIR,'Dias14_seplt5arcsec_Gdifflt2.csv'))
+
+    ##########
+    sourcepath = os.path.join(CLUSTERDATADIR,
+                              'Dias14_seplt5arcsec_Gdifflt2_sources.csv')
+    d14_df['source_id'].to_csv(sourcepath,index=False)
+
+    targetpath = os.path.join(CLUSTERDATADIR,
+                              'Dias14_seplt5arcsec_Gdifflt2_Gaiainfo.csv')
+
+    if not os.path.exists(targetpath):
+        raise RuntimeError('run the gaia2read on the d14 sourcepath list, '
+                           'manually')
+        gaia2readcmd = "gaia2read --header --extra --idfile Dias14_seplt5arcsec_Gdifflt2_sources.csv > Dias14_seplt5arcsec_Gdifflt2_Gaiainfo.csv"
+
+    # merge bigdf against relevant columns of gaia dr2
+    gdf = pd.read_csv(targetpath, delim_whitespace=True)
+    ##########
+
+
+    outpath = os.path.join(
+        OUTDIR,'catalog_to_gaia_match_statistics_Dias14.png'
+    )
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; skip'.format(outpath))
+    else:
+        xms.plot_catalog_to_gaia_match_statistics(d14_df, outpath, isD14=True)
+
+def plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1):
+
+    catalogpath = (
+        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.
+        format(OC_MG_CAT_ver)
+    )
+    df = pd.read_csv(catalogpath, sep=';')
+
+    outpath = os.path.join(OUTDIR, 'target_star_cumulative_counts.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    psc.star_catalog_mag_histogram(df, 'phot_rp_mean_mag', savpath=outpath)
+
+
+
 
 def main():
+
+    plot_catalog_to_gaia_match_statistics(overwrite=1)
+
+    assert 0
+    # fig N: wcs quality verification
+    plot_wcs_verification()
+
+    #FIXME 
+    #FIXME 
+    #FIXME 
+    #FIXME 
+
     sectors = [6,7]
 
     # fig N: RMS vs catalog T mag
@@ -45,19 +152,17 @@ def main():
     plot_pm_scat(sectors, overwrite=1, close_subset=1)
     plot_pm_scat(sectors, overwrite=1, close_subset=0)
 
-    # # fig N: positions of field and cluster stars (currently all cams)
-    # plot_cluster_and_field_star_scatter(sectors, overwrite=1)
+    # fig N: cumulative counts of CDIPS target stars.
+    plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1)
 
-    #
-    # fig N: wcs quality verification
-    #
-    plot_wcs_verification()
+    # fig N: positions of field and cluster stars (currently all cams)
+    plot_cluster_and_field_star_scatter(sectors, overwrite=0)
 
-    pass
 
 def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
+
 
 def _get_rms_vs_mag_df(sectors):
 
@@ -81,6 +186,7 @@ def _get_rms_vs_mag_df(sectors):
         raise AssertionError('need to run rms vs mag first!!')
 
     return df
+
 
 def plot_cdf_T_mag(sectors, overwrite=0):
 
@@ -282,8 +388,6 @@ def plot_pm_scat(sectors, overwrite=0, close_subset=0):
 
     f.tight_layout(pad=0.2)
     savefig(f, outpath)
-
-
 
 
 def plot_cluster_and_field_star_scatter(sectors, overwrite=0):
@@ -550,7 +654,6 @@ def plot_rms_vs_mag(sectors, overwrite=0):
     _plot_rms_vs_mag(df, outpath, overwrite=overwrite, yaxisval='RMS')
 
 
-
 def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
 
     if yaxisval != 'RMS':
@@ -656,7 +759,6 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
     fig.tight_layout(h_pad=-0.3, pad=0.2)
     fig.savefig(outpath, dpi=400)
     print('%sZ: made plot: %s' % (datetime.utcnow().isoformat(), outpath))
-
 
 
 def plot_wcs_verification():

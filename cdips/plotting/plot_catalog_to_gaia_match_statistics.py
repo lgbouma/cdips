@@ -56,31 +56,39 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
 
     f,axs = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
 
-    axs[0].hist(dist_arcsec.value)
-    axs[0].set_xlabel('distance [arcsec]')
+    axs[0].hist(dist_arcsec.value, color='black', fill=False, linewidth=0.5)
+
+    axs[0].set_xlabel('Distance [arcsec]')
+    axs[0].set_ylabel('Number per bin')
     axs[0].set_yscale('log')
 
     if isD14:
-        axs[1].hist(bigdf['gaia_gmag']-bigdf['gmag_estimate'])
+        axs[1].hist(bigdf['gaia_gmag']-bigdf['gmag_estimate'], color='black',
+                    fill=False, linewidth=0.5)
     else:
-        axs[1].hist(bigdf['gmag_match_minus_estimate'])
+        axs[1].hist(bigdf['gmag_match_minus_estimate'], color='black',
+                    fill=False, linewidth=0.5)
+
     axs[1].set_xlabel('$\mathrm{G}_{\mathrm{true}}$ -'
                       '$\mathrm{G}_{\mathrm{pred}}$')
+    axs[1].set_ylabel('Number per bin')
     axs[1].set_yscale('log')
 
     if isD14:
         axs[2].scatter(bigdf['gaia_gmag'],
                        bigdf['gaia_gmag']-bigdf['gmag_estimate'], s=5,
-                       alpha=0.1, rasterized=True, linewidths=0)
+                       alpha=0.1, rasterized=True, linewidths=0, color='black')
     else:
         axs[2].scatter(bigdf['gmag_match'], bigdf['gmag_match_minus_estimate'],
-                       s=5, alpha=0.1, rasterized=True, linewidths=0)
+                       s=5, alpha=0.1, rasterized=True, linewidths=0,
+                       color='black')
+
     axs[2].set_xlabel('$\mathrm{G}_{\mathrm{true}}$')
     axs[2].set_ylabel('$\mathrm{G}_{\mathrm{true}}$ -'
                       '$\mathrm{G}_{\mathrm{pred}}$')
 
     f.tight_layout()
-    f.savefig(outpath, dpi=300)
+    f.savefig(outpath, dpi=450, bbox_inches='tight')
     print('saved {}'.format(outpath))
 
 
