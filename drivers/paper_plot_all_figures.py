@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 from numpy import array as nparr
 from astropy.io import fits
+from astropy.io.votable import from_table, writeto, parse
 from datetime import datetime
 
 from astropy.coordinates import SkyCoord
@@ -28,100 +29,7 @@ from cdips.plotting import plot_catalog_to_gaia_match_statistics as xms
 OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
 
-def plot_catalog_to_gaia_match_statistics(overwrite=1):
-
-    ##########################################
-    # Kharchenko+ 2013 catalog
-    mwscconcatpath = os.path.join(
-        CLUSTERDATADIR, 'MWSC_Gaia_matched_concatenated.csv')
-    if not os.path.exists(mwscconcatpath):
-        bigdf = xms.get_mwsc_gaia_xmatch_statistics()
-        bigdf.to_csv(mwscconcatpath, index=False)
-    else:
-        bigdf = pd.read_csv(mwscconcatpath)
-
-    # Made via open_cluster_xmatch_utils.Kharchenko2013_position_mag_match_Gaia
-    # which annoyingly did not include the G_Rp < 16 cut. which is what we care
-    # about...
-    sourcepath = os.path.join(CLUSTERDATADIR,
-                              'MWSC_Gaia_matched_concatenated_sources.csv')
-    bigdf['gaia_dr2_match_id'].to_csv(sourcepath,index=False)
-
-    targetpath = os.path.join(CLUSTERDATADIR,
-                              'MWSC_Gaia_matched_Gaiainfo.csv')
-
-    if not os.path.exists(targetpath):
-        raise RuntimeError('run the gaia2read on mwsc the sourcepath list, '
-                           'manually')
-        gaia2readcmd = "gaia2read --header --extra --idfile MWSC_Gaia_matched_concatenated_sources.csv > MWSC_Gaia_matched_Gaiainfo.csv"
-
-    # merge bigdf against relevant columns of gaia dr2
-    gdf = pd.read_csv(targetpath, delim_whitespace=True)
-
-    import IPython; IPython.embed()
-    assert 0
-
-
-    outpath = os.path.join(
-        OUTDIR,'catalog_to_gaia_match_statistics_MWSC.png'
-    )
-    if os.path.exists(outpath) and not overwrite:
-        print('found {} and not overwrite; skip'.format(outpath))
-    else:
-        xms.plot_catalog_to_gaia_match_statistics(df, outpath, isD14=False)
-
-    ##########################################
-    # Dias 2014 catalog
-    d14_df = pd.read_csv(os.path.join(
-        CLUSTERDATADIR,'Dias14_seplt5arcsec_Gdifflt2.csv'))
-
-    ##########
-    sourcepath = os.path.join(CLUSTERDATADIR,
-                              'Dias14_seplt5arcsec_Gdifflt2_sources.csv')
-    d14_df['source_id'].to_csv(sourcepath,index=False)
-
-    targetpath = os.path.join(CLUSTERDATADIR,
-                              'Dias14_seplt5arcsec_Gdifflt2_Gaiainfo.csv')
-
-    if not os.path.exists(targetpath):
-        raise RuntimeError('run the gaia2read on the d14 sourcepath list, '
-                           'manually')
-        gaia2readcmd = "gaia2read --header --extra --idfile Dias14_seplt5arcsec_Gdifflt2_sources.csv > Dias14_seplt5arcsec_Gdifflt2_Gaiainfo.csv"
-
-    # merge bigdf against relevant columns of gaia dr2
-    gdf = pd.read_csv(targetpath, delim_whitespace=True)
-    ##########
-
-
-    outpath = os.path.join(
-        OUTDIR,'catalog_to_gaia_match_statistics_Dias14.png'
-    )
-    if os.path.exists(outpath) and not overwrite:
-        print('found {} and not overwrite; skip'.format(outpath))
-    else:
-        xms.plot_catalog_to_gaia_match_statistics(d14_df, outpath, isD14=True)
-
-def plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1):
-
-    catalogpath = (
-        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.
-        format(OC_MG_CAT_ver)
-    )
-    df = pd.read_csv(catalogpath, sep=';')
-
-    outpath = os.path.join(OUTDIR, 'target_star_cumulative_counts.png')
-    if os.path.exists(outpath) and not overwrite:
-        print('found {} and not overwrite; return'.format(outpath))
-        return
-
-    psc.star_catalog_mag_histogram(df, 'phot_rp_mean_mag', savpath=outpath)
-
-
-
-
 def main():
-
-    plot_catalog_to_gaia_match_statistics(overwrite=1)
 
     assert 0
     # fig N: wcs quality verification
@@ -129,10 +37,14 @@ def main():
 
     #FIXME 
     #FIXME 
-    #FIXME 
-    #FIXME 
 
     sectors = [6,7]
+
+    # fig N: cumulative counts of CDIPS target stars.
+    plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1)
+
+    # fig N: catalog_to_gaia_match_statistics
+    plot_catalog_to_gaia_match_statistics(overwrite=1)
 
     # fig N: RMS vs catalog T mag
     plot_rms_vs_mag(sectors, overwrite=1)
@@ -152,9 +64,6 @@ def main():
     plot_pm_scat(sectors, overwrite=1, close_subset=1)
     plot_pm_scat(sectors, overwrite=1, close_subset=0)
 
-    # fig N: cumulative counts of CDIPS target stars.
-    plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1)
-
     # fig N: positions of field and cluster stars (currently all cams)
     plot_cluster_and_field_star_scatter(sectors, overwrite=0)
 
@@ -162,6 +71,118 @@ def main():
 def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
+
+
+def plot_catalog_to_gaia_match_statistics(overwrite=1):
+
+    ##########################################
+    # Kharchenko+ 2013 catalog
+    mwscconcatpath = os.path.join(
+        CLUSTERDATADIR, 'MWSC_Gaia_matched_concatenated.csv')
+    if not os.path.exists(mwscconcatpath):
+        bigdf = xms.get_mwsc_gaia_xmatch_statistics()
+        bigdf.to_csv(mwscconcatpath, index=False)
+    else:
+        bigdf = pd.read_csv(mwscconcatpath)
+
+    # Made via open_cluster_xmatch_utils.Kharchenko2013_position_mag_match_Gaia
+    # which annoyingly did not include the G_Rp < 16 cut. which is what we care
+    # about...
+    sourcepath = os.path.join(CLUSTERDATADIR,
+                              'MWSC_Gaia_matched_concatenated_sources.csv')
+    if not os.path.exists(sourcepath):
+        bigdf['gaia_dr2_match_id'].to_csv(sourcepath,index=False)
+
+    targetpath = os.path.join(CLUSTERDATADIR,
+                              'MWSC_Gaia_matched_Gaiainfo.csv')
+    targetvot = os.path.join(CLUSTERDATADIR,
+                             'mwsc_gaia_matched_concatenated_sources-result.vot.gz')
+
+    if not os.path.exists(targetvot):
+        raise RuntimeError('run the gaia2read on mwsc the sourcepath list, '
+                           'manually')
+        # Upload MWSC_Gaia_matched_concatenated_sources.csv to Gaia archive,
+        # run something like the "mwsc_gaia_matched_concatenated_sources" job,
+        # """
+        # select u.source_id, g.phot_rp_mean_mag
+        # from user_lbouma.dias14_seplt5arcsec_gdifflt2_sources import as u,
+        # gaiadr2.gaia_source as g
+        # WHERE
+        # u.source_id = g.source_id
+        # """
+        # NOTE gaia2read fails because of some bad IDs.
+
+    if not os.path.exists(targetpath):
+        tab = parse(targetvot)
+        t = tab.get_first_table().to_table()
+        gdf = t.to_pandas()
+        df = gdf.merge(bigdf, how='left', right_on='gaia_dr2_match_id', left_on='source_id')
+        df.to_csv(targetpath,index=False)
+    else:
+        df = pd.read_csv(targetpath)
+
+    outpath = os.path.join(
+        OUTDIR,'catalog_to_gaia_match_statistics_MWSC.png'
+    )
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; skip'.format(outpath))
+    else:
+        df = df[df['phot_rp_mean_mag'] < 16]
+        xms.plot_catalog_to_gaia_match_statistics(df, outpath, isD14=False)
+
+    ##########################################
+    # Dias 2014 catalog
+    d14_df = pd.read_csv(os.path.join(
+        CLUSTERDATADIR,'Dias14_seplt5arcsec_Gdifflt2.csv'))
+
+    ##########
+    sourcepath = os.path.join(CLUSTERDATADIR,
+                              'Dias14_seplt5arcsec_Gdifflt2_sources.csv')
+    if not os.path.exists(sourcepath):
+        d14_df['source_id'].to_csv(sourcepath,index=False)
+
+    targetpath = os.path.join(CLUSTERDATADIR,
+                              'Dias14_seplt5arcsec_Gdifflt2_Gaiainfo.csv')
+    targetvot = os.path.join(CLUSTERDATADIR,
+                              'dias14_seplt5arcsec_gdifflt2_sources-result.vot.gz')
+
+    if not os.path.exists(targetvot):
+        raise RuntimeError('run the gaia2read on the d14 sourcepath list, '
+                           'manually')
+
+    if not os.path.exists(targetpath):
+        tab = parse(targetvot)
+        t = tab.get_first_table().to_table()
+        gdf = t.to_pandas()
+        df = gdf.merge(d14_df, how='left', right_on='source_id', left_on='source_id')
+        df.to_csv(targetpath,index=False)
+    else:
+        df = pd.read_csv(targetpath)
+
+    outpath = os.path.join(
+        OUTDIR,'catalog_to_gaia_match_statistics_Dias14.png'
+    )
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; skip'.format(outpath))
+    else:
+        df = df[df['phot_rp_mean_mag'] < 16]
+        xms.plot_catalog_to_gaia_match_statistics(df, outpath, isD14=True)
+
+
+def plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1):
+
+    catalogpath = (
+        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.
+        format(OC_MG_CAT_ver)
+    )
+    df = pd.read_csv(catalogpath, sep=';')
+
+    outpath = os.path.join(OUTDIR, 'target_star_cumulative_counts.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    psc.star_catalog_mag_histogram(df, 'phot_rp_mean_mag', savpath=outpath)
 
 
 def _get_rms_vs_mag_df(sectors):

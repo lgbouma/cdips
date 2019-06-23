@@ -56,7 +56,8 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
 
     f,axs = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
 
-    axs[0].hist(dist_arcsec.value, color='black', fill=False, linewidth=0.5)
+    axs[0].hist(dist_arcsec.value, bins=np.arange(0,5.5,0.5), color='black',
+                fill=False, linewidth=0.5)
 
     axs[0].set_xlabel('Distance [arcsec]')
     axs[0].set_ylabel('Number per bin')
@@ -64,14 +65,17 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
 
     if isD14:
         axs[1].hist(bigdf['gaia_gmag']-bigdf['gmag_estimate'], color='black',
+                    bins=np.arange(-2,2+0.5,0.5),
                     fill=False, linewidth=0.5)
     else:
         axs[1].hist(bigdf['gmag_match_minus_estimate'], color='black',
+                    bins=np.arange(-2,2+0.5,0.5),
                     fill=False, linewidth=0.5)
 
-    axs[1].set_xlabel('$\mathrm{G}_{\mathrm{true}}$ -'
+    axs[1].set_xlabel('$\mathrm{G}_{\mathrm{true}}$ - '
                       '$\mathrm{G}_{\mathrm{pred}}$')
     axs[1].set_ylabel('Number per bin')
+    axs[1].set_xlim([-2.1,2.1])
     axs[1].set_yscale('log')
 
     if isD14:
@@ -84,8 +88,10 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
                        color='black')
 
     axs[2].set_xlabel('$\mathrm{G}_{\mathrm{true}}$')
-    axs[2].set_ylabel('$\mathrm{G}_{\mathrm{true}}$ -'
+    axs[2].set_ylabel('$\mathrm{G}_{\mathrm{true}}$ - '
                       '$\mathrm{G}_{\mathrm{pred}}$')
+    axs[2].set_xlim([4,18])
+    axs[2].set_ylim([-2.1,2.1])
 
     f.tight_layout()
     f.savefig(outpath, dpi=450, bbox_inches='tight')
