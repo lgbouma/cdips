@@ -31,7 +31,6 @@ CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
 
 def main():
 
-    assert 0
     # fig N: wcs quality verification
     plot_wcs_verification()
 
@@ -41,31 +40,33 @@ def main():
     sectors = [6,7]
 
     # fig N: cumulative counts of CDIPS target stars.
-    plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1)
+    plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=0)
 
     # fig N: catalog_to_gaia_match_statistics
-    plot_catalog_to_gaia_match_statistics(overwrite=1)
+    plot_catalog_to_gaia_match_statistics(overwrite=0)
 
     # fig N: RMS vs catalog T mag
-    plot_rms_vs_mag(sectors, overwrite=1)
+    plot_rms_vs_mag(sectors, overwrite=0)
 
     # fig N: histogram (or CDF) of stellar magnitude (T mag)
-    plot_cdf_T_mag(sectors, overwrite=1)
+    plot_cdf_T_mag(sectors, overwrite=0)
 
     # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
     # calculated for CTL stars, so by definition it has limited use
-    plot_cdf_cont(sectors, overwrite=1)
+    # plot_cdf_cont(sectors, overwrite=1)
 
     # fig N: HRD for CDIPS stars.
-    plot_hrd_scat(sectors, overwrite=1, close_subset=1)
-    plot_hrd_scat(sectors, overwrite=1, close_subset=0)
+    plot_hrd_scat(sectors, overwrite=0, close_subset=1)
+    plot_hrd_scat(sectors, overwrite=0, close_subset=0)
 
     # fig N: pmRA and pmDEC scatter for CDIPS stars.
-    plot_pm_scat(sectors, overwrite=1, close_subset=1)
-    plot_pm_scat(sectors, overwrite=1, close_subset=0)
+    plot_pm_scat(sectors, overwrite=0, close_subset=1)
+    plot_pm_scat(sectors, overwrite=0, close_subset=0)
 
     # fig N: positions of field and cluster stars (currently all cams)
-    plot_cluster_and_field_star_scatter(sectors, overwrite=0)
+    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=1)
+    plot_cluster_and_field_star_scatter(sectors=[6], overwrite=1, cams=[1],
+                                        ccds=[1,2,3,4])
 
 
 def savefig(fig, figpath):
@@ -238,7 +239,7 @@ def plot_cdf_T_mag(sectors, overwrite=0):
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize('small')
     ax.set_xlabel('TESS magnitude')
-    ax.set_ylabel('cumulative number of LCs')
+    ax.set_ylabel('Cumulative number')
     ax.set_yscale('log')
 
     f.tight_layout(pad=0.2)
@@ -319,7 +320,7 @@ def plot_hrd_scat(sectors, overwrite=0, close_subset=1):
         tick.label.set_fontsize('small')
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize('small')
-    ax.set_xlabel('$G_{\mathrm{BP}} - G_{\mathrm{RP}}$')
+    ax.set_xlabel('$G_{\mathrm{Bp}} - G_{\mathrm{Rp}}$')
     ax.set_ylabel('$M_\omega = G + 5\log_{10}(\omega_{\mathrm{as}}) + 5$')
 
     ax.set_ylim((12.5, -4.5))
@@ -327,12 +328,12 @@ def plot_hrd_scat(sectors, overwrite=0, close_subset=1):
 
     if close_subset:
         txtstr= (
-            '$\omega>0$, $1/\omega_{\mathrm{as}} < 1000$, '+'{} stars'.
+            '$\omega>0$, $1/\omega_{\mathrm{as}} < 1000$\n'+'{} stars'.
             format(len(df))
         )
     else:
         txtstr= (
-            '{} stars (no parallax cuts)'.format(len(df))
+            'no parallax cuts\n{} stars'.format(len(df))
         )
     ax.text(
         0.97, 0.97,
@@ -384,20 +385,20 @@ def plot_pm_scat(sectors, overwrite=0, close_subset=0):
         tick.label.set_fontsize('small')
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize('small')
-    ax.set_xlabel('pmRA[mas/yr]')
-    ax.set_ylabel('pmDEC[mas/yr]')
+    ax.set_xlabel(r'$\mu_{{\alpha}} \cos\delta$ [mas/yr]')
+    ax.set_ylabel('$\mu_{{\delta}}$ [mas/yr]')
 
     ax.set_xlim([-20,20])
     ax.set_ylim([-20,20])
 
     if close_subset:
         txtstr= (
-            '$\omega>0$, $1/\omega_{\mathrm{as}} < 1000$, '+'{} stars'.
+            '$\omega>0$, $1/\omega_{\mathrm{as}} < 1000$\n'+'{} stars'.
             format(len(df))
         )
     else:
         txtstr= (
-            '{} stars (no parallax cuts)'.format(len(df))
+            'no parallax cuts\n{} stars'.format(len(df))
         )
     ax.text(
         0.97, 0.97,
@@ -411,21 +412,27 @@ def plot_pm_scat(sectors, overwrite=0, close_subset=0):
     savefig(f, outpath)
 
 
-def plot_cluster_and_field_star_scatter(sectors, overwrite=0):
+def plot_cluster_and_field_star_scatter(sectors=None, overwrite=0,
+                                        cams=[1,2,3,4], ccds=[1,2,3,4]):
     """
     note: being kept separate from other stats collection step b/c here you
     need all LCs + CDIPS LCs, rather than only CDIPS LCs
     """
 
-    cams = [1,2,3,4]
-    ccds = [1,2,3,4]
     csvpaths = []
     N_max = 100000
 
     prestr = 'sector{}_'.format(sectors[0]) if len(sectors)==1 else ''
 
-    outpath = os.path.join(OUTDIR,
-                           prestr+'cluster_field_star_positions.png')
+    if cams==[1,2,3,4] and ccds==[1,2,3,4]:
+        outpath = os.path.join(OUTDIR,
+                               prestr+'cluster_field_star_positions.png')
+    else:
+        prestr = prestr + 'cam{}_ccd{}'.format(
+            repr(cams).replace(' ','-').replace(',',''),
+            repr(ccds).replace(' ','-').replace(',',''))
+        outpath = os.path.join(OUTDIR,
+                               prestr+'cluster_field_star_positions.png')
     if os.path.exists(outpath) and not overwrite:
         print('found {} and not overwrite; return'.format(outpath))
         return
@@ -461,8 +468,10 @@ def plot_cluster_and_field_star_scatter(sectors, overwrite=0):
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
 
+    figsize = (4.5,4.5) if len(cams)==1 and len(ccds)==4 else (4.5,6.5)
+
     plot_cluster_and_field_star_positions(
-        df, outpath
+        df, outpath, figsize
     )
 
 
@@ -527,7 +536,7 @@ def get_cluster_and_field_star_positions(lcpaths, cdipslcdir, outpath,
     print('made {}'.format(outpath))
 
 
-def plot_cluster_and_field_star_positions(df, outpath):
+def plot_cluster_and_field_star_positions(df, outpath, figsize):
     """
     scatter of (ra,dec) for [subset of] stars with lightcurves.
 
@@ -536,7 +545,7 @@ def plot_cluster_and_field_star_positions(df, outpath):
     blue foreground points: cluster stars
     """
 
-    f, ax = plt.subplots(figsize=(4.5,4.5))
+    f, ax = plt.subplots(figsize=figsize)
 
     iscdips = df['iscdips']
 
@@ -545,12 +554,21 @@ def plot_cluster_and_field_star_positions(df, outpath):
     ax.scatter(df[iscdips]['ra'], df[iscdips]['dec'], c='C0', alpha=0.8,
                s=0.5, rasterized=True, linewidths=0, zorder=2)
 
-    ax.set_title('black: $G_{\mathrm{Rp}}<13$ field. blue: $G_{\mathrm{Rp}}<16$ cluster.')
+    #ax.set_title('black: $G_{\mathrm{Rp}}<13$ field. blue: $G_{\mathrm{Rp}}<16$ cluster.')
 
-    ax.set_xlabel('ra [deg]')
-    ax.set_ylabel('dec [deg]')
+    ax.set_xlabel(r'Right ascension, $\alpha$ [deg]')
+    ax.set_ylabel('Declination, $\delta$ [deg]')
 
-    f.savefig(outpath, bbox_inches='tight', dpi=350)
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
+
+    # RA increases to the left
+    xlim = ax.get_xlim()
+    ax.set_xlim((max(xlim),min(xlim)))
+
+    f.savefig(outpath, bbox_inches='tight', dpi=450)
     print('made {}'.format(outpath))
 
 

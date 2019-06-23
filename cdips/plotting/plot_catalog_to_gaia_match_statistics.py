@@ -93,6 +93,12 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
     axs[2].set_xlim([4,18])
     axs[2].set_ylim([-2.1,2.1])
 
+    for ax in axs:
+        ax.yaxis.set_ticks_position('both')
+        ax.xaxis.set_ticks_position('both')
+        ax.get_yaxis().set_tick_params(which='both', direction='in')
+        ax.get_xaxis().set_tick_params(which='both', direction='in')
+
     f.tight_layout()
     f.savefig(outpath, dpi=450, bbox_inches='tight')
     print('saved {}'.format(outpath))
