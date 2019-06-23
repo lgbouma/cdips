@@ -1621,7 +1621,7 @@ Some stellar variability plots (perhaps of known stellar variables).
 
 Some focus on particular clusters.
 
-\subsection{Objects of Interest}
+\subsection{Identifying Objects of Interest}
 \label{subsec:ctois}
 
 To identify an initial set of transiting planets, strong stellar rotators, and 
@@ -1756,13 +1756,31 @@ The classifications we used assessed:
     size, and also whether the in-transit minus the out-of-transit images 
     reveal that the source of variability is in fact far from the target star.
 \end{enumerate}
-The actual classification process was performed by LGB, JH, and JNW.
-The \texttt{TagSpaces} software was used~--~an extremely helpful tool for the 
-purposes of easily assigning labels to documents.
+The actual classifications were performed by LGB, JH, and JNW.
+The \texttt{TagSpaces} software was used~--~an extremely helpful tool
+for the purposes of easily assigning labels to documents.
+An example of a full vetting report is described in
+Appendix~\ref{appendix:vetreport}.
 
+\subsection{Objects of Interest}
+The objects that all vetters identified as planet candidates were then
+fit with the usual \citet{mandel_analytic_2002} model. (CITE BATMAN).
+The resulting fits are shown in Figure XXX.
+The parameters of the planet candidates are given in Table YYY, and
+are also available as cTOIs NNN.01 - MMM.01 on exofop-TESS (LINK).
 
+Different types of observations and analyses are needed to confirm 
+(i) the planetary nature of these signals, and
+(ii) whether the host stars are bonafide cluster members.
+For (i), follow-up photometry, high-resolution imaging, and in some
+cases spectroscopic mass measurement are needed.
+For (ii), one or two radial velocity measurements might kinematically
+exclude cluster membership in a number of cases.
+A full assessment of the target star's age indiciators, including
+photometric rotation signatures, spectroscopic Li and H$\alpha$
+measurements, and even an isochronal analysis, would be helpful.
 
-% FIXME FIXME FIXME
+%tODO: add plots and descriptions of other nice objects too
 
 
 
@@ -1867,6 +1885,8 @@ Agreement.
 
 \appendix
 \section{Time system \& barycentric correction}
+\label{appendix:time}
+
 The time-stamps included with the calibrated TESS Full Frame Images
 produced by SPOC include a barycenteric correction at
 a single reference pixel given at the middle of every frame.
@@ -1886,6 +1906,7 @@ is the defacto standard in exoplanet and stellar
 astronomy~\citep{eastman_achieving_2010}.
 
 \section{Vetting Document Description}
+\label{appendix:vetreport}
 
 In \S~\ref{subsec:ctois}, we described the process by which we made 
 vetting reports suitable for assessing which objects were interesting 
@@ -1899,6 +1920,8 @@ The planet candidate chosen for these figures
 (Gaia DR2 \texttt{5541111035713815552} = TIC \texttt{134528212}) was
 chosen for the demonstration in part because it passes all
 the tests.
+It is one of a number of the giant planet candidates that we note may
+be in open clusters.
 
 \begin{figure*}[!h]
 	\begin{center}
