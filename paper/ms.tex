@@ -414,8 +414,9 @@ we preform cross-matching directly via the source identifiers.
 \citep[][a combination of USNO-B1{.}0 and 2MASS
 astrometry]{roeser_ppmxl_2010} and near-infrared photometry from 2MASS
 \citep{skrutskie_tmass_2006} to report the existence of 2859 open
-clusters and stellar associations.
-We selected their ``$1\sigma$'' members according to the
+clusters and stellar associations (globular clusters were
+omitted by excluding any entry of type \texttt{'g'}).
+We selected ``$1\sigma$'' members according to the
 combined photometric, kinematic, and spatial criteria described by
 \citet{kharchenko_global_2012}.  Then, to obtain {\it Gaia}-DR2 source
 identifiers for the members, we performed a crossmatch for {\it
@@ -530,12 +531,14 @@ forming regions justifies their inclusion in our search sample.
 \begin{figure}[t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.45\textwidth]{star_catalog_mag_histogram_phot_rp_mean_mag.png}
+		\includegraphics[width=0.45\textwidth]{target_star_cumulative_counts.png}
 	\end{center}
 	\vspace{-0.2cm}
 	\caption{
-    {\bf Cumulative counts of candidate cluster member stars a
-    function of Gaia $Rp$-band magnitude.}
+    {\bf Cumulative number of target stars as
+    a function of Gaia $Rp$-band magnitude.}  The selected stars are eiher candidate
+    members of clusters, or else have other youth indicators. We only consider stars
+    with $G_{\rm Rp} < 16$.
 	\label{fig:cdips_targets}
 	}
 \end{figure}
