@@ -1331,6 +1331,8 @@ separately.
 	\vspace{-0.5cm}
 	\caption{
 		{\bf  Zoom of Sector 6, Camera 1 from Figure~\ref{fig:lcradec}.}
+		The most populated cluster is XXX, primarily due to candidate
+		members proposed by \citet{dias_proper_2014}.
 		\label{fig:lcradeczoom}
 	}
 \end{figure}
@@ -1344,8 +1346,8 @@ separately.
 	\vspace{-0.5cm}
 	\caption{
     {\bf Cumulative number of CDIPS light curves a function of TESS
-    $T$-band magnitude.}  Light curves were made for the subset of
-    stars shown in Figure~\ref{fig:cdips_targets} that were observed
+    $T$-band magnitude.}  Light curves were made for the
+    target stars (Figure~\ref{fig:cdips_targets}) that were observed
     in Sectors 6 or 7.
 		\label{fig:cdf_T_mag}
 	}
@@ -1654,7 +1656,7 @@ preserve transits while omitting flares and other positive flux excursions.
 
 A number of the light curves show residual variability, often of stellar 
 origin.
-This expected for a sample of young stars; the issue of finding transits in 
+This is expected for a sample of young stars; the problem of finding transits in 
 the face of large stellar rotation signals 
 has been explored by both \citet{rizzuto_zeitV_2017} and also 
 \citet{hippke_wotan_2019}.
@@ -1663,15 +1665,15 @@ pass a sliding window over the light curve that, within each step, performs a
 Bayesian model comparison between a spline and a spline-plus-notch model.  If 
 the spline-plus-notch model is favored, the transits are preserved for 
 subsequent discovery.
-\citet{hippke_wotan_2019}, conversely, described a large number of possible 
-detrending methods, and found that many performed more or less the same at 
+\citet{hippke_wotan_2019}, conversely, described a number of different
+detrending methods, and found that most performed more or less the same at 
 recovering planetary transits for a sample of young stars with strong rotation 
 signals.
 
 Our approach in this work is essentially identical to one of the methods 
 described by \citet{hippke_wotan_2019}.
-First, we run a generalized Lomb-Scargle periodogram (CITE) on each TFA light 
-curve.
+First, we run a generalized Lomb-Scargle periodogram on each TFA light 
+curve \citep{lomb_1976,scargle_studies_1982,vanderplas_periodograms_2015}.
 If a peak is found with false alarm probability below $10^{-5}$, we consider 
 the star ``variable'', and opt to 
 detrend the light curve with robust penalized B-splines, which are splines 
@@ -1687,6 +1689,12 @@ residuals at each iteration
 The maximum number of spline knots is set to 50, which for each TESS sector 
 ($\approx 25\,{\rm days}$) is commensurate with a $\approx0.5\,{\rm day}$ 
 window.
+
+We verified by injecting and recovering a 2.5 mmag central-transit planet
+with variable period that this detrending approach marginally improved
+the recovery probability, compared to not doing anything.
+The main cases for which it helps are those with large residual stellar
+variability in the TFA light curve.
 
 \begin{figure}[!t]
     \gridline{\fig{tlsresult_sector6.png}{0.45\textwidth}{}}
@@ -1718,7 +1726,7 @@ performed TFA signal reconstruction using
 In this process, the model lightcurve $A(i)$ in 
 Equation~\ref{eq:tfa_to_minimize} is set to the phase-binned signal from the 
 most powerful peak in the TLS spectrum, rather than being a constant function. 
-This helps improve lower the scatter of the light curve at frequencies near 
+This helps lower the scatter of the light curve at frequencies away from
 the TLS peak.
 
 We then make a multi-page \texttt{.pdf} document report with the information 
@@ -1728,16 +1736,21 @@ summary for anyone interested in the subset of objects that we have analyzed.
 A full description of each page of the summary \texttt{.pdf} is given in the 
 Appendix.
 
-The classifications we used assess:
+The classifications we used assessed:
 \begin{enumerate}
-    \item {\it The source of photometric variability}. Designations include 
+    \item {\it Photometric variability classification}. Designations include 
     tags for planet candidates, eclipsing binaries, instrumental variations, 
     stellar variations, and ``weirdos''.
+    %
     \item {\it Cluster membership status}. By default, all light curves were 
     made for stars with at least one literature claim of cluster membership.  
-    We therefore include tags only for non-cluster members, and possible 
-    non-cluster members. Typically the primary source of this information is 
-    the Gaia-DR2 parallax.
+    However, some of these claims pre-dated the availability of Gaia-DR2
+    parallaxes or proper motions.
+    We therefore re-assess the membership status on a case-by-case basis 
+    through inspection of the available astrometry and photometry.
+    Known asterisms are also omitted at this point
+    \citep[{\it e.g.},][]{sulentic_revised_1973,kos_galah_2018}.
+    %
     \item {\it Photometric blends}. Tags are created to highlight whether the 
     depth of the photometric signal shows a strong dependence on aperture 
     size, and also whether the in-transit minus the out-of-transit images 
@@ -1875,24 +1888,177 @@ astronomy~\citep{eastman_achieving_2010}.
 \section{Vetting Document Description}
 
 In \S~\ref{subsec:ctois}, we described the process by which we made 
-\texttt{.pdf} documents suitable for assessing which objects were interesting 
+vetting reports suitable for assessing which objects were interesting 
 enough to merit further study.
 
-This section briefly summarizes this document. Updated versions and their 
+Figures~\ref{fig:pg1} to~\ref{fig:pg6} of this
+section summarize this document. Updated versions and their 
 \texttt{README} files will live at this web-address: 
 \url{mast.stsci.edu/CDIPS}.
+The planet candidate chosen for these figures
+(Gaia DR2 \texttt{5541111035713815552} = TIC \texttt{134528212}) was
+chosen for the demonstration in part because it passes all
+the tests.
 
-\begin{itemize}
-\item {\it Page 1: period-search summary}. Periodograms from TLS and 
-phase-dispersion minimization 
-\citep{hippke_TLS_2019,stellingwerf_period_1978}, as calculated 
-with \texttt{astrobase.periodbase} are shown. The top three peaks from each 
-method are shown in the second and third rows; the raw light curve is in the 
-top-right. A small finder chart from DSS is shown (CITE).
+\begin{figure*}[!h]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.98\textwidth]{gaiatwo0005541111035713815552-0007_page01.pdf}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+		{\bf Page 1: period-search summary.} Periodograms from TLS and 
+		phase-dispersion minimization, as calculated 
+		with \texttt{astrobase.periodbase}, are shown in the top left and top center 
+		\citep{bhatti_astrobase_2018,hippke_TLS_2019,stellingwerf_period_1978}.
+		The top three peaks from each 
+		method are shown in the second and third rows; the raw light curve is in the 
+		top-right. A small finder chart from DSS is inset to the top left, with
+		the 1.5-pixel radius aperture used to extract the light curve in orange (CITE).
+		\label{fig:pg1}
+	}
+\end{figure*}
 
-\item {\it Page 2: light curve diagnostics}.
-\end{itemize}
+\begin{figure*}[!h]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.98\textwidth]{gaiatwo0005541111035713815552-0007_page02.pdf}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+		{\bf Page 2: light curve diagnostics.} 
+		Time-series of raw flux (\texttt{IRM2}),  TFA-detrended flux (\texttt{TF2}), stellar-variability
+		detrended flux, and the background are shown as a function of
+		barycentric Julian date.
+		The overplotted dashed vertical lines are the ephemeris of the highest-power
+		TLS peak from Figure~\ref{fig:pg1}.
+		An important check is whether the flux dips are correlated with changes in the 
+		background level -- in this case, they are not.
+		The standard deviation and TESS magnitude are quoted in the upper right.
+		The red line in the second from the top plot is the windowed 
+		spline described in Section~\ref{subsec:ctois} -- in this case it is near its maximal
+		frequency.
+		\label{fig:pg2}
+	}
+\end{figure*}
 
+\begin{figure*}[!h]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.98\textwidth]{gaiatwo0005541111035713815552-0007_page03.pdf}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+		{\bf Page 3: Transit diagnostics.} The plots show the maximally-detrended
+		light curve (top); the phase-folded light curve centered on the primary transit
+		(middle left); the phase-folded light curve centered on the secondary eclipse
+		(middle right); the odd-numbered transits (lower left); and the
+		even-numbered transits (lower right).
+		The stellar parameters ($T_{\rm eff}, R_\star$) are taken from Gaia-DR2 
+		when available.
+		The first eight lines of text are parameters determined 
+		from the best-fitting TLS model.
+		The one exception is the planet radius, which uses the stellar radius
+		as noted above.
+		The ``flux contamination'' (\texttt{TICCONT}) from neighboring stars
+		is {\it never} taken into account, because transit depth dilution does
+		not affect image subtraction analyses in the same manner as 
+		aperture-photometry reductions.
+		To estimate the transit to occulation
+		depth ratio,
+		the phase-folded light curve is also coarsely fit via maximum likelihood
+		by a sum of two gaussians.
+		``AstExc'' refers to the Gaia-DR2 astrometric excess, which can indicate
+		hints of astrometric binarity in the system.
+		``$R_\star + M_\star \rightarrow T_{b0}$'' gives the duration of a 
+		zero-eccentricity central transit based on the Gaia-DR2 stellar radius,
+		and a stellar mass interpolated from the \citet{pecaut_intrinsic_2013} table,
+		under the assumption that the star is a dwarf.%\footnote{\url{http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt}}.
+		\label{fig:pg3}
+	}
+\end{figure*}
+
+\begin{figure*}[!h]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.98\textwidth]{gaiatwo0005541111035713815552-0007_page04.pdf}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+		{\bf Page 4: Light curves for increasing aperture sizes.} 
+		Apertures of radius 1, 1.5, and 2.25 pixels are shown from top to bottom.
+		The blue line is the reference transit depth from the best-fitting TLS model.
+		Any changes in depth with aperture size might indicate the need for a 
+		detailed pixel-level analysis.
+		\label{fig:pg4}
+	}
+\end{figure*}
+
+\begin{figure*}[!h]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.98\textwidth]{gaiatwo0005541111035713815552-0007_page05.pdf}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+		{\bf Page 5: Cluster membership assessment diagnostics.}
+		The star was considered a candidate cluster member by the source(s) listed under
+		``Reference'', in this case \citet{dias_proper_2014}.
+		The name used in the Dias catalog in this case was \texttt{264-025831}, a
+		UCAC-4 identifier, which can be back-referenced to find that \citet{dias_proper_2014}
+		assigned this star a
+		membership probability in NGC 2546 of 98\%.
+		The base catalog for the plots is chiefly that of \citet{Kharchenko_et_al_2013},
+		due to its homogeneous parameter determination procedure (particularly for age).
+		If a match to the \citet{Kharchenko_et_al_2013} catalog is found, then the remaining
+		plots are populated.
+		Top-left shows the parallax, with orange points sampled from the Gaia-DR2
+		posterior, black points the other cluster members in the Kharchenko catalog,
+		and the blue line the claimed Kharchenko parallax for the cluster.
+		A large number of field contaminants are visible in this case.
+		Top-right are the Gaia proper motions, where against black points are cluster
+		members from Kharchenko, and the orange is the target star.
+		Bottom-left is the HR diagram, and bottom-right are the on-sky positions.
+		In the text,
+		\texttt{N1sr2} is the number of $1\sigma$ cluster members claimed
+		by \citet{Kharchenko_et_al_2013} within the cluster angular radius;
+		$\log t$ is the base-10 logarithm of the age in years;
+		\texttt{type} matches the type codes provided by \citet{Kharchenko_et_al_2013}.
+		\label{fig:pg5}
+	}
+\end{figure*}
+
+\begin{figure*}[!h]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.98\textwidth]{gaiatwo0005541111035713815552-0007_page06.pdf}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+		{\bf Page 6: Imaging variability diagnostics.} 
+		This page is intended to help diagnose which stars are producing the observed
+		variability.
+		Top-left and top-center are the mean out-of-transit (OOT) and mean in-transit 
+		calibrated images (separate from any of our image-subtraction analysis).
+		The OOT images are based on the same number of exposures as the in-transit images
+		and split evenly before and after each transit \citep[following][]{bryson_identification_2013,kostov_l9859_2019}.
+		The yellow star is the target; cyan dots are the flux-weighted centroid of the entire
+		image for each transit event; small red crosses are WCS-projected locations of neighbor stars.
+		Middle-left is the most important sub-panel: the difference between
+		the OOT and in-transit mean images.
+		If the variability shown in background map (units: ADU) is off-target, the
+		transit is typically not from the target star.
+		Middle-center is the same, normalized by the uncertainty map.
+		Lower left and lower center show the DSS field in linear and log scales
+		at roughly the same pixel scale as the TESS image,
+		with the 1, 1.5, and 2.25 pixel-radius apertures in blue, orange, and green respectively.
+		The brightness of neighborhood stars is given on the far right.
+		Note the slight rotation difference between DSS and TESS images;
+		DSS images are aligned north-up, east-left; TESS images are oriented as closely as
+		possible to this system without actually performing the rotation.
+		\label{fig:pg6}
+	}
+\end{figure*}
 
 \end{document}
 

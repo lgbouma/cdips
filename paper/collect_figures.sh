@@ -58,6 +58,9 @@ cp ${fdir}catalog_to_gaia_match_statistics_MWSC.png \
 cp ${fdir}catalog_to_gaia_match_statistics_Dias14.png \
    ${pdir}dias14matchstats.png
 
+# pdftk burst the chosen vetting pdf
+pdftk vet_hlsp_cdips_tess_ffi_gaiatwo0005541111035713815552-0007_tess_v01_llc.pdf burst output gaiatwo0005541111035713815552-0007_page%02d.pdf
+
 
 
 ##########################################
