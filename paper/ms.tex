@@ -31,6 +31,8 @@
 \newcommand{\numberlcs}{159{,}337\ } % 2019/06/20 sum
 \newcommand{\numberclusters}{XXX\ }
 
+\newcommand{\stscilink} {\url{archive.stsci.edu/prepds/cdips}}
+
 % END CUSTOM SHORT-CUT COMMANDS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -102,7 +104,7 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   damping.
   %
   The light curves and vetting reports are available at
-  \url{archive.stsci.edu/prepds/cdips}.
+  \stscilink.
 \end{abstract}
 
 \keywords{
@@ -290,48 +292,6 @@ image processing methods, and \S~\ref{sec:results} describes results.
 \S~\ref{sec:discussion} discusses, and \S~\ref{sec:conclusion}
 concludes.
 
-%\begin{figure*}[t]
-%	\begin{center}
-%		\leavevmode
-%		\includegraphics[width=0.7\textwidth]{cluster_positions.pdf}
-%	\end{center}
-%	\vspace{-0.5cm}
-%	\caption{
-%    {\bf TESS looks at many clusters.} Placeholder skymap.
-%		\label{fig:clustermap}
-%	}
-%\end{figure*}
-
-
-\begin{figure*}[!ht]
-    \gridline{
-      \fig{cluster_field_star_positions.png}{0.49\textwidth}{}
-      \fig{cam1_cluster_field_star_positions.png}{0.49\textwidth}{}
-    }
-    %\begin{center}
-    %    \leavevmode
-    %    \includegraphics[width=0.49\textwidth]{cluster_field_star_positions.png}
-    %\end{center}
-    \vspace{-0.5cm}
-    \caption{
-        {\it Left}. Celestial positions of light curves from Sectors 6 and 7.
-        {\it Right}. Celestial positions of light curves from Sector 6, Camera 1.
-        \label{fig:lcradecsector6}
-    }
-\end{figure*}
-
-% \begin{figure}[t]
-% 	\begin{center}
-% 		\leavevmode
-% 		\includegraphics[width=0.49\textwidth]{cam1_cluster_field_star_positions.png}
-% 	\end{center}
-% 	\vspace{-0.5cm}
-% 	\caption{
-%     {\bf Celestial positions of light curves from Sector 6, Camera 1.}
-% 		\label{fig:lcradec}
-% 	}
-% \end{figure}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Method: Star Selection}
@@ -344,7 +304,8 @@ processes across different times and stellar environments.
 An essential step is therefore to define a sample of
 stars that are thought to be young, or members or clusters, or both.
 
-However, a homogeneous membership calculation for every known
+How
+ever, a homogeneous membership calculation for every known
 cluster is outside our scope.  So too is a homogeneous search for
 young stars across the galaxy.
 Instead, we opt to collect
@@ -536,9 +497,10 @@ forming regions justifies their inclusion in our search sample.
 	\vspace{-0.2cm}
 	\caption{
     {\bf Cumulative number of target stars as
-    a function of Gaia $Rp$-band magnitude.}  The selected stars are eiher candidate
-    members of clusters, or else have other youth indicators. We only consider stars
-    with $G_{\rm Rp} < 16$.
+    a function of Gaia $Rp$-band magnitude.}  The selected stars are
+    either candidate members of clusters, or else have other youth
+    indicators (see \S~\ref{sec:starselection}). We only consider
+    stars with $G_{\rm Rp} < 16$.
 	\label{fig:cdips_targets}
 	}
 \end{figure}
@@ -548,9 +510,15 @@ forming regions justifies their inclusion in our search sample.
 	\vspace{-0.8cm}
 	\gridline{\fig{dias14matchstats.png}{0.95\textwidth}{}}
 	\caption{
-		{\it Top.} Cross-match statistics from \cite{Kharchenko_et_al_2013} {\it 
-			vs.} Gaia-DR2.
-		{\it Bottom.} Ditto, for \cite{dias_proper_2014} {\it vs.} Gaia-DR2.
+    {\it Top.} Cross-match statistics from
+    \cite{Kharchenko_et_al_2013} cluster members to Gaia-DR2. A
+    histogram of the distances between matched stars is on the left; a
+    histogram of the difference between the true $G$-band magnitude
+    and that predicted from 2MASS photometry in the middle; a scatter
+    plot of the same magnitude difference as a function of $G$-band
+    magnitude is on the right.
+    {\it Bottom.} Same, but cross-matching \cite{dias_proper_2014}
+    cluster members to Gaia-DR2.
 	}
 	\label{fig:xmatch_info}
 \end{figure*}
@@ -1337,15 +1305,48 @@ separately.
 
 \subsubsection{Stellar properties}
 
-\begin{figure}[t]
+\begin{figure}[!t]
+	%\gridline{
+	%  \fig{cluster_field_star_positions.png}{0.49\textwidth}{}
+	%  \fig{sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png}{0.49\textwidth}{}
+	%}
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.47\textwidth]{cluster_field_star_positions.png}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+		{\bf Celestial positions of light curves from Sectors 6
+			and 7.}  Black: $G_{\rm Rp}<13$ field stars.  Blue: $G_{\rm
+			Rp}<16$ target stars.
+		\label{fig:lcradec}
+	}
+\end{figure}
+
+\begin{figure}[!t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.47\textwidth]{sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+		{\bf  Zoom of Sector 6, Camera 1 from Figure~\ref{fig:lcradec}.}
+		\label{fig:lcradeczoom}
+	}
+\end{figure}
+
+
+\begin{figure}[!t]
 	\begin{center}
 		\leavevmode
 		\includegraphics[width=0.45\textwidth]{cdf_T_mag.png}
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-    {\bf Cumulative distribution of TESS-band magnitudes for CDIPS
-    light curves.}
+    {\bf Cumulative number of CDIPS light curves a function of TESS
+    $T$-band magnitude.}  Light curves were made for the subset of
+    stars shown in Figure~\ref{fig:cdips_targets} that were observed
+    in Sectors 6 or 7.
 		\label{fig:cdf_T_mag}
 	}
 \end{figure}
@@ -1354,32 +1355,78 @@ separately.
 	\gridline{\fig{hrd_scat_all_CDIPS_LCs.png}{0.45\textwidth}{}}
 	\vspace{-0.8cm}
 	\gridline{\fig{hrd_scat_close_subset.png}{0.45\textwidth}{}}
+	\vspace{-0.8cm}
 	\caption{
-    {\it Top.} HR diagram of CDIPS stars with light curves in this
-    data release.  {\it Bottom.} HR diagram of close CDIPS stars with
-    light curves. The wedge separating the pre-MS sample from the MS
+    {\it Top.} HR diagram of CDIPS stars on silicon in this
+    data release.  {\it Bottom.} HR diagram of close CDIPS stars on
+    silicon. The wedge separating the pre-MS sample from the MS
     stars was discussed by \citet{zari_3d_2018}, who introduced it in
     order to avoid contamination by photometric binaries.
 	}
 	\label{fig:hrd}
 \end{figure}
 
-\begin{figure}[!ht]
+\begin{figure}[!t]
 	\gridline{\fig{pm_scat_all_CDIPS_LCs.png}{0.45\textwidth}{}}
 	\vspace{-0.8cm}
 	\gridline{\fig{pm_scat_close_subset.png}{0.45\textwidth}{}}
+	\vspace{-0.8cm}
 	\caption{
-    {\it Top.} Proper motions of CDIPS stars with light curves in this
-    data release.  {\it Bottom.} Proper motions of close CDIPS stars
-    with light curves. A few additional clusters are visible.
+    {\it Top.} Proper motions of CDIPS stars on silicon in this
+    data release.  Many of the stars in the central ``blob'' are possible
+    field-contaminants.
+    {\it Bottom.} Proper motions of close CDIPS stars
+    on silicon.
 	}
 	\label{fig:propermotions}
 \end{figure}
 
-Describe
-Figure~\ref{fig:cdf_T_mag}
-Figure~\ref{fig:hrd}
-Figure~\ref{fig:propermotions}
+The on-sky locations of the light curves from Sectors 6 and 7
+are shown in Figure~\ref{fig:lcradec}.
+Black stars are the field stars for which we performed photometry,
+but only to calibrate the cluster star sample.
+The blue stars are the \numberlcs stars with light curves available
+from \stscilink.
+Most of the target stars are quite close to the galactic plane.
+Gaps between CCD chips are also visible.
+
+A zoom-in of Figure~\ref{fig:lcradec} is shown in Figure~\ref{fig:lcradeczoom}
+for the Camera 1, Sector 6 field. The effects of galactic-latitude
+dependent extinction are visible through the decreasing density of black
+points towards the right of the image.
+The highly clumped nature of the target stars is also apparent.
+
+Figure~\ref{fig:cdf_T_mag} shows the cumulative distribution of
+TESS $T$-band magnitudes for the target stars.
+Though most of the targets are faint, $\approx3\times10^4$ are
+brighter than $T=13$, and so are more promising targets for any
+detailed follow-up observtions.
+
+An HR diagram for the entire sample of stars on silicon
+is shown in Figure~\ref{fig:hrd} (top).
+The sub-sample of stars with
+measured positive parallaxes and naive distances less than
+$1\,{\rm kpc}$ is also shown (bottom).
+About one-third of the stars are in this latter sample.
+The close stars are predominantly on the main-sequence, or the pre-main-sequence.
+A relatively large fraction of these come from \citet{zari_3d_2018},
+and are either on the PMS or upper main-sequence.
+The latter set of OBA dwarf stars, while ``younger'' than the typical
+field dwarf, are likely the least interesting subset of our target sample
+from the perspective of age analyses.
+In the entire sample (Figure~\ref{fig:hrd} top), a much larger fraction of stars are sub-giants,
+red giants, and helium-burning red-clump stars.
+We failed to obtain light curves for roughly $5\%$ of the stars on silicon, 
+primarily due to our masking of saturated stars and their nearby pixels.
+
+Finally, 
+Figure~\ref{fig:propermotions} shows the proper motions
+of the entire and close samples of stars on silicon.
+Each clump signifies a different star cluster. The central
+blob in the top figure is in fact two separate blobs,
+due to the different directions in the Galaxy being observed
+in Sectors 6 and 7.
+
 
 
 \subsubsection{Cluster membership provenance}.
@@ -1433,11 +1480,11 @@ The clusters with the largest claimed numbers of sources are ...
   trend-filtered CDIPS light curves.} 
   Black points correspond to the minimum RMS across the available three
   aperture sizes.  
-  The model (orange and gray lines) uses the optimal aperture sizes reported 
+  The model (orange and gray lines) assumes aperture sizes reported 
   by \citet{Sullivan_et_al_2015}, and the effective area from 
   \citet{vanderspek_2018}.
   The noise from unresolved background stars (dotted gray line) is a function 
-  of galactic latitude, and dominates over zodiacal light and read noise
+  of galactic latitude, and dominates over zodiacal light
   for faint stars near the galactic plane; the line shown assumes a
   sight-line towards the center of Sector 6, Camera 1 (further details
   are in \S~\ref{subsubsec:rmsvsmag}).
@@ -1641,7 +1688,7 @@ The maximum number of spline knots is set to 50, which for each TESS sector
 ($\approx 25\,{\rm days}$) is commensurate with a $\approx0.5\,{\rm day}$ 
 window.
 
-\begin{figure}[!ht]
+\begin{figure}[!t]
     \gridline{\fig{tlsresult_sector6.png}{0.45\textwidth}{}}
     \vspace{-0.8cm}
     \gridline{\fig{tlsresult_sector7.png}{0.45\textwidth}{}}

@@ -7,9 +7,9 @@
 fdir=../paper/figures/
 pdir=../paper/
 
-# positions of clusters
-cp ${fdir}GI_figs/cluster_positions_ecliptic_scicase.pdf \
-   ${pdir}cluster_positions.pdf
+# # positions of clusters
+# cp ${fdir}GI_figs/cluster_positions_ecliptic_scicase.pdf \
+#    ${pdir}cluster_positions.pdf
 
 # what our pipeline does
 cp ${fdir}trex_overview.pdf ${pdir}pipelineoverview.pdf
@@ -30,7 +30,8 @@ fdir=../results/paper_figures/
 cp ${fdir}rms_vs_mag.png ${pdir}rms_vs_mag.png
 
 # positions of lightcurves
-cp ${fdir}cam1_cluster_field_star_positions.png ${pdir}cam1_cluster_field_star_positions.png
+cp ${fdir}sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png \
+   ${pdir}sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png
 
 # positions of lightcurves
 cp ${fdir}cluster_field_star_positions.png ${pdir}cluster_field_star_positions.png
