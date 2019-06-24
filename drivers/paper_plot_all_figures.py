@@ -25,22 +25,20 @@ from cdips.utils import tess_noise_model as tnm
 
 from cdips.plotting import plot_star_catalog as psc
 from cdips.plotting import plot_catalog_to_gaia_match_statistics as xms
+from cdips.plotting import plot_wcsqa as wcsqa
 
 OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
 
 def main():
 
-    # fig N: wcs quality verification
-    plot_wcs_verification()
-
-    #FIXME 
-    #FIXME 
-
     sectors = [6,7]
 
     # fig N: cumulative counts of CDIPS target stars.
     plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=0)
+
+    # fig N: wcs quality verification
+    plot_wcs_verification(overwrite=0)
 
     # fig N: catalog_to_gaia_match_statistics
     plot_catalog_to_gaia_match_statistics(overwrite=0)
@@ -72,6 +70,17 @@ def main():
 def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
+
+
+def plot_wcs_verification(overwrite=1):
+
+    wcsqa.main(
+        fitsfile='proj1500-s0006-cam1-ccd1-combinedphotref-onenight.fits',
+        refbasedir='/nfs/phtess2/ar0/TESS/FFI/BASE/reference-frames/',
+        matchedinpath='proj1500-s0006-cam1-ccd1-combinedphotref-onenight.matched',
+        isspocwcs=True,
+        outdir=OUTDIR
+    )
 
 
 def plot_catalog_to_gaia_match_statistics(overwrite=1):
@@ -468,7 +477,7 @@ def plot_cluster_and_field_star_scatter(sectors=None, overwrite=0,
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
 
-    figsize = (4.5,4.5) if len(cams)==1 and len(ccds)==4 else (4.5,6.5)
+    figsize = (4.5,4.5) if len(cams)==1 and len(ccds)==4 else (4.5,5.5)
 
     plot_cluster_and_field_star_positions(
         df, outpath, figsize
@@ -799,9 +808,6 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
     fig.savefig(outpath, dpi=400)
     print('%sZ: made plot: %s' % (datetime.utcnow().isoformat(), outpath))
 
-
-def plot_wcs_verification():
-    pass
 
 
 if __name__ == "__main__":
