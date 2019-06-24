@@ -117,7 +117,8 @@ def plot_sep_hist(df, outpath):
 
     weights = np.ones_like(nparr(df['sep']))/float(len(df))
 
-    ax.hist(df['sep'], bins=np.logspace(-2, 1, 19), weights=weights)
+    ax.hist(df['sep'], bins=np.logspace(-2, 1, 19), weights=weights,
+            color='black', fill=False, linewidth=0.5)
 
     ax.text(
         0.98, 0.98,
@@ -131,6 +132,12 @@ def plot_sep_hist(df, outpath):
     ax.set_xlabel(r'$|\vec{{x}}_{{\mathrm{{measured}}}} - \vec{{x}}_{{\mathrm{{projected}}}}|$ [pixels]')
     #ax.set_xlabel('Measured - projected centroid separation [pixels]')
     ax.set_ylabel('Relative fraction')
+
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
+
     f.savefig(outpath, bbox_inches='tight', dpi=300)
 
 
@@ -159,5 +166,10 @@ def plot_quiver_meas_proj_sep(df, outpath):
 
     ax.set_xlabel('Column index [px]')
     ax.set_ylabel('Row index [px]')
+
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
 
     f.savefig(outpath, bbox_inches='tight', dpi=400)

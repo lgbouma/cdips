@@ -34,11 +34,11 @@ def main():
 
     sectors = [6,7]
 
+    # fig N: wcs quality verification
+    plot_wcs_verification(overwrite=1)
+
     # fig N: cumulative counts of CDIPS target stars.
     plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=0)
-
-    # fig N: wcs quality verification
-    plot_wcs_verification(overwrite=0)
 
     # fig N: catalog_to_gaia_match_statistics
     plot_catalog_to_gaia_match_statistics(overwrite=0)
@@ -48,10 +48,6 @@ def main():
 
     # fig N: histogram (or CDF) of stellar magnitude (T mag)
     plot_cdf_T_mag(sectors, overwrite=0)
-
-    # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
-    # calculated for CTL stars, so by definition it has limited use
-    # plot_cdf_cont(sectors, overwrite=1)
 
     # fig N: HRD for CDIPS stars.
     plot_hrd_scat(sectors, overwrite=0, close_subset=1)
@@ -66,6 +62,10 @@ def main():
     plot_cluster_and_field_star_scatter(sectors=[6], overwrite=1, cams=[1],
                                         ccds=[1,2,3,4])
 
+    # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
+    # calculated for CTL stars, so by definition it has limited use
+    # plot_cdf_cont(sectors, overwrite=1)
+
 
 def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
@@ -73,6 +73,11 @@ def savefig(fig, figpath):
 
 
 def plot_wcs_verification(overwrite=1):
+
+    outpaths = glob(os.path.join(OUTDIR, '*_quiver_meas_proj_sep.png'))
+    if len(outpaths) >= 1 and not overwrite:
+        print('found quiver and no overwrite; skip')
+        return
 
     wcsqa.main(
         fitsfile='proj1500-s0006-cam1-ccd1-combinedphotref-onenight.fits',

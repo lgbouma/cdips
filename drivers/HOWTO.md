@@ -31,9 +31,17 @@ THINGS THRU CANDIDATE PRODUCTION
 
 COLLECT VETTING CLASSIFICATIONS
 
-1. `classification_postprocessing`
-    (both for my main classification runs)
-    (and to postprocess joel and jnw's classifications)
+1. `classification_postprocessing`: does three stages of classification:
+
+    1. `given_full_classifications_organize`: LGB classifies everything, sends
+       PCs to team
+    2. `given_collab_subclassifications_merge`: team responds w/
+       classifications (csvs and txt files). they must be merged
+    3. `given_merged_gold_organize_PCs`: the results of the merge must be
+       organized.
+
+2. `fit_models_to_gold`: MCMC fit Mandel-Agol transits to gold above -- these
+   parameters are used for paper and CTOIs.
 
 PAPER-PROCESSING
 
