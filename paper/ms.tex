@@ -304,8 +304,7 @@ processes across different times and stellar environments.
 An essential step is therefore to define a sample of
 stars that are thought to be young, or members or clusters, or both.
 
-How
-ever, a homogeneous membership calculation for every known
+However, a homogeneous membership calculation for every known
 cluster is outside our scope.  So too is a homogeneous search for
 young stars across the galaxy.
 Instead, we opt to collect
@@ -647,19 +646,31 @@ For this run of processing, they conclude at the end of Sector 7
 \label{subsec:preparation}
 
 
-\begin{figure*}[!ht]
+\begin{figure}[!t]
 	\gridline{\fig{astromresidual_hist.png}{0.5\textwidth}{}}
 	\vspace{-0.8cm}
 	\gridline{\fig{astromresidual_quiver.png}{0.5\textwidth}{}}
+  %\vspace{-0.8cm}
+	%\gridline{\fig{astromresidual_apertures.png}{0.5\textwidth}{}}
 	\vspace{-0.8cm}
-	\gridline{\fig{astromresidual_apertures.png}{0.5\textwidth}{}}
-	\caption{
-		{\it Top.} Histogram
-		{\it Middle.} Vector
-		{\it Bottom.} Apertures
+    \caption{
+		{\it Top.} {\bf Histogram of astrometric residual.} The $x$-axis shows 
+		the distance between the measured centroid positions of stars, 
+		compared to the predicted positions from the WCS solution.
+		{\it Bottom.} {\bf Vector plot of astrometric residual.} Each arrow is 
+		the vector from the measured to the projected star position. 
+		Directions are correct, but lengths are 50 times their true size for 
+		visualization purposes.
+        The systematic error in the top-right corner is a typical problem in 
+        wide-field astrometry.
+        The frame chosen for this plot is the photometric reference frame used 
+        for Sector 6, Camera 1, CCD 1; we automatically 
+        impose cutoffs on the median and $90^{\rm th}$ percentile of the 
+        astrometric residual in order to ensure similar levels of astrometric 
+        precision are maintained throughout the reduction.
 	}
 	\label{fig:astromresid}
-\end{figure*}
+\end{figure}
 
 
 
@@ -790,7 +801,7 @@ The source catalog look-up is performed using
 
 The astrometric residual is displayed for one photometric reference
 frame (to be described shortly) in
-Figure~\ref{fig:astrometricresidual}.
+Figure~\ref{fig:astromresid}.
 A few salient points can be made.
 First, the typical median precision of the WCS solution is a bit below
 0.1 pixels, and its $90^{\rm th}$ percentile is typically less than

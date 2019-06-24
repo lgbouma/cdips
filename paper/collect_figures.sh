@@ -14,17 +14,6 @@ pdir=../paper/
 # what our pipeline does
 cp ${fdir}trex_overview.pdf ${pdir}pipelineoverview.pdf
 
-# placeholding wcs
-fdir=../results/astrometric_residual/
-cp ${fdir}proj1510-s0006-cam3-ccd3-combinedphotref-onenight_apertures_on_frame_x_954t1094_y_954t1094.png \
-   ${pdir}astromresidual_apertures.png
-
-cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_sep_hist.png \
-   ${pdir}astromresidual_hist.png
-
-cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_quiver_meas_proj_sep.png \
-   ${pdir}astromresidual_quiver.png
-
 # rms vs mag 
 fdir=../results/paper_figures/
 cp ${fdir}rms_vs_mag.png ${pdir}rms_vs_mag.png
@@ -58,12 +47,22 @@ cp ${fdir}catalog_to_gaia_match_statistics_MWSC.png \
 cp ${fdir}catalog_to_gaia_match_statistics_Dias14.png \
    ${pdir}dias14matchstats.png
 
+# wcs
+cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_sep_hist.png \
+   ${pdir}astromresidual_hist.png
+
+cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_quiver_meas_proj_sep.png \
+   ${pdir}astromresidual_quiver.png
+
 # pdftk burst the chosen vetting pdf
 pdftk vet_hlsp_cdips_tess_ffi_gaiatwo0005541111035713815552-0007_tess_v01_llc.pdf burst output gaiatwo0005541111035713815552-0007_page%02d.pdf
 
-
-
 ##########################################
+
+# outdated, probably won't be in paper
+fdir=../results/astrometric_residual/
+cp ${fdir}proj1510-s0006-cam3-ccd3-combinedphotref-onenight_apertures_on_frame_x_954t1094_y_954t1094.png \
+   ${pdir}astromresidual_apertures.png
 
 lcdir=../results/projid1088_cam2_ccd2_lcs/center_lcs/
 # plot of (mag,x,y,T,s,d,k,bkgd) vs time
@@ -74,6 +73,5 @@ cp ${lcdir}EPDparams_vs_time_frac1.0_4979427719678442752_llc.png \
 lcdir=../results/projid1088_cam2_ccd2_lcs/
 cp ${lcdir}IRM1_vs_EPD_parameters_fourstars_norbit1.png \
    ${pdir}mag_vs_epdparams.png
-
 
 echo "collected figures -> /paper/f?.pdf -> /paper/f?.png"
