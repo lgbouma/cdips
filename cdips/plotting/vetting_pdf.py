@@ -903,6 +903,11 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
                 is_known_asterism = True
                 break
 
+            # identified by Kos+2018, MNRAS 480 5242-5259 as asterisms
+            if int(c) in [1252, 6994, 7772, 7826]:
+                is_known_asterism = True
+                break
+
     is_gagne_mg = False
     if 'Gagne' in supprow['reference'].iloc[0]:
         is_gagne_mg = True
