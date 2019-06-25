@@ -355,7 +355,7 @@ def main(sector=None, cdips_cat_vnum=None):
     pfdf = pd.read_csv(pfpath)
 
     toipath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-              'cdips/data/toi-plus-2019-06-13.csv')
+              'cdips/data/toi-plus-2019-06-25.csv')
     toidf = pd.read_csv(toipath)
 
     # reconstructive_tfa/RunTFASR.sh applied the threshold cutoff on TFA_SR
