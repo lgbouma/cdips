@@ -43,6 +43,69 @@ paper and CTOIs.
 
 CLASSIFXNDIR = "/home/lbouma/proj/cdips/results/vetting_classifications"
 
+def main(overwrite=0, sector=6, cdipsvnum=1, nworkers=40, cdipsvnum=1,
+         cdips_cat_vnum=0.3):
+
+    lcbasedir, tfasrdir, resultsdir = _define_and_make_directories(sector)
+    df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf = _get_data(
+        sector, cdips_cat_vnum=cdips_cat_vnum)
+    tfa_sr_paths = _get_lcpaths(df, tfasrdir)
+
+    for tfa_sr_path in tfa_sr_paths:
+
+        sourceid = int(tfa_sr_path.split('gaiatwo')[1].split('-')[0].lstrip('0'))
+        mdf = cdips_df[cdips_df['source_id']==sourceid]
+        if len(mdf) != 1:
+            errmsg = 'expected exactly 1 source match in CDIPS cat'
+            raise AssertionError(errmsg)
+
+        hdul = fits.open(tfa_sr_path)
+        hdr = hdul[0].header
+        cam, ccd = hdr['CAMERA'], hdr['CCD']
+        hdul.close()
+
+        lcname = (
+            'hlsp_cdips_tess_ffi_'
+            'gaiatwo{zsourceid}-{zsector}_'
+            'tess_v{zcdipsvnum}_llc.fits'
+        ).format(
+            zsourceid=str(sourceid).zfill(22),
+            zsector=str(sector).zfill(4),
+            zcdipsvnum=str(cdipsvnum).zfill(2)
+        )
+        lcpath = os.path.join(
+            lcbasedir, 'cam{}_ccd{}'.format(cam, ccd), lcname
+        )
+
+        # fitresults, samples: each object's sector light curve gets a separate
+        # fit. fitresults  contains csvs and jpgs to assess.
+        outdirs = [
+            os.path.join(resultsdir,'fitresults',lcname.replace('.fits','')),
+            os.path.join(resultsdir,'samples',lcname.replace('.fits',''))
+        ]
+        for outdir in outdirs:
+            if not os.path.exists(outdir):
+                os.mkdir(outdir)
+
+        supprow = _get_supprow(sourceid, supplementstatsdf)
+        suppfulldf = supplementstatsdf
+
+        pfrow = pfdf.loc[pfdf['source_id']==sourceid]
+        if len(pfrow) != 1:
+            errmsg = 'expected exactly 1 source match in period find df'
+            raise AssertionError(errmsg)
+
+        outpath = os.path.join(resultsdir,'fitresults',
+                               lcname.replace('.fits',''),
+                               lcname.replace('.fits','_fitparameters.csv'))
+
+        if not os.path.exists(outpath):
+
+            _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf,
+                                    sourceid, supprow, suppfulldf, pfdf, pfrow,
+                                    toidf, ctoidf, sector, nworkers)
+
+
 def _get_data(sector, cdips_cat_vnum=0.3):
 
     classifxn_csv = os.path.join(CLASSIFXNDIR,
@@ -118,69 +181,6 @@ def _get_lcpaths(df, tfasrdir):
 
     return lcpaths
 
-
-
-def main(overwrite=0, sector=6, cdipsvnum=1, nworkers=40):
-
-    lcbasedir, tfasrdir, resultsdir = _define_and_make_directories(sector)
-    df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf = _get_data(sector)
-    tfa_sr_paths = _get_lcpaths(df, tfasrdir)
-
-    for tfa_sr_path in tfa_sr_paths:
-
-        sourceid = int(tfa_sr_path.split('gaiatwo')[1].split('-')[0].lstrip('0'))
-        mdf = cdips_df[cdips_df['source_id']==sourceid]
-        if len(mdf) != 1:
-            errmsg = 'expected exactly 1 source match in CDIPS cat'
-            raise AssertionError(errmsg)
-
-        hdul = fits.open(tfa_sr_path)
-        hdr = hdul[0].header
-        cam, ccd = hdr['CAMERA'], hdr['CCD']
-        hdul.close()
-
-        lcname = (
-            'hlsp_cdips_tess_ffi_'
-            'gaiatwo{zsourceid}-{zsector}_'
-            'tess_v{zcdipsvnum}_llc.fits'
-        ).format(
-            zsourceid=str(sourceid).zfill(22),
-            zsector=str(sector).zfill(4),
-            zcdipsvnum=str(cdipsvnum).zfill(2)
-        )
-        lcpath = os.path.join(
-            lcbasedir, 'cam{}_ccd{}'.format(cam, ccd), lcname
-        )
-
-        # fitresults, samples: each object's sector light curve gets a separate
-        # fit. fitresults  contains csvs and jpgs to assess.
-        outdirs = [
-            os.path.join(resultsdir,'fitresults',lcname.replace('.fits','')),
-            os.path.join(resultsdir,'samples',lcname.replace('.fits',''))
-        ]
-        for outdir in outdirs:
-            if not os.path.exists(outdir):
-                os.mkdir(outdir)
-
-        supprow = _get_supprow(sourceid, supplementstatsdf)
-        suppfulldf = supplementstatsdf
-
-        pfrow = pfdf.loc[pfdf['source_id']==sourceid]
-        if len(pfrow) != 1:
-            errmsg = 'expected exactly 1 source match in period find df'
-            raise AssertionError(errmsg)
-
-        outpath = os.path.join(resultsdir,'fitresults',
-                               lcname.replace('.fits',''),
-                               lcname.replace('.fits','_fitparameters.csv'))
-
-        if not os.path.exists(outpath):
-
-            _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf,
-                                    sourceid, supprow, suppfulldf, pfdf, pfrow,
-                                    toidf, ctoidf, sector, nworkers)
-
-
 def  _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                              supprow, suppfulldf, pfdf, pfrow, toidf, ctoidf,
                              sector, nworkers):
@@ -223,7 +223,6 @@ def given_light_curve_fit_transit(time, flux, err):
     """
     maybe to astrobase?
     """
-    pass
 
     # run tls to get initial parameters.
     tlsp = periodbase.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
@@ -336,3 +335,5 @@ def given_light_curve_fit_transit(time, flux, err):
     )
 
 
+if __name__=="__main__":
+    main()
