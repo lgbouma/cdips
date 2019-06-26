@@ -237,6 +237,11 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
     if len(selstars)>=1:
         mrow = selstars[np.argmin(selstars['dstArcSec'])]
 
+        # TICv8 rebasing on GaiaDR2 allows this
+        if not int(mrow['GAIA']) == int(hdr['GAIA-ID']):
+            # TODO: should just instead query selstars by Gaia ID u want...
+            raise ValueError
+
         primaryhdr.set('TICVER',
                        mrow['version'],
                        'TIC version')
