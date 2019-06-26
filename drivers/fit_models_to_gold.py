@@ -1,6 +1,7 @@
 import os, argparse, pickle, h5py, json, shutil, requests
 from glob import glob
 from parse import search
+from datetime import datetime
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -38,6 +39,13 @@ from cdips.lcproc import detrend as dtr
 from cdips.lcproc import mask_orbit_edges as moe
 from cdips.plotting import vetting_pdf as vp
 import make_vetting_multipg_pdf as mvp
+
+# FIXME FIXME: you need to update this so that if the parameter pickle exists,
+# you dont redo the MCMC fitting...
+#FIXME
+#FIXME
+#FIXME
+#FIXME
 
 """
 MCMC fit Mandel-Agol transits to gold above -- these parameters are used for
@@ -109,8 +117,15 @@ def main(overwrite=0, sector=6, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
 
             _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf,
                                     sourceid, supprow, suppfulldf, pfdf, pfrow,
-                                    toidf, ctoidf, sector, nworkers)
+                                    toidf, ctoidf, sector, nworkers,
+                                    cdipsvnum=cdipsvnum)
 
+
+def today_YYYYMMDD():
+    txt = '{}{}{}'.format(str(datetime.today().year),
+                          str(datetime.today().month).zfill(2),
+                          str(datetime.today().day).zfill(2))
+    return txt
 
 def _get_data(sector, cdips_cat_vnum=0.3):
 
@@ -189,7 +204,7 @@ def _get_lcpaths(df, tfasrdir):
 
 def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                             supprow, suppfulldf, pfdf, pfrow, toidf, ctoidf,
-                            sector, nworkers):
+                            sector, nworkers, cdipsvnum=1):
     #
     # read and re-detrend lc if needed
     #
@@ -290,7 +305,8 @@ def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
 
     # convert fit results to ctoi csv format
     fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
-                            teff, teff_err, rstar, rstar_err, logg, logg_err)
+                            teff, teff_err, rstar, rstar_err, logg, logg_err,
+                            cdipsvnum=cdipsvnum)
 
 
 
@@ -727,7 +743,8 @@ def given_light_curve_fit_transit(time, flux, err, teff, teff_err, rstar,
 
 
 def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
-                            teff, teff_err, rstar, rstar_err, logg, logg_err):
+                            teff, teff_err, rstar, rstar_err, logg, logg_err,
+                            cdipsvnum=1):
     """
     args:
 
@@ -899,7 +916,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
     target = ctoiname
     flag = 'newctoi'
     disp = 'PC'
-
+    extranote = ''
     #
     # check MIT TSO TOI list for whether there are matches by TIC ID.
     # for disposition, take whatever the MIT TSO labelled as truth.
@@ -955,13 +972,86 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
         flag = 'newparams'
         disp = "PC"
 
-    # TODO : check for matches by spatial position + period
+    ##########################################
+    # check for matches by spatial position + period
+    toicoords = SkyCoord(nparr(toidf['RA']), nparr(toidf['Dec']), unit=(u.deg),
+                         frame='icrs')
+    ctoicoords = SkyCoord(nparr(ctoidf['RA']), nparr(ctoidf['Dec']),
+                          unit=(u.deg), frame='icrs')
+    c_obj = SkyCoord(ra, dec, unit=(u.deg), frame='icrs')
 
-    # TODO : read in the notes / comments for each object as well...
-    notes = 'Bouma+2019 CDIPS PC.{}'.format(' '+comment)
+    toiseps = toicoords.separation(c_obj).to(u.arcsec).value
+    ctoiseps = ctoicoords.separation(c_obj).to(u.arcsec).value
+
+    spatial_cutoff = 126 # arcseconds ~= 6 pixels
+
+    sel = nparr(toiseps < spatial_cutoff)
+    if len(toiseps[sel]) == 1:
+
+        sel &= np.isclose(
+            period,
+            nparr(toidf[toidf['tic_id']==ticid]['Period']),
+            atol=0.5
+        )
+
+        if len(toiseps[sel]) == 1:
+            #
+            # match is within 6 pixels of a TOI, and has same period. 
+            # by default, assume TOI program got it right.
+            #
+            tdf = toidf[sel]
+            toiname = tdf['toi_id'].iloc[0]
+            target = toiname
+            flag = 'newparams'
+            disp = tdf['Disposition'].iloc[0]
+
+        else:
+            #
+            # match is within 6 pixels of a TOI, but has different period. 
+            # assume i got it right, but add warning to note.
+            #
+            tdf = toidf[sel]
+            toiname = tdf['toi_id'].iloc[0]
+            extranote = "<2' from TOI{} but diff period".format(repr(toiname))
+
+    ctoisel = nparr(ctoiseps < spatial_cutoff)
+    if len(ctoiseps[ctoisel]) == 1:
+
+        sel &= np.isclose(
+            period,
+            nparr(ctoidf[ctoidf['TIC ID']==ticid]['Period (days)']),
+            atol=0.5
+        )
+
+        if len(ctoiseps[sel]) == 1:
+            #
+            # match is within 6 pixels of a cTOI, and has same period. 
+            # by default, assume I got it right. add warning to note.
+            #
+            tdf = ctoidf[sel]
+            ctoiname = tdf['CTOI'].iloc[0]
+            extranote = "WRN! <2' from CTOI{}".format(repr(ctoiname))
+
+        else:
+            #
+            # match is within 6 pixels of a TOI, but has different period. 
+            # assume i got it right, but add warning to note.
+            #
+            tdf = ctoidf[sel]
+            ctoiname = tdf['CTOI'].iloc[0]
+            extranote = "<2' from CTOI{}, but diff period".format(repr(ctoiname))
+
+    ##########################################
+
+    if len(extranote) > 1:
+        notes = (
+            'Bouma+2019 CDIPS1. Vetting report gives details.{}'.
+            format(' '+extranote)
+        )
+    else:
+        notes = 'Bouma+2019 CDIPS1. Vetting report gives details.'
+
     assert len(notes) < 120
-
-
 
     # finally write
     d = {
@@ -996,32 +1086,24 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
         'dens_unc':np.nan, #fitted stellar density uncertainty
         'sma':np.nan, #semi-major axis (AU)
         'sma_unc':np.nan, #semi-major axis uncertainty
-        'ecc':np.nan
-        'ecc_unc':np.nan
-        'arg_peri':np.nan
-        'arg_peri_unc':np.nan
-        'time_peri':np.nan
-        'time_peri_unc':np.nan
-        'vsa':np.nan
-        'vsa_unc':np.nan
-        'tag':'YYYYMMDD_username_description_nnnnn' #FIXME FIXME
-        'group':'tfopwg'
-        'prop_period':0
+        'ecc':np.nan,
+        'ecc_unc':np.nan,
+        'arg_peri':np.nan,
+        'arg_peri_unc':np.nan,
+        'time_peri':np.nan,
+        'time_peri_unc':np.nan,
+        'vsa':np.nan,
+        'vsa_unc':np.nan,
+        'tag':'{}_bouma_cdips-v{}_00001'.format(today_YYYYMMDD(),
+                                                str(cdipsvnum).zfill(2)),
+        'group':'tfopwg',
+        'prop_period':0,
         'notes':notes
     }
 
-
-    # for param in params:
-
-    # # pass numbers that will be fixed during single-transit fitting
-    # fit_abyrstar, fit_incl, fit_ulinear, fit_uquad = (
-    #     maf_empc_errs['fitinfo']['finalparams']['incl'],
-    #     maf_empc_errs['fitinfo']['finalparams']['u_linear'],
-    #     maf_empc_errs['fitinfo']['finalparams']['u_quad']
-    # )
-    # return fit_abyrstar, fit_incl, fit_ulinear, fit_uquad
-
-
+    df = pd.DataFrame(d)
+    df.to_csv(outpath,sep="|",index=False)
+    print('made {}'.format(outpath))
 
 
 if __name__=="__main__":
