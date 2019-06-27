@@ -1,6 +1,5 @@
-import os, argparse, pickle, h5py, json, shutil, requests
+import os, pickle, h5py, json, shutil, requests
 from glob import glob
-from parse import search
 from datetime import datetime
 
 import matplotlib as mpl
@@ -13,12 +12,7 @@ from numpy import array as nparr
 from astropy.io import fits
 from astropy import units as u, constants as const
 
-#TODO: clean this
-from astrobase import periodbase, checkplot, lcfit
-from astrobase import astrotess as at
-from astrobase.periodbase import kbls
-from astrobase.varbase.trends import smooth_magseries_ndimage_medfilt
-from astrobase import lcmath
+from astrobase import periodbase, lcfit
 from astrobase.services.tic import tic_single_object_crossmatch
 from astrobase.varbase.transits import get_snr_of_dip
 from astrobase.varbase.transits import estimate_achievable_tmid_precision
@@ -39,13 +33,6 @@ from cdips.lcproc import detrend as dtr
 from cdips.lcproc import mask_orbit_edges as moe
 from cdips.plotting import vetting_pdf as vp
 import make_vetting_multipg_pdf as mvp
-
-# FIXME FIXME: you need to update this so that if the parameter pickle exists,
-# you dont redo the MCMC fitting...
-#FIXME
-#FIXME
-#FIXME
-#FIXME
 
 """
 MCMC fit Mandel-Agol transits to gold above -- these parameters are used for
@@ -118,7 +105,7 @@ def main(overwrite=0, sector=6, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
             _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf,
                                     sourceid, supprow, suppfulldf, pfdf, pfrow,
                                     toidf, ctoidf, sector, nworkers,
-                                    cdipsvnum=cdipsvnum)
+                                    cdipsvnum=cdipsvnum, overwrite=overwrite)
 
 
 def today_YYYYMMDD():
@@ -204,7 +191,7 @@ def _get_lcpaths(df, tfasrdir):
 
 def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                             supprow, suppfulldf, pfdf, pfrow, toidf, ctoidf,
-                            sector, nworkers, cdipsvnum=1):
+                            sector, nworkers, cdipsvnum=1, overwrite=1):
     #
     # read and re-detrend lc if needed
     #
@@ -301,7 +288,8 @@ def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                                                chain_savdir, nworkers=nworkers,
                                                n_transit_durations=5,
                                                n_mcmc_steps=1000,
-                                               tlsfit_savfile=tlsfit_savfile)
+                                               tlsfit_savfile=tlsfit_savfile,
+                                               overwrite=overwrite)
 
     # convert fit results to ctoi csv format
     fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
@@ -465,27 +453,27 @@ def fit_phased_transit_mandelagol_and_line(
                      'period':period,
                      'sma':a_by_rstar,
                      'rp':rp_by_rstar,
-                     'incl':incl,
-                     'u':[u_linear,u_quad]
+                     'incl':incl
                     }
     fixedparams = {'ecc':0.,
                    'omega':90.,
-                   'limb_dark':'quadratic'}
+                   'limb_dark':'quadratic',
+                   'u':[u_linear,u_quad]}
     priorbounds = {'t0':(t0 - period/10, t0 + period/10),
                    'period':(period-1e-1, period+1e-1),
                    'sma':(a_by_rstar/5, 5*a_by_rstar),
                    'rp':(rp_by_rstar/3, 3*rp_by_rstar),
-                   'incl':(incl-20, 90),
-                   'u_linear':(u_linear-0.1, u_linear+0.1), # narrow to remain "physical"
-                   'u_quad':(u_quad-0.1, u_quad+0.1)
+                   'incl':(65, 90)
+                   #'u_linear':(u_linear-0.1, u_linear+0.1), # narrow to remain "physical"
+                   #'u_quad':(u_quad-0.1, u_quad+0.1)
                    }
     cornerparams = {'t0':t0,
                     'period':period,
                     'sma':a_by_rstar,
                     'rp':rp_by_rstar,
-                    'incl':incl,
-                    'u_linear':u_linear,
-                    'u_quad':u_quad }
+                    'incl':incl}#,
+                    #'u_linear':u_linear,
+                    #'u_quad':u_quad }
 
     ndims = len(initfitparams)
 
@@ -518,30 +506,33 @@ def fit_phased_transit_mandelagol_and_line(
 
     plt.close('all')
 
-    maf_data_errs = lcfit.transits.mandelagol_fit_magseries(
-                    sel_time, sel_flux, sel_err,
-                    initfitparams, priorbounds, fixedparams,
-                    trueparams=cornerparams, magsarefluxes=True,
-                    sigclip=None, plotfit=mandelagolfit_savfile,
-                    plotcorner=corner_savfile,
-                    samplesavpath=samplesavpath, nworkers=nworkers,
-                    n_mcmc_steps=n_mcmc_steps, eps=1e-6, n_walkers=500,
-                    skipsampling=False,
-                    overwriteexistingsamples=overwriteexistingsamples,
-                    mcmcprogressbar=mcmcprogressbar)
-
-    #TODO:  FIXME -- change logic so that if not overwriteexistingsamples, just
-    #load in  the pickled data!!
     fitparamdir = fit_savdir
     if not os.path.exists(fitparamdir):
         os.mkdir(fitparamdir)
     maf_savpath = ( os.path.join(
         fitparamdir,
-        os.path.splitext(os.path.basename(outpath))[0]+"_phased_{:s}_fit_dataerrs.pickle".format(fittype)
+        (os.path.splitext(os.path.basename(outpath))[0]
+        +"_phased_{:s}_fit_dataerrs.pickle".format(fittype))
     ) )
-    with open(maf_savpath, 'wb') as f:
-        pickle.dump(maf_data_errs, f, pickle.HIGHEST_PROTOCOL)
-        print('saved {:s}'.format(maf_savpath))
+
+    if os.path.exists(maf_savpath) and not overwriteexistingsamples:
+        maf_data_errs = pickle.load(open(maf_savpath, 'rb'))
+
+    else:
+        maf_data_errs = lcfit.transits.mandelagol_fit_magseries(
+                        sel_time, sel_flux, sel_err,
+                        initfitparams, priorbounds, fixedparams,
+                        trueparams=cornerparams, magsarefluxes=True,
+                        sigclip=None, plotfit=mandelagolfit_savfile,
+                        plotcorner=corner_savfile,
+                        samplesavpath=samplesavpath, nworkers=nworkers,
+                        n_mcmc_steps=n_mcmc_steps, exp_time_minutes=30,
+                        eps=1e-6, n_walkers=500, skipsampling=False,
+                        overwriteexistingsamples=overwriteexistingsamples,
+                        mcmcprogressbar=mcmcprogressbar)
+        with open(maf_savpath, 'wb') as f:
+            pickle.dump(maf_data_errs, f, pickle.HIGHEST_PROTOCOL)
+            print('saved {:s}'.format(maf_savpath))
 
     fitfluxs = maf_data_errs['fitinfo']['fitmags']
     fitepoch = maf_data_errs['fitinfo']['fitepoch']
@@ -603,50 +594,96 @@ def fit_phased_transit_mandelagol_and_line(
     corner_savfile = os.path.join(fit_savdir, corner_plotname)
     samplesavpath = os.path.join(chain_savdir, sample_plotname)
 
-    print('beginning {:s}'.format(samplesavpath))
-
     plt.close('all')
-    maf_empc_errs = lcfit.mandelagol_fit_magseries(
-                    sel_time, sel_flux, empirical_err,
-                    initfitparams, priorbounds, fixedparams,
-                    trueparams=cornerparams, magsarefluxes=True,
-                    sigclip=None, plotfit=mandelagolfit_savfile,
-                    plotcorner=corner_savfile,
-                    samplesavpath=samplesavpath, nworkers=nworkers,
-                    n_mcmc_steps=n_mcmc_steps, eps=1e-6, n_walkers=500,
-                    skipsampling=False,
-                    overwriteexistingsamples=overwriteexistingsamples,
-                    mcmcprogressbar=mcmcprogressbar)
+
+    print('beginning {:s}'.format(samplesavpath))
 
     maf_savpath = ( os.path.join(
         fitparamdir,
-        os.path.splitext(os.path.basename(outpath))[0]+"_phased_{:s}_fit_empiricalerrs.pickle".format(fittype)
+        (os.path.splitext(os.path.basename(outpath))[0]
+         +"_phased_{:s}_fit_empiricalerrs.pickle".format(fittype))
     ) )
-    with open(maf_savpath, 'wb') as f:
-        pickle.dump(maf_empc_errs, f, pickle.HIGHEST_PROTOCOL)
-        print('saved {:s}'.format(maf_savpath))
 
+    if os.path.exists(maf_savpath) and not overwriteexistingsamples:
+        maf_empc_errs = pickle.load(open(maf_savpath, 'rb'))
+
+    else:
+        maf_empc_errs = lcfit.transits.mandelagol_fit_magseries(
+                        sel_time, sel_flux, empirical_err,
+                        initfitparams, priorbounds, fixedparams,
+                        trueparams=cornerparams, magsarefluxes=True,
+                        sigclip=None, plotfit=mandelagolfit_savfile,
+                        plotcorner=corner_savfile,
+                        samplesavpath=samplesavpath, nworkers=nworkers,
+                        n_mcmc_steps=n_mcmc_steps, exp_time_minutes=30,
+                        eps=1e-6, n_walkers=500, skipsampling=False,
+                        overwriteexistingsamples=overwriteexistingsamples,
+                        mcmcprogressbar=mcmcprogressbar)
+
+        with open(maf_savpath, 'wb') as f:
+            pickle.dump(maf_empc_errs, f, pickle.HIGHEST_PROTOCOL)
+            print('saved {:s}'.format(maf_savpath))
+
+    # fitfluxs, fittimes = _get_interp_fitfluxs(maf_empc_errs, sel_time)
     # now plot the phased lightcurve
     fitfluxs = maf_empc_errs['fitinfo']['fitmags']
     fittimes = maf_empc_errs['magseries']['times']
+    fitperiod = maf_empc_errs['fitinfo']['finalparams']['period']
     fitepoch = maf_empc_errs['fitinfo']['finalparams']['t0']
+
     outfile = ( os.path.join(
         fit_savdir,
-        os.path.splitext(os.path.basename(outpath))[0]+"_phased_{:s}_fit_empiricalerrs.png".format(fittype)
+        (os.path.splitext(os.path.basename(outpath))[0]
+         +"_phased_{:s}_fit_empiricalerrs.png".format(fittype))
     ) )
 
-    plot_phased_magseries(sel_time, sel_flux, period, magsarefluxes=True,
-                           errs=None, normto=False, epoch=fitepoch,
-                           outfile=outfile, sigclip=False, phasebin=0.01,
-                           plotphaselim=[-.4,.4], plotdpi=400,
-                           modelmags=fitfluxs, modeltimes=fittimes,
-                           xaxlabel='Time from mid-transit [days]',
-                           yaxlabel='Relative flux', xtimenotphase=True)
+    plot_phased_magseries(sel_time, sel_flux, fitperiod, magsarefluxes=True,
+                          errs=None, normto=False, epoch=fitepoch,
+                          outfile=outfile, sigclip=False, phasebin=0.01,
+                          phasewrap=True, phasesort=True,
+                          plotphaselim=[-.4,.4], plotdpi=400,
+                          modelmags=fitfluxs, modeltimes=fittimes,
+                          xaxlabel='Time from mid-transit [days]',
+                          yaxlabel='Relative flux', xtimenotphase=True)
     print('made {}'.format(outfile))
 
     # fit parameters are accessed like
     # maf_empc_errs['fitinfo']['finalparams']['sma'],
     return maf_empc_errs
+
+
+def _get_interp_fitfluxs(mafr, sel_time):
+
+    medianparams = mafr['fitinfo']['finalparams']
+    fixedparams = mafr['fitinfo']['fixedparams']
+
+    from astrobase.lcfit.transits import _get_value, _transit_model
+
+    per = _get_value('period', medianparams, fixedparams)
+    t0 = _get_value('t0', medianparams, fixedparams)
+    rp = _get_value('rp', medianparams, fixedparams)
+    sma = _get_value('sma', medianparams, fixedparams)
+    incl = _get_value('incl', medianparams, fixedparams)
+    ecc = _get_value('ecc', medianparams, fixedparams)
+    omega = _get_value('omega', medianparams, fixedparams)
+    limb_dark = _get_value('limb_dark', medianparams, fixedparams)
+    try:
+        u = fixedparams['u']
+    except Exception:
+        u = [medianparams['u_linear'], medianparams['u_quad']]
+
+    # sample model over 10k points
+    times = np.linspace(np.nanmin(sel_time),
+                        np.nanmax(sel_time),
+                        num=int(1e4))
+
+    fit_params, fit_m = _transit_model(times, t0, per, rp, sma, incl, ecc,
+                                       omega, u, limb_dark,
+                                       exp_time_minutes=30,
+                                       supersample_factor=20)
+    fitmags = fit_m.light_curve(fit_params)
+
+    return fitmags, times
 
 
 def get_limb_darkening_initial_guesses(teff, logg):
@@ -696,7 +733,8 @@ def given_light_curve_fit_transit(time, flux, err, teff, teff_err, rstar,
                                   rstar_err, logg, logg_err, outpath,
                                   fit_savdir, chain_savdir, nworkers=40,
                                   n_transit_durations=5, n_mcmc_steps=1,
-                                  tlsfit_savfile=None):
+                                  tlsfit_savfile=None,
+                                  overwrite=1):
     """
     maybe to astrobase?
     """
@@ -735,7 +773,7 @@ def given_light_curve_fit_transit(time, flux, err, teff, teff_err, rstar,
         n_transit_durations=n_transit_durations,
         nworkers=nworkers,
         n_mcmc_steps=n_mcmc_steps,
-        overwriteexistingsamples=True,
+        overwriteexistingsamples=overwrite,
         mcmcprogressbar=True
     )
 
@@ -822,6 +860,8 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
     \          (only required if new CTOI)
     """
 
+    extranote = ''
+
     def _get_unc(param_errs, key):
         unc = np.mean([param_errs['std_perrs'][key],
                        param_errs['std_merrs'][key]])
@@ -837,6 +877,11 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
     param_values =  mafr['fitinfo']['finalparams']
     param_errs =  mafr['fitinfo']['finalparamerrs']
 
+    period = param_values['period']
+    period_unc = _get_unc(param_errs,'period')
+    epoch = param_values['t0']
+    epoch_unc = _get_unc(param_errs,'t0')
+
     # calculate radius in earth radii; uncertainty from propagating errors of
     # Rp/Rstar, and assuming uncorrelated.
     rp_rs = param_values['rp']
@@ -844,6 +889,9 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
     radius = ((param_values['rp'] * rstar)*u.Rsun).to(u.Rearth).value
     radius_unc = radius * np.sqrt((rp_rs_unc/rp_rs)**2 + (rstar_err/rstar)**2)
+    if type(rstar_err)==np.ma.core.MaskedConstant:
+        radius_unc = radius * 0.3  # assign 30% relative uncertainty if nan...
+        extranote += 'TIC Rstar nan.'
 
     # calculate depth and uncertainty in ppm. depth is not the measured
     # quantity -- it is just (by definition) (Rp/Rstar)^2.
@@ -916,7 +964,6 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
     target = ctoiname
     flag = 'newctoi'
     disp = 'PC'
-    extranote = ''
     #
     # check MIT TSO TOI list for whether there are matches by TIC ID.
     # for disposition, take whatever the MIT TSO labelled as truth.
@@ -1012,7 +1059,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
             #
             tdf = toidf[sel]
             toiname = tdf['toi_id'].iloc[0]
-            extranote = "<2' from TOI{} but diff period".format(repr(toiname))
+            extranote = "<2' from TOI{} but diff period.".format(repr(toiname))
 
     ctoisel = nparr(ctoiseps < spatial_cutoff)
     if len(ctoiseps[ctoisel]) == 1:
@@ -1030,7 +1077,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
             #
             tdf = ctoidf[sel]
             ctoiname = tdf['CTOI'].iloc[0]
-            extranote = "WRN! <2' from CTOI{}".format(repr(ctoiname))
+            extranote = "WRN! <2' from CTOI{}.".format(repr(ctoiname))
 
         else:
             #
@@ -1039,7 +1086,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
             #
             tdf = ctoidf[sel]
             ctoiname = tdf['CTOI'].iloc[0]
-            extranote = "<2' from CTOI{}, but diff period".format(repr(ctoiname))
+            extranote = "<2' from CTOI{}, but diff period.".format(repr(ctoiname))
 
     ##########################################
 
@@ -1060,8 +1107,8 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
         'disp':disp,
         'period':param_values['period'],
         'period_unc':_get_unc(param_errs,'period'),
-        'epoch':param_values['epoch'],
-        'epoch_unc':_get_unc(param_errs,'epoch'),
+        'epoch':param_values['t0'],
+        'epoch_unc':_get_unc(param_errs,'t0'),
         'depth':depth,
         'depth_unc':depth_unc,
         'duration':T_tot,
@@ -1071,9 +1118,9 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
         'imp':b,
         'imp_unc':b_unc,
         'r_planet':param_values['rp'],
-        'r_planet_unc'_get_unc(param_errs,'rp'):,
+        'r_planet_unc':_get_unc(param_errs,'rp'),
         'ar_star':param_values['sma'],
-        'a_rstar_unc'_get_unc(param_errs,'sma'):,
+        'a_rstar_unc':_get_unc(param_errs,'sma'),
         'radius':radius, #radius (R_Earth)
         'radius_unc':radius_unc, #radius uncertainty
         'mass':np.nan, #mass (M_Earth)
@@ -1101,7 +1148,11 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
         'notes':notes
     }
 
-    df = pd.DataFrame(d)
+    try:
+        df = pd.DataFrame(d, index=[0])
+    except AttributeError:
+        import IPython; IPython.embed()
+        assert 0
     df.to_csv(outpath,sep="|",index=False)
     print('made {}'.format(outpath))
 
