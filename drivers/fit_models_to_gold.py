@@ -43,7 +43,7 @@ paper and CTOIs.
 
 CLASSIFXNDIR = "/home/lbouma/proj/cdips/results/vetting_classifications"
 
-def main(overwrite=0, sector=6, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
+def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
 
     lcbasedir, tfasrdir, resultsdir = _define_and_make_directories(sector)
 
@@ -314,13 +314,15 @@ def fit_phased_transit_mandelagol_and_line(
 ):
     """
     tlsr: result dictionary from TLS.
-    teff, rstr, logg: usual units
+    teff, rstr, logg: usual units, from wherever.
     outpath: .csv file with fit parameters to save.
     fit_savdir: directory where other plots are saved.
     chain_savdir: MCMC chains go here.
+    overwriteexistingsamples: if false, and finds pickle file with saved
+    parameters, no sampling is done.
     """
 
-    # initial guesses
+    # initial guesses mostly from TLS results.
     incl = 85
     b = 0.2
     period = tlsr['period']
@@ -350,15 +352,13 @@ def fit_phased_transit_mandelagol_and_line(
         if np.any(these_inds):
             sel_inds |= these_inds
 
-    sel_time = time[sel_inds]
-    _ = flux[sel_inds]
-    sel_err = err[sel_inds]
-
     # to construct the phase-folded light curve, fit a line to the OOT flux
     # data, and use the parameters of the best-fitting line to "rectify" each
     # lightcurve. Note that an order 1 legendre polynomial == a line, so we'll
     # use that implementation.
-    out_fluxs, in_fluxs, fit_fluxs, time_list, intra_inds_list = [], [], [], [], []
+    out_fluxs, in_fluxs, fit_fluxs, time_list, intra_inds_list, err_list = (
+        [], [], [], [], [], []
+    )
     for t_start,t_end in zip(t_starts, t_ends):
         this_window_inds = (time > t_start) & (time < t_end)
         tmid = t_start + (t_end-t_start)/2
@@ -378,16 +378,22 @@ def fit_phased_transit_mandelagol_and_line(
 
         if len(this_oot_flux) == len(this_oot_time) == 0:
             continue
-        p = Legendre.fit(this_oot_time, this_oot_flux, 1)
-        coeffs = p.coef
-        this_window_fit_flux = p(time[this_window_inds])
+        try:
+            p = Legendre.fit(this_oot_time, this_oot_flux, 1)
+            coeffs = p.coef
+            this_window_fit_flux = p(time[this_window_inds])
 
-        time_list.append( time[this_window_inds] )
-        out_fluxs.append( flux[this_window_inds] / this_window_fit_flux )
-        fit_fluxs.append( this_window_fit_flux )
-        in_fluxs.append( flux[this_window_inds] )
-        intra_inds_list.append( (time[this_window_inds]>transit_start) &
-                                (time[this_window_inds]<transit_end) )
+            time_list.append( time[this_window_inds] )
+            out_fluxs.append( flux[this_window_inds] / this_window_fit_flux )
+            fit_fluxs.append( this_window_fit_flux )
+            in_fluxs.append( flux[this_window_inds] )
+            intra_inds_list.append( (time[this_window_inds]>transit_start) &
+                                    (time[this_window_inds]<transit_end) )
+            err_list.append( err[this_window_inds] )
+        except np.linalg.LinAlgError:
+            print('WRN! Legendre.fit failed, b/c bad data for this transit. '
+                  'Continue.')
+            continue
 
     # make plots to verify that this procedure is working.
     ix = 0
@@ -442,8 +448,10 @@ def fit_phased_transit_mandelagol_and_line(
         print('saved {:s}'.format(savpath))
         ix += 1
 
+    sel_time = np.concatenate(time_list)
     sel_flux = np.concatenate(out_fluxs)
     fit_flux = np.concatenate(fit_fluxs)
+    sel_err = np.concatenate(err_list)
     assert len(sel_flux) == len(sel_time) == len(sel_err)
 
     # model = transit only (no line). "transit" as defined by BATMAN has flux=1
@@ -697,8 +705,22 @@ def get_limb_darkening_initial_guesses(teff, logg):
     # the selected table below is good from Teff = 1500 - 12000K, logg = 2.5 to
     # 6. We choose values computed with the "r method", see
     # http://vizier.u-strasbg.fr/viz-bin/VizieR-n?-source=METAnot&catid=36000030&notid=1&-out=text
-    assert 2300 < teff < 12000
-    assert 2.5 < logg < 6
+    if not 2300 < teff < 12000:
+        if teff < 15000:
+            print('WRN! using 12000K atmosphere LD coeffs even tho teff={}'.
+                  format(teff))
+        else:
+            print('got teff error')
+            import IPython; IPython.embed()
+    if not 2.5 < logg < 6:
+        if teff < 15000:
+            # is B star; assume star is like B6V, mamajek table
+            _Mstar = 4*u.Msun
+            _Rstar = 2.9*u.Rsun
+            logg = np.log10((const.G * _Mstar / _Rstar**2).cgs.value)
+        else:
+            print('got logg error')
+            import IPython; IPython.embed()
 
     Vizier.ROW_LIMIT = -1
     catalog_list = Vizier.find_catalogs('J/A+A/600/A30')
@@ -869,7 +891,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
     #
     # calculate paramaters required for write out. there is some linear error
-    # propgataion done here.
+    # propgataion done here. see math in /doc/2019-06-27_transit_param_errs.pdf
     #
 
     # 'incl', 'period', 'rp', 'sma', 't0', 'u_linear', 'u_quad'
