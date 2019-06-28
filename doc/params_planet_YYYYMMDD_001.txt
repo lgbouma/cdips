@@ -1,0 +1,68 @@
+\ ExoFOP-TESS Planet Parameters Bulk Upload Example File
+\
+\ Naming convention: params_planet_YYYYMMDD_nnn.txt
+\ nnn is a number (001-999) differentiating files uploaded on the same day
+\
+\ Column headers:  (*required)
+\
+\ Parameter value is required if uncertainty value is present
+\
+\
+\ *target = TOI name (must be existing) or CTOI name (can be new or existing)
+\           example TOI name = TOI125.01, TOI125.02 (must include "TOI" prefix and no spaces)
+\           example CTOI name = TIC52368076.01, TIC52368076.02 (must include "TIC" prefix and no spaces)  
+\
+\ *flag = flag indicating type of upload. valid values are:
+\		  newctoi - for creating a new CTOI and adding associated planet parameters
+\		  newparams - for adding new planet parameters to an existing CTOI or TOI
+\
+\ *disp = disposition (CP = confirmed planet, FP = false positive, or PC = planet candidate)
+\
+\ period = orbital period (days)
+\ period_unc = orbital period uncertainty
+\ epoch = transit midpoint (BJD) - must be greater than 2000000.0
+\ epoch_unc = transit midpoint uncertainty
+\ depth = transit depth (ppm)
+\ depth_unc = transit depth uncertainty
+\ duration = transit duration (hrs)
+\ duration_unc = transit duration uncertainty
+\ inc = inclination (degrees)
+\ inc_unc = inclination uncertainty
+\ imp = impact parameter
+\ imp_unc = impact parameter uncertainty
+\ r_planet = R_planet/R_star
+\ r_planet_unc = R_planet/R_star uncertainty
+\ ar_star = a/R_star
+\ ar_star_unc = a/R_star uncertainty
+\ radius = radius (R_Earth)
+\ radius_unc = radius uncertainty
+\ mass = mass (M_Earth)
+\ mass_unc = mass uncertainty
+\ temp = equilibrium temperature (K)
+\ temp_unc = equilibrium temperature uncertainty
+\ insol = insolation flux (flux_Earth)
+\ insol_unc = insolation flux uncertainty
+\ dens = fitted stellar density (g/cm^3)
+\ dens_unc = fitted stellar density uncertainty
+\ sma = semi-major axis (AU)
+\ sma_unc = semi-major axis uncertainty
+\ ecc = eccentricity
+\ ecc_unc = eccentricity uncertainty
+\ arg_peri = argument of periastron
+\ arg_peri_unc = argument of periastron uncertainty
+\ time_peri = time of periastron (BJD) -  must be greater than 2000000.0
+\ time_peri_unc = time of periastron uncertainty
+\ vsa = velocity semi-amplitude (m/s)
+\ vsa_unc = velocity semi-amplitude uncertainty
+\ *tag = data tag number or name (e.g. YYYYMMDD_username_description_nnnnn)
+\ group = group name
+\ *prop_period = proprietary period in months (0 or 12) 
+\                Must be 0 if not associated with a group
+\                Must be 0 for new CTOIs
+\ *notes = notes about the values - maximum 120 characters
+\          (only required if new CTOI)
+
+target|flag|disp|period|period_unc|epoch|epoch_unc|depth|depth_unc|duration|duration_unc|inc|inc_unc|imp|imp_unc|r_planet|r_planet_err|ar_star|ar_star_err|radius|radius_unc|mass|mass_unc|temp|temp_unc|insol|insol_unc|dens|dens_unc|sma|sma_unc|ecc|ecc_unc|arg_peri|arg_peri_err|time_peri|time_peri_unc|vsa|vsa_unc|tag|group|prop_period|notes
+TOI125.01|newparams|PC|12.345|1.2345|2456155.12345|0.000586|12.345|1.2345|3.456|0.123|10.2|0.5|0.123|0.05|1.123|0.05|1.123|0.05|10.234|0.05|100.234|1.2|1234|123|1234|123|1234|123|0.123|0.05|0.123|0.05|0.123|0.05|2456155.12345|123|123|0.1|123||0|existing TOI
+TIC52368076.01|newparams|PC|12.345|1.2345|2456155.12345|0.000586|12.345|1.2345|3.456|0.123|10.2|0.5|0.123|0.05|1.123|0.05|1.123|0.05|10.234|0.05|100.234|1.2|1234|123|1234|123|1234|123|0.123|0.05|0.123|0.05|0.123|0.05|2456155.12345|123|123|0.1|123||0|existing CTOI
+TIC52368076.02|newctoi|PC|55.545|0.1234|2457653.12345|0.000006|12.345|1.2345|3.456|0.123|10.2|0.5|0.123|0.05|1.123|0.05|1.123|0.05|10.234|0.05|100.234|1.2|1234|123|1234|123|1234|123|0.123|0.05|0.123|0.05|0.123|0.05|2456155.12345|123|123|0.1|123||0|new CTOI
