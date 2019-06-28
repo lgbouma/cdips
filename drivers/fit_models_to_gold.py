@@ -25,6 +25,8 @@ from astroquery.mast import Catalogs
 from astroquery.vizier import Vizier
 
 from numpy.polynomial.legendre import Legendre
+from scipy import optimize
+from scipy.interpolate import interp1d
 
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -276,6 +278,39 @@ def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         logg_err = seltab['e_logg']
         rstar = seltab['rad']
         rstar_err = seltab['e_rad']
+
+        if type(teff)==np.ma.core.MaskedConstant:
+            print('WRN! TIC teff nan. why? trying gaia value')
+            teff = hdr['teff_val']
+            teff_err = 100
+
+        if type(rstar)==np.ma.core.MaskedConstant:
+            print('WRN! TIC rstar nan. why? trying gaia value')
+            rstar = hdr['radius_val']
+            rstar_err = 0.3*rstar
+            # get mass given rstar, so that you can get logg
+            mamadf = pd.read_csv('../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
+                                 delim_whitespace=True)
+            if rstar != 'NaN':
+                mamarstar, mamamstar = nparr(mamadf['Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
+                isbad = np.insert(np.diff(mamamstar) <= 0, False, 0)
+                fn_mass_to_rstar = interp1d(mamamstar[~isbad], mamarstar[~isbad],
+                                            kind='quadratic', bounds_error=False,
+                                            fill_value='extrapolate')
+                radiusval = rstar
+                fn = lambda mass: fn_mass_to_rstar(mass) - radiusval
+                mass_guess = mamamstar[np.argmin(np.abs(mamarstar - radiusval))]
+                try:
+                    mass_val = optimize.newton(fn, mass_guess)
+                except RuntimeError:
+                    mass_val = mass_guess
+                mstar = mass_val
+            else:
+                raise NotImplementedError('need rstar somehow')
+            _Mstar = mstar*u.Msun
+            _Rstar = rstar*u.Rsun
+            logg = np.log10((const.G * _Mstar / _Rstar**2).cgs.value)
+            logg_err = 0.3*logg
 
         ticid = int(hdr['TICID'])
 
