@@ -1,4 +1,16 @@
-THINGS THRU CANDIDATE PRODUCTION
+TO MAKE THE TARGET STAR CATALOG
+----------
+
+The `/drivers/` are not used. Instead, the process is:
+
+1. Use `/cdips/catalogbuild/homogenize_cluster_lists.py` to get everything in
+   same format.  The merging is then done here as well.  (Iteratively).
+
+2. Use `/cdips/catalogbuild/construct_unique_cluster_name_column.py` to do what
+   is advertized.
+
+TO PRODUCE CANDIDATES
+----------
 
 1. make lightcurves using pipe-trex.
 
@@ -29,7 +41,8 @@ THINGS THRU CANDIDATE PRODUCTION
     * Check `logs/vetting_pdf.log` for name-matching errors. (First pass, they
       will always show up! Grep for "ERR!")
 
-COLLECT VETTING CLASSIFICATIONS
+TO PROCESS VETTING CLASSIFICATIONS
+----------
 
 1. `classification_postprocessing`: does three stages of classification:
 
@@ -43,11 +56,11 @@ COLLECT VETTING CLASSIFICATIONS
 2. `fit_models_to_gold`: MCMC fit Mandel-Agol transits to gold above -- these
    parameters are used for paper and CTOIs.
 
-PAPER-PROCESSING
+TO COMMUNICATE RESULTS
+----------
 
 1. `paper_plot_all_figures`: plots figures for paper I.
 
 2. `paper_get_CDIPS_star_stats`: analyze stats of cdips stars.  how many are
    there total?  what fraction come from which sources?  how many are
    single-source claims?  how many are multi-source claims?
-
