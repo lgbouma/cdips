@@ -35,6 +35,8 @@ from cdips.lcproc import detrend as dtr
 from cdips.lcproc import mask_orbit_edges as moe
 from cdips.plotting import vetting_pdf as vp
 from cdips.utils import collect_cdips_lightcurves as ccl
+from cdips.utils import today_YYYYMMDD
+
 import make_vetting_multipg_pdf as mvp
 
 """
@@ -110,12 +112,6 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
                                     toidf, ctoidf, sector, nworkers,
                                     cdipsvnum=cdipsvnum, overwrite=overwrite)
 
-
-def today_YYYYMMDD():
-    txt = '{}{}{}'.format(str(datetime.today().year),
-                          str(datetime.today().month).zfill(2),
-                          str(datetime.today().day).zfill(2))
-    return txt
 
 def _get_data(sector, cdips_cat_vnum=0.3):
 
