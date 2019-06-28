@@ -1840,15 +1840,20 @@ required to report some of the values.  For the stellar radii, we
 assumed the $R_\star$ values and uncertainties reported in the TIC.
 There were a few cases with null uncertainties in the stellar radii --
 for these, we simply invented a relative uncertainty of 30\%, and note
-in the comments that this was done.  The uncertainties in e.g., the
-planetary radii and impact parameters were found using linear error
-propagation theory, under the idealized assumption that the covariance
-between all stellar and planetary parameters was zero.
+in the comments that this was done.  There were also a few cases for
+which the TIC stellar temperatures and/or radii were not available,
+but the Gaia values were.  In these cases, we used the Gaia $T_{\rm
+eff}$ and $R_\star$ values, and used the stellar mass interpolated
+from the \citet{pecaut_intrinsic_2013} table (assuming the star is a
+dwarf) to estimate $\log g$.  The uncertainties in e.g., the planetary
+radii and impact parameters were found using linear error propagation
+theory, under the idealized assumption that the covariance between all
+stellar and planetary parameters was zero.
 
-Finally, the determine the names of the objects -- that is whether
-they were already TOIs, or cTOIs -- we cross-referenced based on a
-combination of the TIC identifier, spatial position, and the ephemeris
-of each object.
+Finally, the determine the names of the objects -- and whether they
+had already been identified as TOIs or cTOIs -- we cross-referenced
+based on a combination of the TIC identifier, spatial position, and
+the ephemeris of each object.
 
 
 
