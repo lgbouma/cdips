@@ -25,7 +25,7 @@
 % BEGIN CUSTOM SHORT-CUT COMMANDS
 
 % BEGIN NUMBERS
-\newcommand{\numberpcs}{42\ }
+\newcommand{\numberpcs}{29\ }  % 2019/06/28 unanimous gold
 \newcommand{\sVInumberlcs}{67{,}601\ }  % 2019/06/20 not allnan
 \newcommand{\sVIInumberlcs}{91{,}736\ }  % 2019/06/20 not allnan
 \newcommand{\numberlcs}{159{,}337\ } % 2019/06/20 sum
@@ -147,8 +147,8 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 
 Many evolutionary processes are expected to occur over the lives of
 stars and exoplanets; it would be interesting to statistically observe
-these changes as functions of time.  However, since most dwarf star
-properties do not appreciably change until the stars evolve off the
+these changes as functions of time.  However, since most dwarf stars
+do not appreciably change until evolving off the
 main sequence, creative approaches must be used to infer stellar ages
 \citep{soderblom_ages_2010}.  One approach beginning to bear fruit in
 exoplanet studies is to search for planets in coeval groups of stars,
@@ -166,9 +166,9 @@ e.g.},][]{barnes_color-period_2015,meibom_spin-down_2015,curtis_tess_2019}.
 The ages of planets discovered in these cluster stars are then assumed
 to equal the age of the larger stellar ensemble.
 
-The first planets in open clusters were detected through radial
-velocity (RV) measurements of evolved stars in the Hyades
-and NGC~2423 \citep{Sato_et_al_2007,lovis_mayor_2007}.
+The first planets to be detected in open clusters were found through
+radial velocity (RV) measurements of evolved stars in the Hyades and
+NGC~2423 \citep{Sato_et_al_2007,lovis_mayor_2007}.
 Subsequent spectroscopic searches in Praesepe led to the detection of
 the first hot Jupiter in a cluster \citep{Quinn_et_al_2012}, and also
 the first multi-planet system in a cluster \citep{Malavolta_et_al_2016}.
@@ -186,7 +186,7 @@ searches of M~37 by \citet{hartman_MMT_IV_2009}, as well as searches
 of nine young clusters in the solar neighborhood by the Monitor
 project
 \citep{aigrain_monitor_2007,irwin_monitordata_2007,miller_monitor_2008}.
-While these studies led to valuable measurements of stellar rotation
+While these studies led to measurements of stellar rotation
 periods \citep{hartman_rotation_2009,Irwin_NGC2516_2007} as well as
 the discovery of pre-main-sequence (PMS) eclipsing binaries (EBs)
 \citep{irwin_monitor_PMSEB_2007}, no transiting planets in open
@@ -207,7 +207,8 @@ Praesepe, and Upper Sco were a major inspiration for the present work.
 K2-25b, discovered in the Hyades, has a radius ($3.43\,R_\oplus$) that
 is larger than older Kepler planets at similar insolation levels
 \citep{Mann_K2_25_2016}.  This inflated radius is perhaps a hint that
-the planet is contracting, or losing its atmosphere (e.g., CITE).  The
+the planet is contracting, or losing its atmosphere \citep[{\it
+e.g.},][]{Fortney_et_al_2007,Owen_Wu_2013,Fulton_et_al_2017}.  The
 super-Neptune sized K2-33b ($P\approx 5.4\,{\rm d}$), found in Upper
 Sco, showed that at least some close-in planets must form within about
 10 Myr, excluding long-timescale migration as an explanation for its
@@ -217,7 +218,7 @@ included six transiting planets in Praesepe
 super-Earth in the Hyades \citep{vanderburg_zeitVII_2018}, the
 three-planet K2-136 system in the Hyades
 \citep{ciardi_k2-136_2018,livingston_three_2018,mann_ZEITVI_2018}, and
-also the two-planet system K2-264 in Praesepe
+later the two-planet system K2-264 in Praesepe
 \citep{rizzuto_zeitVIII_2018,livingston_k2-264_2019}.  There has also
 recently been a detection by K2 of a Jupiter-sized planet orbiting
 every 24 days around V1298~Tau \citep{david_v1298_2019}.
@@ -241,7 +242,7 @@ comprehensive cluster photometric survey in history.  More
 quantitatively, the \citet{Kharchenko_et_al_2013} cluster member
 database indicates that $\approx 2\times10^5$ open cluster members
 brighter than $T=16$ will be observed in the full-frame images over
-the first two years of TESS observations.  The actual number will be
+the first two years of TESS observations.  The actual number may be
 larger, as cluster membership catalogs are not yet complete, even at
 these relatively bright magnitudes \citep[{\it
 e.g.},][]{cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019}.
@@ -249,85 +250,88 @@ e.g.},][]{cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019}.
 % young stars, perhaps one-third of which are bonafide cluster members
 % (see \S~\ref{sec:starselection}).
 
-One of the major challenges in deriving precise photometry from the
+One of the major barriers to deriving precise photometry from the
 TESS images is the relatively poor angular resolution ($\approx 21''$
 per pixel).  Almost all clusters are within 10 degrees of the Galactic
 plane. The problems with crowding and complex backgrounds are so
 severe near the galactic plane that the TESS Candidate Target List has
 deprioritized all objects at galactic latitudes less than $\approx
 15^\circ$~\citep{stassun_TIC_2018,stassun_TIC8_2019}, which includes
-90\% of all star clusters\footnote{TICv8 has updated this to $10^\circ$,
+almost all star clusters\footnote{TICv8 has updated this to $10^\circ$,
 but for the first year of TESS observations, the number used when
 selecting target stars was $15^\circ$.}.  This is sensible, given that
-the large pixel size and the high stellar surface density will make
+the large pixel size and the high stellar surface density make
 aperture photometry unreliable.  However, it also means that a large
-number of stars in clusters that could yield planet candidates may go
-unprocessed by the official {\it TESS} data reduction pipeline.
+number of stars in clusters that could yield transiting planets will
+go unprocessed by the official {\it TESS} data reduction pipeline.
 
-If one's concern is to discover and characterize benchmark systems
-with known ages,
-hunting for transiting planets in nearby stellar assocations is a path
-that seems to be working.  A number of promising targets from TESS are
-in various stages of follow-up from this approach, notably DS Tuc Ab
-(TOI 200, \citealt{benatti_dstuc_2019}, Newton+2019), as well as
-TOI-450 and TOI-451.  This is good, and these will remain benchmark
-systems because they are close and bright.  However, to do statistics,
-we need more stars -- we might also benefit from investigating the full range of cluster
-properties (densities, ages, metallicities).  This motivates the need
-to go crowded, and fainter.
+Of course, not all young stars are in crowded fields.  TESS
+observations of a few nearby non-crowded stellar assocations have
+already begun bearing fruit, notably DS Tuc Ab (TOI 200;
+\citealt{benatti_dstuc_2019,newton_dstuc_2019}), and perhaps the
+planet candidates TOI-450 and 451.  These objects are close and
+bright, and will be benchmark systems because they are relatively easy
+to characterize.  However, statistical studies of how stellar and
+planetary properties are affected by ages require tens of thousands of
+target stars.  This motivates us to also search the more crowded, and
+fainter fields.
 
 We have therefore opted to produce time-series photometry from the
 TESS images of any star that could be a member of a coeval group.  We
 are also including some stars that we suspect are young due to
 combined photometric and astrometric indicators.  We are using the
 difference imaging technique because of its benefits in modelling
-complex backgrouds in crowded regions.  While we hope to
-discover at least a few giant transiting planets, a separate hope
-is that the dataset might be useful to those wishing to study the
-time evolution of stellar processes.
+complex backgrouds in crowded regions.  While we hope to discover at
+least a few giant transiting planets, a separate hope is that the
+dataset might be useful to those wishing to study the time evolution
+of stellar processes.
 
-In the following, \S~\ref{sec:starselection} describes the process of
-selecting target stars.  \S~\ref{sec:method} presents the photometric and
-image processing methods, and \S~\ref{sec:results} describes results.
-\S~\ref{sec:discussion} discusses, and \S~\ref{sec:conclusion}
-concludes.
+In the following, \S~\ref{sec:starselection} describes how we selected
+target stars. \S~\ref{sec:method} presents the photometric and image
+processing methods we used to produce light curves for these stars.
+The statistical properties of the \numberlcs light curves from TESS Sectors
+6 and 7 are then summarized (\S~\ref{subsec:lcstatistics}).  The
+procedure we used to identify and vet transiting planets is
+described in \S~\ref{subsec:identifying_ctois}, and the candidate
+planets are presented in \S~\ref{subsec:ctois}.
+\S~\ref{sec:discussion} discusses the additional work that is required
+to confirm or reject the planetary nature of these objects, and
+\S~\ref{sec:conclusion} summarizes our findings.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Method: Star Selection}
 \label{sec:starselection}
 
-A major aim of the CDIPS project is to increase the number of
-cluster stars for which photometric time-series are
-available, to facilitate studies of exoplanetary and stellar
-processes across different times and stellar environments.
-An essential step is therefore to define a sample of
-stars that are thought to be young, or members or clusters, or both.
+The main aim of the CDIPS project is to increase the number of cluster
+stars for which photometric time-series are available, and thereby
+facilitate studies of exoplanetary and stellar processes across
+different times and stellar environments.  An essential step is
+therefore to define a sample of stars that are thought to be young, or
+members or clusters, or both.
 
-However, a homogeneous membership calculation for every known
-cluster is outside our scope.  So too is a homogeneous search for
-young stars across the galaxy.
-Instead, we opt to collect
-and concatenate appropriate catalogs from across the literature.  
-We then use the resulting meta-catalog to identify our target stars within the 
-TESS images.
+A homogeneous membership calculation for every known cluster is a
+rather large undertaking, and currently falls outside our scope.  So
+too is a homogeneous search for young stars across the galaxy.
+Instead, we have opted to collect and concatenate appropriate catalogs
+from across the literature.  We then use the resulting meta-catalog to
+identify our target stars within the TESS images.
 
-In our initial stellar selection our aim is therefore completeness, not 
-accuracy.  If there has
-been a claim in the literature that a star should be considered a
-cluster member, or a young star, we would like to report a light curve for the 
-star.
-For stars that are photometrically interesting, we can perform post-hoc
-quality checks using Gaia DR2 astrometry and photometry to assess cluster 
-membership and youth.
+In our initial stellar selection our aim is completeness, not
+accuracy.  If there has been a claim in the literature that a star
+should be considered a cluster member, or a young star, we would like
+to report a light curve for the star.  For stars that are
+photometrically interesting, we can perform post-hoc quality checks
+using Gaia DR2 astrometry and photometry to assess cluster membership
+and youth.
 
-\S~\ref{subsec:oc} describes the large catalogs we used to 
-identify candidate members of open clusters.
-\S~\ref{subsec:mg} describes the smaller catalogs we used to identify 
-candidate members of moving groups, stellar associations, as well as young 
-stars identified through combined Gaia photometry and astrometry.
-\S~\ref{subsec:ocmgsummary} then reports summary statistics for the entire 
-sample of about one million target stars.
+\S~\ref{subsec:oc} describes the catalogs we used to identify
+candidate members of open clusters.  \S~\ref{subsec:mg} describes the
+catalogs we used to identify candidate members of moving groups,
+stellar associations, as well as young stars identified through
+combined Gaia photometry and astrometry.  \S~\ref{subsec:ocmgsummary}
+then reports summary statistics for the entire sample of about one
+million target stars.
 
 %FIXME: make table
 
@@ -1633,7 +1637,7 @@ Some stellar variability plots (perhaps of known stellar variables).
 Some focus on particular clusters.
 
 \subsection{Identifying Objects of Interest}
-\label{subsec:ctois}
+\label{subsec:identifying_ctois}
 
 To identify an initial set of transiting planets, strong stellar rotators, and 
 eclipsing binaries, we performed a few steps of post-processing on the light 
@@ -1770,10 +1774,11 @@ The classifications we used assessed:
 The actual classifications were performed by LGB, JH, and JNW.
 The \texttt{TagSpaces} software was used~--~an extremely helpful tool
 for the purposes of easily assigning labels to documents.
-An example of a full vetting report is described in
+An example vetting report for a planet candidate is described in
 Appendix~\ref{appendix:vetreport}.
 
 \subsection{Objects of Interest}
+\label{subsec:ctois}
 The objects that all vetters identified as planet candidates were then
 fit with the usual \citet{mandel_analytic_2002} model. (CITE BATMAN).
 The resulting fits are shown in Figure XXX.
@@ -1799,27 +1804,17 @@ measurements, and even an isochronal analysis, would be helpful.
 \section{Discussion}
 \label{sec:discussion}
 
-Lorem ipsum.
+Additional observations are needed for two major goals:
+a) cluster membership confirmation
+(age indicators, across the board);
+b) verify the planetary nature of the signals
+(seeing-limited photometry, RV mass measurement).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
 \label{sec:conclusion}
 
-% \begin{figure}[t]
-% 	\begin{center}
-% 		\leavevmode
-% 		\includegraphics[width=0.49\textwidth]{f6.pdf}
-% 	\end{center}
-% 	\vspace{-0.5cm}
-% 	\caption{
-%     {\bf Further observations will be needed to confirm and understand
-%     the timing variations of WASP-4b.} Dots are as in
-%     Figure~\ref{fig:times}.  Lines are 100 random draws from the
-%     posteriors of the apsidal precession model (orange), and the
-%     orbital decay model (blue).    
-% 		\label{fig:future}
-% 	}
-% \end{figure}
+Lorem ipsum.
 
 
 
