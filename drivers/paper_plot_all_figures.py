@@ -26,6 +26,7 @@ from cdips.utils import tess_noise_model as tnm
 from cdips.plotting import plot_star_catalog as psc
 from cdips.plotting import plot_catalog_to_gaia_match_statistics as xms
 from cdips.plotting import plot_wcsqa as wcsqa
+from cdips.utils import collect_cdips_lightcurves as ccl
 
 OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
@@ -186,18 +187,14 @@ def plot_catalog_to_gaia_match_statistics(overwrite=1):
 
 def plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1):
 
-    catalogpath = (
-        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.
-        format(OC_MG_CAT_ver)
-    )
-    df = pd.read_csv(catalogpath, sep=';')
+    cdips_df = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
 
     outpath = os.path.join(OUTDIR, 'target_star_cumulative_counts.png')
     if os.path.exists(outpath) and not overwrite:
         print('found {} and not overwrite; return'.format(outpath))
         return
 
-    psc.star_catalog_mag_histogram(df, 'phot_rp_mean_mag', savpath=outpath)
+    psc.star_catalog_mag_histogram(cdips_df, 'phot_rp_mean_mag', savpath=outpath)
 
 
 def _get_rms_vs_mag_df(sectors):

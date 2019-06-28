@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from cdips.plotting import vetting_pdf as vp
-
+from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.vetting import centroid_analysis as cdva
 
 from numpy import array as nparr
@@ -339,9 +339,7 @@ def main(sector=None, cdips_cat_vnum=None):
     lcbasedir =  ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
                   'CDIPS_LCS/sector-{}/'.format(sector))
 
-    cdipscatpath = ('/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
-                    'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(cdips_cat_vnum))
-    cdips_df = pd.read_csv(cdipscatpath, sep=';')
+    cdips_df = ccl.get_cdips_catalog(ver=cdips_cat_vnum)
 
     supppath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
                 'cdips_lc_stats/sector-{}/'.format(sector)+

@@ -7,7 +7,7 @@ from numpy import array as nparr
 import astropy.coordinates as coord
 from astropy import units as u, constants as c
 
-catalogpath = '../../data/cluster_data/OC_MG_FINAL_GaiaRp_lt_16_v0.3.csv'
+from cdips.utils import collect_cdips_lightcurves as ccl
 pfrespath = '../../results/cdips_lc_periodfinding/sector-6/initial_period_finding_results_supplemented.csv'
 
 def main():
@@ -21,7 +21,7 @@ def main():
 
     ##########################################
 
-    df = pd.read_csv(catalogpath, sep=';')
+    df = ccl.get_cdips_catalog(ver=0.3)
     if overplot_s6_results:
         pfdf = pd.read_csv(pfrespath)
     else:

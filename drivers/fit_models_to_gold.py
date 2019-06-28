@@ -34,6 +34,7 @@ from astropy.coordinates import SkyCoord
 from cdips.lcproc import detrend as dtr
 from cdips.lcproc import mask_orbit_edges as moe
 from cdips.plotting import vetting_pdf as vp
+from cdips.utils import collect_cdips_lightcurves as ccl
 import make_vetting_multipg_pdf as mvp
 
 """
@@ -122,9 +123,7 @@ def _get_data(sector, cdips_cat_vnum=0.3):
                                  "sector-{}_UNANIMOUS_GOLD.csv".format(sector))
     df = pd.read_csv(classifxn_csv, sep=';')
 
-    cdipscatpath = ('/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
-                    'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(cdips_cat_vnum))
-    cdips_df = pd.read_csv(cdipscatpath, sep=';')
+    cdips_df = ccl.get_cdips_catalog(ver=cdips_cat_vnum)
 
     pfpath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
               'cdips/results/cdips_lc_periodfinding/'

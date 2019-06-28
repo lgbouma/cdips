@@ -11,10 +11,9 @@ python paper_get_CDIPS_star_stats.py &> ../logs/paper_get_CDIPS_star_stats.log
 
 import pandas as pd, numpy as np
 from collections import Counter
+from cdips.utils import collect_cdips_lightcurves as ccl
 
-cdipspath = '/home/luke/local/cdips/catalogs/OC_MG_FINAL_GaiaRp_lt_16_v0.3.csv'
-
-df = pd.read_csv(cdipspath, sep=';')
+df = ccl.get_cdips_catalog(ver=0.3)
 
 n_stars = len(df)
 

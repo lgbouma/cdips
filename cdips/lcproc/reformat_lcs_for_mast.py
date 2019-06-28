@@ -12,8 +12,7 @@ from astropy import units as u, constants as const
 from astropy.coordinates import SkyCoord
 import multiprocessing as mp
 
-cdips_cat_file = ('/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
-                  'OC_MG_FINAL_GaiaRp_lt_16_v0.3.csv')
+from cdips.utils import collect_cdips_lightcurves as ccl
 
 def _map_timeseries_key_to_comment(k):
     kcd = {
@@ -387,7 +386,7 @@ def reformat_worker(task):
 def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
                               nworkers=56, maxworkertasks=1000):
 
-    cdips_df = pd.read_csv(cdips_cat_file, sep=';')
+    cdips_df = ccl.get_cdips_catalog(ver=0.3)
 
     tasks = [(x, cdips_df, outdir, sectornum, cdipsvnum) for x in lcpaths[:300]]
 
@@ -411,7 +410,7 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
 
 def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum):
 
-    cdips_df = pd.read_csv(cdips_cat_file, sep=';')
+    cdips_df = ccl.get_cdips_catalog(ver=0.3)
 
     for lcpath in lcpaths:
 

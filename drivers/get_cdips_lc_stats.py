@@ -16,6 +16,8 @@ import aperturephot as ap
 import os, subprocess, shlex, shutil
 from glob import glob
 
+from cdips.utils import collect_cdips_lightcurves as ccl
+
 def get_cdips_lc_stats(
     sector=6,
     cdipssource_vnum=0.3,
@@ -152,11 +154,7 @@ def supplement_stats_file(
     del df, cgdf, gdf
 
     # merge against CDIPS catalog info
-    catalogfile = (
-        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.
-        format(cdipssource_vnum)
-    )
-    cdipsdf = pd.read_csv(catalogfile, sep=';')
+    cdips_df = ccl.get_cdips_catalog(ver=cdipssource_vnum)
 
     dcols = 'cluster;ext_catalog_name;reference;source_id'
     dcols = dcols.split(';')
