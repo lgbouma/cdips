@@ -1717,7 +1717,7 @@ variability in the TFA light curve.
     \gridline{\fig{tlsresult_sector7.png}{0.45\textwidth}{}}
     \caption{
         Significance thresholds empirically defined for the transiting planet 
-        search described in \S~\ref{subsec:ctois}. Each point represents the 
+        search described in \S~\ref{subsec:identifying_ctois}. Each point represents the 
         TLS periodogram peak signal detection efficiency from one light curve.
         {\it Top.} Sector 6.  {\it Bottom.} Sector 7.
     }
@@ -1779,24 +1779,76 @@ Appendix~\ref{appendix:vetreport}.
 
 \subsection{Objects of Interest}
 \label{subsec:ctois}
-The objects that all vetters identified as planet candidates were then
-fit with the usual \citet{mandel_analytic_2002} model. (CITE BATMAN).
-The resulting fits are shown in Figure XXX.
-The parameters of the planet candidates are given in Table YYY, and
-are also available as cTOIs NNN.01 - MMM.01 on exofop-TESS (LINK).
 
-Different types of observations and analyses are needed to confirm 
-(i) the planetary nature of these signals, and
-(ii) whether the host stars are bonafide cluster members.
-For (i), follow-up photometry, high-resolution imaging, and in some
-cases spectroscopic mass measurement are needed.
-For (ii), one or two radial velocity measurements might kinematically
-exclude cluster membership in a number of cases.
-A full assessment of the target star's age indiciators, including
-photometric rotation signatures, spectroscopic Li and H$\alpha$
-measurements, and even an isochronal analysis, would be helpful.
+\begin{figure*}[t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.9\textwidth]{ctoi_quilt.png}
+	\end{center}
+	\vspace{-0.2cm}
+	\caption{
+    {\bf 12 of the \numberpcs candidate transiting planets identified
+    in this work.} 
+    Models are fit as described in \S~\ref{subsec:ctois}.
+    The full set of model parameters are in Table~XXX and on
+    exofop-TESS.
+	\label{fig:ctoi_quilt}
+	}
+\end{figure*}
 
-%tODO: add plots and descriptions of other nice objects too
+If all vetters identified an object as a planet candidate, we then
+proceeded to fit a transit model to the data.  The procedure closely
+mirrors that used by \citet{bouma_wasp-4b_2019} to create a
+phase-folded light curve for WASP-4.
+
+First, we selected points within 5 transit durations of each transit
+midpoint, using the orbital period, transit duration, and reference
+epoch found from applying TLS to the detrended light curve.  We then
+fitted a line to the out-of-transit flux measurements around each
+transit window, and divided it out.  We then fitted a standard transit
+model using the formulae given by \citet{mandel_analytic_2002} and
+implemented by \citet[][\texttt{BATMAN}]{kreidberg_batman_2015}.  The
+free parameters were the orbital period, the reference epoch, the
+planet to star radius ratio $R_{\rm p}/R_\star$, the orbital distance
+to stellar radius ratio $a/R_\star$, and the inclination $i$.  We
+assumed circular orbits.  To fix the quadratic limb-darkening
+parameters, we collected $T_{\rm eff}$ and $\log g$ from the TIC, and
+then interpolated against the \citet{claret_limb_2017} tables.  For
+stars hotter than the maximal effective temperature of these tables
+($12,000\,{\rm K}$), we simply used the coefficients of the hottest
+star.
+
+We then sampled the posterior probability distribution using the
+\citet{goodman_ensemble_2010} algorithm, as implemented by
+\citet[][\texttt{emcee}]{foreman-mackey_emcee_2013}.  Our main goal in
+this procedure was to provide an accurate ephemeris.  To ensure that
+the reported uncertainties are valid, after performing the initial fit
+using the photometric uncertainties reported in our light curves, we
+rescaled the the uncertainty in each photometric data point to equal
+the root-mean-square deviation of each transit-model subtracted light
+curve. We then refitted each light curve.
+
+The resulting parameters are given in Table YYY, and are also
+available as cTOIs NNN.01 - MMM.01 on exofop-TESS (LINK).
+Figure~\ref{fig:ctoi_quilt} shows the phase-folded lightcurves and
+their best-fitting moels.
+
+The physical parameters quoted in Table YYY, and on exofop-TESS,
+should be considered preliminary, and could be substantially improved
+with an object-by-object analysis.  A few additional assumptions were
+required to report some of the values.  For the stellar radii, we
+assumed the $R_\star$ values and uncertainties reported in the TIC.
+There were a few cases with null uncertainties in the stellar radii --
+for these, we simply invented a relative uncertainty of 30\%, and note
+in the comments that this was done.  The uncertainties in e.g., the
+planetary radii and impact parameters were found using linear error
+propagation theory, under the idealized assumption that the covariance
+between all stellar and planetary parameters was zero.
+
+Finally, the determine the names of the objects -- that is whether
+they were already TOIs, or cTOIs -- we cross-referenced based on a
+combination of the TIC identifier, spatial position, and the ephemeris
+of each object.
 
 
 
@@ -1809,6 +1861,19 @@ a) cluster membership confirmation
 (age indicators, across the board);
 b) verify the planetary nature of the signals
 (seeing-limited photometry, RV mass measurement).
+
+Different types of observations and analyses are needed to confirm 
+(i) the planetary nature of these signals, and
+(ii) whether the host stars are bonafide cluster members.
+For (i), follow-up photometry, high-resolution imaging, and in some
+cases spectroscopic mass measurement are needed.
+For (ii), one or two radial velocity measurements might kinematically
+exclude cluster membership in a number of cases.
+A full assessment of the target star's age indiciators, including
+photometric rotation signatures, spectroscopic Li and H$\alpha$
+measurements, and even an isochronal analysis, would be helpful.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
