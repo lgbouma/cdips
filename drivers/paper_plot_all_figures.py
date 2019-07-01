@@ -35,9 +35,8 @@ def main():
 
     sectors = [6,7]
 
-    # fig N: histogram of CDIPS target star age.
-    plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1)
-    assert 0
+    # fig N: histogram of ages of LC stars 
+    plot_hist_logt(sectors, overwrite=1)
 
     # fig N: wcs quality verification
     plot_wcs_verification(overwrite=1)
@@ -48,26 +47,26 @@ def main():
     # fig N: catalog_to_gaia_match_statistics
     plot_catalog_to_gaia_match_statistics(overwrite=0)
 
+    # fig N: histogram of CDIPS target star age.
+    plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1)
+
     # fig N: RMS vs catalog T mag
     plot_rms_vs_mag(sectors, overwrite=0)
 
     # fig N: histogram (or CDF) of stellar magnitude (T mag)
-    plot_cdf_T_mag(sectors, overwrite=0)
-
-    # fig N: histogram of ages of LC stars 
-    plot_hist_logt(sectors, overwrite=1)
+    plot_cdf_T_mag(sectors, overwrite=1)
 
     # fig N: HRD for CDIPS stars.
-    plot_hrd_scat(sectors, overwrite=0, close_subset=1)
-    plot_hrd_scat(sectors, overwrite=0, close_subset=0)
+    plot_hrd_scat(sectors, overwrite=1, close_subset=1)
+    plot_hrd_scat(sectors, overwrite=1, close_subset=0)
 
     # fig N: pmRA and pmDEC scatter for CDIPS stars.
-    plot_pm_scat(sectors, overwrite=0, close_subset=1)
-    plot_pm_scat(sectors, overwrite=0, close_subset=0)
+    plot_pm_scat(sectors, overwrite=1, close_subset=1)
+    plot_pm_scat(sectors, overwrite=1, close_subset=0)
 
     # fig N: positions of field and cluster stars (currently all cams)
-    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=1)
-    plot_cluster_and_field_star_scatter(sectors=[6], overwrite=1, cams=[1],
+    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=0)
+    plot_cluster_and_field_star_scatter(sectors=[6], overwrite=0, cams=[1],
                                         ccds=[1,2,3,4])
 
     # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
@@ -287,6 +286,10 @@ def plot_cdf_T_mag(sectors, overwrite=0):
         return
 
     df = _get_rms_vs_mag_df(sectors)
+    print('N before finite lc length cut: {}'.format(len(df)))
+    sel = (df['ndet_tf1'] > 1) | (df['ndet_tf2'] > 1) | (df['ndet_tf3'] > 1)
+    df = df[sel]
+    print('N after finite lc length cut: {}'.format(len(df)))
 
     f,ax = plt.subplots(figsize=(4,3))
 
@@ -329,6 +332,12 @@ def plot_hist_logt(sectors, overwrite=0):
     n_total = len(mdf)
     mdf = mdf[~pd.isnull(mdf['k13_logt'])]
     n_with_age = len(mdf)
+
+    # aside for the abstract...
+    sel = (mdf['ndet_tf1'] > 1) | (mdf['ndet_tf2'] > 1) | (mdf['ndet_tf3'] > 1)
+    print('sectors {}: got {} unique_cluster_names'.format(
+        repr(sectors), len(np.unique(mdf[sel]['unique_cluster_name']))
+    ))
 
     f,ax = plt.subplots(figsize=(4,3))
 
@@ -376,6 +385,8 @@ def plot_cdf_cont(sectors, overwrite=0):
         return
 
     df = _get_rms_vs_mag_df(sectors)
+    sel = (df['ndet_tf1'] > 1) | (df['ndet_tf2'] > 1) | (df['ndet_tf3'] > 1)
+    df = df[sel]
 
     f,ax = plt.subplots(figsize=(4,3))
 
@@ -414,6 +425,8 @@ def plot_hrd_scat(sectors, overwrite=0, close_subset=1):
         return
 
     df = _get_rms_vs_mag_df(sectors)
+    sel = (df['ndet_tf1'] > 1) | (df['ndet_tf2'] > 1) | (df['ndet_tf3'] > 1)
+    df = df[sel]
 
     # 2d SCATTER CASE
     if close_subset:
@@ -480,6 +493,8 @@ def plot_pm_scat(sectors, overwrite=0, close_subset=0):
         return
 
     df = _get_rms_vs_mag_df(sectors)
+    sel = (df['ndet_tf1'] > 1) | (df['ndet_tf2'] > 1) | (df['ndet_tf3'] > 1)
+    df = df[sel]
 
     # 2d SCATTER CASE
     if close_subset:
