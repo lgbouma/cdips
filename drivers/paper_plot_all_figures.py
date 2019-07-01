@@ -35,6 +35,10 @@ def main():
 
     sectors = [6,7]
 
+    # fig N: histogram of CDIPS target star age.
+    plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1)
+    assert 0
+
     # fig N: wcs quality verification
     plot_wcs_verification(overwrite=1)
 
@@ -49,6 +53,9 @@ def main():
 
     # fig N: histogram (or CDF) of stellar magnitude (T mag)
     plot_cdf_T_mag(sectors, overwrite=0)
+
+    # fig N: histogram of ages of LC stars 
+    plot_hist_logt(sectors, overwrite=1)
 
     # fig N: HRD for CDIPS stars.
     plot_hrd_scat(sectors, overwrite=0, close_subset=1)
@@ -197,6 +204,55 @@ def plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1):
     psc.star_catalog_mag_histogram(cdips_df, 'phot_rp_mean_mag', savpath=outpath)
 
 
+def plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1):
+
+    mdf = ccl.get_cdips_pub_catalog(ver=OC_MG_CAT_ver)
+
+    outpath = os.path.join(OUTDIR, 'target_star_hist_logt.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    n_total = len(mdf)
+    mdf = mdf[~pd.isnull(mdf['k13_logt'])]
+    n_with_age = len(mdf)
+
+    f,ax = plt.subplots(figsize=(4,3))
+
+    bins = np.arange(5.5,
+                     10.5,
+                     0.5)
+    ax.hist(mdf['k13_logt'], bins=bins, cumulative=False, color='black',
+            fill=False, linewidth=0.5)
+
+    txtstr = '$N_{{\mathrm{{total}}}}$: {}'.format(n_total)
+    txtstr += '\n$N_{{\mathrm{{with\ ages}}}}$: {}'.format(n_with_age)
+    ax.text(
+        0.03, 0.97,
+        txtstr,
+        ha='left', va='top',
+        fontsize='x-small',
+        transform=ax.transAxes
+    )
+
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    ax.set_xlabel('log$_{10}$(age [years])')
+    ax.set_ylabel('Number per bin')
+    ax.set_yscale('log')
+    ax.set_xlim([5.5, 10.5])
+    ax.set_ylim([3e3, 3e5])
+
+    f.tight_layout(pad=0.2)
+    savefig(f, outpath)
+
+
 def _get_rms_vs_mag_df(sectors):
 
     cams = [1,2,3,4]
@@ -255,6 +311,59 @@ def plot_cdf_T_mag(sectors, overwrite=0):
 
     f.tight_layout(pad=0.2)
     savefig(f, outpath)
+
+
+def plot_hist_logt(sectors, overwrite=0):
+
+    prestr = 'sector{}_'.format(sectors[0]) if len(sectors)==1 else ''
+
+    outpath = os.path.join(OUTDIR, prestr+'hist_logt.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    df = _get_rms_vs_mag_df(sectors)
+    cdips_df = ccl.get_cdips_pub_catalog(ver=0.3)
+    mdf = df.merge(cdips_df, how='left', right_on='source_id',
+                   left_on='Gaia-ID')
+    n_total = len(mdf)
+    mdf = mdf[~pd.isnull(mdf['k13_logt'])]
+    n_with_age = len(mdf)
+
+    f,ax = plt.subplots(figsize=(4,3))
+
+    bins = np.arange(5.5,
+                     10.5,
+                     0.5)
+    ax.hist(mdf['k13_logt'], bins=bins, cumulative=False, color='black',
+            fill=False, linewidth=0.5)
+
+    txtstr = '$N_{{\mathrm{{total}}}}$: {}'.format(n_total)
+    txtstr += '\n$N_{{\mathrm{{with\ ages}}}}$: {}'.format(n_with_age)
+    ax.text(
+        0.03, 0.97,
+        txtstr,
+        ha='left', va='top',
+        fontsize='x-small',
+        transform=ax.transAxes
+    )
+
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label.set_fontsize('small')
+    ax.set_xlabel('log$_{10}$(age [years])')
+    ax.set_ylabel('Number per bin')
+    ax.set_yscale('log')
+    ax.set_xlim([5.5, 10.5])
+
+    f.tight_layout(pad=0.2)
+    savefig(f, outpath)
+
 
 
 def plot_cdf_cont(sectors, overwrite=0):
