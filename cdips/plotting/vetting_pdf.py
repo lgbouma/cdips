@@ -757,6 +757,15 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
 
 def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)):
 
+    #FIXME FIXME
+    # TODO: turn the next ~200 lines into a call from "construct unique cluster
+    # name column", or something similar
+    #FIXME FIXME
+    #FIXME FIXME
+    #FIXME FIXME
+
+    # TODO add any of the kharchenko "notes" from his table 3 if u find a match
+
     #
     # first, given cluster name(s), you need to search for kharchenko match.
     #
