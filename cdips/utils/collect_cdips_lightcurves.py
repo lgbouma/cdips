@@ -159,6 +159,27 @@ def get_cdips_catalog(ver=0.3):
     return df
 
 
+def get_cdips_pub_catalog(ver=0.3):
+
+    dir_d = {
+        'brik':'/home/luke/local/cdips/catalogs/',
+        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
+    }
+
+    cdips_stars_dir = dir_d[socket.gethostname()]
+
+    cdips_stars_path = os.path.join(
+        cdips_stars_dir, 'OC_MG_FINAL_v{}_publishable.csv'.format(ver)
+    )
+
+    df = pd.read_csv(cdips_stars_path, sep=';')
+
+    return df
+
+
+
 def get_cdips_sourceids(ver=0.3):
 
     cdips_stars_path = (
