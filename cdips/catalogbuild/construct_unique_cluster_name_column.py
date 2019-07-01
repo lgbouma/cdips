@@ -5,7 +5,7 @@ we need some idea of the cluster names.
 #TODO write ... and generalize to match between pg 5 and this function...
 
 from glob import glob
-import os, textwrap, re
+import os, textwrap, re, requests, time
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from numpy import array as nparr
 
@@ -23,7 +23,7 @@ from astropy.io.votable import from_table, writeto, parse
 
 clusterdir = "/home/lbouma/proj/cdips/data/cluster_data"
 
-DEBUG = True
+DEBUG = False
 
 def main(cdips_cat_vnum=0.3):
 
@@ -40,34 +40,43 @@ def main(cdips_cat_vnum=0.3):
     referencearr = nparr(cdips_df['reference'])
 
     if DEBUG:
-        np.random.seed(49)
-
-        #inds = np.random.choice(np.arange(0, len(sourceid)), size=5000, replace=False)
+        # test on all unique non-nan cluster names.
+        inds = ~pd.isnull(clusterarr)
+        sourceid = sourceid[inds]
+        clusterarr = clusterarr[inds]
+        ras = ras[inds]
+        decs = decs[inds]
+        referencearr = referencearr[inds]
         uarr, inds = np.unique(clusterarr, return_index=True)
-
         sourceid = sourceid[inds]
         clusterarr = clusterarr[inds]
         ras = ras[inds]
         decs = decs[inds]
         referencearr = referencearr[inds]
 
-    res = list( map(get_k13_name_match,
-                    zip(clusterarr, ras, decs, referencearr, repeat(k13)))
-              )
-
-    resdf = pd.DataFrame(res, columns=['k13_name_match', 'how_match', 'have_name_match',
-                                       'have_mwsc_id_match',
-                                       'is_known_asterism', 'not_in_k13',
-                                       'why_not_in_k13'])
-    resdf['source_id'] = sourceid
-
-    outpath = (
+    namematchpath = (
         '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_v{}_with_K13_name_match.csv'.
         format(cdips_cat_vnum)
     )
-    outdf = resdf.merge(cdips_df, how='left', on='source_id')
-    outdf.to_csv(outpath, index=False, sep=';')
-    print('made {}'.format(outpath))
+
+    if not os.path.exists(namematchpath):
+        res = list( map(get_k13_name_match,
+                        zip(clusterarr, ras, decs, referencearr, repeat(k13)))
+                  )
+
+        resdf = pd.DataFrame(res, columns=['k13_name_match', 'how_match', 'have_name_match',
+                                           'have_mwsc_id_match',
+                                           'is_known_asterism', 'not_in_k13',
+                                           'why_not_in_k13'])
+        resdf['source_id'] = sourceid
+
+        mdf = resdf.merge(cdips_df, how='left', on='source_id')
+        mdf.to_csv(namematchpath, index=False, sep=';')
+        print('made {}'.format(namematchpath))
+    else:
+        mdf = pd.read_csv(namematchpath, sep=';')
+
+    import IPython; IPython.embed()
 
     # FIXME
     # TODO: still need to construct MY unique cluster name. as much as possible,
@@ -110,6 +119,8 @@ def get_k13_name_match(task):
     originalname, target_ra, target_dec, reference, k13 = task
 
     cluster = originalname
+    print(42*'#')
+    print(cluster)
 
     have_name_match = False
     have_mwsc_id_match = False
@@ -141,15 +152,8 @@ def get_k13_name_match(task):
                 is_known_asterism, not_in_k13, why_not_in_k13)
 
     is_gaia_member = False
-    if not pd.isnull(cluster):
-        if ( ('Gulliver' in cluster and 'CantatGaudin_2018'
-              in reference)
-            or
-             ('Teutsch_12' in cluster and
-              'CantatGaudin_2018' in reference)
-           ):
-            is_gaia_member = True
-    if is_gaia_member:
+    if 'Gulliver' in cluster and 'CantatGaudin_2018' in reference:
+        is_gaia_member = True
         not_in_k13 = True
         why_not_in_k13 = 'is_gaia_member'
         return (np.nan, how_match, have_name_match, have_mwsc_id_match,
@@ -172,23 +176,16 @@ def get_k13_name_match(task):
 
     #
     # special formatting cases:
-    # * ESO clusters like "ESO_129-32" (K13 format) are read from Dias as
-    #   "ESO_129_32".
     # * Pozzo 1 is Vel OB2
     # * Majaess50 is 10' from FSR0721, from D. Majaess (2012).
     # * Majaess58 is 6' from FSR0775, from D. Majaess (2012).
     # * Ditto for a few from CG2018...
-    # * weird "-" to "_" for Alessi-Teutsch 10.
     # * "Collinder 34" is a sub-cluster of the larger Collinder 33 nebula, not
     #   appreciably different from SAI-24 either. (Saurin+ 2015,
     #   https://arxiv.org/pdf/1502.00373.pdf)
     # * Some catalogs, eg., Cantat-Gaudin's, replaced "vdBergh-Hagen" with "BH"
     # * Coma Star Cluster in Coma Berenices is Melotte 111
     #
-    if cluster.startswith('ESO_'):
-        if '-' not in cluster:
-            _cid = cluster.split('_')[1] + '-' + cluster.split('_')[2]
-            cluster = 'ESO_'+_cid
     if 'Pozzo_1' in cluster:
         cluster = 'Vel_OB2'
         how_match = 'manual_override'
@@ -198,19 +195,10 @@ def get_k13_name_match(task):
     if 'Majaess 58' in cluster:
         cluster = 'FSR_0775'
         how_match = 'manual_override'
-    if 'Alessi Teutsch' in cluster:
-        # e.g., 'Alessi Teutsch 10'
-        cluster = 'Alessi-Teutsch_' + cluster.split(' ')[-1]
-        how_match = 'string_match'
     if 'Alessi_Teutsch_5' in cluster:
         # underscores mess up the duplicate name list
         cluster = "ASCC 118"
-        how_match = 'string_match'
-    #FIXME FIXME: GENERALIZE BELOW TO ALL "CHARACTER CHARACTER NUMBER" TYPE
-    # STRINGS. ALSO DO 'Aveni_Hunter_1,nan,Aveni_Hunter_1,nan' style match.
-    if 'Aveni Hunter 1' in cluster:
-        cluster = "Aveni-Hunter_1"
-        how_match = 'string_match'
+        how_match = 'manual_override'
     if 'Collinder 34' in cluster:
         cluster = 'Collinder_33'
         how_match = 'manual_override'
@@ -222,10 +210,61 @@ def get_k13_name_match(task):
     if 'ScoOB2' in cluster:
         cluster = cluster.replace('ScoOB2','Sco_OB2')
         how_match = 'string_match'
+    if 'USCO' in cluster:
+        cluster = cluster.replace('USCO','Sco_OB2')
+        how_match = 'string_match'
     if "BDSB" in cluster:
         if ' ' not in cluster and "_" not in cluster:
             cluster = cluster.replace("BDSB","BDSB_")
             how_match = 'string_match'
+    if "Casado Alessi 1" in cluster:
+        cluster = "Alessi_1"
+        how_match = 'manual_override'
+    if "Coll140" in cluster:
+        cluster = "Collinder_140"
+        how_match = 'manual_override'
+    if "alphaPer" in cluster:
+        cluster = "Melotte_20"
+        how_match = 'manual_override'
+    if "Trump10" in cluster:
+        cluster = "Trumpler_10"
+        how_match = 'manual_override'
+    if "Trump10" in cluster:
+        cluster = cluster.replace("Trump10","Trumpler_10")
+        how_match = 'manual_override'
+    if "Trump02" in cluster:
+        cluster = cluster.replace("Trump02","Trumpler_2")
+        how_match = 'manual_override'
+
+    # types like: 'Aveni_Hunter_42,nan,Aveni_Hunter_42,nan' need to be recast
+    # to e.g., 'Aveni-Hunter_42,nan,Aveni-Hunter_42,nan' 
+    for m in re.finditer('[a-zA-Z]+_[a-zA-Z]+_[0-9]+', cluster):
+        cluster = cluster.replace(
+            m.group(0),
+            m.group(0).split('_')[0]+"-"+'_'.join(m.group(0).split('_')[1:])
+        )
+
+    # types like: "Aveni Hunter 1,nan,Aveni Hunter 1,nan", or 'Alessi Teutsch
+    # 10' need to follow the same "Alessi-Teutsch_10" syntax
+    for m in re.finditer('[a-zA-Z]+\ [a-zA-Z]+\ [0-9]+', cluster):
+        cluster = cluster.replace(
+            m.group(0),
+            m.group(0).split(' ')[0]+"-"+'_'.join(m.group(0).split(' ')[1:])
+        )
+
+    # reformat ESO clusters like "ESO 129 32" (D14) to "ESO_129-32" (K13 format)
+    for m in re.finditer('ESO\ [0-9]+\ [0-9]+', cluster):
+        cluster = cluster.replace(
+            m.group(0),
+            "ESO_"+'-'.join(m.group(0).split(' ')[1:])
+        )
+
+    # reformat ESO clusters like "ESO_129_32" (CG18) to "ESO_129-32" (K13 format)
+    for m in re.finditer('ESO_[0-9]+_[0-9]+', cluster):
+        cluster = cluster.replace(
+            m.group(0),
+            "ESO_"+'-'.join(m.group(0).split('_')[1:])
+        )
 
     #
     # initial normal match: try matching against replacing spaces with
@@ -249,7 +288,12 @@ def get_k13_name_match(task):
     #
     if not have_name_match:
         for c in clustersplt:
-            res = Simbad.query_objectids(c)
+            try:
+                res = Simbad.query_objectids(c)
+            except requests.exceptions.ConnectionError:
+                time.sleep(15)
+                res = Simbad.query_objectids(c)
+
             try:
                 resdf = res.to_pandas()
             except AttributeError:
@@ -440,9 +484,6 @@ def get_k13_name_match(task):
                 return get_k13_name_match((adopted_name, target_ra, target_dec,
                                            reference, k13))
 
-    #if cluster == 'Alessi 40,Alessi 40':
-    #    import IPython; IPython.embed()
-
     #
     # Check against known asterisms
     #
@@ -475,15 +516,23 @@ def get_k13_name_match(task):
             if c.endswith('B'):
                 c = c.rstrip('B')
 
-            if int(c) in ngc_asterisms:
-                is_known_asterism = True
-                break
+            try:
+                if int(c) in ngc_asterisms:
+                    is_known_asterism = True
+                    break
+            except ValueError:
+                # e.g., "NGC 2467-east", or similiar bs
+                pass
 
             # NGC 1252 was also by Baumgardt 1998.
             # identified by Kos+2018, MNRAS 480 5242-5259 as asterisms
-            if int(c) in [1252, 6994, 7772, 7826]:
-                is_known_asterism = True
-                break
+            try:
+                if int(c) in [1252, 6994, 7772, 7826]:
+                    is_known_asterism = True
+                    break
+            except ValueError:
+                # e.g., "NGC 2467-east"
+                pass
 
     is_gagne_mg = False
     if 'Gagne' in reference:
@@ -500,9 +549,20 @@ def get_k13_name_match(task):
         is_rizzuto_mg = True
         why_not_in_k13 = 'is_rizzuto_mg'
 
+    is_bell32ori_mg = False
+    if 'Bell_2017_32Ori' in reference:
+        is_bell32ori_mg = True
+        why_not_in_k13 = 'is_bell_mg'
+
+    is_kraus_mg = False
+    if 'Kraus' in reference:
+        is_kraus_mg = True
+        why_not_in_k13 = 'is_kraus_mg'
+
     not_in_k13 = False
     if (
-        (is_gagne_mg or is_oh_mg or is_rizzuto_mg or is_in_index)
+        (is_gagne_mg or is_oh_mg or is_rizzuto_mg or is_bell32ori_mg or
+         is_kraus_mg or is_in_index)
         and
         not have_name_match
     ):
