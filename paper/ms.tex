@@ -551,18 +551,20 @@ concatenated.
 To assign unique cluster names, we adopted the name matched against
 \citet{Kharchenko_et_al_2013} whenever possible, following the
 procedure described in Appendix~\ref{appendix:uniquenames}.  For
-moving groups not identified in \citet{Kharchenko_et_al_2013}, we
-adopted the constellation-based naming convention from
+moving groups not identified in \citet{Kharchenko_et_al_2013}, we used
+the constellation-based naming convention from
 \citet{gagne_banyan_XI_2018}.  Otherwise, we used the name reported by
-the original catalog.  This process reduced 16,425 name permutations
-down to 3,216 unique cluster names.  Though we have made every effort
-to avoid duplicates, a small number may remain in this column, so we
-advise inspection of the \texttt{cluster} and \texttt{reference}
-columns rather than the \texttt{unique_cluster_name} column when
-analyzing individual objects of interest.  Nonetheless, 87.7\% of the
-$\sim$million unique target stars are matched to clusters within
-\citet{Kharchenko_et_al_2013}, and 88.8\% are assigned a cluster name.
-The remainder are mostly the young stars from \citet{zari_3d_2018}.
+the original catalog claiming membership.  This process reduced 16,425
+name permutations down to 3,216 unique cluster names.  Though we have
+made every effort to avoid duplicates, a small number may remain, so we
+advise inspection of the \texttt{cluster} column
+as well as the references given in the
+\texttt{reference} column rather than using the
+\texttt{unique\_cluster\_name} column to analyze individual objects
+of interest.  Nonetheless, 87.7\% of the $\sim$million unique target
+stars are matched to clusters within \citet{Kharchenko_et_al_2013},
+and 88.8\% are assigned a cluster name.  The remainder are mostly the
+young stars from \citet{zari_3d_2018}.
 
 The resulting CDIPS target star list is given in Table~N.
 The distribution of target star brightnesses is shown in
@@ -1804,7 +1806,7 @@ Appendix~\ref{appendix:vetreport}.
 \begin{figure*}[t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.9\textwidth]{ctoi_quilt.png}
+		\includegraphics[width=0.9\textwidth]{tlsresult_sector6.png}%{ctoi_quilt.png}
 	\end{center}
 	\vspace{-0.2cm}
 	\caption{
@@ -2010,30 +2012,30 @@ against the \citet{Kharchenko_et_al_2013} name whenever possible,
 since this was the largest available catalog, and it also included
 homogeneous age determinations for many of the clusters.
 To find the matching name, in order of precedence we
-\begin{enumerate}[(i)]
-  \item checked for direct string matches from
+\begin{enumerate}
+  \item Checked for direct string matches from
     \citet{Kharchenko_et_al_2013} clusters with determined parameters;
-  \item checked whether the SIMBAD online name resolving service had
+  \item Checked whether the SIMBAD online name resolving service \citep{wenger_simbad_2000} had
     any direct string matches against \citet{Kharchenko_et_al_2013}
     clusters with determined parameters;
-  \item checked for string matches in the full
+  \item Checked for string matches in the full
     \citet{Kharchenko_et_al_2013} index (including clusters without
     determined parameters);
-  \item searched for spatial matches between each star and cluster
+  \item Searched for spatial matches between each star and cluster
     centers from \citet{Kharchenko_et_al_2013} within 10 arcminutes.
     In cases with multiple cluster matches, we ignored candidate
     matches to avoid assigning incorrect names;
-  \item checked the WEBDA double name
+  \item Checked the WEBDA double name
     list\footnote{\url{https://webda.physics.muni.cz/double_names.html}},
-    and repeated (i)-(iv).
+    and repeated Steps 1-4 with any matches.
 \end{enumerate}
 
-A few edge-cases, including for instance sub-clusters within larger
+A few edge-cases, including for instance sub-clusters  larger
 star-forming complexes like in Sco-Cen or Collinder~33, were 
-manually resolved to the extent feasible \citep[][give
+manually resolved to the extent feasible (\citealt{rizzuto_multidimensional_2011}
+and \citealt{saurin_isolating_2015} give
 detailed pictures of the complex morphologies that frequently arise in
-very young star-forming
-regions]{rizzuto_multidimensional_2011,saurin_isolating_2015}.
+young star-forming regions).
 
 The procedure described above failed to yield matches for a few of the
 infrared clusters identified by \citet{majaess_discovering_2013} and
