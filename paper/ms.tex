@@ -29,7 +29,7 @@
 \newcommand{\sVInumberlcs}{67{,}601\ }  % 2019/06/20 not allnan
 \newcommand{\sVIInumberlcs}{91{,}736\ }  % 2019/06/20 not allnan
 \newcommand{\numberlcs}{159{,}337\ } % 2019/06/20 sum
-\newcommand{\numberclusters}{XXX\ }
+\newcommand{\numberclusters}{596\ } % 2019/07/01 paper_plot_all_figures.py
 
 \newcommand{\stscilink} {\url{archive.stsci.edu/prepds/cdips}}
 
@@ -43,7 +43,6 @@
 \begin{document}
 
 \title{
-  The Cluster Difference Imaging Photometric Survey (CDIPS).  I.
   Light Curves \& Planet Candidates in Open Clusters from TESS Sectors 6 \& 7
 }
 
@@ -76,9 +75,10 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   photometrically monitor almost every star cluster in
   the solar neighborhood.
   % Aims
-  The CDIPS project is processing the TESS
-  full-frame images and making light curves of stars that could be
-  members of stellar associations, moving groups, or open clusters.
+  As part of the Cluster Difference Imaging Photometric Survey
+  (CDIPS), we have been processing the TESS full-frame images and
+  making light curves of stars that could be members of stellar
+  associations, moving groups, or open clusters.
   %
   Our eventual hope is to discover giant transiting planets with known
   ages, and probe the exoplanet size and separation distributions for
@@ -91,13 +91,13 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   % Methods
   We describe in detail the image subtraction and time-series analysis 
   techniques we used to create the light curves, which
-  have noise properties in agreement with theoretical expectations.
+  have noise properties that agree with theoretical expectations.
   % Results
   We then highlight the \numberpcs planet candidates we identified in
   an initial search, describe the vetting procedures that they have
   survived, and emphasize the additional spectroscopic, photometric,
-  and imaging observations that are needed to verify that these
-  candidates are in fact planets.
+  and imaging observations that are needed to verify (i) that these
+  candidates are planets and (ii) that the host stars are cluster members.
   %
   We also comment on the possible use of the light curve sample for
   studies of stellar rotation evolution, and binary eccentricity
@@ -415,7 +415,7 @@ Figure~\ref{fig:xmatch_info}.  The distances between matches is
 typically below 1 arcsecond.  The Dias catalog shows somewhat stronger
 crowding effects at the faint end compared to the Kharchenko catalog.
 The Kharchenko catalog also has a more lop-sided distribution of true
-{\it vs.} predicted $G$-band magnitudes.
+{\it vs.}$\,$predicted $G$-band magnitudes.
 
 
 \subsection{Smaller catalogs: moving groups and stellar associations}
@@ -443,19 +443,19 @@ Gaia-DR1 parallaxes, to photometric searches for infrared excesses, to
 spectroscopic studies including RVs, H$\alpha$
 emission, and Li absorption.
 
-For the Gagne et al{.} catalogs, we searched the Gaia-DR2 archive for
-sources within 10 arcseconds of the listed positions.  If Gagne et
+For the Gagn\'e et al{.} catalogs, we searched the Gaia-DR2 archive for
+sources within 10 arcseconds of the listed positions.  If Gagn\'e et
 al{.} gave a proper motion, we required that the sign of each the Gaia
-proper motion components match that of the Gagne values (the stated
+proper motion components match that of the Gagn\'e values (the stated
 proper motion uncertainties seemed to have been underestimated).  We
 also imposed a $G<18$ cut on any putative matches.  Of 3012 moving
-group members collected from the three combined Gagne et al{.}
+group members collected from the three combined Gagn\'e et al{.}
 catalogs, we found 2702 matches.
 
 The \citet{kraus_tucanahor_2014}, \citet{roser_deep_2011}, and
 \citet{bell_32ori_2017} studies reported members in Tucana-Horologium,
 the Hyades, and 32$\,$Ori respectively.  Applying the same procedure as
-for the Gagne catalogs gave 187, 684, and 119 best-neighbors
+for the Gagn\'e catalogs gave 187, 684, and 119 best-neighbors
 respectively, compared to 205, 724, and 141 initially reported
 members.  Note that \citet{kraus_tucanahor_2014} found that only
 $\sim$70\% of their listed members have spectroscopic indicators
@@ -554,9 +554,9 @@ Stars reported in multiple catalogs have all available reference information
 concatenated.  
 
 To assign unique cluster names, we adopted the name matched against
-\citet{Kharchenko_et_al_2013} whenever possible, following the
-procedure described in Appendix~\ref{appendix:uniquenames}.  For
-moving groups not identified in \citet{Kharchenko_et_al_2013}, we used
+\citet{Kharchenko_et_al_2013} whenever possible.
+Appendix~\ref{appendix:uniquenames} describes  how this was done in detail.
+For moving groups not identified in \citet{Kharchenko_et_al_2013}, we used
 the constellation-based naming convention from
 \citet{gagne_banyan_XI_2018}.  Otherwise, we used the name reported by
 the original catalog claiming membership.  This process reduced 16,425
@@ -605,7 +605,7 @@ typical age of 100$\,$Myr.
 
 We reduced the TESS images to light curves by performing a sequence of
 steps using stand-alone programs.
-Our overall method is in the spirit of the reduction approaches described
+Our overall method is in the spirit of the reduction approaches developed
 by \citet{Pal_2009}, \citet{huang_high-precision_2015}, \citet{soares-furtado_image_2017} and
 \citet{oelkers_precision_2018}; a conceptual overview is given in
 Figure~\ref{fig:pipeline}.
@@ -615,19 +615,20 @@ Processing Operations Center at NASA Ames (\S~\ref{subsec:observations}).
 We then perform a collection of
 preparatory steps, including source extraction of bright stars,
 astrometric verification, and coarse simple aperture
-photometry (\S~\ref{subsec:preparation}).  Using the shape values from
-the initial astrometry, we select an astrometric reference frame to
+photometry of bright stars (\S~\ref{subsec:preparation}).  Using the metadata
+collected from these initial steps, we select an astrometric reference frame to
 which we transform all of the calibrated images.  We construct a
-photometric reference by stacking a collection of frames,
-convolve the transformed frames to this photometric reference, and
-subtract (\S~\ref{subsec:imagesubtraction}).  We perform aperture
+photometric reference by stacking a subset of these transformed frames, after
+having convolved the frames to match the stellar profiles of an intermediate
+reference frame. Finally, we
+subtract each target frame from the photometric reference (\S~\ref{subsec:imagesubtraction}).
+We perform aperture
 photometry on the subtracted images using positions projected onto the
-frame from Gaia DR2.  
+frame from the Gaia DR2 source catalog.  
 We detrend the resulting light curves
 (\S~\ref{subsec:lcdetrending}).  The resulting white noise and red noise properties
 of the light curves, and a few
 interesting cases of variability, are discussed in \S~\ref{sec:results}.
-
 
 
 
@@ -848,10 +849,10 @@ masked, and thus do not have measureable centroid positions.
 The errors are typically largest in the corners of the field of view,
 where the non-linearity of the focal plane is most significant, and
 where the corrections required by the SIP coefficients are largest.
-The final sub-panel of Figure~\ref{fig:astrometricresidual} is a
-sanity check on the location of the projected positions, and also
-gives some context for our chosen aperture radii of 1, 1.5, and 2.25
-pixels.
+%The final sub-panel of Figure~\ref{fig:astrometricresidual} is a
+%sanity check on the location of the projected positions, and also
+%gives some context for our chosen aperture radii of 1, 1.5, and 2.25
+%pixels.
 
 Finally, we use \texttt{fiphot} to perform aperture photometry on the
 bright stars from the
