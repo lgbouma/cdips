@@ -245,7 +245,7 @@ brighter than $T=16$ will be observed in the full-frame images over
 the first two years of TESS observations.  The actual number may be
 larger, as cluster membership catalogs are not yet complete, even at
 these relatively bright magnitudes \citep[{\it
-e.g.},][]{cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019}.
+e.g.},][]{roser_nine_RSG_2016,cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019}.
 % Our target list currently sits at $\approx 1.0\times10^6$ candidate
 % young stars, perhaps one-third of which are bonafide cluster members
 % (see \S~\ref{sec:starselection}).
@@ -489,6 +489,8 @@ moving groups or open clusters, their reported youth and proximity to star
 forming regions justifies their inclusion in our search sample.
 
 
+
+
 \subsection{Summary of selected stars}
 \label{subsec:ocmgsummary}
 
@@ -542,12 +544,31 @@ membership catalogs.
 multiple authors.  The largest number of stars come from
 \citealt{dias_proper_2014} (44.3\% of stars), \citealt{Kharchenko_et_al_2013}
 (17.3\%), \citealt{cantat-gaudin_gaia_2018} (16.7\%), and \citealt{zari_3d_2018}
-(11.1\%).
+(11.1\%). %FIXME how many in PMS vs UMS?
 Stars reported in multiple catalogs have all available reference information
 concatenated.  
+
+To assign unique cluster names, we adopted the name matched against
+\citet{Kharchenko_et_al_2013} whenever possible, following the
+procedure described in Appendix~\ref{appendix:uniquenames}.  For
+moving groups not identified in \citet{Kharchenko_et_al_2013}, we
+adopted the constellation-based naming convention from
+\citet{gagne_banyan_XI_2018}.  Otherwise, we used the name reported by
+the original catalog.  This process reduced 16,425 name permutations
+down to 3,216 unique cluster names.  Though we have made every effort
+to avoid duplicates, a small number may remain in this column, so we
+advise inspection of the \texttt{cluster} and \texttt{reference}
+columns rather than the \texttt{unique_cluster_name} column when
+analyzing individual objects of interest.  Nonetheless, 87.7\% of the
+$\sim$million unique target stars are matched to clusters within
+\citet{Kharchenko_et_al_2013}, and 88.8\% are assigned a cluster name.
+The remainder are mostly the young stars from \citet{zari_3d_2018}.
+
 The resulting CDIPS target star list is given in Table~N.
 The distribution of target star brightnesses is shown in
 Figure~\ref{fig:cdips_targets}.
+
+
 
 
 
@@ -1764,7 +1785,7 @@ The classifications we used assessed:
     We therefore re-assess the membership status on a case-by-case basis 
     through inspection of the available astrometry and photometry.
     Known asterisms are also omitted at this point
-    \citep[{\it e.g.},][]{sulentic_revised_1973,kos_galah_2018}.
+    \citep[{\it e.g.},][]{sulentic_revised_1973,baumgardt_asterisms_1998,kos_galah_2018}.
     %
     \item {\it Photometric blends}. Tags are created to highlight whether the 
     depth of the photometric signal shows a strong dependence on aperture 
@@ -1980,6 +2001,56 @@ We advise use of our \texttt{TMID\_BJD} column, which gives the
 mid-time of each exposure in the BJD$_{\rm TDB}$ time system, which
 is the defacto standard in exoplanet and stellar
 astronomy~\citep{eastman_achieving_2010}.
+
+\section{Assigning unique names to each cluster}
+\label{appendix:uniquenames}
+
+In assigning a single unique cluster name to each star, we matched
+against the \citet{Kharchenko_et_al_2013} name whenever possible,
+since this was the largest available catalog, and it also included
+homogeneous age determinations for many of the clusters.
+To find the matching name, in order of precedence we
+\begin{enumerate}[(i)]
+  \item checked for direct string matches from
+    \citet{Kharchenko_et_al_2013} clusters with determined parameters;
+  \item checked whether the SIMBAD online name resolving service had
+    any direct string matches against \citet{Kharchenko_et_al_2013}
+    clusters with determined parameters;
+  \item checked for string matches in the full
+    \citet{Kharchenko_et_al_2013} index (including clusters without
+    determined parameters);
+  \item searched for spatial matches between each star and cluster
+    centers from \citet{Kharchenko_et_al_2013} within 10 arcminutes.
+    In cases with multiple cluster matches, we ignored candidate
+    matches to avoid assigning incorrect names;
+  \item checked the WEBDA double name
+    list\footnote{\url{https://webda.physics.muni.cz/double_names.html}},
+    and repeated (i)-(iv).
+\end{enumerate}
+
+A few edge-cases, including for instance sub-clusters within larger
+star-forming complexes like in Sco-Cen or Collinder~33, were 
+manually resolved to the extent feasible \citep[][give
+detailed pictures of the complex morphologies that frequently arise in
+very young star-forming
+regions]{rizzuto_multidimensional_2011,saurin_isolating_2015}.
+
+The procedure described above failed to yield matches for a few of the
+infrared clusters identified by \citet{majaess_discovering_2013} and
+included in the \citet{dias_proper_2014} catalog.
+For these cases, we used the name given by \citet{dias_proper_2014}.
+
+The Hyades and a number of other nearby moving groups were also
+missed, since they were not in the \citet{Kharchenko_et_al_2013}
+catalog.  For moving groups not identified in
+\citet{Kharchenko_et_al_2013}, we adopted the constellation-based
+naming convention from \citet{gagne_banyan_XI_2018}.  
+
+Finally, the procedure enumerated above did not yield matches for
+recently discovered clusters, such as the ``RSG'' clusters found by
+\citet{roser_nine_RSG_2016} and the ``Gulliver'' clusters from
+\citet{cantat-gaudin_gaia_2018}.  In these cases, we used the names
+given by the original authors.
 
 \section{Vetting Document Description}
 \label{appendix:vetreport}
