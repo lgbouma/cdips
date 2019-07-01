@@ -76,13 +76,50 @@ def main(cdips_cat_vnum=0.3):
     else:
         mdf = pd.read_csv(namematchpath, sep=';')
 
-    import IPython; IPython.embed()
+    mdf['unique_cluster_name'] = list(map(
+        get_unique_cluster_name, zip(mdf.iterrows()))
+    )
 
+    import IPython; IPython.embed()
     # FIXME
     # TODO: still need to construct MY unique cluster name. as much as possible,
     # this is the K13 name. however for any Gulliver objects, or things for
     # which it's not in K13 but is known to be missing (Hyades, RSG1/7/8, ..), we
     # still want to list names.
+
+
+def get_unique_cluster_name(task):
+    # ix = index
+    # mdfr = row of merged data frame
+    ix, mdfr = task[0][0], task[0][1]
+
+    if not pd.isnull(mdfr['k13_name_match']):
+        return mdfr['k13_name_match']
+
+    if 'is_zari' in mdfr['why_not_in_k13']:
+        return np.nan
+
+    new_cluster_groups = ['Gulliver', 'RSG']
+    for _n in new_cluster_groups:
+        if _n in mdfr['cluster']:
+            cluster = str(mdfr['cluster'])
+            for c in cluster.split(','):
+                if _n in c:
+                    return c
+
+    cluster = str(mdfr['cluster'])
+    # hyades
+    if 'HYA' in cluster or 'Hyades' in cluster:
+        return 'Hyades'
+
+    if (
+        pd.isnull(mdfr['k13_name_match']) and
+        mdfr['why_not_in_k13'] in
+        ['is_gagne_mg','is_oh_mg','is_rizzuto_mg','is_bell_mg','is_kraus_mg']
+    ):
+        for c in cluster.split(','):
+            if not pd.isnull(c):
+                return c
 
 
 
