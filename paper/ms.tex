@@ -497,15 +497,20 @@ forming regions justifies their inclusion in our search sample.
 \begin{figure}[t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.45\textwidth]{target_star_cumulative_counts.png}
+    %\includegraphics[width=0.45\textwidth]{target_star_cumulative_counts.png}
+    \gridline{\fig{target_star_cumulative_counts.png}{0.45\textwidth}{}}
+    \vspace{-0.8cm}
+    \gridline{\fig{target_star_hist_logt.png}{0.45\textwidth}{}}
 	\end{center}
-	\vspace{-0.2cm}
+	\vspace{-0.8cm}
 	\caption{
-    {\bf Cumulative number of target stars as
-    a function of Gaia $Rp$-band magnitude.}  The selected stars are
+    {\it Top.} Cumulative number of target stars as
+    a function of Gaia $Rp$-band magnitude.  The selected stars are
     either candidate members of clusters, or else have other youth
     indicators (see \S~\ref{sec:starselection}). We only consider
     stars with $G_{\rm Rp} < 16$.
+    {\it Bottom.} Histogram of target star ages, for the subset of
+    stars with ages matched against \citet{Kharchenko_et_al_2013}.
 	\label{fig:cdips_targets}
 	}
 \end{figure}
@@ -565,11 +570,14 @@ of interest.  Nonetheless, 87.7\% of the $\sim$million unique target
 stars are matched to clusters within \citet{Kharchenko_et_al_2013},
 and 88.8\% are assigned a cluster name.  The remainder are mostly the
 young stars from \citet{zari_3d_2018}.
+Ages and their uncertainties are then merged against the 
+parameters reported by \citet{Kharchenko_et_al_2013}.
 
 The resulting CDIPS target star list is given in Table~N.
-The distribution of target star brightnesses is shown in
-Figure~\ref{fig:cdips_targets}.
-
+The cumulative distribution of target star brightnesses, as well as a
+histogram of the ages, is shown in Figure~\ref{fig:cdips_targets}.
+Relative to field stars, our target star sample is young, with a
+typical age of 100$\,$Myr.
 
 
 

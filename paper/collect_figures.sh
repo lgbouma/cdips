@@ -40,6 +40,9 @@ cp ${fdir}pm_scat_close_subset.png ${pdir}pm_scat_close_subset.png
 cp ${fdir}target_star_cumulative_counts.png \
    ${pdir}target_star_cumulative_counts.png
 
+cp ${fdir}target_star_hist_logt.png \
+   ${pdir}target_star_hist_logt.png
+
 # catalog matching statistics
 cp ${fdir}catalog_to_gaia_match_statistics_MWSC.png \
    ${pdir}mwscmatchstats.png
