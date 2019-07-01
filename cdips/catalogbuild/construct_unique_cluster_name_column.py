@@ -2,8 +2,6 @@
 we need some idea of the cluster names.
 """
 
-#TODO write ... and generalize to match between pg 5 and this function...
-
 from glob import glob
 import os, textwrap, re, requests, time
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
@@ -23,11 +21,10 @@ from astropy.io.votable import from_table, writeto, parse
 
 clusterdir = "/home/lbouma/proj/cdips/data/cluster_data"
 
-DEBUG = False
-
 def main(cdips_cat_vnum=0.3):
 
-    # cluster;dec;dist;ext_catalog_name;parallax;phot_bp_mean_mag;phot_g_mean_mag;phot_rp_mean_mag;pmdec;pmra;ra;reference;source_id
+    # cluster;dec;dist;ext_catalog_name;parallax;phot_bp_mean_mag;
+    # phot_g_mean_mag;phot_rp_mean_mag;pmdec;pmra;ra;reference;source_id
     cdips_df = ccl.get_cdips_catalog(ver=cdips_cat_vnum)
 
     # Name,Type,MWSC,ra,dec, etc.
@@ -39,20 +36,19 @@ def main(cdips_cat_vnum=0.3):
     decs = nparr(cdips_df['dec'])
     referencearr = nparr(cdips_df['reference'])
 
-    if DEBUG:
-        # test on all unique non-nan cluster names.
-        inds = ~pd.isnull(clusterarr)
-        sourceid = sourceid[inds]
-        clusterarr = clusterarr[inds]
-        ras = ras[inds]
-        decs = decs[inds]
-        referencearr = referencearr[inds]
-        uarr, inds = np.unique(clusterarr, return_index=True)
-        sourceid = sourceid[inds]
-        clusterarr = clusterarr[inds]
-        ras = ras[inds]
-        decs = decs[inds]
-        referencearr = referencearr[inds]
+    # first, generate names for all unique non-nan cluster names.
+    inds = ~pd.isnull(clusterarr)
+    sourceid = sourceid[inds]
+    clusterarr = clusterarr[inds]
+    ras = ras[inds]
+    decs = decs[inds]
+    referencearr = referencearr[inds]
+    uarr, inds = np.unique(clusterarr, return_index=True)
+    sourceid = sourceid[inds]
+    clusterarr = clusterarr[inds]
+    ras = ras[inds]
+    decs = decs[inds]
+    referencearr = referencearr[inds]
 
     namematchpath = (
         '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_v{}_with_K13_name_match.csv'.
@@ -64,7 +60,8 @@ def main(cdips_cat_vnum=0.3):
                         zip(clusterarr, ras, decs, referencearr, repeat(k13)))
                   )
 
-        resdf = pd.DataFrame(res, columns=['k13_name_match', 'how_match', 'have_name_match',
+        resdf = pd.DataFrame(res, columns=['k13_name_match', 'how_match',
+                                           'have_name_match',
                                            'have_mwsc_id_match',
                                            'is_known_asterism', 'not_in_k13',
                                            'why_not_in_k13'])
@@ -73,19 +70,170 @@ def main(cdips_cat_vnum=0.3):
         mdf = resdf.merge(cdips_df, how='left', on='source_id')
         mdf.to_csv(namematchpath, index=False, sep=';')
         print('made {}'.format(namematchpath))
+
     else:
         mdf = pd.read_csv(namematchpath, sep=';')
 
-    mdf['unique_cluster_name'] = list(map(
-        get_unique_cluster_name, zip(mdf.iterrows()))
+    uniqpath = (
+        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_v{}_uniq.csv'.
+        format(cdips_cat_vnum)
     )
 
+    if not os.path.exists(uniqpath):
+        mdf['unique_cluster_name'] = list(map(
+            get_unique_cluster_name, zip(mdf.iterrows()))
+        )
+
+        cols = ['unique_cluster_name', 'k13_name_match', 'how_match',
+                'have_name_match', 'have_mwsc_id_match', 'is_known_asterism',
+                'not_in_k13', 'why_not_in_k13', 'source_id', 'cluster', 'dec',
+                'dist', 'ext_catalog_name', 'parallax', 'phot_bp_mean_mag',
+                'phot_g_mean_mag', 'phot_rp_mean_mag', 'pmdec', 'pmra', 'ra',
+                'reference']
+
+        mdf[cols].to_csv(uniqpath, index=False, sep=';')
+        print('made {}'.format(uniqpath))
+
+    else:
+        mdf = pd.read_csv(uniqpath, sep=';')
+
+    # finally, merge against the whole cdips dataframe. using mdf as a
+    # lookup table. this is slightly off, b/c spatial matches will be slightly
+    # different. however they are a small subset, and it's better than running
+    # the above for 1e6 cases, vs 16,000
+    subdf = mdf[['unique_cluster_name', 'k13_name_match', 'how_match',
+                 'have_name_match', 'have_mwsc_id_match', 'is_known_asterism',
+                 'not_in_k13', 'why_not_in_k13', 'cluster']]
+
+    print('beginning big merge...')
+    fdf = cdips_df.merge(subdf, on='cluster', how='left')
+
+    print(42*'#')
+    print('# unique cluster names: {}'.format(
+        len(np.unique(
+            fdf[~pd.isnull(fdf['unique_cluster_name'])]['unique_cluster_name'])
+        ))
+    )
+    print('fraction with k13 name match: {:.5f}'.format(
+        len(fdf[~pd.isnull(fdf['k13_name_match'])])/len(fdf)
+    ))
+    print('fraction with any unique name: {:.5f}'.format(
+        len(fdf[~pd.isnull(fdf['unique_cluster_name'])])/len(fdf)
+    ))
+
+    #
+    # merge fdf k13_name_match against K13 index, and get updated comments.
+    # join "why_not_in_k13" with "Source object type" "SType" from K13 index.
+    # this gives the "comments" column to be published.
+    #
+    Vizier.ROW_LIMIT = -1
+    catalog_list = Vizier.find_catalogs('J/A+A/558/A53')
+    catalogs = Vizier.get_catalogs(catalog_list.keys())
+    k13_index = catalogs[1].to_pandas()
+    for c in k13_index.columns:
+        if c != 'N':
+            k13_index[c] = k13_index[c].str.decode('utf-8')
+
+    k13_df = k13
+
+    styped = {
+        "ass":"stellar association",
+        "ast":"Dias: possible asterism/dust hole/star cloud",
+        "dub":"Dias: dubious, objects considered doubtful by the DSS images inspection",
+        "emb":"embedded open cluster/cluster associated with nebulosity",
+        "glo":"globular cluster/possible globular cluster",
+        "irc":"infrared cluster",
+        "irg":"infrared stellar group",
+        "mog":"Dias: possible moving group",
+        "non":"Dias: non-existent NGC/ objects not found in DSS images inspection",
+        "rem":"Possible cluster remnant",
+        "var":"clusters with variable extinction"
+    }
+
+    k13_index['STypeComment'] = k13_index['SType'].map(styped)
+
+    # in order to do the desired name join, must remove duplicates from k13
+    # index. since we only care about the comments, keep "last" works from
+    # inspection.
+    ids = k13_index['Name']
+    print('removing duplicates from K13 index...\n{}'.format(repr(
+        k13_index[ids.isin(ids[ids.duplicated()])].sort_values(by='Name'))))
+
+    k13_index = k13_index.drop_duplicates(subset=['Name'], keep='last')
+
+    _df = fdf.merge(k13_index, left_on='k13_name_match', right_on='Name',
+                    how='left')
+
+    assert len(_df) == len(fdf)
+
+    comment = _df['why_not_in_k13']
+    stypecomment = _df['STypeComment']
+
+    _df['comment'] = comment.map(str) + ". " + stypecomment.map(str)
+    _df['comment'] = _df['comment'].map(lambda x: x.replace('nan',''))
+    _df['comment'] = _df['comment'].map(lambda x: x.lstrip('. ').rstrip('.  '))
+
+    # unique comments include:
+    # array(['',
+    #    'Dias: dubious, objects considered doubtful by the DSS images inspection',
+    #    'Dias: non-existent NGC/ objects not found in DSS images inspection',
+    #    'Dias: possible asterism/dust hole/star cloud',
+    #    'K13index: duplicated/coincides with other cluster',
+    #    'K13index: duplicated/coincides with other cluster. Dias: dubious, objects considered doubtful by the DSS images inspection',
+    #    'K13index: duplicated/coincides with other cluster. Dias: non-existent NGC/ objects not found in DSS images inspection',
+    #    'K13index: duplicated/coincides with other cluster. clusters with variable extinction',
+    #    'K13index: duplicated/coincides with other cluster. embedded open cluster/cluster associated with nebulosity',
+    #    'K13index: duplicated/coincides with other cluster. infrared cluster',
+    #    'K13index: duplicated/coincides with other cluster. stellar association',
+    #    'K13index: possibly this is a cluster, but parameters are not determined',
+    #    'K13index: possibly this is a cluster, but parameters are not determined. Dias: dubious, objects considered doubtful by the DSS images inspection',
+    #    'K13index: possibly this is a cluster, but parameters are not determined. Dias: non-existent NGC/ objects not found in DSS images inspection',
+    #    'K13index: possibly this is a cluster, but parameters are not determined. infrared cluster',
+    #    'K13index: possibly this is a cluster, but parameters are not determined. stellar association',
+    #    'K13index: this is not a cluster',
+    #    'K13index: this is not a cluster. Dias: dubious, objects considered doubtful by the DSS images inspection',
+    #    'K13index: this is not a cluster. Dias: non-existent NGC/ objects not found in DSS images inspection',
+    #    'K13index: this is not a cluster. Dias: possible asterism/dust hole/star cloud',
+    #    'K13index: this is not a cluster. Possible cluster remt',
+    #    'K13index: this is not a cluster. infrared cluster',
+    #    'Majaess IR cluster match missing in K13', 'Possible cluster remt',
+    #    'clusters with variable extinction',
+    #    'embedded open cluster/cluster associated with nebulosity',
+    #    'infrared cluster', 'is_bell_mg', 'is_gagne_mg',
+    #    'is_gagne_mg. infrared cluster',
+    #    'is_gagne_mg. stellar association', 'is_gaia_member',
+    #    'is_kraus_mg', 'is_oh_mg', 'is_oh_mg. stellar association',
+    #    'is_rizzuto_mg. stellar association', 'known missing from K13',
+    #    'stellar association']
+    fdf['comment'] = _df['comment']
+    del _df
+
+    #
+    # merge against K13 ages. report "k13_logt" and "k13_e_logt"
+    #
+    _df = fdf.merge(k13_df, left_on='k13_name_match', right_on='Name',
+                    how='left')
+    assert len(_df) == len(fdf)
+    fdf['k13_logt'] = _df['logt']
+    fdf['k13_e_logt'] = _df['e_logt']
+
+    # reformat for table to publish
+    scols = ['source_id', 'cluster', 'reference', 'ext_catalog_name', 'ra',
+             'dec', 'pmra', 'pmdec', 'parallax', 'phot_g_mean_mag',
+             'phot_bp_mean_mag', 'phot_rp_mean_mag', 'k13_name_match',
+             'unique_cluster_name', 'how_match', 'not_in_k13', 'comment',
+             'k13_logt', 'k13_e_logt']
+    _df = fdf[scols]
+
+    pubpath = (
+        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_v{}_publishable.csv'.
+        format(cdips_cat_vnum)
+    )
+    _df.to_csv(pubpath, index=False, sep=';')
+    print('made {}'.format(pubpath))
+
     import IPython; IPython.embed()
-    # FIXME
-    # TODO: still need to construct MY unique cluster name. as much as possible,
-    # this is the K13 name. however for any Gulliver objects, or things for
-    # which it's not in K13 but is known to be missing (Hyades, RSG1/7/8, ..), we
-    # still want to list names.
+
 
 
 def get_unique_cluster_name(task):
@@ -108,9 +256,15 @@ def get_unique_cluster_name(task):
                     return c
 
     cluster = str(mdfr['cluster'])
-    # hyades
+    # hyades, and other moving group specifics
     if 'HYA' in cluster or 'Hyades' in cluster:
         return 'Hyades'
+    if 'Tuc-Hor' in cluster:
+        return 'THA'
+    if '{beta}PMG' in cluster:
+        return 'BPMG'
+    if '32Ori' in cluster:
+        return 'THOR'
 
     if (
         pd.isnull(mdfr['k13_name_match']) and
@@ -118,13 +272,23 @@ def get_unique_cluster_name(task):
         ['is_gagne_mg','is_oh_mg','is_rizzuto_mg','is_bell_mg','is_kraus_mg']
     ):
         for c in cluster.split(','):
-            if not pd.isnull(c):
+            if not pd.isnull(c) and not c=='N/A':
+                return c
+
+    if (
+        pd.isnull(mdfr['k13_name_match']) and
+        'Majaess IR cluster' in mdfr['why_not_in_k13']
+    ):
+        for c in cluster.split(','):
+            if not pd.isnull(c) and not c=='N/A':
                 return c
 
 
 
 def get_k13_df():
 
+    # nb. this is the 3006 row table with determined parameters. full
+    # kharchenko catalog is like 3700, which is the index.
     getfile = os.path.join(clusterdir,'Kharchenko_2013_MWSC.vot')
     vot = parse(getfile)
     tab = vot.get_first_table().to_table()
@@ -244,6 +408,12 @@ def get_k13_name_match(task):
     if 'ComaBer' in cluster:
         cluster = cluster.replace('ComaBer','Melotte_111')
         how_match = 'manual_override'
+    if 'CBER' in cluster:
+        cluster = cluster.replace('CBER','Melotte_111')
+        how_match = 'manual_override'
+    if 'PLE' in cluster:
+        cluster = cluster.replace('PLE','Melotte_22')
+        how_match = 'manual_override'
     if 'ScoOB2' in cluster:
         cluster = cluster.replace('ScoOB2','Sco_OB2')
         how_match = 'string_match'
@@ -271,6 +441,9 @@ def get_k13_name_match(task):
         how_match = 'manual_override'
     if "Trump02" in cluster:
         cluster = cluster.replace("Trump02","Trumpler_2")
+        how_match = 'manual_override'
+    if "PL8" in cluster:
+        cluster = cluster.replace("PL8","Platais_8")
         how_match = 'manual_override'
 
     # types like: 'Aveni_Hunter_42,nan,Aveni_Hunter_42,nan' need to be recast
