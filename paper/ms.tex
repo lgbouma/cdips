@@ -1673,7 +1673,7 @@ Some stellar variability plots (perhaps of known stellar variables).
 
 Some focus on particular clusters.
 
-\subsection{Identifying Objects of Interest}
+\subsection{Identifying Planet Candidates}
 \label{subsec:identifying_ctois}
 
 To identify an initial set of transiting planets, strong stellar rotators, and 
@@ -1815,7 +1815,7 @@ for the purposes of easily assigning labels to documents.
 An example vetting report for a planet candidate is described in
 Appendix~\ref{appendix:vetreport}.
 
-\subsection{Objects of Interest}
+\subsection{Candidate TESS Objects of Interest}
 \label{subsec:ctois}
 
 \begin{figure*}[t]
@@ -1909,6 +1909,33 @@ from \url{exofop.ipac.caltech.edu/tess} for cTOIs.  We
 cross-referenced based on a combination of the TIC identifier, spatial
 position, and the ephemeris of each object.
 
+
+\subsection{Eclipsing binaries, stellar rotation}
+
+\begin{figure}[t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.47\textwidth]{LS_period_vs_color_and_age.png}
+	\end{center}
+	\vspace{-0.2cm}
+	\caption{
+    {\bf Time evolution of Lomb-Scargle periodogram peak period versus
+    Gaia color.}
+    Red stars are on the right, blue stars are on the left.
+    Each point on this diagram is a star for which the false alarm
+    probability of the most powerful Lomb-Scargle peak is below
+    $10^{-15}$.
+    Additionally, we required (a) that the membership claim originate
+    from \citet{cantat-gaudin_gaia_2018},
+    \citet{Kharchenko_et_al_2013}, or \citet{gaia_hr_2018}; and (b)
+    that the claimed cluster had an age reported by
+    \citet{Kharchenko_et_al_2013}.
+	\label{fig:ls_peak_vs_time}
+	}
+\end{figure}
+
+TODO: describe how this was made.
+Figure~\ref{fig:ls_peak_vs_time}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
