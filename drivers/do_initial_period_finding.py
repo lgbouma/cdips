@@ -232,7 +232,8 @@ def do_initial_period_finding(
         df['source_id'] = df['source_id'].astype(np.int64)
         mdf = df.merge(cd, how='left', on='source_id')
 
-        mdf.to_csv(outpath, index=False)
+        # ";" sep needed b/c reference is ","-separated
+        mdf.to_csv(outpath, index=False, sep=';')
         print('made {}'.format(outpath))
     else:
         mdf = pd.read_csv(outpath)

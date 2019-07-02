@@ -29,12 +29,18 @@ from cdips.plotting import plot_catalog_to_gaia_match_statistics as xms
 from cdips.plotting import plot_wcsqa as wcsqa
 from cdips.utils import collect_cdips_lightcurves as ccl
 
+from collections import Counter
+
 OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
 
 def main():
 
     sectors = [6,7]
+
+    plot_LS_period_vs_color_and_age(sectors, overwrite=1, OC_MG_CAT_ver=0.3)
+    assert 0
+
 
     # fig N: T magnitue CDF for all CDIPS target stars.
     plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=0)
@@ -83,6 +89,144 @@ def main():
 def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
+
+
+def plot_LS_period_vs_color_and_age(sectors, overwrite=0, OC_MG_CAT_ver=0.3):
+    """
+    * plot lomb-scargle periodogram peak period vs Gaia-G magnitude.
+      (or vs Bp-Rp).
+      should show : there's a lot of science to do here.
+
+      * cut on FAP < 1e-20, or something.
+
+      * selected by e.g., only "good member lists" -- Kharchenko, and
+        Cantat-Gaudin. never Dias.
+
+      * focus on any cluster larger than 100 Myr...
+    """
+
+    outpath = os.path.join(OUTDIR, 'LS_period_vs_color_and_age.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    pfdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding'
+    pfpaths = []
+    for sector in sectors:
+        thisdir = os.path.join(pfdir, 'sector-{}'.format(sector))
+        pfpath = os.path.join(thisdir, 'initial_period_finding_results.csv')
+        pfpaths.append(pfpath)
+
+    pfdf = pd.concat((pd.read_csv(f) for f in pfpaths))
+    cddf = ccl.get_cdips_pub_catalog(ver=OC_MG_CAT_ver)
+
+    pfdf['source_id'] = pfdf['source_id'].astype(np.int64)
+    cddf['source_id'] = cddf['source_id'].astype(np.int64)
+
+    # cols are:
+    # 'source_id', 'ls_period', 'ls_fap', 'tls_period', 'tls_sde', 'tls_t0',
+    # 'tls_depth', 'tls_duration', 'pspline_detrended', 'xcc', 'ycc', 'ra_x',
+    # 'dec_x', 'cluster', 'reference', 'ext_catalog_name', 'ra_y', 'dec_y',
+    # 'pmra', 'pmdec', 'parallax', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+    # 'phot_rp_mean_mag', 'k13_name_match', 'unique_cluster_name', 'how_match',
+    # 'not_in_k13', 'comment', 'k13_logt', 'k13_e_logt'
+    mdf = pfdf.merge(cddf, how='left', on='source_id')
+
+    FAP_CUTOFF = 1e-15
+    sel = mdf['reference'].str.contains('CantatGaudin_2018')
+    sel |= mdf['reference'].str.contains('Kharchenko2013')
+    sel |= mdf['reference'].str.contains('GaiaCollaboration2018')
+    sel &= ~pd.isnull(mdf['phot_rp_mean_mag'] - mdf['phot_bp_mean_mag'])
+    sel &= mdf['ls_fap'] < FAP_CUTOFF
+    sel &= ~pd.isnull(mdf['k13_logt'])
+
+    sdf = mdf[sel]
+
+    # first, remove duplicates that match source ids. (these are in multiple
+    # sectors) -- take the lower ls_fap for these. then, remove duplicates that
+    # are close in source_id and also close in period, since they are
+    # photometric blends. also take the lowest ls_fap from these.
+
+    sdf = sdf.sort_values(by=['source_id','ls_fap'])
+
+    sdf = sdf.drop_duplicates(subset='source_id', keep='first')
+
+    sdf['round_source_id'] = np.round(sdf['source_id'], decimals=-14)
+    sdf['round_ls_period'] = np.round(sdf['ls_period'], decimals=4)
+
+    sdf = sdf.drop_duplicates(subset=['round_source_id','round_ls_period'],
+                              keep='first')
+
+    #TODO could use...
+    cnt = Counter(nparr(sdf['unique_cluster_name']))
+    mostcommon = cnt.most_common(n=20)
+    print('LS FAP<{:.0e}, (CG18|K13|G18) in ref, has age'.format(FAP_CUTOFF))
+    print('most common are\n{}'.format(repr(mostcommon)))
+
+    #
+    # finally, plot
+    #
+    bins = [(7.4,8), (8,8.333), (8.333, 8.666), (8.666,9)]#, (9,10)]
+    min_all, max_all = 7.4, 9
+    ixs = range(len(bins))
+    nrows = len(bins)
+
+    f,axs = plt.subplots(nrows=nrows, ncols=1, figsize=(3.5,2*nrows),
+                         sharex=True)
+    axs = axs.flatten()
+
+    for ix, _bin, ax in zip(ixs, bins, axs):
+
+        min_age = _bin[0]
+        max_age = _bin[1]
+
+        # first, overplot the emphasized subset
+        sel = (sdf['k13_logt'] >= min_age) & (sdf['k13_logt'] < max_age)
+        xval = sdf[sel]['phot_bp_mean_mag'] - sdf[sel]['phot_rp_mean_mag']
+        yval = sdf[sel]['ls_period']
+        ax.scatter(xval, yval, rasterized=True, s=5, alpha=0.9, linewidths=0,
+                   zorder=3, c='black')
+
+        l = (
+            '{:.2f}'.format(min_age) +
+            r'$\geq \log_{{10}}$(age) $>$' +
+            '{:.2f}'.format(max_age) +
+            '. {} stars'.format(len(sdf[sel]))
+        )
+        ax.text(0.97, 0.97, l, ha='right', va='top', fontsize='x-small',
+                transform=ax.transAxes)
+
+        # underplot the entire set
+        allsel = (sdf['k13_logt'] >= min_all) & (sdf['k13_logt'] < max_all)
+        xval = sdf[allsel]['phot_bp_mean_mag'] - sdf[allsel]['phot_rp_mean_mag']
+        yval = sdf[allsel]['ls_period']
+        ax.scatter(xval, yval, rasterized=True, s=5, alpha=0.9, linewidths=0,
+                   zorder=2, c='gray')
+
+    for ax in axs:
+        ax.yaxis.set_ticks_position('both')
+        ax.xaxis.set_ticks_position('both')
+        ax.get_yaxis().set_tick_params(which='both', direction='in')
+        ax.get_xaxis().set_tick_params(which='both', direction='in')
+        for tick in ax.xaxis.get_major_ticks():
+            tick.label.set_fontsize('small')
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize('small')
+
+        ax.set_yscale('log')
+        ax.set_xlim((-0.6,3.6))
+        ax.set_ylim((0.4, 11))
+
+    f.text(0.5,-0.01, '$G_{{\mathrm{{Bp}}}} - G_{{\mathrm{{Rp}}}}$', ha='center')
+    f.text(-0.03,0.5, 'Period of Lomb-Scargle peak [days]', va='center', rotation=90)
+
+    txtstr= (
+        'LS FAP<{:.0e}, (CG18|K13|G18) in ref, has age\n'.format(FAP_CUTOFF)
+    )
+    #axs[0].set_title(txtstr, fontsize='small')
+
+    f.tight_layout(h_pad=0.35, pad=0.2)
+    savefig(f, outpath)
 
 
 def plot_quilt_PCs(overwrite=1):
