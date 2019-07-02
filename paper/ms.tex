@@ -30,6 +30,7 @@
 \newcommand{\sVIInumberlcs}{91{,}736\ }  % 2019/06/20 not allnan
 \newcommand{\numberlcs}{159{,}337\ } % 2019/06/20 sum
 \newcommand{\numberclusters}{596\ } % 2019/07/01 paper_plot_all_figures.py
+\newcommand{\pctoflcswithage}{77} %  2019/07/02 from hist_logt.png
 
 \newcommand{\stscilink} {\url{archive.stsci.edu/prepds/cdips}}
 
@@ -85,7 +86,7 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   planets younger than 1 Gyr.
   %
   In this study, we made \numberlcs light curves of candidate young
-  stars in \numberclusters clusters.
+  stars, across \numberclusters distinct clusters.
   Each light curve represents between 20 and 25 days of observations
   of a star brighter than $G_{Rp}=16$, sampled at 30 minute cadence.
   % Methods
@@ -96,10 +97,10 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   We then highlight the \numberpcs planet candidates we identified in
   an initial search, describe the vetting procedures that they have
   survived, and emphasize the additional spectroscopic, photometric,
-  and imaging observations that are needed to verify (i) that these
-  candidates are planets and (ii) that the host stars are cluster members.
+  and imaging observations that are needed to verify (i) whether these
+  candidates are planets and (ii) whether the host stars are cluster members.
   %
-  We also comment on the possible use of the light curve sample for
+  We also comment on the possible utility of the light curve sample for
   studies of stellar rotation evolution, and binary eccentricity
   damping.
   %
@@ -1747,6 +1748,7 @@ variability in the TFA light curve.
     \gridline{\fig{tlsresult_sector6.png}{0.45\textwidth}{}}
     \vspace{-0.8cm}
     \gridline{\fig{tlsresult_sector7.png}{0.45\textwidth}{}}
+    \vspace{-0.8cm}
     \caption{
         Significance thresholds empirically defined for the transiting planet 
         search described in \S~\ref{subsec:identifying_ctois}. Each point represents the 
@@ -1815,15 +1817,26 @@ Appendix~\ref{appendix:vetreport}.
 \begin{figure*}[t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.9\textwidth]{tlsresult_sector6.png}%{ctoi_quilt.png}
+		\includegraphics[width=0.9\textwidth]{quilt_PCs.png}
 	\end{center}
 	\vspace{-0.2cm}
 	\caption{
-    {\bf 12 of the \numberpcs candidate transiting planets identified
-    in this work.} 
-    Models are fit as described in \S~\ref{subsec:ctois}.
-    The full set of model parameters are in Table~XXX and on
-    exofop-TESS.
+    {\bf 6 of the \numberpcs candidate transiting planets identified
+    in this studies.}
+	Black points are detrended flux measurements, phased to the
+	best-fit orbital period, indicated in the lower right of each panel.
+	Best-fit models are fit as described in \S~\ref{subsec:ctois}, and
+	shown with blue lines.
+	For display purpses, $\pm 4$ transit durations of the
+	light curves are displayed.
+	The vetting reports for these objects are available at XXX.	%FIXME
+	The Gaia source identifiers are
+	a): 5605128927705695232, 
+	b): 3125263468681400320, 
+	c): 5510676828723793920, 
+	d): 3007171311355035136, 
+	e): 5617126180115568256, 
+	f): 3220266049321724416.   
 	\label{fig:ctoi_quilt}
 	}
 \end{figure*}
@@ -1882,7 +1895,7 @@ radii and impact parameters were found using linear error propagation
 theory, under the idealized assumption that the covariance between all
 stellar and planetary parameters was zero.
 
-Finally, the determine the names of the objects -- and whether they
+Finally, to determine the names of the objects -- and whether they
 had already been identified as TOIs or cTOIs -- we cross-referenced
 based on a combination of the TIC identifier, spatial position, and
 the ephemeris of each object.
@@ -2130,31 +2143,34 @@ be in open clusters.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Page 3: Transit diagnostics.} The plots show the maximally-detrended
-		light curve (top); the phase-folded light curve centered on the primary transit
-		(middle left); the phase-folded light curve centered on the secondary eclipse
-		(middle right); the odd-numbered transits (lower left); and the
-		even-numbered transits (lower right).
-		The stellar parameters ($T_{\rm eff}, R_\star$) are taken from Gaia-DR2 
-		when available.
-		The first eight lines of text are parameters determined 
-		from the best-fitting TLS model.
-		The one exception is the planet radius, which uses the stellar radius
-		as noted above.
-		The ``flux contamination'' (\texttt{TICCONT}) from neighboring stars
-		is {\it never} taken into account, because transit depth dilution does
-		not affect image subtraction analyses in the same manner as 
-		aperture-photometry reductions.
-		To estimate the transit to occulation
-		depth ratio,
-		the phase-folded light curve is also coarsely fit via maximum likelihood
-		by a sum of two gaussians.
-		``AstExc'' refers to the Gaia-DR2 astrometric excess, which can indicate
-		hints of astrometric binarity in the system.
-		``$R_\star + M_\star \rightarrow T_{b0}$'' gives the duration of a 
-		zero-eccentricity central transit based on the Gaia-DR2 stellar radius,
-		and a stellar mass interpolated from the \citet{pecaut_intrinsic_2013} table,
-		under the assumption that the star is a dwarf.%\footnote{\url{http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt}}.
+    {\bf Page 3: Transit diagnostics.} The plots show the
+    maximally-detrended light curve (top); the phase-folded light
+    curve centered over $\pm3$ transit durations of the primary
+    transit (middle left); the secondary eclipse (middle right); the
+    odd-numbered transits (lower left); and the even-numbered transits
+    (lower right).
+    The stellar parameters ($T_{\rm eff}, R_\star$) are taken from
+    Gaia-DR2 Apsis pipeline results when available
+    \citep{andrae_apsis_2018}.
+    The first eight lines of text are parameters determined from the
+    best-fitting TLS model.
+    The one exception is the planet radius, which uses the stellar
+    radius as noted above.
+    The ``flux contamination'' (\texttt{TICCONT}) from neighboring
+    stars is {\it never} taken into account, because transit depth
+    dilution does not affect image subtraction analyses in the same
+    manner as aperture-photometry reductions.
+    To estimate the transit to occulation depth ratio, the
+    phase-folded light curve is also coarsely fit via maximum
+    likelihood by a sum of two gaussians.
+    ``AstExc'' refers to the Gaia-DR2 astrometric excess, which can
+    indicate hints of astrometric binarity in the system.
+    ``$R_\star + M_\star \rightarrow T_{b0}$'' gives the duration of a
+    zero-eccentricity central transit based on the Gaia-DR2 stellar
+    radius, and a stellar mass interpolated from the
+    \citet{pecaut_intrinsic_2013} table, under the assumption that the
+    star is a dwarf.
+    %\footnote{\url{http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt}}.
 		\label{fig:pg3}
 	}
 \end{figure*}

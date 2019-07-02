@@ -18,6 +18,9 @@ cp ${fdir}trex_overview.pdf ${pdir}pipelineoverview.pdf
 fdir=../results/paper_figures/
 cp ${fdir}rms_vs_mag.png ${pdir}rms_vs_mag.png
 
+# quilt of PCs
+cp ${fdir}quilt_PCs.png ${pdir}quilt_PCs.png
+
 # positions of lightcurves
 cp ${fdir}sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png \
    ${pdir}sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png
