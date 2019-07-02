@@ -26,7 +26,12 @@ cp ${fdir}sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png \
    ${pdir}sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png
 
 # positions of lightcurves
-cp ${fdir}cluster_field_star_positions.png ${pdir}cluster_field_star_positions.png
+cp ${fdir}cluster_field_star_positions.png \
+   ${pdir}cluster_field_star_positions.png
+
+# positions of lightcurves
+cp ${fdir}galacticcoords_cluster_field_star_positions.png \
+   ${pdir}galacticcoords_cluster_field_star_positions.png
 
 # CDF of T mags of LCs
 cp ${fdir}cdf_T_mag.png ${pdir}cdf_T_mag.png

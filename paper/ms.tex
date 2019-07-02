@@ -1353,23 +1353,23 @@ separately.
 
 \subsubsection{Stellar properties}
 
-\begin{figure}[!t]
+\begin{figure*}[!t]
 	%\gridline{
 	%  \fig{cluster_field_star_positions.png}{0.49\textwidth}{}
 	%  \fig{sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png}{0.49\textwidth}{}
 	%}
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.47\textwidth]{cluster_field_star_positions.png}
+		\includegraphics[width=0.97\textwidth]{galacticcoords_cluster_field_star_positions.png}
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Celestial positions of light curves from Sectors 6
-			and 7.}  Black: $G_{\rm Rp}<13$ field stars.  Blue: $G_{\rm
-			Rp}<16$ target stars.
-		\label{fig:lcradec}
+		{\bf Positions of light curves from Sectors 6
+			and 7 in galactic coordinates.}
+		    Black: $G_{\rm Rp}<13$ field stars.  Blue: $G_{\rm Rp}<16$ target stars.
+		\label{fig:lcgalactic}
 	}
-\end{figure}
+\end{figure*}
 
 \begin{figure}[!t]
 	\begin{center}
@@ -1378,7 +1378,8 @@ separately.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf  Zoom of Sector 6, Camera 1 from Figure~\ref{fig:lcradec}.}
+		{\bf  Zoom and coordinate transformation
+			of Sector 6, Camera 1 from Figure~\ref{fig:lcgalactic}.}
 		The most populated cluster is XXX, primarily due to candidate
 		members proposed by \citet{dias_proper_2014}.
 		\label{fig:lcradeczoom}
@@ -1432,7 +1433,7 @@ separately.
 \end{figure}
 
 The on-sky locations of the light curves from Sectors 6 and 7
-are shown in Figure~\ref{fig:lcradec}.
+are shown in Figure~\ref{fig:lcgalactic}.
 Black stars are the field stars for which we performed photometry,
 but only to calibrate the cluster star sample.
 The blue stars are the \numberlcs stars with light curves available
@@ -1440,7 +1441,7 @@ from \stscilink.
 Most of the target stars are quite close to the galactic plane.
 Gaps between CCD chips are also visible.
 
-A zoom-in of Figure~\ref{fig:lcradec} is shown in Figure~\ref{fig:lcradeczoom}
+A zoom-in of Figure~\ref{fig:lcgalactic} is shown in Figure~\ref{fig:lcradeczoom}
 for the Camera 1, Sector 6 field. The effects of galactic-latitude
 dependent extinction are visible through the decreasing density of black
 points towards the right of the image.
@@ -1821,22 +1822,23 @@ Appendix~\ref{appendix:vetreport}.
 	\end{center}
 	\vspace{-0.2cm}
 	\caption{
-    {\bf 6 of the \numberpcs candidate transiting planets identified
-    in this studies.}
-	Black points are detrended flux measurements, phased to the
-	best-fit orbital period, indicated in the lower right of each panel.
-	Best-fit models are fit as described in \S~\ref{subsec:ctois}, and
-	shown with blue lines.
-	For display purpses, $\pm 4$ transit durations of the
-	light curves are displayed.
-	The vetting reports for these objects are available at XXX.	%FIXME
-	The Gaia source identifiers are
-	a): 5605128927705695232, 
-	b): 3125263468681400320, 
-	c): 5510676828723793920, 
-	d): 3007171311355035136, 
-	e): 5617126180115568256, 
-	f): 3220266049321724416.   
+    {\bf Six of the \numberpcs candidate transiting planets identified
+    from this work.}
+    Black points are detrended flux measurements, phased to the
+    best-fit orbital period, indicated in the lower right of each panel.
+    Best-fit models are fit as described in \S~\ref{subsec:ctois}, and
+    shown with blue lines.
+    For display purpses, a window of $\pm 4$ transit durations from the
+    mid-point is displayed.
+    The vetting reports for these objects are available at XXX.	%FIXME
+    % TODO: include age? T mag?
+    The Gaia source identifiers are
+    a): 5605128927705695232, 
+    b): 3125263468681400320, 
+    c): 5510676828723793920, 
+    d): 3007171311355035136, 
+    e): 5617126180115568256, 
+    f): 3220266049321724416.   
 	\label{fig:ctoi_quilt}
 	}
 \end{figure*}
@@ -1888,17 +1890,20 @@ for these, we simply invented a relative uncertainty of 30\%, and note
 in the comments that this was done.  There were also a few cases for
 which the TIC stellar temperatures and/or radii were not available,
 but the Gaia values were.  In these cases, we used the Gaia $T_{\rm
-eff}$ and $R_\star$ values, and used the stellar mass interpolated
-from the \citet{pecaut_intrinsic_2013} table (assuming the star is a
-dwarf) to estimate $\log g$.  The uncertainties in e.g., the planetary
-radii and impact parameters were found using linear error propagation
-theory, under the idealized assumption that the covariance between all
-stellar and planetary parameters was zero.
+eff}$ and $R_\star$ values \citep{andrae_apsis_2018}, and a stellar
+mass interpolated from the \citet{pecaut_intrinsic_2013} table
+(assuming the star is a dwarf) to estimate $\log g$.  The
+uncertainties in e.g., the planetary radii and impact parameters were
+found using linear error propagation theory, under the idealized
+assumption that the covariance between all stellar and planetary
+parameters was zero.
 
-Finally, to determine the names of the objects -- and whether they
-had already been identified as TOIs or cTOIs -- we cross-referenced
-based on a combination of the TIC identifier, spatial position, and
-the ephemeris of each object.
+Finally, to assign the names of the planet candidates -- and determine
+whether they had already been identified as TOIs or cTOIs -- we used
+lists downloaded from the \url{tev.mit.edu} alert site for TOIs, and
+from \url{exofop.ipac.caltech.edu/tess} for cTOIs.  We
+cross-referenced based on a combination of the TIC identifier, spatial
+position, and the ephemeris of each object.
 
 
 
