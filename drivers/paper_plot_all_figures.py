@@ -36,10 +36,6 @@ def main():
 
     sectors = [6,7]
 
-    plot_quilt_PCs(overwrite=1)
-    assert 0
-
-
     # fig N: T magnitue CDF for all CDIPS target stars.
     plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=0)
 
@@ -69,7 +65,12 @@ def main():
     plot_pm_scat(sectors, overwrite=1, close_subset=1)
     plot_pm_scat(sectors, overwrite=1, close_subset=0)
 
+    # fig N: 3x2 quilty of phased PC
+    plot_quilt_PCs(overwrite=1)
+
     # fig N: positions of field and cluster LC stars (currently all cams)
+    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=0,
+                                        galacticcoords=True)
     plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=0)
     plot_cluster_and_field_star_scatter(sectors=[6], overwrite=0, cams=[1],
                                         ccds=[1,2,3,4])
@@ -107,7 +108,7 @@ def plot_quilt_PCs(overwrite=1):
 
     np.random.seed(42)
     spaths = np.random.choice(fpaths, size=3*2, replace=False)
-    ylims = [
+    ylims = [ # for seed 42
         (0.957, 1.015),
         (0.97, 1.017),
         (0.995, 1.003),
@@ -682,7 +683,8 @@ def plot_pm_scat(sectors, overwrite=0, close_subset=0):
 
 
 def plot_cluster_and_field_star_scatter(sectors=None, overwrite=0,
-                                        cams=[1,2,3,4], ccds=[1,2,3,4]):
+                                        cams=[1,2,3,4], ccds=[1,2,3,4],
+                                        galacticcoords=False):
     """
     note: being kept separate from other stats collection step b/c here you
     need all LCs + CDIPS LCs, rather than only CDIPS LCs
@@ -692,6 +694,8 @@ def plot_cluster_and_field_star_scatter(sectors=None, overwrite=0,
     N_max = 100000
 
     prestr = 'sector{}_'.format(sectors[0]) if len(sectors)==1 else ''
+    if galacticcoords:
+        prestr = prestr + 'galacticcoords_'
 
     if cams==[1,2,3,4] and ccds==[1,2,3,4]:
         outpath = os.path.join(OUTDIR,
@@ -736,11 +740,21 @@ def plot_cluster_and_field_star_scatter(sectors=None, overwrite=0,
                                                    N_desired=N_max)
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
+    if galacticcoords:
+        coords = SkyCoord(nparr(df['ra'])*u.deg, nparr(df['dec'])*u.deg,
+                          frame='icrs')
+        glon = coords.galactic.l.value
+        glat = coords.galactic.b.value
+        df['glon'] = glon
+        df['glat'] = glat
 
-    figsize = (4.5,4.5) if len(cams)==1 and len(ccds)==4 else (4.5,5.5)
+    if not galacticcoords:
+        figsize = (4.5,4.5) if len(cams)==1 and len(ccds)==4 else (4.5,5.5)
+    else:
+        figsize = (12/1.5, 5/1.5)
 
     plot_cluster_and_field_star_positions(
-        df, outpath, figsize
+        df, outpath, figsize, galacticcoords
     )
 
 
@@ -805,7 +819,7 @@ def get_cluster_and_field_star_positions(lcpaths, cdipslcdir, outpath,
     print('made {}'.format(outpath))
 
 
-def plot_cluster_and_field_star_positions(df, outpath, figsize):
+def plot_cluster_and_field_star_positions(df, outpath, figsize, galacticcoords):
     """
     scatter of (ra,dec) for [subset of] stars with lightcurves.
 
@@ -818,24 +832,32 @@ def plot_cluster_and_field_star_positions(df, outpath, figsize):
 
     iscdips = df['iscdips']
 
-    ax.scatter(df[~iscdips]['ra'], df[~iscdips]['dec'], c='k', alpha=0.5,
-               s=0.5, rasterized=True, linewidths=0, zorder=1)
-    ax.scatter(df[iscdips]['ra'], df[iscdips]['dec'], c='C0', alpha=0.8,
-               s=0.5, rasterized=True, linewidths=0, zorder=2)
+    if not galacticcoords:
+        ax.scatter(df[~iscdips]['ra'], df[~iscdips]['dec'], c='k', alpha=0.5,
+                   s=0.5, rasterized=True, linewidths=0, zorder=1)
+        ax.scatter(df[iscdips]['ra'], df[iscdips]['dec'], c='C0', alpha=0.8,
+                   s=0.5, rasterized=True, linewidths=0, zorder=2)
+        ax.set_xlabel(r'Right ascension, $\alpha$ [deg]')
+        ax.set_ylabel('Declination, $\delta$ [deg]')
+    else:
+        ax.scatter(df[~iscdips]['glon'], df[~iscdips]['glat'], c='k', alpha=0.5,
+                   s=0.5, rasterized=True, linewidths=0, zorder=1)
+        ax.scatter(df[iscdips]['glon'], df[iscdips]['glat'], c='C0', alpha=0.8,
+                   s=0.5, rasterized=True, linewidths=0, zorder=2)
+        ax.set_xlabel('Galactic longitude, $l$ [deg]')
+        ax.set_ylabel('Galactic latitude, $b$ [deg]')
 
     #ax.set_title('black: $G_{\mathrm{Rp}}<13$ field. blue: $G_{\mathrm{Rp}}<16$ cluster.')
-
-    ax.set_xlabel(r'Right ascension, $\alpha$ [deg]')
-    ax.set_ylabel('Declination, $\delta$ [deg]')
 
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
     ax.get_yaxis().set_tick_params(which='both', direction='in')
     ax.get_xaxis().set_tick_params(which='both', direction='in')
 
-    # RA increases to the left
-    xlim = ax.get_xlim()
-    ax.set_xlim((max(xlim),min(xlim)))
+    if not galacticcoords:
+        # north up, east left. RA increases to the left (east)
+        xlim = ax.get_xlim()
+        ax.set_xlim((max(xlim),min(xlim)))
 
     f.savefig(outpath, bbox_inches='tight', dpi=450)
     print('made {}'.format(outpath))
