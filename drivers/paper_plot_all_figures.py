@@ -38,11 +38,10 @@ def main():
 
     sectors = [6,7]
 
+    # fig N: LS period vs color evolution in time
     plot_LS_period_vs_color_and_age(sectors, overwrite=1, OC_MG_CAT_ver=0.3)
-    assert 0
 
-
-    # fig N: T magnitue CDF for all CDIPS target stars.
+    # fig N: T magnitude CDF for all CDIPS target stars.
     plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=0)
 
     # fig N: wcs quality verification for one photometric reference
