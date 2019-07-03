@@ -41,6 +41,9 @@ def main():
     # fig N: LS period vs color evolution in time
     plot_LS_period_vs_color_and_age(sectors, overwrite=1, OC_MG_CAT_ver=0.3)
 
+    # fig N: target star provenance
+    plot_target_star_reference_pie_chart(OC_MG_CAT_ver=0.3, overwrite=1)
+
     # fig N: T magnitude CDF for all CDIPS target stars.
     plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=0)
 
@@ -200,7 +203,7 @@ def plot_LS_period_vs_color_and_age(sectors, overwrite=0, OC_MG_CAT_ver=0.3):
         xval = sdf[allsel]['phot_bp_mean_mag'] - sdf[allsel]['phot_rp_mean_mag']
         yval = sdf[allsel]['ls_period']
         ax.scatter(xval, yval, rasterized=True, s=5, alpha=0.9, linewidths=0,
-                   zorder=2, c='gray')
+                   zorder=2, c='lightgray')
 
     for ax in axs:
         ax.yaxis.set_ticks_position('both')
@@ -525,6 +528,67 @@ def plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1):
     ax.set_yscale('log')
     ax.set_xlim([5.5, 10.5])
     ax.set_ylim([3e3, 3e5])
+
+    f.tight_layout(pad=0.2)
+    savefig(f, outpath)
+
+
+def plot_target_star_reference_pie_chart(OC_MG_CAT_ver=0.3, overwrite=1):
+
+    cdips_df = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
+
+    outpath = os.path.join(OUTDIR, 'target_star_reference_pie_chart.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    #
+    # Collect the info:
+    # ('Dias2014', 470313), ('Kharchenko2013', 183992), ('CantatGaudin_2018',
+    # 177913), ('Zari_2018_UMS', 82875), ('Zari_2018_PMS', 35488)
+    #
+    cnt = Counter(nparr(cdips_df['reference']))
+    atleast2 = 0
+    for k in cnt.keys():
+        if ',' in k:
+            atleast2 += cnt[k]
+
+    mostcommon = cnt.most_common(n=5)
+    mostcommon.append(('>2', atleast2))
+
+    s = np.sum([e[1] for e in mostcommon])
+
+    # Single-source, not otherwise counted
+    mostcommon.append(('Other', len(cdips_df)-s))
+
+    #
+    # make the plot 
+    #
+    f,ax = plt.subplots(figsize=(4*1.5,3*1.5))
+
+    sizes = [e[1] for e in mostcommon]
+    labels = ['D14', 'K13', 'CG18', 'Z18UMS', 'Z18PMS', '$\geq$2', 'Other']
+
+    colors = plt.cm.Greys(np.linspace(0.1,0.8,num=len(labels)))
+
+    wedges, texts, autotexts = ax.pie(sizes, autopct='%1.1f%%',
+                                      pctdistance=1.15, colors=colors,
+                                      textprops=dict(fontsize='large'))
+
+    patterns = ('.', '', 'o', '-', 'x', '*', '')
+    for wedge, pattern in zip(wedges, patterns):
+        wedge.set_hatch(pattern)
+
+    leg = ax.legend(wedges, labels,
+                    title="Reference",
+                    loc="center left",
+                    fontsize='large',
+                    labelspacing=1.3,
+                    handleheight=1.7,
+                    bbox_to_anchor=(1.07, 0.1, 0.2, 0.8)) #x,y,width,height
+    plt.setp(leg.get_title(), fontsize='large')
+
+    ax.axis('equal')
 
     f.tight_layout(pad=0.2)
     savefig(f, outpath)
