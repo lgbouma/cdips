@@ -499,19 +499,32 @@ forming regions justifies their inclusion in our search sample.
 	\begin{center}
 		\leavevmode
     %\includegraphics[width=0.45\textwidth]{target_star_cumulative_counts.png}
-    \gridline{\fig{target_star_cumulative_counts.png}{0.45\textwidth}{}}
+    \gridline{\fig{target_star_cumulative_counts.png}{0.4\textwidth}{}}
     \vspace{-0.8cm}
-    \gridline{\fig{target_star_hist_logt.png}{0.45\textwidth}{}}
+    \gridline{\fig{target_star_hist_logt.png}{0.4\textwidth}{}}
+    \vspace{-0.8cm}
+    \gridline{\fig{target_star_reference_pie_chart.png}{0.4\textwidth}{}}
 	\end{center}
 	\vspace{-0.8cm}
 	\caption{
-    {\it Top.} Cumulative number of target stars as
-    a function of Gaia $Rp$-band magnitude.  The selected stars are
+    {\it Top.} Cumulative counts of target stars as
+    a function of Gaia $Rp$-band magnitude.  The stars are
     either candidate members of clusters, or else have other youth
     indicators (see \S~\ref{sec:starselection}). We only consider
     stars with $G_{\rm Rp} < 16$.
-    {\it Bottom.} Histogram of target star ages, for the subset of
+    {\it Middle.} Histogram of target star ages, for the subset of
     stars with ages matched against \citet{Kharchenko_et_al_2013}.
+    {\it Bottom.} Provenance of cluster membership.  Percentages are
+    relative to $N_{\rm total}=1061446$ target stars. Symbols
+    are as follows.
+    D14 is \citet{dias_proper_2014}.
+    K13 is \citet{Kharchenko_et_al_2013}.
+    CG18 is \citet{cantat-gaudin_gaia_2018}.
+    Z18 is \citet{zari_3d_2018}, with upper main sequence and
+    pre-main-sequence samples sub-divided.
+    ``$\geq 2$'' indicates at least two authors reported a star as a
+    candidate cluster member.
+    %``Other'' refers to sources enumerated in \S~\ref{sec:starselection}.
 	\label{fig:cdips_targets}
 	}
 \end{figure}
@@ -522,8 +535,8 @@ forming regions justifies their inclusion in our search sample.
 	\gridline{\fig{dias14matchstats.png}{0.95\textwidth}{}}
 	\vspace{-0.8cm}
 	\caption{
-    {\it Top.} Cross-match statistics from
-    \cite{Kharchenko_et_al_2013} cluster members to Gaia-DR2. A
+    {\it Top.} Quality diagnostics from cross-matching
+    \cite{Kharchenko_et_al_2013} cluster members against Gaia-DR2.
     histogram of the distances between matched stars is on the left; a
     histogram of the difference between the true $G$-band magnitude
     and that predicted from 2MASS photometry is in the middle; a scatter
@@ -1679,11 +1692,11 @@ Some focus on particular clusters.
 	\gridline{\fig{tlsresult_sector7.png}{0.45\textwidth}{}}
 	\vspace{-0.8cm}
 	\caption{
-		Significance thresholds empirically defined for the transiting
-		planet search described in \S~\ref{subsec:identifying_ctois}.
-		Each point represents the TLS periodogram peak signal
-		detection efficiency from one light curve.  {\it Top.} Sector
-		6.  {\it Bottom.} Sector 7.
+    (IN PROGRESS) Significance thresholds empirically defined for the
+    transiting planet search described in
+    \S~\ref{subsec:identifying_ctois}.  Each point represents the TLS
+    periodogram peak signal detection efficiency from one light curve.
+    {\it Top.} Sector 6.  {\it Bottom.} Sector 7.
 	}
 	\label{fig:tlsresults}
 \end{figure}
@@ -1824,9 +1837,9 @@ labels to documents.
 		Black points are detrended flux measurements, phased to the
 		best-fit orbital period indicated in the lower right of each
 		panel.
-		Best-fit models are fit as described in \S~\ref{subsec:ctois}, and
-		plotted with blue lines.
-		For display purpses, a window of $\pm 4$ transit durations
+    Transit models are fitted as described in \S~\ref{subsec:ctois},
+    and plotted with blue lines.
+		For display purposes, a window of $\pm 4$ transit durations
 		centered on the transit mid-point is displayed.
 		The vetting reports for these objects are available at XXX.	%FIXME
 		% TODO: include age? T mag?

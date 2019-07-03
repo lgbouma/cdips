@@ -54,6 +54,10 @@ cp ${fdir}target_star_cumulative_counts.png \
 cp ${fdir}target_star_hist_logt.png \
    ${pdir}target_star_hist_logt.png
 
+cp ${fdir}target_star_reference_pie_chart.png \
+   ${pdir}target_star_reference_pie_chart.png
+
+
 # catalog matching statistics
 cp ${fdir}catalog_to_gaia_match_statistics_MWSC.png \
    ${pdir}mwscmatchstats.png
