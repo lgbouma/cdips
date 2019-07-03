@@ -50,7 +50,11 @@
 \correspondingauthor{L. G. Bouma}
 \email{luke@astro.princeton.edu}
 
-\author[0000-0002-0514-5538]{L. G. Bouma}
+\author[0000-0002-0514-5538]{L. G. Bouma (ORDER TBD)}
+\affiliation{ Department of Astrophysical Sciences, Princeton
+University, 4 Ivy Lane, Princeton, NJ 08540, USA}
+%
+\author[0000-0001-8732-6166]{J. D. Hartman}
 \affiliation{ Department of Astrophysical Sciences, Princeton
 University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 %
@@ -58,15 +62,11 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 \affiliation{ Department of Astrophysical Sciences, Princeton
     University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 %
-\author[0000-0001-8732-6166]{J. D. Hartman}
+\author[0000-0002-4265-047X]{J. N. Winn}
 \affiliation{ Department of Astrophysical Sciences, Princeton
 University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 %
 \author[0000-0001-7204-6727]{G. \'A. Bakos}
-\affiliation{ Department of Astrophysical Sciences, Princeton
-University, 4 Ivy Lane, Princeton, NJ 08540, USA}
-%
-\author[0000-0002-4265-047X]{J. N. Winn}
 \affiliation{ Department of Astrophysical Sciences, Princeton
 University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 
@@ -323,7 +323,7 @@ accuracy.  If there has been a claim in the literature that a star
 should be considered a cluster member, or a young star, we would like
 to report a light curve for the star.  For stars that are
 photometrically interesting, we can perform post-hoc quality checks
-using Gaia DR2 astrometry and photometry to assess cluster membership
+using Gaia-DR2 astrometry and photometry to assess cluster membership
 and youth.
 
 \S~\ref{subsec:oc} describes the catalogs we used to identify
@@ -363,11 +363,11 @@ $500\,{\rm pc}$. While this work also included memberships for
 globular clusters, we omitted these from consideration.
 
 In our photometric reduction,  our default identifier for all sources
-is the Gaia DR2 \texttt{source\_id}.
+is the Gaia-DR2 \texttt{source\_id}.
 The TIC identifiers are found through a spatial cross-match after the light 
 curves have been made
 \citep{stassun_TIC_2018,stassun_TIC8_2019}
-This is because Gaia DR2 is the base-catalog used to project
+This is because Gaia-DR2 is the base-catalog used to project
 sources from celestial coordinates to the imaging plane (\S~\ref{sec:method}).
 It also has the advantage that for any Gaia-derived cluster memberships, 
 we preform cross-matching directly via the source identifiers.
@@ -428,7 +428,7 @@ are known to exist in moving groups, they are of particular interest
 because moving groups are less crowded than open clusters, and are
 often closer to the Sun.
 
-We obtained Gaia DR2 identifiers from the results of the following
+We obtained Gaia-DR2 identifiers from the results of the following
 studies:
 \citet{gagne_banyan_XI_2018},
 \citet{gagne_banyan_XII_2018},
@@ -618,33 +618,38 @@ typical age of 100$\,$Myr.
 
 \subsection{Overview}
 
-We reduced the TESS images to light curves by performing a sequence of
-steps using stand-alone programs.
-Our overall method is in the spirit of the reduction approaches developed
-by \citet{Pal_2009}, \citet{huang_high-precision_2015}, \citet{soares-furtado_image_2017} and
-\citet{oelkers_precision_2018}; a conceptual overview is given in
-Figure~\ref{fig:pipeline}.
+We reduced the TESS images to light curves using an image subtraction
+approach.  The overall method is in the spirit of the reduction
+pipelines developed by \citet{Pal_2009},
+\citet{huang_high-precision_2015}, \citet{soares-furtado_image_2017}
+and \citet{oelkers_precision_2018}; a conceptual overview is given in
+Figure~\ref{fig:pipeline}.  Most sub-modules of our pipeline have been
+developed over the past decade to process HAT data \citep[{\it
+e.g.},][]{bakos_hat_review_2018}.  The specific high-level framework
+used for this reduction was adapted from a pipeline called
+\texttt{pipe-trex}, under development primarily for the HATPI project
+(\url{hatpi.org}).  This code is available
+online\footnote{\url{github.com/waqasbhatti/pipe-trex}, commit
+\texttt{cd9f9bb}.}.
 
-We begin with the calibrated full frame images produced by the Science
-Processing Operations Center at NASA Ames (\S~\ref{subsec:observations}).
-We then perform a collection of
+We begin our processing with the calibrated full frame images produced
+by the Science Processing Operations Center at NASA Ames
+(\S~\ref{subsec:observations}).  We then perform a collection of
 preparatory steps, including source extraction of bright stars,
-astrometric verification, and coarse simple aperture
-photometry of bright stars (\S~\ref{subsec:preparation}).  Using the metadata
-collected from these initial steps, we select an astrometric reference frame to
-which we transform all of the calibrated images.  We construct a
-photometric reference by stacking a subset of these transformed frames, after
-having convolved the frames to match the stellar profiles of an intermediate
-reference frame. Finally, we
-subtract each target frame from the photometric reference (\S~\ref{subsec:imagesubtraction}).
-We perform aperture
-photometry on the subtracted images using positions projected onto the
-frame from the Gaia DR2 source catalog.  
-We detrend the resulting light curves
-(\S~\ref{subsec:lcdetrending}).  The resulting white noise and red noise properties
-of the light curves, and a few
-interesting cases of variability, are discussed in \S~\ref{sec:results}.
-
+astrometric verification, and coarse simple aperture photometry of
+bright stars (\S~\ref{subsec:preparation}).  Using the metadata
+collected from these initial steps, we select an astrometric reference
+frame to which we transform all of the calibrated images.  We
+construct a photometric reference by stacking a subset of these
+transformed frames, after having convolved the frames to have
+identical stellar profiles. Finally, we subtract each target frame
+from the photometric reference (\S~\ref{subsec:imagesubtraction}).  We
+perform aperture photometry on the subtracted images using positions
+projected onto the frame from the Gaia-DR2 source catalog.  We detrend
+the resulting light curves (\S~\ref{subsec:lcdetrending}).  The
+resulting white noise and red noise properties of the light curves,
+and a few interesting cases of variability, are discussed in
+\S~\ref{sec:results}.
 
 
 \subsection{Observations}
@@ -656,46 +661,111 @@ interesting cases of variability, are discussed in \S~\ref{sec:results}.
 
 The TESS spacecraft began science operations on July 25, 2018.  To
 keep its cameras pointed opposite the Sun, the spacecraft advances by
-$\approx$$28$ degrees east in ecliptic longitude every lunar month.  Data
-acquired throughout each ``sector'' are downlinked at spacecraft
+$\approx$$28$ degrees east in ecliptic longitude every lunar month.
+Data acquired throughout each ``sector'' are downlinked at spacecraft
 perigee through the Deep Space Network.  Verbose descriptions of the
 spacecraft's design and operations are given by
 \citet{ricker_transiting_2015} and the instrument handbook
 \citep{vanderspek_2018}.
 
 For us, the main data product of interest is the calibrated full frame
-image (FFI).  Each TESS camera is read out every 2 seconds.  To produce
-a manageable telemetric load, the resulting pixel values are averaged
-by the onboard computer into 30 minute exposures. An on-board cosmic
-ray mitigation algorithm is applied (CITE: BERTA-THOMPSON). Once
-transmitted to the ground, the raw images are calibrated by the
-Science Processing Operations Center.  The calibration process
-includes an overscan, bias, and dark current correction, and also
-divides out a flat field.  Details are discussed by
-\citet{clarke_kepler_2017}, and the resulting science data products
+image (FFI).  Each TESS camera is read out every 2 seconds.  To
+produce a manageable telemetric load, the resulting pixel values are
+averaged by the onboard computer into 30 minute exposures. An on-board
+cosmic ray mitigation algorithm is applied \citep[][\S
+5.1]{vanderspek_2018}. Once transmitted to the ground, the raw images
+are calibrated by the Science Processing Operations Center.  The
+calibration process includes an overscan, bias, and dark current
+correction, and also divides out a flat field.  Details are discussed
+by \citet{clarke_kepler_2017}, and the resulting science data products
 are described by \citet{tess_data_product_description_2018}.
 
-We begin our analysis using the calibrated images, their uncertainty
-maps, and their associated headers.  The spacecraft has four cameras,
-and each camera has four CCDs.  In the following analysis, all
-image-level operations are thus performed on the images for each CCD,
-so that at any instant of time there are 16 independent images
-undergoing analysis.
+We perform our processing using the calibrated images, their
+uncertainty maps, and their associated headers.  The spacecraft has
+four cameras, and each camera has four CCDs.  In the following
+analysis, all image-level operations are thus performed on the images
+for each CCD, so that at any instant of time there are 16 independent
+images that require analysis.
 
-While we performed numerous initial tests on the first sectors of data,
-by geometric coincidence Sectors 1--5 were pointed away from the galactic plane.
-Less than 2\% of the CDIPS target star sample
-was therefore observed in the first five TESS sectors.
-Though a few interesting clusters are present ({\it e.g.}, Blanco~1, NGC~2516, NGC~1901),
-for the time being we opted to focus on sectors in which there were stars
-of interest for our intended science.
-These begin in Sector 6 (2018-12-12, spacecraft orbit \#19).
+While we performed numerous initial tests on the first sectors of
+data, by geometric coincidence Sectors 1--5 were pointed away from the
+galactic plane.  Consequently, less than 2\% of the CDIPS target star
+sample was observed in the first five TESS sectors.  Though a few
+interesting clusters are present in these observations ({\it e.g.},
+Blanco~1, NGC~2516, NGC~1901), for the present work we opted to focus
+on sectors in which there were more stars of interest for our intended
+science.  These begin in Sector 6 (2018-12-12, spacecraft orbit \#19).
 For this run of processing, they conclude at the end of Sector 7
 (2019-02-01, spacecraft orbit \#22).
 
-\subsection{Image Preparation, Background Removal, \& Meta-Data Collection}
+\subsection{Image Preparation \& Background Removal}
 \label{subsec:preparation}
 
+Before we can perform any kind of photometry, a few janitorial tasks
+are required.
+First, we convert the calibrated image from MAST into a
+single-extension FITS image, and trim to remove virtual rows and
+columns using the \texttt{SCIROWS}, \texttt{SCIROWE}, \texttt{SCCSA},
+and \texttt{SCCED} header values.
+
+In order to pre-emptively address the background variations present in
+some frames due to scattered light from the Earth and Moon
+\citep[see][\S 7.3.1--7.3.4]{vanderspek_2018}, we then estimate and
+subtract the large-scale background.  We do this by temporarily
+masking out pixels more than $2\sigma$ from the image median, and then
+pass a $48\times48$ median box filter over each pixel in the image,
+with reflective boundary conditions.  We blur the resulting background
+estimate with a gaussian kernel, which produces a smooth background
+estimate for each image.  These steps also remove a low-level
+vignetting present in the corners of many images, which remains even
+after flat-fielding \citep[see][\S 7.3.5]{vanderspek_2018}.  With the
+exception of scattered-light caustics, which remain over small areas
+of less than 10\% of the frames, our ad-hoc procedure seems to
+adequately remove large spatial scale scattered light patches.
+
+% We found this background subtraction step to be particularly important
+% in our subsequent difference imaging analysis. In its absense, the
+% scattered light artifacts could introduce erroneous residuals into the
+% kernel solution used to match reference and target images.  Including
+% this step mitigated such effects, and helped produce clean
+% subtractions.  Even after subtraction, a small fraction of frames also
+% show sharp features (caustics) below our median box filter's size
+% scale.  Such features may affect flux measurements at specific times
+% in a small subset of light curves.
+
+After subtracting the background, we mask out saturated stars using a
+fixed saturation level of $8\times10^4\,{\rm ADU}$. This value was
+chosen based on the onset of bleeding charge trails in the images, and
+is slightly greater than the expected saturation level quoted by
+\citet{vanderspek_2018}.  As described by \citet{Pal_2009}, our masks
+are metadata to the image, and are only applied to the pixel values
+during the specific image processing steps in which they are necessary
+({\it e.g.}, convolution). We also extend the masks beyond purely
+saturated pixels to ``bloomed'' pixels horizontally and vertically
+adjacent to the saturated pixels (see Figure~6 of \citealt{Pal_2009}).
+
+Finally, for frames with the \texttt{DQUALITY} bit-flag corresponding
+to the ``momentum dumps'' and ``coarse pointing modes'' described by
+\citet{vanderspek_2018}, we omit the entire frame.  This removes on
+average a few frames per sector. Through visual inspection, we see
+that the stars on these frames are extremely smeared, and are unlikely
+to produce useful science data.  In addition, we use the
+sector-specific data release notes\footnote{\url{
+  archive.stsci.edu/tess/tess_drn.html}} to identify further times
+with anomalous spacecraft performance, which we omit from
+consideration.
+For Sectors 6 and 7, this included three days at the beginning of
+Sector 6 dedicated to acquiring pixel response function data, and no
+additional gaps in Sector 7.
+%For Sectors 1 through 5, these
+%include coarse pointing windows from orbits 10, 13, 14, and an
+%instrumetal anomaly window in orbit 15.
+% For Sectors 6 through 8, these include three days at the beginning of
+% Sector 6 dedicated to acquiring pixel response function data, and also
+% about three days during Sector 8 lost to an instrument anomaly.
+
+\subsection{Meta-Data Collection \& WCS verification}
+\label{subsec:metadatacollection}
 
 \begin{figure}[!t]
 	\gridline{\fig{astromresidual_hist.png}{0.5\textwidth}{}}
@@ -723,99 +793,34 @@ For this run of processing, they conclude at the end of Sector 7
 	\label{fig:astromresid}
 \end{figure}
 
-
-
-Before we can perform any kind of photometry, a few janitorial tasks
-are required.
-
-First, we trim the images.  We convert the calibrated image from MAST
-into a single-extension FITS image, trimmed to remove virtual rows and
-columns using the \texttt{SCIROWS}, \texttt{SCIROWE}, \texttt{SCCSA},
-and \texttt{SCCED} header values.
-
-In order to pre-emptively address the background
-variations present in some frames due to scattered light from the
-Earth and Moon \citep[see][\S 7.3.1--7.3.4]{vanderspek_2018},
-we then estimate and subtract the large-scale background.
-We do this by
-temporarily masking out pixels more than $2\sigma$ from the image median,
-and then pass a $48\times48$ median box filter over each pixel in
-the image, with reflective boundary conditions. 
-We blur the resulting background estimate with a gaussian kernel,
-which produces a
-smooth background estimate for each image.  These steps also remove
-a low-level vignetting
-present in the corners of many images, which remains even after
-flat-fielding \citep[see][\S 7.3.5]{vanderspek_2018}.
-With the exception of scattered-light caustics, which remain in small
-areas of less than 10\% of the frames, this ad-hoc procedure removes
-large spatial scale scattered light patches.
-
-% We found this background subtraction step to be particularly important
-% in our subsequent difference imaging analysis. In its absense, the
-% scattered light artifacts could introduce erroneous residuals into the
-% kernel solution used to match reference and target images.  Including
-% this step mitigated such effects, and helped produce clean
-% subtractions.  Even after subtraction, a small fraction of frames also
-% show sharp features (caustics) below our median box filter's size
-% scale.  Such features may affect flux measurements at specific times
-% in a small subset of light curves.
-
-After subtracting the background, we mask out saturated stars using a
-fixed saturation level of $8\times10^4\,{\rm ADU}$. This value was
-chosen based on the onset of visible trails of bleeding charge, and is
-slightly greater than the expected saturation level quoted by
-\citet{vanderspek_2018}.  As described by \citet{Pal_2009}, our masks
-are metadata to the image, and are only applied to the
-pixel values during the specific image processing steps in which they
-are necessary ({\it e.g.}, convolution). We also extend the masks
-beyond purely saturated pixels to ``bloomed'' pixels horizontally and
-vertically adjacent to the saturated pixels (see Figure~6 of \citealt{Pal_2009}).
-
-Finally, for frames with the \texttt{DQUALITY} bit-flag corresponding
-to the ``momentum dumps'' and ``coarse pointing modes'' described by
-\citet{vanderspek_2018}, we omit the entire frame.  This removes
-on average a few frames per sector. Through visual inspection, we see
-that the stars on these frames are extremely smeared, and are unlikely
-to produce useful science data.
-In addition, we use the sector-specific data release
-notes\footnote{\url{ archive.stsci.edu/tess/tess_drn.html}} to
-identify further times with anomalous spacecraft performance,
-which we omit from consideration.
-%For Sectors 1 through 5, these
-%include coarse pointing windows from orbits 10, 13, 14, and an
-%instrumetal anomaly window in orbit 15.
-For Sectors 6 through 8, these include three days at the beginning of
-Sector 6 dedicated to acquiring pixel response function data, and also
-about three days during Sector 8 lost to an instrument anomaly.
-%FIXME for sectors 6 thru 8
-
-Having prepared the images, we perform some initial analysis steps
-to produce metadata
-needed during image subtraction.  
+Having prepared the images, we perform some initial analysis steps to
+produce metadata needed during image subtraction.  
 
 First, we use \texttt{fistar} to perform source extraction on bright
-stars in each image.
-uring the initial source
-extraction, we also fit elongated gaussians to the bright stars,
-yielding the shape parameters $(s,d,k)$, where the flux as a function
-of position is assumed to take the form
+stars in each image.  During the initial source extraction, we also
+fit elongated gaussians to the bright stars, yielding the shape
+parameters $(s,d,k)$, where the flux $f$ as a function of position
+$(x,y)$ in the CCD image plane is assumed to take the form
 \begin{align}
-  f_{\rm elong}(\vec{x}) &= B + A \exp \{ -0.5 \times ( 
+  f(x,y) &= B + A \exp \{ -0.5 \times [
     s(\Delta x^2 + \Delta y^2) + \\
     \nonumber
     &d(\Delta x^2 - \Delta y^2) +
     k(2\Delta x \Delta y)
-  )  \},
+  ]  \},
 \end{align}
-for $\Delta x = x-x_0$, and $\Delta y = y - y_0$.  For a nearly
-circular shape profile, the sharpness $s$ is related to the FWHM as
-${\rm FWHM} \approx 2.35\sqrt{s}$ \citep[{\it e.g.},][]{Pal_2009}.
-These shape parameters are later used when selecting an astrometric
-reference (\S~\ref{subsec:imagesubtraction}).  We note that the fast
-focal ratio of the TESS cameras introduces significant comatic
-aberrations to the images: stars closer to the center of the field are
-more round, while stars towards the edges are more triangular.
+for $(x_0,y_0)$ arbitrary reference positions,
+$\Delta x = x-x_0$, $\Delta y = y - y_0$, and $A$ and $B$ arbitrary
+flux-scaling constants.
+For a nearly circular shape profile, the sharpness $s$ is related to
+the FWHM as ${\rm FWHM} \approx 2.35\sqrt{s}$ \citep[{\it
+e.g.},][]{Pal_2009}.  These shape parameters are later used when
+selecting an astrometric reference frame
+(\S~\ref{subsec:imagesubtraction}).  
+In agreement with what is obvious upon visual inspection, this 
+fitting process shows that stars closer to the
+center of each camera's field are round, while
+stars near the field edges are more triangular.
 
 For the astrometric solution, we use the WCS and SIP coefficients
 derived by SPOC and included in the FFI headers
@@ -824,8 +829,10 @@ using \texttt{astrometry.net} \citep{lang_2010} to derive our own
 astrometric solutions for each frame, but found that the astrometric
 residual (the mean separation between projected and measured
 positions) was consistently a factor of 1.5-2 times higher in our WCS
-solutions than in those given by SPOC (perhaps attributable to the
-algorithm used to select stars and measure their positions).
+solutions than in those given by SPOC.  This was perhaps because
+we did not invest major amounts of time developing a robust
+algorith to select non-blended stars of intermediate brightness before
+measuring their positions.
 
 With the resulting WCS information, we then project a source catalog
 onto each frame.  Initially, we planned to photometer all Gaia-DR2
@@ -835,11 +842,12 @@ large number of sources (millions of stars per
 $12^\circ\times12^\circ$ CCD).  We therefore limited our source
 catalog for each frame to be
 a combination of the CDIPS target stars ($G_{Rp} < 16$), and
-all Gaia-DR2 sources down to $G_{Rp} < 13$.  We use the expected
-projected of these sources to center the apertures in our photometry,
+all Gaia-DR2 sources down to $G_{Rp} < 13$.  We use the
+projected positions of these sources to center the apertures in our
+photometry,
 rather than attempting to detect the positions.  Such
-``forced-aperture photometry'' is preferable to performing source
-extraction in the crowded fields that are central in this work.  The
+``forced-aperture photometry'' is preferable to source
+extraction in the crowded fields that are central to this work.  The
 Gaia-DR2 epoch is J2015.5, so even the fastest-moving stars with
 proper motions of $\sim$$1\,{\rm arcsecond}\,{\rm yr}^{-1}$ are still
 well within one pixel of their predicted positions in the TESS images.
@@ -851,16 +859,16 @@ The source catalog look-up is performed using
 \citep{kim_2018_gaia2read}.
 
 The astrometric residual is displayed for one photometric reference
-frame (to be described shortly) in
-Figure~\ref{fig:astromresid}.
-A few salient points can be made.
+frame in Figure~\ref{fig:astromresid}.
+The construction of this frame will be described shortly, however
+a few salient points can first be made.
 First, the typical median precision of the WCS solution is a bit below
 0.1 pixels, and its $90^{\rm th}$ percentile is typically less than
 0.3 pixels\footnote{In fact, in our reduction we automatically impose
 that the median residual and 90th percentile remain below 0.2 and 0.4
 pixels, respectively.}.
-The distribution has a outlier tail of saturated stars which were
-masked, and thus do not have measureable centroid positions.
+%The distribution has a outlier tail of saturated stars which were
+%masked, and thus do not have measureable centroid positions.
 The errors are typically largest in the corners of the field of view,
 where the non-linearity of the focal plane is most significant, and
 where the corrections required by the SIP coefficients are largest.
@@ -869,44 +877,50 @@ where the corrections required by the SIP coefficients are largest.
 %gives some context for our chosen aperture radii of 1, 1.5, and 2.25
 %pixels.
 
-Finally, we use \texttt{fiphot} to perform aperture photometry on the
+As a final step of metadata collection, we use \texttt{fiphot}
+to perform aperture photometry on the
 bright stars from the
 source list, by summing the counts inside appropriately-weighted
-circular apertures centered on the projected positions from Gaia DR2. 
-The pixel weights $w_{x,y}$ are equal to the fraction of the pixel
+circular apertures centered on the projected positions. 
+The pixel weights are equal to the fraction of the pixel
 that falls within the aperture.  They are thus unity for pixels
 entirely within the aperture, and fractional along the aperture
-boundary (see \citealt{Pal_2009} Fig 17). 
+boundary. % (see \citealt{Pal_2009} Fig 17). 
 The background levels are measured in annuli around each aperture
-center.  The raw flux of the object after background removal is then
-(\citealt{Pal_2009} Eq 65)
-\begin{equation}
-  f = \sum_{x,y} w_{x,y} (I_{x,y} - B) = f_{\rm total} - B r_0^2.
-  \label{eq:simple_aperture_phot}
-\end{equation}
+center. 
+%The raw flux of the object after background removal is then
+%(\citealt{Pal_2009} Eq 65)
+%\begin{equation}
+%  f = \sum_{x,y} w_{x,y} (I_{x,y} - B) = f_{\rm total} - B r_0^2.
+%  \label{eq:simple_aperture_phot}
+%\end{equation}
 The resulting measurements, for instance of the background level of
-each aperture, and the number of ``good'' objects that are detected,
+each aperture, and the number of stars with ``good'' photometry,
 are later used to select photometric reference frames.
 
 
 \subsection{Image Subtraction}
 \label{subsec:imagesubtraction}
 
+\subsubsection{History of image subtraction method}
 The core operation of ``classical'' image subtraction
 attempts to match a photometric reference $R$ and a target image $I$ by 
 computing and applying a convolution kernel.
 For ground-based data, this ``match'' typically corrects for
 differences in seeing or transparency between the reference and
 target; for space-based data, the match might correct for spacecraft
-jitter, or thermal and corresponding PSF variations.
+jitter, or thermal and corresponding point-spread function (PSF)
+variations.
 The kernel, once applied to the high signal-to noise reference,
 produces a model image, $M_{xy}$,
 \begin{equation}
     M_{xy} = (R \otimes K)_{xy} + B_{xy},
+    \label{eq:imagemodel}
 \end{equation}
 where $B_{xy}$ is a component of the model image that allows for
 background variations.
-We model the background separately, so we set $B_{xy}=0$.
+Since we modeled the background separately (\S~\ref{subsec:preparation}),
+we set $B_{xy}=0$.
 The convolution kernel $K$ is typically decomposed onto a
 basis, $K = \sum_i c_i K_i$, and the coefficients are found
 by minimizing
@@ -917,57 +931,70 @@ by minimizing
 where $\sigma_{xy}$ is the uncertainty in the target image pixel values.
 Photometry is then performed on the difference image $D_{xy}$, where
 $D_{xy} = I_{xy} - M_{xy}$.
-For this work, the uncertainty in each target image pixel is
+For the present reduction, the uncertainty in each target image pixel was
 taken to be a constant.	
 
 The procedure described above was first proposed by \citet{Alard_Lupton_1998}.
 It was reviewed and clarified by \citet{miller_optimal_2008}.
-The choice of how to decompose the kernel was further clarified by
+The choice of how to decompose the kernel was further explored by
 \citet{bramich_new_2008}, who showed that using a delta function
 had a few select advantages compared to a basis of gaussians.
 We perform the convolution using \texttt{ficonv}, and opt for
-the implementation of Bramich's method (see \citealt{Pal_2009} Section 2.8).
+the implementation of Bramich's method (see \citealt{Pal_2009} \S~2.8).
 
-For posterity, we note a few implementation details.
-We must select two ``reference frames'' for image subtraction:
-(1) the astrometric reference; (2) the photometric reference.
 
-To choose the astrometric reference, we search for frames with
-the largest and roundest stars (big $s$, small $d$ and $k$ values).
-We also require
-that the frame must minimal background noise, as measured in annuli
+\subsubsection{Astrometric registration}
+We now describe a few implementation details we used to make the
+above high-level picture work.
+First, we needed to select two ``reference frames'' for image subtraction:
+(1) the astrometric reference; and (2) the photometric reference.
+
+To choose the astrometric reference, we searched for frames with
+large, round stars (big $s$, small $d$ and $k$ values).
+We also required
+that the frame have minimal background noise, as measured in annuli
 around the bright stars selected in \S~\ref{subsec:preparation}.
-Finally, the astrometric reference frame must have, relative to the 
+Finally, the astrometric reference frame needed to have, relative to the 
 other frames being
 considered, a large number of detected sources.
-We sort the frames using these metrics, and then select the
+We sorted the frames using these metrics, and then selected the
 astrometric reference from successive intersections of each sorted
 list.
-Using the algorithm presented by \citet{pal_astrometry_2006}, we then
-use the \texttt{grtrans} tool to
-calculate an affine transformation that maps each calibrated frame
-to the astrometric reference.
-We use the flux-conserving interpolation
-scheme described by \citet{Pal_2009} to minimize photometric errors
-incurred during this step --
-standard bilinear or bicubic interpolation do not achieve flux
-conservation.  
-The largest component of the transformation is typically a translation,
-of order 2 arcseconds, or about 0.1 TESS pixels.
-%FIXME: EXPLAIN THIS BETTER
 
-The second reference frame is the
+We then
+used the \texttt{grmatch} and \texttt{grtrans} tools to
+compute and apply a spatial transformation of each calibrated frame
+to match the astrometric reference frame.
+The transformation is calculated using the measured source positions
+found in ~\S~\ref{subsec:metadatacollection},
+and the symmetric triangle point-matching scheme described
+by \citet[][~\S~2.5.2]{Pal_2009}.
+The transformation~--~a combination of rotation, dilation, and
+translation~--~typically moves stars by less than a pixel, since
+the TESS spacecraft is quite stable.
+The precision of the transformation is guaranteed by forcing 
+its unitarity $\Lambda$ to always be below 0.01, where 
+$\Lambda$ is defined by \citet[][~Eq.~54]{Pal_2009}.
+We reduced the photometric errors
+incurred during this step by using
+the flux-conserving interpolation
+scheme described by \citet{Pal_2009},
+which was necessary because polynomial interpolation schemes
+do not conserve stellar flux. 
+
+\subsubsection{Photometric reference frame construction \& reference flux measurement}
+
+The second required reference frame is the
 photometric reference, which is used both to calculate the
 convolution kernel, and to obtain a
 reference flux for each star.  
-To minimize Poisson errors, our photometric reference is a median average of
-$N=50$ selected frames.
-The sub-frames are chosen to have low scatter in their photometry,
-and low background measurements, using the metadata collected
+To make it, we first chose 50
+sub-frames with low scatter in their photometry
+and low background measurements, according to the metadata collected
 in \S~\ref{subsec:preparation}.
-We convolve the 50 best candidate photometric references to the best
-photometric reference, and then perform a median combination of the
-frames to make the photometric reference.
+We then convolved these candidate photometric reference frame to the best
+frame, and performed a median average over the entire stack
+to make the photometric reference.
 
 %\begin{enumerate}
 %  \item Lowest median scatter in photometry
@@ -979,55 +1006,60 @@ frames to make the photometric reference.
     % fiphot files used for all of this.
 %\end{enumerate}
 
-To measure the reference flux for each star, we go a bit further.
+Measuring the reference flux for each star is a slightly non-trivial
+operation.
 First, we perform forced simple aperture photometry to measure
 the flux for each source.
 The local background is estimated in annuli, with neighboring stars
 masked out during the background measurement.
-If we were to stop here, {\it it would be a bad mistake}.
-The reference flux for faint stars would be overestimated, due to
+However if we were to stop here, {\it it would be a bad mistake}.
+The reference fluxes for faint stars would be overestimated, due to
 crowding.
 The relative amplitude of photometric signals would correspondingly
 be biased small, hindering exoplanet detection.
-Therefore, after performing simple aperture photometry on the 
-reference frame, we fit for an for aperture-size specific zero point
-that relates each star's catalog $T$-band magnitude to the
-measured flux.
-The $T$-band magnitude is calculated according to Equation~1 of 
-Stassun et al (2019, CITE).
-Crowding is minimzed down to Gaia's resolution limit.
-We then use the known catalog magnitude to predict the expected
-photometric reference flux.
 
-The final instrumental flux values we report (for example,
-the \texttt{IFL1} column) are similar to \citealt{Pal_2009} Equation~83:
+Therefore, after performing simple aperture photometry on the 
+reference frame, we fitted an aperture-size specific zero point
+between the catalog $T$-band magnitude of each star, and its
+measured flux.
+The $T$-band magnitude was calculated according to Equation~1 of 
+\citet{stassun_TIC8_2019}.
+We then use the known catalog magnitude to predict the expected
+reference flux for each star.
+In effect, this minimizes crowding down to Gaia's resolution limit of
+$\approx$1$''$, rather than the TESS limit of $\approx$20$''$.
+
+Following \citet{Pal_2009}~Equation~83,
+the final instrumental flux values $f$ we report\footnote{For example,
+the \texttt{IFL1} column} are then equal to
 \begin{align}
-f &= f_{\rm subtracted} + f_{\rm reference} \\
+f &=  f_{\rm reference} + f_{\rm subtracted} \\
 &=
-\frac{1}{|| K ||_1^2} \sum_{x,y} S_{x,y} (w \otimes K)_{x,y}
+g \left(T_{\rm cat} \right)
 +
-g \left(T_{\rm cat} \right),
+\frac{1}{|| K ||_1^2} \sum_{x,y} D_{x,y} (w \otimes K)_{x,y}.
 \label{eq:ism_flux_measurement}
 \end{align}
-for the subtracted image $S$, which is equal to $I -  R\otimes K$,
-where $I$ is the original image transformed to the astrometric
-reference, $R$ is the photometric reference, and $K$ is the convolution
-kernel.
-The weights $w$ from the circular aperture mask are matched to
-the image convolution.
 The function $g$ takes as input the target star's
 catalog magnitude $T_{\rm cat}$, and returns the reference flux.
-Its coefficients have been fit per the procedure 
-discussed in the preceding paragraph.
-%FIXME: derive this equation. why exactly does this work?
+Its coefficients have been fit per the procedure  just discussed.
+The difference image $D$ is equal to $I -  R\otimes K$,
+where as in Equation~\ref{eq:imagemodel}, $I$ is the target image 
+transformed to the astrometric
+reference, $R$ is the photometric reference, and $K$ is the convolution
+kernel.
+The weights $w$ from the circular aperture mask are included in
+the convolution.
+The norm $|| K ||_1$ is defined by \citet{Pal_2009}~Equation~81.
 
+\subsection{Choice of convolution kernel}
 A few brief notes on the algorithm to actually solve for the 
 coefficients to the convolution kernel.
-The procedure implemented in \texttt{ficonv} is to grid up
+The procedure implemented in \texttt{ficonv} is to grid
 the image, and within each grid element find the brightest non-saturated
 star. These isolated ``stamp'' stars are then used to solve for the
 coefficients of the kernel, by minimizing
-Equation~\ref{eq:chisq_conv}.
+Equation~\ref{eq:chisq_conv} over the sum of all stamps.
 
 %NOTE : this is kind of incomprehensible
 %CHECK: does the polynomial weighting actually do what you want it to do?
@@ -1043,9 +1075,9 @@ free parameters:
 (2) the maximum order of the polynomial weighting the delta function terms;
 (3) the maximum order of the polynomial weighting the flux scaling.
 We performed a grid-search to tune these parameters, in
-which our main metrics for success included the measured RMS as
+which our metrics for success included the measured RMS as
 a function of magnitude, and also the recovered SNR of transits from
-known TOIs (CITE: Guerrero et al in prep 2019).
+the catalog of known TOIs (TESS Objects of Interest; N.~Guerrero, in prep).
 
 Varying the kernel box-size, we found that kernels with box-length smaller than the 
 typical TESS FWHM at field center ($\approx$3 pixels) produced light curves
@@ -1069,12 +1101,14 @@ Averaging over all TOIs present in the camera we used for these experiments,
 we found that different choices 
 of kernel parameters produced variations of $\lesssim 12\%$ in the retrieved 
 transit SNR.  
-For computational expediency, we therefore chose a $(7\times 7)$ kernel with 
-second-order spatial polynomial weights in the basis functions.
+For computational expediency, we therefore chose a single
+$(7\times 7)$ kernel with 
+second-order spatial polynomial weights in the basis functions for the
+remainder of our reduction.
 However, we caution that within our parameter-tuning experiments, the 
 recovered SNR of perhaps a third of the TOIs varied by up to a factor of two,
 which in a few 
-cases would have lead to non-detections of objects near the noise floor.
+cases led to non-detections of transit signals near the noise floor.
 In the longer term, developing an image-subtraction method that marginalizes 
 over uncertainties of how to chose ``optimal'' kernels would be desirable.
 Pixel-level image subtraction methods that omit these 
@@ -1082,15 +1116,16 @@ parameters entirely
 are also worth exploring \citep{wang_pixel-level_2017}.
 
 With a kernel selected, and the convolution and subtraction performed, 
-we calculate the instrumental fluxes on each frame per 
+we calculate the instrumental fluxes for each frame per 
 Equation~\ref{eq:ism_flux_measurement}. 
-We do this with three different aperture sizes: for this work, circles
+We did this with three different aperture sizes: for this work, circles
 of radii 1 pixel, 1.5 pixels, and 2.25 pixels.
 These sizes were chosen to roughly span the range of optimal aperture
-sizes for stars in our sample, as calcuated in the pre-flight
-\citet{Sullivan_et_al_2015} work.
-To finally convert from a list of 
-sources on each frame to a list of flux values at any given time, we use the 
+sizes for stars in our sample, as calcuated from the pre-flight
+\citet{Sullivan_et_al_2015} noise model.
+Finally, to convert from a list of 
+flux measurements for each source on a frame to a list of flux values
+at any given time, we used the 
 \texttt{grcollect} transposition tool.
 
 \subsection{Light Curve Detrending}
@@ -1118,10 +1153,10 @@ sources on each frame to a list of flux values at any given time, we use the
 The preceding steps produce light curves that include both instrumental
 systematics as well as astrophysical variability.  The detrending
 approach adopted by the HAT group typically proceeds in a few
-sequential stages (see discussions from {\it e.g.}
+sequential stages (previously discussed by {\it e.g.}
 \citealt{bakos_2010,huang_high-precision_2015,zhang_precision_2016}).
-Given the heritage of our pipeline, we briefly discuss these, and then
-explain why we omit most of the steps described.
+Given the heritage of our pipeline, we briefly note which of these concepts
+were used in this reduction.
 
 The first detrending step commonly performed on ground-based data is
 ``magnitude-fitting'': the raw magnitudes measured from the difference
@@ -1134,14 +1169,14 @@ known to affect the stellar flux measurements (EPD,
 \citealt[][~Appendix]{bakos_2010}).  For ground-based data this may include zenith
 angle, or changing PSF parameters.  For TESS data, this might include
 CCD temperature, or perhaps some measure of the scatter in the spacecraft
-pointing (CITE: Vanderburg 2019).
+pointing \citep{vanderburg_hr858_2019}.
 
 The final step is to then decorrelate the measured brightnesses of
 stars against each other (TFA, \citealt{kovacs_trend_2005}).  
 This accounts for variations due to unknown systematic
 instrument changes that affect many stars.
 
-
+%TODO TODO TODO FIXME LEFT OFF EDITS HERE
 %FIXME TURGID PROSE
 In \S~\ref{sec:flux_vs_external_parameters}, we show that the
 ``external parameter'' dependence visible in the TESS data is rather
@@ -1370,8 +1405,9 @@ separately.
 		{\bf Positions of light curves from TESS Sectors 6
 			and 7 in galactic coordinates.}
 		Black: $G_{\rm Rp}<13$ field stars.  Blue: $G_{\rm Rp}<16$
-		target stars.  The target stars are mostly near the galactic
-		plane.
+		target stars.  Target stars are mostly near the galactic
+		plane. The data for Sectors 6 and 7 cover about one-sixth of
+		the galactic plane.
 		\label{fig:lcgalactic}
 	}
 \end{figure*}
@@ -1537,12 +1573,12 @@ skepticism on a source-by-source basis.  For Platais~6,
 Mamajek~3 (32$\,$Ori) has only about 50 confirmed members
 \citep{bell_32ori_2017}.
 
-We remind the reader that our goal in creating this sample was
+We remind the reader that our goal in creating our target catalog was
 completeness, rather than fidelity. The \citet{dias_proper_2014} stars
 in particular were included if they were listed with membership
 probability exceeding 50\%.  To create cleaner sub-samples, we advise
-use of the \texttt{CDEXTCAT} header keyword, which can be
-cross-matched against the original source catalog to obtain the
+use of the \texttt{CDEXTCAT} header keyword, which can be used
+to merge against the original source catalog to obtain the
 membership probabilities claimed by the original catalog.
 
 \paragraph{Sector 7}
@@ -2216,7 +2252,7 @@ section summarize this document. Updated versions and their
 \texttt{README} files will live at this web-address: 
 \url{mast.stsci.edu/CDIPS}.
 The planet candidate chosen for these figures
-(Gaia DR2 \texttt{5541111035713815552} = TIC \texttt{134528212}) was
+(Gaia-DR2 \texttt{5541111035713815552} = TIC \texttt{134528212}) was
 chosen for the demonstration in part because it passes all
 the tests.
 It is one of a number of the giant planet candidates that we note may
