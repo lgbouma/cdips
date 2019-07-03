@@ -1083,6 +1083,25 @@ sources on each frame to a list of flux values at any given time, we use the
 \subsection{Light Curve Detrending}
 \label{subsec:lcdetrending}
 
+\begin{figure*}[t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.6\textwidth]{epdparams_vs_time.png}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+		{\bf Timeseries of ``external parameters'' for a representative
+			star.} {\it Top}: Instrumental raw magnitude (with a particular
+		aperture size), as a function of time.  {\it Second and third from
+			top}: $x$ and $y$ centroid positions as a function of time.
+		Continuing in order are the CCD temperature, the $(s,d,k)$ shape
+		parameters, and the measured background value.
+		Most of the apparent variability is instrumental: see
+		\S~\ref{sec:flux_vs_external_parameters}.
+		\label{fig:external_parameter_timeseries}
+	}
+\end{figure*}
+
 The preceding steps produce light curves that include both instrumental
 systematics as well as astrophysical variability.  The detrending
 approach adopted by the HAT group typically proceeds in a few
@@ -1124,25 +1143,6 @@ decorrelate against other nearby stars with standard TFA.
 
 \subsubsection{Flux versus external parameters}
 \label{sec:flux_vs_external_parameters}
-
-\begin{figure*}[t]
-	\begin{center}
-		\leavevmode
-		\includegraphics[width=0.6\textwidth]{epdparams_vs_time.png}
-	\end{center}
-	\vspace{-0.5cm}
-	\caption{
-    {\bf Timeseries of ``external parameters'' for a representative
-    star.} {\it Top}: Instrumental raw magnitude (with a particular
-    aperture size), as a function of time.  {\it Second and third from
-    top}: $x$ and $y$ centroid positions as a function of time.
-    Continuing in order are the CCD temperature, the $(s,d,k)$ shape
-    parameters, and the measured background value.
-    Most of the apparent variability is instrumental: see
-    \S~\ref{sec:flux_vs_external_parameters}.
-		\label{fig:external_parameter_timeseries}
-	}
-\end{figure*}
 
 
 % \begin{figure*}[t]
@@ -1347,18 +1347,7 @@ separately.
 \section{Results}
 \label{sec:results}
 
-
-
-\subsection{Light Curve Statistics}
-\label{subsec:lcstatistics}
-
-\subsubsection{Stellar properties}
-
 \begin{figure*}[!t]
-	%\gridline{
-	%  \fig{cluster_field_star_positions.png}{0.49\textwidth}{}
-	%  \fig{sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png}{0.49\textwidth}{}
-	%}
 	\begin{center}
 		\leavevmode
 		\includegraphics[width=0.97\textwidth]{galacticcoords_cluster_field_star_positions.png}
@@ -1367,27 +1356,27 @@ separately.
 	\caption{
 		{\bf Positions of light curves from TESS Sectors 6
 			and 7 in galactic coordinates.}
-        Black: $G_{\rm Rp}<13$ field stars.  Blue: $G_{\rm Rp}<16$
-        target stars.  The target stars are mostly near the galactic
-        plane.
+		Black: $G_{\rm Rp}<13$ field stars.  Blue: $G_{\rm Rp}<16$
+		target stars.  The target stars are mostly near the galactic
+		plane.
 		\label{fig:lcgalactic}
 	}
 \end{figure*}
 
-\begin{figure}[!t]
-	\begin{center}
-		\leavevmode
-		\includegraphics[width=0.47\textwidth]{sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png}
-	\end{center}
-	\vspace{-0.5cm}
-	\caption{
-		{\bf  Zoom and coordinate transformation
-			of Sector 6, Camera 1 from Figure~\ref{fig:lcgalactic}.}
-		The most populated cluster is XXX, primarily due to candidate
-		members proposed by \citet{dias_proper_2014}.
-		\label{fig:lcradeczoom}
-	}
-\end{figure}
+%\begin{figure}[!t]
+%	\begin{center}
+%		\leavevmode
+%		\includegraphics[width=0.47\textwidth]{sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png}
+%	\end{center}
+%	\vspace{-0.5cm}
+%	\caption{
+%		{\bf  Zoom and coordinate transformation
+%			of Sector 6, Camera 1 from Figure~\ref{fig:lcgalactic}.}
+%		The most populated cluster is XXX, primarily due to candidate
+%		members proposed by \citet{dias_proper_2014}.
+%		\label{fig:lcradeczoom}
+%	}
+%\end{figure}
 
 
 \begin{figure}[!t]
@@ -1397,10 +1386,10 @@ separately.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-    {\bf Cumulative number of CDIPS light curves a function of TESS
-    $T$-band magnitude.}  Light curves were made for the
-    target stars (Figure~\ref{fig:cdips_targets}) that were observed
-    in Sectors 6 or 7.
+		{\bf Cumulative number of CDIPS light curves a function of TESS
+			$T$-band magnitude.}  Light curves were made for the
+		target stars (Figure~\ref{fig:cdips_targets}) that were observed
+		in Sectors 6 or 7.
 		\label{fig:cdf_T_mag}
 	}
 \end{figure}
@@ -1411,11 +1400,11 @@ separately.
 	\gridline{\fig{hrd_scat_close_subset.png}{0.45\textwidth}{}}
 	\vspace{-0.8cm}
 	\caption{
-    {\it Top.} HR diagram of CDIPS stars on silicon in this
-    data release.  {\it Bottom.} HR diagram of close CDIPS stars on
-    silicon. The wedge separating the pre-MS sample from the MS
-    stars was discussed by \citet{zari_3d_2018}, who introduced it in
-    order to avoid contamination by photometric binaries.
+		{\it Top.} HR diagram of CDIPS stars on silicon in this
+		data release.  {\it Bottom.} HR diagram of close CDIPS stars on
+		silicon. The wedge separating the pre-MS sample from the MS
+		stars was discussed by \citet{zari_3d_2018}, who introduced it in
+		order to avoid contamination by photometric binaries.
 	}
 	\label{fig:hrd}
 \end{figure}
@@ -1426,14 +1415,43 @@ separately.
 	\gridline{\fig{pm_scat_close_subset.png}{0.45\textwidth}{}}
 	\vspace{-0.8cm}
 	\caption{
-    {\it Top.} Proper motions of CDIPS stars on silicon in this
-    data release.  Many of the stars in the central ``blob'' are possible
-    field-contaminants.
-    {\it Bottom.} Proper motions of close CDIPS stars
-    on silicon.
+		{\it Top.} Proper motions of CDIPS stars on silicon in this
+		data release.  Many of the stars in the central ``blob'' are possible
+		field-contaminants.
+		{\it Bottom.} Proper motions of close CDIPS stars
+		on silicon.
 	}
 	\label{fig:propermotions}
 \end{figure}
+
+\begin{figure}[t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.47\textwidth]{rms_vs_mag.png}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{ {\bf Standard deviation vs catalog TESS-band magnitude for
+			trend-filtered CDIPS light curves.} 
+		Black points correspond to the minimum RMS across the available three
+		aperture sizes.  
+		The model (orange and gray lines) assumes aperture sizes reported 
+		by \citet{Sullivan_et_al_2015}, and the effective area from 
+		\citet{vanderspek_2018}.
+		The noise from unresolved background stars (dotted gray line) is a function 
+		of galactic latitude, and dominates over zodiacal light
+		for faint stars near the galactic plane; the line shown assumes a
+		sight-line towards the center of Sector 6, Camera 1 (further details
+		are in \S~\ref{subsubsec:rmsvsmag}).
+		\label{fig:rms_vs_mag}
+	}
+\end{figure}
+
+
+
+\subsection{Light Curve Statistics}
+\label{subsec:lcstatistics}
+
+\subsubsection{Stellar properties}
 
 The on-sky locations of the light curves from Sectors 6 and 7
 are shown in Figure~\ref{fig:lcgalactic}.
@@ -1443,17 +1461,18 @@ The blue stars are the \numberlcs stars with light curves available
 from \stscilink.
 Most of the target stars are quite close to the galactic plane.
 Gaps between CCD chips are also visible.
-
-A zoom-in of Figure~\ref{fig:lcgalactic} is shown in Figure~\ref{fig:lcradeczoom}
-for the Camera 1, Sector 6 field. The effects of galactic-latitude
-dependent extinction are visible through the decreasing density of black
-points towards the right of the image.
 The highly clumped nature of the target stars is also apparent.
+
+%A zoom-in of Figure~\ref{fig:lcgalactic} is shown in Figure~\ref{fig:lcradeczoom}
+%for the Camera 1, Sector 6 field. The effects of galactic-latitude
+%dependent extinction are visible through the decreasing density of black
+%points towards the right of the image.
+
 
 Figure~\ref{fig:cdf_T_mag} shows the cumulative distribution of
 TESS $T$-band magnitudes for the target stars.
 Though most of the targets are faint, $\approx3\times10^4$ are
-brighter than $T=13$, and so are more promising targets for any
+brighter than $T=13$. These targets are more promising for any
 detailed follow-up observtions.
 
 An HR diagram for the entire sample of stars on silicon
@@ -1523,28 +1542,6 @@ The clusters with the largest claimed numbers of sources are ...
 
 \subsubsection{Light curve noise properties}
 \label{subsubsec:rmsvsmag}
-
-\begin{figure}[t]
-	\begin{center}
-		\leavevmode
-		\includegraphics[width=0.47\textwidth]{rms_vs_mag.png}
-	\end{center}
-	\vspace{-0.5cm}
-  \caption{ {\bf Standard deviation vs catalog TESS-band magnitude for
-  trend-filtered CDIPS light curves.} 
-  Black points correspond to the minimum RMS across the available three
-  aperture sizes.  
-  The model (orange and gray lines) assumes aperture sizes reported 
-  by \citet{Sullivan_et_al_2015}, and the effective area from 
-  \citet{vanderspek_2018}.
-  The noise from unresolved background stars (dotted gray line) is a function 
-  of galactic latitude, and dominates over zodiacal light
-  for faint stars near the galactic plane; the line shown assumes a
-  sight-line towards the center of Sector 6, Camera 1 (further details
-  are in \S~\ref{subsubsec:rmsvsmag}).
-		\label{fig:rms_vs_mag}
-	}
-\end{figure}
 
 \paragraph{Observed RMS vs magnitude.}
 The standard deviation of the TFA-detrended light curves is plotted as
@@ -1676,176 +1673,198 @@ Some focus on particular clusters.
 \subsection{Identifying Planet Candidates}
 \label{subsec:identifying_ctois}
 
-To identify an initial set of transiting planets, strong stellar rotators, and 
-eclipsing binaries, we performed a few steps of post-processing on the light 
-curve described in the preceding sections. 
-This processing was entirely independent of the data release, since it was 
-quite specific to our own scientific interests.
-
-For simplicity,
-we first chose a single aperture size~--~``aperture 2''~--~with a radius of 
-1.5  pixels.
-Then, to identify periodic transit-like signals, we used 
-\citet{hippke_TLS_2019}'s transit least-squares (TLS) tool.
-The algorithm is the same as the canonical box least-squares
-\citep{kovacs_box-fitting_2002}, except in place of a box template, a transit 
-template is used  for a marginal improvement of the detection efficiency.
-In addition, the search grids in \texttt{tls} 
-\footnote{\url{https://github.com/hippke/tls}} are slightly more 
-efficient than in most BLS implementations, since \texttt{tls} uses the 
-cubic-in-frequency sampling advocated by \citet{ofir_optimizing_2014}, 
-rather than standard linear-in-frequency sampling.
-Our grids typically consisted of about 30 different durations, and
-about 5000 periods between 0.5 and 21 days. 
-
-Before performing the period search, we rejected $6\,{\rm hours}$ at the
-beginning and end of each spacecraft orbit, to mitigate the presence
-of correlated red noise in the results.
-This shrank the data volume by about 5\%, but also lowered the number
-of systematic false positives in subsequent vetting.
-We then performed an asymmetric sigma-clipping of $(50\sigma,5\sigma)$ to 
-preserve transits while omitting flares and other positive flux excursions. 
-
-A number of the light curves show residual variability, often of stellar 
-origin.
-This is expected for a sample of young stars; the problem of finding transits in 
-the face of large stellar rotation signals 
-has been explored by both \citet{rizzuto_zeitV_2017} and also 
-\citet{hippke_wotan_2019}.
-The former adopted an approach that we have yet to explore, which is to 
-pass a sliding window over the light curve that, within each step, performs a 
-Bayesian model comparison between a spline and a spline-plus-notch model.  If 
-the spline-plus-notch model is favored, the transits are preserved for 
-subsequent discovery.
-\citet{hippke_wotan_2019}, conversely, described a number of different
-detrending methods, and found that most performed more or less the same at 
-recovering planetary transits for a sample of young stars with strong rotation 
-signals.
-
-Our approach in this work is essentially identical to one of the methods 
-described by \citet{hippke_wotan_2019}.
-First, we run a generalized Lomb-Scargle periodogram on each TFA light 
-curve \citep{lomb_1976,scargle_studies_1982,vanderplas_periodograms_2015}.
-If a peak is found with false alarm probability below $10^{-5}$, we consider 
-the star ``variable'', and opt to 
-detrend the light curve with robust penalized B-splines, which are splines 
-with knot-length automatically determined via cross-validation 
-\citep{eilers_flexible_1996}. The idea behind the cross-validation is that a 
-larger  number of knots leads to smaller residuals on training data, but 
-larger errors 
-when tested on the entire dataset.
-We used the \texttt{wotan} implementation, which is a wrapper to the 
-\texttt{pyGAM} spline fitter, with $2\sigma$ clipping of outliers from the fit 
-residuals at each iteration 
-\citep{serven_pygam_2018_1476122,hippke_wotan_2019}.
-The maximum number of spline knots is set to 50, which for each TESS sector 
-($\approx 25\,{\rm days}$) is commensurate with a $\approx0.5\,{\rm day}$ 
-window.
-
-We verified by injecting and recovering a 2.5 mmag central-transit planet
-with variable period that this detrending approach marginally improved
-the recovery probability, compared to not doing anything.
-The main cases for which it helps are those with large residual stellar
-variability in the TFA light curve.
-
 \begin{figure}[!t]
-    \gridline{\fig{tlsresult_sector6.png}{0.45\textwidth}{}}
-    \vspace{-0.8cm}
-    \gridline{\fig{tlsresult_sector7.png}{0.45\textwidth}{}}
-    \vspace{-0.8cm}
-    \caption{
-        Significance thresholds empirically defined for the transiting planet 
-        search described in \S~\ref{subsec:identifying_ctois}. Each point represents the 
-        TLS periodogram peak signal detection efficiency from one light curve.
-        {\it Top.} Sector 6.  {\it Bottom.} Sector 7.
-    }
-    \label{fig:tlsresults}
+	\gridline{\fig{tlsresult_sector6.png}{0.45\textwidth}{}}
+	\vspace{-0.8cm}
+	\gridline{\fig{tlsresult_sector7.png}{0.45\textwidth}{}}
+	\vspace{-0.8cm}
+	\caption{
+		Significance thresholds empirically defined for the transiting
+		planet search described in \S~\ref{subsec:identifying_ctois}.
+		Each point represents the TLS periodogram peak signal
+		detection efficiency from one light curve.  {\it Top.} Sector
+		6.  {\it Bottom.} Sector 7.
+	}
+	\label{fig:tlsresults}
 \end{figure}
 
-After (optionally) detrending, we run the TLS search. To select 
-``significant'' signals for visual inspection, we 
-performed a cut on the TLS signal detection efficiency defined piecewise over 
-the signal periods.
-The overall lower limit is ${\rm SDE} > 12$, with higher limits imposed in 
-regions with heavy contamination from systematic signals.
-The signals for sectors 6 and 7 are shown in the space of SDE vs period in 
-Figure~\ref{fig:tlsresults}.
 
-This yielded a few thousand light curves.  About two-thirds already had been 
-detrended with splines, and were not processed further.
-For the remaining third we
-performed TFA signal reconstruction using 
-\texttt{vartools}.
-In this process, the model lightcurve $A(i)$ in 
-Equation~\ref{eq:tfa_to_minimize} is set to the phase-binned signal from the 
-most powerful peak in the TLS spectrum, rather than being a constant function. 
-This helps lower the scatter of the light curve at frequencies away from
-the TLS peak.
+To identify an initial set of transiting planets, strong stellar
+rotators, and eclipsing binaries, we performed a few steps of
+post-processing on the light curve described in the preceding
+sections.  This processing was entirely independent of the data
+release, since it was quite specific to our own scientific interests.
 
-We then make a multi-page \texttt{.pdf} document report with the information 
-necessary to make classifications for vetting.
-These documents are released along with the light curves, and are a useful 
-summary for anyone interested in the subset of objects that we have analyzed.
-A full description of each page of the summary \texttt{.pdf} is given in the 
-Appendix.
+For simplicity, we first chose a single aperture size~--~``aperture
+2''~--~with a radius of 1.5  pixels.  Then, to identify periodic
+transit-like signals, we used \citet{hippke_TLS_2019}'s transit
+least-squares (TLS) tool.  The algorithm is the same as the canonical
+box least-squares \citep{kovacs_box-fitting_2002}, except in place of
+a box template, a transit template is used  for a marginal improvement
+of the detection efficiency.  In addition, the search grids in
+\texttt{tls} \footnote{\url{https://github.com/hippke/tls}} are
+slightly more efficient than in most BLS implementations, since
+\texttt{tls} uses the cubic-in-frequency sampling advocated by
+\citet{ofir_optimizing_2014}, rather than standard linear-in-frequency
+sampling.  Our grids typically consisted of about 30 different
+durations, and about 5000 periods between 0.5 and 21 days. 
+
+Before performing the period search, we rejected $6\,{\rm hours}$ at
+the beginning and end of each spacecraft orbit, to mitigate the
+presence of correlated red noise in the results.  This shrank the data
+volume by about 5\%, but also lowered the number of systematic false
+positives in subsequent vetting.  We then performed an asymmetric
+sigma-clipping of $(50\sigma,5\sigma)$ to preserve transits while
+omitting flares and other positive flux excursions. 
+
+A number of the light curves show residual variability, often of
+stellar origin.  This is expected for a sample of young stars; the
+problem of finding transits in the face of large stellar rotation
+signals has been explored by both \citet{rizzuto_zeitV_2017} and also
+\citet{hippke_wotan_2019}.  The former adopted an approach that we
+have yet to explore, which is to pass a sliding window over the light
+curve that, within each step, performs a Bayesian model comparison
+between a spline and a spline-plus-notch model.  If the
+spline-plus-notch model is favored, the transits are preserved for
+subsequent discovery.  \citet{hippke_wotan_2019}, conversely,
+described a number of different detrending methods, and found that
+most performed more or less the same at recovering planetary transits
+for a sample of young stars with strong rotation signals.
+
+Our approach in this work is essentially identical to one of the
+methods described by \citet{hippke_wotan_2019}.  First, before
+sigma-clipping or omitting points near the edges of orbits we run a
+generalized Lomb-Scargle periodogram on each TFA light curve
+\citep{lomb_1976,scargle_studies_1982,vanderplas_periodograms_2015}.
+If a peak is found with false alarm probability below $10^{-5}$, we
+consider the star ``variable'', and opt to detrend the light curve
+with robust penalized B-splines, which are splines with knot-length
+automatically determined via cross-validation
+\citep{eilers_flexible_1996}. The idea behind the cross-validation is
+that more knots leads to smaller residuals on training data, but
+larger errors when tested on the entire dataset.  We used the
+\texttt{wotan} implementation, which is a wrapper to the
+\texttt{pyGAM} spline fitter, with $2\sigma$ clipping of outliers from
+the fit residuals at each iteration
+\citep{serven_pygam_2018_1476122,hippke_wotan_2019}.  The maximum
+number of spline knots is set to 50, which for each TESS sector
+($\approx 25\,{\rm days}$) is commensurate with a $\approx0.5\,{\rm
+day}$ window.
+
+We verified by injecting and recovering a 2.5 mmag central-transit
+planet with variable period that this detrending approach marginally
+improved the recovery probability, compared to not doing anything.
+The main cases for which it helps are those with large residual
+stellar variability in the TFA light curve.
+
+After (optionally) detrending, we run the TLS search. To select
+``significant'' signals for visual inspection, we performed a cut on
+the TLS signal detection efficiency defined piecewise over the signal
+periods.  The overall lower limit is ${\rm SDE} > 12$, with higher
+limits imposed in regions with heavy contamination from systematic
+signals.  The signals for sectors 6 and 7 are shown in the space of
+SDE vs period in Figure~\ref{fig:tlsresults}.
+
+This yielded a few thousand light curves.  About two-thirds already
+had been detrended with splines, and were not processed further.  For
+the remaining third we performed TFA signal reconstruction using
+\texttt{vartools}.  In this process, the model lightcurve $A(i)$ in
+Equation~\ref{eq:tfa_to_minimize} is set to the phase-binned signal
+from the most powerful peak in the TLS spectrum, rather than being a
+constant function.  This helps lower the scatter of the light curve at
+frequencies away from the TLS peak.
+
+We then make a multi-page \texttt{.pdf}-format document report with
+the information necessary to make classifications for vetting.  These
+vetting reports are released along with the light curves, and are a
+useful summary for anyone interested in the subset of objects that we
+have analyzed.  A full description of each page of the report is given
+in Appendix~\ref{appendix:vetreport}.
 
 The classifications we used assessed:
 \begin{enumerate}
-    \item {\it Photometric variability classification}. Designations include 
-    tags for planet candidates, eclipsing binaries, instrumental variations, 
-    stellar variations, and ``weirdos''.
+    \item {\it Photometric variability classification}. Designations
+      include tags for planet candidates, eclipsing binaries,
+      instrumental variations, stellar variations, and ``weirdos''.
     %
-    \item {\it Cluster membership status}. By default, all light curves were 
-    made for stars with at least one literature claim of cluster membership.  
-    However, some of these claims pre-dated the availability of Gaia-DR2
-    parallaxes or proper motions.
-    We therefore re-assess the membership status on a case-by-case basis 
-    through inspection of the available astrometry and photometry.
-    Known asterisms are also omitted at this point
-    \citep[{\it e.g.},][]{sulentic_revised_1973,baumgardt_asterisms_1998,kos_galah_2018}.
+    \item {\it Cluster membership status}. By default, all light
+      curves were made for stars with at least one literature claim of
+      cluster membership.  However, some of these claims pre-dated the
+      availability of Gaia-DR2 parallaxes or proper motions.  We
+      therefore re-assess the membership status on a case-by-case
+      basis through inspection of the available astrometry and
+      photometry.  Known asterisms are also omitted at this point
+      \citep[{\it
+      e.g.},][]{sulentic_revised_1973,baumgardt_asterisms_1998,kos_galah_2018}.
     %
-    \item {\it Photometric blends}. Tags are created to highlight whether the 
-    depth of the photometric signal shows a strong dependence on aperture 
-    size, and also whether the in-transit minus the out-of-transit images 
-    reveal that the source of variability is in fact far from the target star.
+    \item {\it Photometric blends}. Tags are created to highlight
+      whether the depth of the photometric signal shows a strong
+      dependence on aperture size, and also whether the in-transit
+      minus the out-of-transit images reveal that the source of
+      variability is in fact far from the target star.
 \end{enumerate}
-The actual classifications were performed by LGB, JH, and JNW.
-The \texttt{TagSpaces} software was used~--~an extremely helpful tool
-for the purposes of easily assigning labels to documents.
-An example vetting report for a planet candidate is described in
-Appendix~\ref{appendix:vetreport}.
+The initial classifications were performed by LGB, with subsequent
+checking by JH and JNW.  The \texttt{TagSpaces} software was
+used~--~an extremely helpful tool for the purposes of easily assigning
+labels to documents.
+
 
 \subsection{Candidate TESS Objects of Interest}
 \label{subsec:ctois}
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
 	\begin{center}
 		\leavevmode
 		\includegraphics[width=0.9\textwidth]{quilt_PCs.png}
 	\end{center}
 	\vspace{-0.2cm}
 	\caption{
-    {\bf Phased light curves for six of the \numberpcs candidate
-    transiting planets identified in this work.}
-    Black points are detrended flux measurements, phased to the
-    best-fit orbital period indicated in the lower right of each
-    panel.
-    Best-fit models are fit as described in \S~\ref{subsec:ctois}, and
-    plotted with blue lines.
-    For display purpses, a window of $\pm 4$ transit durations
-    centered on the transit mid-point is displayed.
-    The vetting reports for these objects are available at XXX.	%FIXME
-    % TODO: include age? T mag?
-    The Gaia source identifiers are
-    a): 5605128927705695232, 
-    b): 3125263468681400320, 
-    c): 5510676828723793920, 
-    d): 3007171311355035136, 
-    e): 5617126180115568256, 
-    f): 3220266049321724416.   
-	\label{fig:ctoi_quilt}
+		{\bf Phased light curves for six of the \numberpcs candidate
+			transiting planets identified in this work.}
+		Black points are detrended flux measurements, phased to the
+		best-fit orbital period indicated in the lower right of each
+		panel.
+		Best-fit models are fit as described in \S~\ref{subsec:ctois}, and
+		plotted with blue lines.
+		For display purpses, a window of $\pm 4$ transit durations
+		centered on the transit mid-point is displayed.
+		The vetting reports for these objects are available at XXX.	%FIXME
+		% TODO: include age? T mag?
+		The Gaia source identifiers are
+		a): 5605128927705695232, 
+		b): 3125263468681400320, 
+		c): 5510676828723793920, 
+		d): 3007171311355035136, 
+		e): 5617126180115568256, 
+		f): 3220266049321724416.   
+		\label{fig:ctoi_quilt}
 	}
 \end{figure*}
+
+\begin{figure}[!t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.45\textwidth]{LS_period_vs_color_and_age.png}
+	\end{center}
+	\vspace{-0.2cm}
+	\caption{
+		{\bf Time evolution of Lomb-Scargle periodogram peak period versus
+			Gaia color.}
+		Red stars are on the right, blue stars are on the left.
+		Each point on this diagram is a star for which the false alarm
+		probability of the most powerful Lomb-Scargle peak is below
+		$10^{-15}$.
+		Additionally, we required (1) that the membership claim originate
+		from \citet{cantat-gaudin_gaia_2018},
+		\citet{Kharchenko_et_al_2013}, or \citet{gaia_hr_2018}; and (2)
+		that the cluster with claimed membership had an age reported by
+		\citet{Kharchenko_et_al_2013}.
+		Our approach for avoiding photometric blends is described in
+		\S~\ref{subsec:notplanets}.
+		\label{fig:ls_peak_vs_time}
+	}
+\end{figure}
+
 
 If all vetters identified an object as a planet candidate, we then
 proceeded to fit a transit model to the data.  The procedure closely
@@ -1911,37 +1930,58 @@ position, and the ephemeris of each object.
 
 
 \subsection{Eclipsing binaries, stellar rotation}
+\label{subsec:notplanets}
 
-\begin{figure}[t]
-	\begin{center}
-		\leavevmode
-		\includegraphics[width=0.47\textwidth]{LS_period_vs_color_and_age.png}
-	\end{center}
-	\vspace{-0.2cm}
-	\caption{
-    {\bf Time evolution of Lomb-Scargle periodogram peak period versus
-    Gaia color.}
-    Red stars are on the right, blue stars are on the left.
-    Each point on this diagram is a star for which the false alarm
-    probability of the most powerful Lomb-Scargle peak is below
-    $10^{-15}$.
-    Additionally, we required (1) that the membership claim originate
-    from \citet{cantat-gaudin_gaia_2018},
-    \citet{Kharchenko_et_al_2013}, or \citet{gaia_hr_2018}; and (2)
-    that the cluster with claimed membership had an age reported by
-    \citet{Kharchenko_et_al_2013}.
-	\label{fig:ls_peak_vs_time}
-	}
-\end{figure}
+To assess the prospects for studying forms of stellar variability
+other than that caused by transiting planets, we performed a brief
+additional exploration.
+Using the Lomb-Scargle periodogram results from
+\S~\ref{subsec:identifying_ctois}, we selected light curves 
+for which the periodogram peak power had a corresponding false alarm
+probability below $10^{-15}$.
+We chose this cutoff to be small enough to give us a reasonable number
+of objects, but large enough so that there would be no question that
+the signal being detected was astrophysical.
 
-TODO: describe how this was made.
-Figure~\ref{fig:ls_peak_vs_time}.
+Further, we then restricted our focus to stars with a cluster
+membership claim in \citet{cantat-gaudin_gaia_2018},
+\citet{Kharchenko_et_al_2013}, or \citet{gaia_hr_2018}, since from our
+experience these works have a relatively low false positive
+probability.
+We then further restricted our sample of stars to be those for which
+the claimed cluster also had an age reported by
+\citet{Kharchenko_et_al_2013}.
+
+To remove obvious photometrically-blended duplicates, for any signal,
+if any nearby stars had matching periods, we kept only the signal with
+the lowest false alarm probabilty.
+While this does not ensure that the detected signals originate from
+the target star, it removed a large number of the duplicate signals,
+and suits our exploratory purposes.
+
+All told, this yielded 4057 stars between the ages of about 25 Myr and
+1 Gyr.
+In Figure~\ref{fig:ls_peak_vs_time}, we plot the Lomb-Scargle peak period
+versus $G_{\rm Bp} - G_{\rm Rp}$ color over four different bins of
+time.
+The bins were chosen to match the sub-sample sizes within reasonable
+proximity.
+
+The youngest sample of stars is the reddest, as might be expected
+given that many of these stars have not yet reached the main sequence,
+and may exist along lines of sight with heavy extinction.
+
+%FIXME
+The weird part is that the oldest stars seem to have relatively more
+sub-day peak periods.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Discussion}
 \label{sec:discussion}
 
+\subsection{The planet candidates require more observations}
 Additional observations are needed for two major goals:
 a) cluster membership confirmation
 (age indicators, across the board);
@@ -1959,13 +1999,49 @@ A full assessment of the target star's age indiciators, including
 photometric rotation signatures, spectroscopic Li and H$\alpha$
 measurements, and even an isochronal analysis, would be helpful.
 
+\subsection{Eclipsing binary and stellar variability analyses may also
+be feasible}
+
+Lorem ipsum
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
 \label{sec:conclusion}
 
-Lorem ipsum.
+%FIXME: paraphrase / improve all the below
+In this study, we made \numberlcs light curves of candidate young
+stars, across \numberclusters distinct clusters.
+Each light curve represents between 20 and 25 days of observations
+of a star brighter than $G_{Rp}=16$, sampled at 30 minute cadence.
+
+In the process of making the light curves, we learned X, Y, and Z.
+One point in particular was that image subtraction analyses seem to
+do fine at detecting variability in the galactic plane.
+
+In analyzing the noise properties of our light curves, we found that
+at the faint end, contamination from unresolved background stars
+dominated over other noise sources.
+
+From a cursory transiting planet search, we identified \numberpcs
+planet candidates, which need additional spectroscopic, photometric,
+and imaging observations to verify (i) whether these candidates are
+planets and (ii) whether the host stars are cluster members.
+The vetting reports are available at \stscilink, and the planet
+candidate parameters are on exoFOP-TESS.
+
+We also briefly explored the age-evolution of extremely high-SNR
+variability in the space of dominant period versus color
+(Figure~\ref{fig:ls_peak_vs_time}).
+This seems to show X, and Y.
+
+The overall takeaway is that the sample of light curves and vetting
+reports we have made should prove useful for doing some astrophysics.
+%  We also comment on the possible utility of the light curve sample for
+%  studies of stellar rotation evolution, and binary eccentricity
+%  damping.
+
 
 
 
@@ -2036,6 +2112,9 @@ Agreement.
   \texttt{tesscut} \citep{brasseur_astrocut_2019},
   \texttt{wotan} \citep{hippke_wotan_2019}
 }
+
+\clearpage
+\newpage
 
 \bibliographystyle{yahapj}                            
 \bibliography{bibliography} 
