@@ -38,6 +38,9 @@ def main():
 
     sectors = [6,7]
 
+    # fig N: 3x2 quilty of phased PC
+    plot_quilt_PCs(overwrite=1)
+
     # fig N: LS period vs color evolution in time
     plot_LS_period_vs_color_and_age(sectors, overwrite=1, OC_MG_CAT_ver=0.3)
 
@@ -72,9 +75,6 @@ def main():
     # fig N: pmRA and pmDEC scatter for CDIPS LC stars.
     plot_pm_scat(sectors, overwrite=1, close_subset=1)
     plot_pm_scat(sectors, overwrite=1, close_subset=0)
-
-    # fig N: 3x2 quilty of phased PC
-    plot_quilt_PCs(overwrite=1)
 
     # fig N: positions of field and cluster LC stars (currently all cams)
     plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=0,
@@ -262,9 +262,10 @@ def plot_quilt_PCs(overwrite=1):
         (0.983, 1.008),
         (0.972, 1.008)
     ]
-    alphas = [
-        0.45, 0.6, 0.5, 0.45, 0.5, 0.45
-    ]
+    alphas = np.ones_like(spaths)
+    #alphas = [
+    #    0.45, 0.6, 0.5, 0.45, 0.5, 0.45
+    #]
     inds = ['a)','b)','c)','d)','e)','f)']
 
     gaiaids = list(map(
