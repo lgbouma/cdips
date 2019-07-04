@@ -20,6 +20,9 @@ fdir=../results/paper_figures/
 cp ${fdir}rms_vs_mag.png ${pdir}rms_vs_mag.png
 cp ${fdir}avg_acf.png ${pdir}avg_acf.png
 
+cp ${fdir}tls_sde_vs_period_scatter.png \
+   ${pdir}tls_sde_vs_period_scatter.png
+
 # quilt of PCs
 cp ${fdir}quilt_PCs.png ${pdir}quilt_PCs.png
 
@@ -58,7 +61,6 @@ cp ${fdir}target_star_hist_logt.png \
 
 cp ${fdir}target_star_reference_pie_chart.png \
    ${pdir}target_star_reference_pie_chart.png
-
 
 # catalog matching statistics
 cp ${fdir}catalog_to_gaia_match_statistics_MWSC.png \
