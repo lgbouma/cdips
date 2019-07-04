@@ -499,19 +499,18 @@ forming regions justifies their inclusion in our search sample.
 	\begin{center}
 		\leavevmode
     %\includegraphics[width=0.45\textwidth]{target_star_cumulative_counts.png}
-    \gridline{\fig{target_star_cumulative_counts.png}{0.4\textwidth}{}}
+    \gridline{\fig{target_star_cumulative_counts.png}{0.41\textwidth}{}}
     \vspace{-0.8cm}
-    \gridline{\fig{target_star_hist_logt.png}{0.4\textwidth}{}}
+    \gridline{\fig{target_star_hist_logt.png}{0.41\textwidth}{}}
     \vspace{-0.8cm}
-    \gridline{\fig{target_star_reference_pie_chart.png}{0.4\textwidth}{}}
+    \gridline{\fig{target_star_reference_pie_chart.png}{0.41\textwidth}{}}
 	\end{center}
 	\vspace{-0.8cm}
 	\caption{
-    {\it Top.} Cumulative counts of target stars as
-    a function of Gaia $Rp$-band magnitude.  The stars are
-    either candidate members of clusters, or else have other youth
-    indicators (see \S~\ref{sec:starselection}). We only consider
-    stars with $G_{\rm Rp} < 16$.
+    Target star statistics.
+    {\it Top.} Cumulative counts as a function of Gaia $Rp$-band
+    magnitude.  The stars are either candidate members of clusters, or
+    else have other youth indicators (see \S~\ref{sec:starselection}).
     {\it Middle.} Histogram of target star ages, for the subset of
     stars with ages matched against \citet{Kharchenko_et_al_2013}.
     {\it Bottom.} Provenance of cluster membership.  Percentages are
@@ -610,7 +609,7 @@ typical age of 100$\,$Myr.
 	\end{center}
 	\vspace{-0.2cm}
 	\caption{
-    {\bf Conceptual overview of photometric reduction pipeline.}
+    Conceptual overview of photometric reduction pipeline.
     Details are given in \S~\ref{sec:method}.
     %TODO: add latex section numbers!
     %TODO: do FORCED aperture photomery on differenced images
@@ -778,10 +777,10 @@ additional gaps in Sector 7.
 	%\gridline{\fig{astromresidual_apertures.png}{0.5\textwidth}{}}
 	\vspace{-0.8cm}
     \caption{
-		{\it Top.} {\bf Histogram of astrometric residual.} The $x$-axis shows 
+		{\it Top.} Histogram of astrometric residual. The $x$-axis shows 
 		the distance between the measured centroid positions of stars, 
 		compared to the predicted positions from the WCS solution.
-		{\it Bottom.} {\bf Vector plot of astrometric residual.} Each arrow is 
+		{\it Bottom.} Vector plot of astrometric residual. Each arrow is 
 		the vector from the measured to the projected star position. 
 		Directions are correct, but lengths are 50 times their true size for 
 		visualization purposes.
@@ -1141,8 +1140,8 @@ at any given time, we used the
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Timeseries of ``external parameters'' for a representative
-			star.} {\it Top}: Instrumental raw magnitude (with a particular
+		Timeseries of ``external parameters'' for a representative
+			star. {\it Top}: Instrumental raw magnitude (with a particular
 		aperture size), as a function of time.  {\it Second and third from
 			top}: $x$ and $y$ centroid positions as a function of time.
 		Continuing in order are the CCD temperature, the $(s,d,k)$ shape
@@ -1426,8 +1425,8 @@ separately.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Positions of light curves from TESS Sectors 6
-			and 7 in galactic coordinates.}
+		Positions of light curves from TESS Sectors 6
+			and 7 in galactic coordinates.
 		Black: $G_{\rm Rp}<13$ field stars.  Blue: $G_{\rm Rp}<16$
 		target stars.  Target stars are mostly near the galactic
 		plane. The data for Sectors 6 and 7 cover about one-sixth of
@@ -1459,8 +1458,8 @@ separately.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Cumulative number of CDIPS light curves a function of TESS
-			$T$-band magnitude.}  Light curves were made for the
+		Cumulative number of CDIPS light curves a function of TESS
+			$T$-band magnitude.  Light curves were made for the
 		target stars (Figure~\ref{fig:cdips_targets}) that were observed
 		in Sectors 6 or 7.
 		\label{fig:cdf_T_mag}
@@ -1503,18 +1502,18 @@ separately.
 		\includegraphics[width=0.47\textwidth]{rms_vs_mag.png}
 	\end{center}
 	\vspace{-0.5cm}
-	\caption{ {\bf Standard deviation vs catalog TESS-band magnitude for
-			trend-filtered CDIPS light curves.} 
-		Black points correspond to the minimum RMS across the available three
-		aperture sizes.  
-		The model (orange and gray lines) assumes aperture sizes reported 
-		by \citet{Sullivan_et_al_2015}, and the effective area from 
-		\citet{vanderspek_2018}.
-		The noise from unresolved background stars (dotted gray line) is a function 
-		of galactic latitude, and dominates over zodiacal light
-		for faint stars near the galactic plane; the line shown assumes a
-		sight-line towards the center of Sector 6, Camera 1 (further details
-		are in \S~\ref{subsubsec:rmsvsmag}).
+	\caption{
+    Standard deviation of trend-filtered CDIPS light curves as a
+    function of catalog TESS-band magnitude.  Black points correspond
+    to the minimum RMS across the available three aperture sizes.  The
+    model (orange and gray lines) assumes aperture sizes reported by
+    \citet{Sullivan_et_al_2015}, and the effective area from
+    \citet{vanderspek_2018}.  The noise from unresolved background
+    stars (dotted gray line) is a function of galactic latitude, and
+    dominates over zodiacal light for faint stars near the galactic
+    plane; the line shown assumes a sight-line towards the center of
+    Sector 6, Camera 1 (further details are in
+    \S~\ref{subsubsec:rmsvsmag}).
 		\label{fig:rms_vs_mag}
 	}
 \end{figure}
@@ -1526,12 +1525,11 @@ separately.
 	\end{center}
 	\vspace{-0.5cm}
   \caption{
-    {\bf Percentiles of the average autocorrelation of
-    $10^4$ randomly selected light curves from each sector.} The
-    25$^{\rm th}$, 50$^{\rm th}$, and 75$^{\rm th}$ percentiles at
-    time lags spaced by one hour are
-    shown by dashed, solid, and dotted lines respectively.  The raw
-    light curves (column name \texttt{IRM}) are shown in gray, and the
+    Average autocorrelations of $10^4$ randomly selected light curves
+    from each sector. The 25$^{\rm th}$, 50$^{\rm th}$, and 75$^{\rm
+    th}$ percentiles at time lags spaced by one hour are shown by
+    dashed, solid, and dotted lines respectively.  The raw light
+    curves (column name \texttt{IRM}) are shown in gray, and the
     TFA-detrended light curves are in black.
   \label{fig:avg_acf}
 	}
@@ -1651,10 +1649,10 @@ of template light curves used during TFA detrending.
 The correction in the denominator penalizes the natural degree of
 overfitting inherent to the TFA algorithm.
 
-The observed RMS (black points) follows the expected shape,
+The observed RMS (black points) follows the usual shape,
 with photon noise dominating from $T=9$ to $T=12$, beyond which the
 onset of the ``sky'' background changes the overall slope of the
-curve to a slightly steeper scaling.
+curve to be more steep.
 For the brightest stars ($T\lesssim 9$), a ``systematic floor'' was an
 expected part of the mission's error budget \citep{ricker_transiting_2015}, 
 but 
@@ -1671,32 +1669,31 @@ It is also true however that our largest aperture contains only about
 16 pixels, which is sub-optimal for stars brighter than $T\approx9$
 \citep[see][Figure~14]{Sullivan_et_al_2015}.
 Since the brightest stars are not the focus of the present work, we
-leave this as a point to improve in future work.
+leave this issue unaddressed for the time being.
 
 Importantly, the faint stars do not noticeably exhibit
 the typical effects of crowding at the faint end 
 \citep[{\it e.g.},][Figure~5]{feinstein_eleanor_2019}.
-In aperture photometry pipelines, star in very crowded regions typically 
-have their flux overestimated relative to what would be predicted from their
-catalog magnitudes.
+In aperture photometry pipelines, stars in very crowded regions typically 
+have their flux overestimated relative to the actual number of photons
+that fall on silicon.
 This leads to systematic underestimates of the uncertainty in the relative 
 fluxes, as well as ``flux contamination'' (the reduction in amplitude of say, 
-transit signals, due to diluting flux).
+transit signals, due to diluting flux from neighbor stars).
 Our method to work around this problem -- using the catalog magnitudes to 
 predict the reference flux values, and measuring deviations from these 
-reference fluxes on the subtracted images -- seems to be performing as we had 
-hoped.
+reference fluxes on the subtracted images -- seems to be performing well.
 
 
 \paragraph{Expected RMS vs magnitude.}
 
 The noise model shown in Figure~\ref{fig:rms_vs_mag} is quite similar
 to that of \citet{Sullivan_et_al_2015}, save for two changes.
-The first change is minor: the effective area of the telescope is
-updated to be $86.6\,{\rm cm}^2$, per the measurements of
+The first change is that the effective area of the telescope is
+updated to be $86.6\,{\rm cm}^2$, per the measurements by
 \citet{vanderspek_2018}.
 
-The second point is more important: we explicitly include the
+The second change is that we have explicitly included the
 estimated noise contribution from unresolved faint stars.  The
 brightness of the diffuse sky is dominated by different sources at
 different wavelengths.  For instance, the CMB is most important in
@@ -1706,16 +1703,17 @@ system (zodiacal light) is dominant in the far infra-red
 faint stars can play a role, depending on the line of sight under
 consideration. The zodiacal light is brightest near the ecliptic
 plane, and the faint star background is brightest near the galactic
-plane (and towards the galactic center).  \citet{winn_background_2013}
-estimated the photon-counts from each component that would be observed 
-by TESS.
+plane (and towards the galactic center).  
+When performing pre-launch noise estimates,
+\citet{winn_background_2013}
+estimated the photon-counts from each component.
 His zodiacal light model was presented by \citet{Sullivan_et_al_2015},
-but the faint star model was not emphasized since the Sullivan
+but the faint star component was not emphasized since the Sullivan
 simulations were performed away from the galactic plane.
 
-A few words are therefore pertinent about the diffuse sky model we
-have used for Figure~\ref{fig:rms_vs_mag}, which is adopted explicitly
-because most of our target stars are near the galactic plane.
+The diffuse sky model we have used for Figure~\ref{fig:rms_vs_mag} is
+adopted explicitly because most of our target stars are near the
+galactic plane.
 Stars are judged to be ``unresolved'' and part of the background if
 their surface density exceeds the angular resolution of the telescope.
 TESS has an angular resolution of $\Delta \theta \sim 1'$, set by a
@@ -1728,31 +1726,35 @@ photon counts from faint sources
 is  $N(<m,l,b)$ --- the number of stars per square arcsecond
 brighter than magnitude $m$, along a line of sight with galactic
 longitude and latitude $(l,b)$.
-\citet{winn_background_2013} queried the Besan\c con model 
-\citep{robin_synthetic_2003}  along a grid of galactic sight-lines, and 
-converted the resulting $N(<m,l,b)$ surface densities into $I$-band surface 
-brightnesses.
-Fitting a smooth function to the results, \citet{winn_background_2013} found
+To calculate this surface density, \citet{winn_background_2013}
+queried the Besan\c con model
+\citep{robin_synthetic_2003}  along a grid of galactic sight-lines,
+and then converted to $I$-band surface brightnesses.
+Fitting a smooth function to the results, \citet{winn_background_2013}
+found
 \begin{equation}
 I\ {\rm mag\ arcsec}^{-2} =
     a_0 + a_1 \left(\frac{|b|}{40^\circ}\right)
     + a_2 \left(\frac{|l|}{180^\circ}\right)^{a_3},
 \end{equation}
-where the galactic longitude $l$ is measured from $-180^\circ$ to 
-$180^\circ$, and the empirical coefficients were found to be $a_0 = 18.9733$, 
-$a_1=8.833$, $a_2=4.007$, and $a_3=0.805$.
-This fit was cautioned to be {\it very approximate}.
-It is sensitive to the threshold used to select ``unresolved'' stars, and 
-likely no more accurate than 0.5 mag on average.
-In regions with exceptionally high extinction ({\it e.g.}, star forming 
-regions) it is expected to systematic underestimate the background brightness 
-by an even larger degree.
+where the galactic longitude $l$ is measured from $-180^\circ$ to
+$180^\circ$, and the empirical coefficients were found to be $a_0 =
+18.9733$, $a_1=8.833$, $a_2=4.007$, and $a_3=0.805$.  This fit was
+cautioned to be {\it very approximate}.  It is sensitive to the
+threshold used to select ``unresolved'' stars, and likely no more
+accurate than 0.5 mag on average.  In regions with exceptionally high
+extinction ({\it e.g.}, star forming regions) it is expected to
+systematic underestimate the background brightness by an even larger
+degree.
+Nonetheless, this model for the diffuse sky background seems
+to agree reasonably well with the observed trend of standard deviation
+versus stellar magnitude.
 
 
 \paragraph{ACF statistics}
 
-The preceding discussion is only relevant to the white noise
-properties of the light curves. 
+Beyond the white noise properties of the light curves, the red noise
+properties are also important. 
 In Figure~\ref{fig:avg_acf} we show the average autocorrelation of the
 raw and TFA-filtered light curves.
 The raw light curves have substantial systematic red noise; 
@@ -1776,7 +1778,7 @@ any other signals via matched-filter techniques).
 	\gridline{\fig{tls_sde_vs_period_scatter.png}{0.45\textwidth}{}}
 	\vspace{-0.8cm}
 	\caption{
-    {\bf Transiting planet search periodogram summary.}
+    Transiting planet search periodogram summary.
     Each point represents the TLS periodogram peak signal detection
     efficiency (SDE) and corresponding period from one light curve.
     Significance thresholds (orange lines) are empirically defined for
@@ -1870,7 +1872,7 @@ SDE vs period in Figure~\ref{fig:tlsresults}.
 This yielded a few thousand light curves.  About two-thirds already
 had been detrended with splines, and were not processed further.  For
 the remaining third we performed TFA signal reconstruction using
-\texttt{vartools}.  In this process, the model lightcurve $A(i)$ in
+\texttt{VARTOOLS}.  In this process, the model lightcurve $A(i)$ in
 Equation~\ref{eq:tfa_to_minimize} is set to the phase-binned signal
 from the most powerful peak in the TLS spectrum, rather than being a
 constant function.  This helps lower the scatter of the light curve at
@@ -1904,8 +1906,9 @@ When classifying these reports, we assessed:
       minus the out-of-transit images reveal that the source of
       variability is in fact far from the target star.
 \end{enumerate}
-The initial classifications were performed by LGB, with possible
-planet candidates inspected by JH and JNW.  The \texttt{TagSpaces}
+The initial classifications were performed by LGB, and possible
+planet candidates were then vetted by JH and JNW.
+The \texttt{TagSpaces}
 software was used to easily assign labels to the documents.
 
 
@@ -1919,8 +1922,8 @@ software was used to easily assign labels to the documents.
 	\end{center}
 	\vspace{-0.2cm}
 	\caption{
-		{\bf Phased light curves for six of the \numberpcs candidate
-			transiting planets identified in this work.}
+		Phased light curves for six of the \numberpcs candidate
+			transiting planets identified in this work.
 		Black points are detrended flux measurements, phased to the
 		best-fit orbital period indicated in the lower right of each
 		panel.
@@ -1948,8 +1951,8 @@ software was used to easily assign labels to the documents.
 	\end{center}
 	\vspace{-0.2cm}
 	\caption{
-		{\bf Time evolution of Lomb-Scargle periodogram peak period versus
-			Gaia color.}
+    Time evolution of Lomb-Scargle periodogram peak period versus Gaia
+    color.
 		Red stars are on the right, blue stars are on the left.
 		Each point on this diagram is a star for which the false alarm
 		probability of the most powerful Lomb-Scargle peak is below
@@ -2182,23 +2185,26 @@ for the DPAC has been provided by national institutions, in particular
 the institutions participating in the {\it Gaia} Multilateral
 Agreement.
 %
+The Digitized Sky Surveys were produced at the Space Telescope Science Institute under U.S. Government grant NAG W-2166. The images of these surveys are based on photographic data obtained using the Oschin Schmidt Telescope on Palomar Mountain and the UK Schmidt Telescope. The plates were processed into the present compressed digital form with the permission of these institutions.
+%
 \newline
 %
 \facility{
-	TESS \citep{ricker_transiting_2015},
-	Gaia \citep{gaia_collaboration_gaia_2016,gaia_collaboration_gaia_2018},
 	2MASS \citep{skrutskie_tmass_2006},
-    DSS (CITE)    
+	Gaia \citep{gaia_collaboration_gaia_2016,gaia_collaboration_gaia_2018},
+	TESS \citep{ricker_transiting_2015},
+	UCAC4 \citep{zacharias_fourth_2013}
+    %DSS (CITE)    
 }
 %
 \software{
   \texttt{astrobase} \citep{bhatti_astrobase_2018},
   \texttt{astropy} \citep{the_astropy_collaboration_astropy_2018},
   \texttt{astroquery} \citep{astroquery_2018},
-  \texttt{astroquery.gaia} CITE,
-  \texttt{astroquery.simbad} CITE,
-  \texttt{astroquery.mast} CITE,
-  \texttt{astroquery.nasaexopanetarchive} CITE,
+  %\texttt{astroquery.gaia} CITE,
+  %\texttt{astroquery.simbad} CITE,
+  %\texttt{astroquery.mast} CITE,
+  %\texttt{astroquery.nasaexopanetarchive} CITE,
   \texttt{BATMAN} \citep{kreidberg_batman_2015},
   \texttt{corner} \citep{corner_2016},
   \texttt{emcee} \citep{foreman-mackey_emcee_2013},
@@ -2208,10 +2214,12 @@ Agreement.
   \texttt{numpy} \citep{walt_numpy_2011}, 
   \texttt{pandas} \citep{mckinney-proc-scipy-2010},
   \texttt{pyGAM} \citep{serven_pygam_2018_1476122}
+  \texttt{psycopg2} (\url{initd.org/psycopg})
   \texttt{scipy} \citep{jones_scipy_2001},
-  \texttt{TagSpaces} (CITE),
+  \texttt{TagSpaces} (\url{tagspaces.org}),
   \texttt{tesscut} \citep{brasseur_astrocut_2019},
-  \texttt{wotan} \citep{hippke_wotan_2019}
+  \texttt{VARTOOLS} \citep{Hartman_Bakos_2016}
+  \texttt{wotan} \citep{hippke_wotan_2019},
 }
 
 \clearpage
