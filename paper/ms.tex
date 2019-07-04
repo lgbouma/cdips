@@ -1497,7 +1497,7 @@ separately.
 	\label{fig:propermotions}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[!t]
 	\begin{center}
 		\leavevmode
 		\includegraphics[width=0.47\textwidth]{rms_vs_mag.png}
@@ -1519,6 +1519,23 @@ separately.
 	}
 \end{figure}
 
+\begin{figure}[!t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.47\textwidth]{avg_acf.png}
+	\end{center}
+	\vspace{-0.5cm}
+  \caption{
+    {\bf Percentiles of the average autocorrelation of
+    $10^4$ randomly selected light curves from each sector.} The
+    25$^{\rm th}$, 50$^{\rm th}$, and 75$^{\rm th}$ percentiles at
+    time lags spaced by one hour are
+    shown by dashed, solid, and dotted lines respectively.  The raw
+    light curves (column name \texttt{IRM}) are shown in gray, and the
+    TFA-detrended light curves are in black.
+  \label{fig:avg_acf}
+	}
+\end{figure}
 
 
 \subsection{Light Curve Statistics}
@@ -1733,16 +1750,24 @@ by an even larger degree.
 
 
 \paragraph{ACF statistics}
-TODO:
-ACF statistics before and after detrending(?)
 
-SNR of retrieved HJs?
+The preceding discussion is only relevant to the white noise
+properties of the light curves. 
+In Figure~\ref{fig:avg_acf} we show the average autocorrelation of the
+raw and TFA-filtered light curves.
+The raw light curves have substantial systematic red noise; 
+their average autocorrelation, evaluated at various time lags, is
+positive.
+The TFA-filtered light curves are much closer to gaussian~--~the
+average autocorrelation between any two points in these light curves
+is close to zero.
+However, the average TFA-filtered light curve is not {\it exactly}
+gaussian.
+At time lags of a few hours or less, there is some excess power.
+This suggests that additional detrending may be
+necessary to maximize the effectiveness of planet searches (or the discovery of
+any other signals via matched-filter techniques).
 
-Maybe movies of subtracted images?
-
-Some stellar variability plots (perhaps of known stellar variables)?
-
-Some focus on particular clusters?
 
 \subsection{Identifying Planet Candidates}
 \label{subsec:identifying_ctois}

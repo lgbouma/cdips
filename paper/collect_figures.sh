@@ -16,7 +16,9 @@ cp ${fdir}trex_overview.pdf ${pdir}pipelineoverview.pdf
 
 # rms vs mag 
 fdir=../results/paper_figures/
+
 cp ${fdir}rms_vs_mag.png ${pdir}rms_vs_mag.png
+cp ${fdir}avg_acf.png ${pdir}avg_acf.png
 
 # quilt of PCs
 cp ${fdir}quilt_PCs.png ${pdir}quilt_PCs.png
