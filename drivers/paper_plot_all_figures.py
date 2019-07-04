@@ -5,7 +5,7 @@ execution environment: cdips, + pipe-trex .pth file in
 python -u paper_plot_all_figures.py &> logs/paper_plot_all.log &
 """
 from glob import glob
-import datetime, os, pickle, shutil
+import datetime, os, pickle, shutil, subprocess
 import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
 
@@ -21,6 +21,7 @@ from astrobase import lcmath
 from astrobase.lcmath import phase_magseries
 
 from aperturephot import get_lc_statistics
+import lcstatistics as lcs
 
 from cdips.utils import tess_noise_model as tnm
 
@@ -33,10 +34,14 @@ from collections import Counter
 
 OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
+LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
 def main():
 
     sectors = [6,7]
+
+    # fig N: average autocorrelation fn of LCs
+    plot_avg_acf(sectors, overwrite=1, cleanprevacf=True)
 
     # fig N: 3x2 quilty of phased PC
     plot_quilt_PCs(overwrite=1)
@@ -91,6 +96,141 @@ def main():
 def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
+
+
+def plot_avg_acf(sectors, size=10000, overwrite=0, percentiles=[25,50,75],
+                 cleanprevacf=True):
+
+    outpath = os.path.join(OUTDIR, 'avg_acf.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    #
+    # collect acfs for however many random LCs passed
+    #
+    np.random.seed(42)
+    lcpaths = []
+    for sector in sectors:
+        lcpaths.append(
+            np.random.choice(
+                glob(os.path.join(LCDIR, 'sector-{}'.format(sector),
+                                  'cam?_ccd?', 'hlsp_*llc.fits')),
+                size=size,
+                replace=False
+            )
+        )
+    lcpaths = nparr(lcpaths).flatten()
+
+    acfdir = os.path.join(OUTDIR, 'avg_acf_data')
+
+    if cleanprevacf:
+        # annoyingly fails. maybe nfs problem?
+        pass
+        #cmd = 'rm -rf {}'.format(acfdir)
+        #subprocess.call(cmd)
+
+    if not os.path.exists(acfdir):
+        os.mkdir(acfdir)
+    lcs.parallel_compute_acf_statistics(
+        lcpaths, acfdir, nworkers=40,
+        eval_times_hr=np.arange(1,301,1),
+        skipepd=True)
+    acfstatfiles = glob(os.path.join(acfdir,'*_acf_stats.csv'))
+    df = lcs.read_acf_stat_files(acfstatfiles)
+
+    plt.close('all')
+    fig, ax = plt.subplots(figsize=(4,3))
+
+    linestyles = ['--','-',':']
+
+    #
+    # plot raw lines
+    #
+    apstr = 'RAW2'
+    timelags = np.sort(np.unique(df['LAG_TIME_HR']))
+
+    percentile_dict = {}
+    for timelag in timelags:
+        percentile_dict[timelag] = {}
+        sel = df['LAG_TIME_HR']==timelag
+        for percentile in percentiles:
+            val = np.nanpercentile(df[sel][apstr+'_ACF'], percentile)
+            percentile_dict[timelag][percentile] = np.round(val,7)
+        pctile_df = pd.DataFrame(percentile_dict)
+
+    ind = 0
+    for ix, row in pctile_df.iterrows():
+        pctile = row.name
+        label = '{}%'.format(str(pctile))
+        timelags = nparr(row.index)
+        vals = nparr(row)
+
+        ax.plot(timelags, vals, ls=linestyles[ind], color='gray', zorder=2)
+        ax.text(0.75, 0.8, 'Raw', ha='center', va='center',
+                fontsize='medium', transform=ax.transAxes, color='gray')
+
+
+        ind += 1
+
+    #
+    # plot TFA lines
+    #
+    apstr = 'TFA2'
+
+    percentile_dict = {}
+    for timelag in timelags:
+        percentile_dict[timelag] = {}
+        sel = df['LAG_TIME_HR']==timelag
+        for percentile in percentiles:
+            val = np.nanpercentile(df[sel][apstr+'_ACF'], percentile)
+            percentile_dict[timelag][percentile] = np.round(val,7)
+        pctile_df = pd.DataFrame(percentile_dict)
+
+    ind = 0
+    for ix, row in pctile_df.iterrows():
+        pctile = row.name
+        label = '{}%'.format(str(pctile))
+        timelags = nparr(row.index)
+        vals = nparr(row)
+
+        ax.plot(timelags, vals, label=label, ls=linestyles[ind], color='black',
+                zorder=3)
+        ind += 1
+
+        ax.text(0.42, 0.42, 'TFA detrended', ha='center', va='top',
+                fontsize='medium', transform=ax.transAxes)
+
+    ax.legend(loc='lower left', fontsize='medium')
+
+    ax.set_yscale('linear')
+    ax.set_xscale('log')
+    ax.set_xlabel('Time lag [hr]')
+    ax.set_ylabel('Autocorrelation')
+
+    # titlestr = '{:s} - {:d} ACFs - {:s}'.format(
+    #     outprefix,
+    #     len(acfstatfiles),
+    #     '{:s} percentiles'.format(repr(percentiles))
+    # )
+    # ax.set_title(titlestr, fontsize='small')
+
+    #plt.gca().grid(color='#a9a9a9',
+    #               alpha=0.9,
+    #               zorder=0,
+    #               linewidth=1.0,
+    #               linestyle=':')
+
+    ax.set_ylim((-1,1))
+
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
+
+    fig.tight_layout(h_pad=0.35, pad=0.2)
+    savefig(fig, outpath)
+
 
 
 def plot_LS_period_vs_color_and_age(sectors, overwrite=0, OC_MG_CAT_ver=0.3):
