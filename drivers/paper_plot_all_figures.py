@@ -10,10 +10,10 @@ import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
 
 from numpy import array as nparr
-from astropy.io import fits
-from astropy.io.votable import from_table, writeto, parse
 from datetime import datetime
 
+from astropy.io import fits
+from astropy.io.votable import from_table, writeto, parse
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
@@ -24,11 +24,12 @@ from aperturephot import get_lc_statistics
 import lcstatistics as lcs
 
 from cdips.utils import tess_noise_model as tnm
-
 from cdips.plotting import plot_star_catalog as psc
 from cdips.plotting import plot_catalog_to_gaia_match_statistics as xms
 from cdips.plotting import plot_wcsqa as wcsqa
 from cdips.utils import collect_cdips_lightcurves as ccl
+
+from skim_cream import plot_initial_period_finding_results
 
 from collections import Counter
 
@@ -39,6 +40,9 @@ LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 def main():
 
     sectors = [6,7]
+
+    # fig N: tls_sde_vs_period_scatter
+    plot_tls_sde_vs_period_scatter(sectors, overwrite=1)
 
     # fig N: average autocorrelation fn of LCs
     plot_avg_acf(sectors, overwrite=1, cleanprevacf=True)
@@ -96,6 +100,60 @@ def main():
 def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
+
+
+def plot_tls_sde_vs_period_scatter(sectors, overwrite=1):
+
+    outpath = os.path.join(
+        OUTDIR, 'tls_sde_vs_period_scatter.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    if len(sectors) != 2:
+        raise AssertionError
+
+    f,axs = plt.subplots(nrows=2, sharex=True, figsize=(4,6))
+
+    for sector, ax in zip(sectors, axs):
+
+        pfdir = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/'
+                 'results/cdips_lc_periodfinding/sector-{}'.format(sector))
+        pfpath = os.path.join(
+            pfdir, 'initial_period_finding_results_with_limit.csv')
+
+        df = pd.read_csv(pfpath, sep=',')
+
+        ax.scatter(df['tls_period'], df['tls_sde'], c='k', alpha=1, s=0.2,
+                   rasterized=True, linewidths=0)
+
+        ax.scatter(df['tls_period'], df['limit'], c='C1', alpha=1, rasterized=True,
+                   linewidths=0, zorder=2, s=1)
+        #ax.scatter(df['tls_period'], df['limit'], c='C1', alpha=1, rasterized=True,
+        #           linewidths=0, zorder=2, s=0.2)
+
+        txt = ('$N_{{\mathrm{{above}}}}$: '+
+                '{}'.format(len(df[df['tls_sde']>df['limit']]))+
+                '\n$N_{{\mathrm{{below}}}}$: '+
+                '{}'.format(len(df[df['tls_sde']<df['limit']])) )
+
+        ax.text(0.96, 0.96, txt, ha='right', va='top', fontsize='medium',
+                transform=ax.transAxes)
+
+        ax.set_xscale('log')
+
+        ax.set_ylim([0,40])
+        ax.yaxis.set_ticks_position('both')
+        ax.xaxis.set_ticks_position('both')
+        ax.get_yaxis().set_tick_params(which='both', direction='in')
+        ax.get_xaxis().set_tick_params(which='both', direction='in')
+
+    f.text(0.5,-0.01, 'TLS peak period [days]', ha='center')
+    f.text(-0.03,0.5, 'TLS SDE', va='center', rotation=90)
+
+    f.tight_layout(h_pad=0.2, pad=0.2)
+    savefig(f, outpath)
+
 
 
 def plot_avg_acf(sectors, size=10000, overwrite=0, percentiles=[25,50,75],
