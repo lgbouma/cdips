@@ -25,14 +25,17 @@
 % BEGIN CUSTOM SHORT-CUT COMMANDS
 
 % BEGIN NUMBERS
-\newcommand{\numberpcs}{29\ }  % 2019/06/28 unanimous gold
+\newcommand{\numberpcs}{39\ }  % 2019/06/28 unanimous gold
+\newcommand{\numberzaripcs}{10\ }  % 2019/06/28 unanimous gold
+\newcommand{\numberclusterpcs}{29\ }  % 2019/06/28 unanimous gold
 \newcommand{\sVInumberlcs}{67{,}601\ }  % 2019/06/20 not allnan
 \newcommand{\sVIInumberlcs}{91{,}736\ }  % 2019/06/20 not allnan
 \newcommand{\numberlcs}{159{,}337\ } % 2019/06/20 sum
 \newcommand{\numberclusters}{596\ } % 2019/07/01 paper_plot_all_figures.py
 \newcommand{\pctoflcswithage}{77} %  2019/07/02 from hist_logt.png
 
-\newcommand{\stscilink} {\url{archive.stsci.edu/prepds/cdips}}
+\newcommand{\stscilink}{\url{archive.stsci.edu/prepds/cdips}}
+\newcommand{\stscivetlink}{\url{archive.stsci.edu/prepds/cdips/vetting}}
 
 % END CUSTOM SHORT-CUT COMMANDS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -76,14 +79,13 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   photometrically monitor almost every star cluster in
   the solar neighborhood.
   % Aims
-  As part of the Cluster Difference Imaging Photometric Survey
-  (CDIPS), we have been processing the TESS full-frame images and
-  making light curves of stars that could be members of stellar
-  associations, moving groups, or open clusters.
+  To make light curves of stars that could be members of stellar
+  associations, moving groups, or open clusters, we have begun a
+  Cluster Difference Imaging Photometric Survey (CDIPS).
   %
-  Our eventual hope is to discover giant transiting planets with known
-  ages, and probe the exoplanet size and separation distributions for
-  planets younger than 1 Gyr.
+  Our aim is to discover giant transiting planets with known
+  ages, and to probe the exoplanet size and separation distributions for
+  planets younger than one gigayear.
   %
   In this study, we made \numberlcs light curves of candidate young
   stars, across \numberclusters distinct clusters.
@@ -95,10 +97,14 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   have noise properties that agree with theoretical expectations.
   % Results
   We then highlight the \numberpcs planet candidates we identified in
-  an initial search, describe the vetting procedures that they have
-  survived, and emphasize the additional spectroscopic, photometric,
-  and imaging observations that are needed to verify (i) whether these
-  candidates are planets and (ii) whether the host stars are cluster members.
+  an initial search.
+  \numberclusterpcs of these planet candidates are candidate cluter
+  members, and the remaining \numberzaripcs have indications of youth
+  relative to field stars.
+  We describe the vetting procedures that these objects have survived,
+  and emphasize the additional spectroscopic, photometric, and imaging
+  observations that are needed to determine (i) whether these candidates
+  are planets and (ii) for which cases the host stars are cluster members.
   %
   We also comment on the possible utility of the light curve sample for
   studies of stellar rotation evolution, and binary eccentricity
@@ -304,6 +310,58 @@ to confirm or reject the planetary nature of these objects, and
 \section{Method: Star Selection}
 \label{sec:starselection}
 
+\begin{figure}[!t]
+	\begin{center}
+		\leavevmode
+		%\includegraphics[width=0.45\textwidth]{target_star_cumulative_counts.png}
+		\gridline{\fig{target_star_cumulative_counts.png}{0.41\textwidth}{}}
+		\vspace{-0.8cm}
+		\gridline{\fig{target_star_hist_logt.png}{0.41\textwidth}{}}
+		\vspace{-0.8cm}
+		\gridline{\fig{target_star_reference_pie_chart.png}{0.41\textwidth}{}}
+	\end{center}
+	\vspace{-0.8cm}
+	\caption{
+		Target star statistics.
+		{\it Top.} Cumulative counts as a function of Gaia $Rp$-band
+		magnitude.  The stars are either candidate members of clusters, or
+		else have other youth indicators (see \S~\ref{sec:starselection}).
+		{\it Middle.} Histogram of target star ages, for the subset of
+		stars with ages matched against \citet{Kharchenko_et_al_2013}.
+		{\it Bottom.} Provenance of cluster membership.  Percentages are
+		relative to $N_{\rm total}=1061446$ target stars. Symbols
+		are as follows.
+		D14 is \citet{dias_proper_2014}.
+		K13 is \citet{Kharchenko_et_al_2013}.
+		CG18 is \citet{cantat-gaudin_gaia_2018}.
+		Z18 is \citet{zari_3d_2018}, with upper main sequence and
+		pre-main-sequence samples sub-divided.
+		``$\geq 2$'' indicates at least two authors reported a star as a
+		candidate cluster member.
+		%``Other'' refers to sources enumerated in \S~\ref{sec:starselection}.
+		\label{fig:cdips_targets}
+	}
+\end{figure}
+
+\begin{figure*}[!t]
+	\gridline{\fig{mwscmatchstats.png}{0.95\textwidth}{}}
+	\vspace{-0.8cm}
+	\gridline{\fig{dias14matchstats.png}{0.95\textwidth}{}}
+	\vspace{-0.8cm}
+	\caption{
+		{\it Top.} Quality diagnostics from cross-matching
+		\cite{Kharchenko_et_al_2013} cluster members against Gaia-DR2.
+		histogram of the distances between matched stars is on the left; a
+		histogram of the difference between the true $G$-band magnitude
+		and that predicted from 2MASS photometry is in the middle; a scatter
+		plot of the same magnitude difference as a function of $G$-band
+		magnitude is on the right.
+		{\it Bottom.} Same, but cross-matching \cite{dias_proper_2014}
+		cluster members to Gaia-DR2.
+	}
+	\label{fig:xmatch_info}
+\end{figure*}
+
 The main aim of the CDIPS project is to increase the number of cluster
 stars for which photometric time-series are available, and thereby
 facilitate studies of exoplanetary and stellar processes across
@@ -494,58 +552,6 @@ forming regions justifies their inclusion in our search sample.
 
 \subsection{Summary of target stars}
 \label{subsec:ocmgsummary}
-
-\begin{figure}[t]
-	\begin{center}
-		\leavevmode
-    %\includegraphics[width=0.45\textwidth]{target_star_cumulative_counts.png}
-    \gridline{\fig{target_star_cumulative_counts.png}{0.41\textwidth}{}}
-    \vspace{-0.8cm}
-    \gridline{\fig{target_star_hist_logt.png}{0.41\textwidth}{}}
-    \vspace{-0.8cm}
-    \gridline{\fig{target_star_reference_pie_chart.png}{0.41\textwidth}{}}
-	\end{center}
-	\vspace{-0.8cm}
-	\caption{
-    Target star statistics.
-    {\it Top.} Cumulative counts as a function of Gaia $Rp$-band
-    magnitude.  The stars are either candidate members of clusters, or
-    else have other youth indicators (see \S~\ref{sec:starselection}).
-    {\it Middle.} Histogram of target star ages, for the subset of
-    stars with ages matched against \citet{Kharchenko_et_al_2013}.
-    {\it Bottom.} Provenance of cluster membership.  Percentages are
-    relative to $N_{\rm total}=1061446$ target stars. Symbols
-    are as follows.
-    D14 is \citet{dias_proper_2014}.
-    K13 is \citet{Kharchenko_et_al_2013}.
-    CG18 is \citet{cantat-gaudin_gaia_2018}.
-    Z18 is \citet{zari_3d_2018}, with upper main sequence and
-    pre-main-sequence samples sub-divided.
-    ``$\geq 2$'' indicates at least two authors reported a star as a
-    candidate cluster member.
-    %``Other'' refers to sources enumerated in \S~\ref{sec:starselection}.
-	\label{fig:cdips_targets}
-	}
-\end{figure}
-
-\begin{figure*}[!ht]
-	\gridline{\fig{mwscmatchstats.png}{0.95\textwidth}{}}
-	\vspace{-0.8cm}
-	\gridline{\fig{dias14matchstats.png}{0.95\textwidth}{}}
-	\vspace{-0.8cm}
-	\caption{
-    {\it Top.} Quality diagnostics from cross-matching
-    \cite{Kharchenko_et_al_2013} cluster members against Gaia-DR2.
-    histogram of the distances between matched stars is on the left; a
-    histogram of the difference between the true $G$-band magnitude
-    and that predicted from 2MASS photometry is in the middle; a scatter
-    plot of the same magnitude difference as a function of $G$-band
-    magnitude is on the right.
-    {\it Bottom.} Same, but cross-matching \cite{dias_proper_2014}
-    cluster members to Gaia-DR2.
-	}
-	\label{fig:xmatch_info}
-\end{figure*}
 
 
 After collecting the aforementioned lists, we
@@ -812,8 +818,9 @@ $(x,y)$ in the CCD image plane is assumed to take the form
   ]  \},
 \end{align}
 for $(x_0,y_0)$ arbitrary reference positions,
-$\Delta x = x-x_0$, $\Delta y = y - y_0$, and $A$ and $B$ arbitrary
-flux-scaling constants.
+$\Delta x = x-x_0$, $\Delta y = y - y_0$, $B$ is the background
+level, and $A$ is an arbitrary
+flux-scaling constant.
 For a nearly circular shape profile, the sharpness $s$ is related to
 the FWHM as ${\rm FWHM} \approx 2.35\sqrt{s}$ \citep[{\it
 e.g.},][]{Pal_2009}.  These shape parameters are later used when
@@ -920,7 +927,7 @@ produces a model image, $M_{xy}$,
     \label{eq:imagemodel}
 \end{equation}
 where $B_{xy}$ is a component of the model image that allows for
-background variations.
+background variations, and $\otimes$ denotes convolution.
 Since we modeled the background separately (\S~\ref{subsec:preparation}),
 we set $B_{xy}=0$.
 The convolution kernel $K$ is typically decomposed onto a
@@ -1141,7 +1148,8 @@ at any given time, we used the
 	\vspace{-0.5cm}
 	\caption{
 		Timeseries of ``external parameters'' for a representative
-			star. {\it Top}: Instrumental raw magnitude (with a particular
+			star over one sector.
+			{\it Top}: Instrumental raw magnitude (with a particular
 		aperture size), as a function of time.  {\it Second and third from
 			top}: $x$ and $y$ centroid positions as a function of time.
 		Continuing in order are the CCD temperature, the $(s,d,k)$ shape
@@ -1382,22 +1390,22 @@ method \citep{kovacs_box-fitting_2002},
 this detrending process must then be repeated while accounting for our
 updated knowledge about the light curve's shape.
 
-Some notes on our implementation follow.
-We select template stars in two stages.
-In the first stage, we fit a parabola in the RMS-magnitude
-plane, and discard stars more than $2\sigma$ away from the
+Some implementation notes follow.
+We selected template stars in two stages.
+In the first stage, we fitted a parabola in the RMS-magnitude
+plane, and discarded stars more than $2\sigma$ away from the
 prediction of the fit.
-We also require that these initial candidate stars have intermediate
+We also required that these initial candidate stars have intermediate
 brightness ($8.5 > T > 13$), and have a relatively large number
 of time-series data points.
-We then perform an initial iteration of TFA, on only the candidate
+We then performed an initial iteration of TFA, on only the candidate
 template stars.
-We inspect the resulting detrended light curves for residual
+We inspected the resulting detrended light curves for residual
 structure by computing a Lomb-Scargle periodogram.
-If the maximum-power peak has a false alarm probability below 0.1\%, 
-we exclude the star from the list of candidate template stars, on the
+If the maximum-power peak had a false alarm probability below 0.1\%, 
+we excluded the star from the list of candidate template stars, on the
 basis of its presumed periodic variability.
-We then randomly select at most 200 template stars from the remaining
+We then randomly selected at most 200 template stars from the remaining
 non-variable candidates. 
 The choice of number of template stars was discussed by
 \citet{kovacs_trend_2005}, and is another free parameter in
@@ -1408,9 +1416,9 @@ While the number of template stars can be optimized by constructing
 and minimizing a BIC-like quantity, a little overfitting is acceptable
 for our pupose of finding planetary transits.
 
-Once the template stars are selected, we use the \texttt{VARTOOLS}
+Once the template stars were selected, we use the \texttt{VARTOOLS}
 program to perform the detrending \citep{Hartman_Bakos_2016}.
-This process is performed for each photometric aperture
+This process was performed for each photometric aperture
 separately.
 
 
@@ -1623,10 +1631,10 @@ membership probabilities claimed by the original catalog.
 \paragraph{Sector 7}
 In Sector 7, \sVIInumberlcs light curves of candidate cluster stars
 were made. The provenance of the claimed cluster origin of these
-sources is  ...
+sources is  ... LGBTODO
 
 The clusters with the largest claimed numbers of sources are ...
-
+LGBTODO
 
 \subsubsection{Light curve noise properties}
 \label{subsubsec:rmsvsmag}
@@ -2073,10 +2081,14 @@ proximity.
 The youngest sample of stars is the reddest, as might be expected
 given that many of these stars have not yet reached the main sequence,
 and may exist along lines of sight with heavy extinction.
-
-%FIXME
-The weird part is that the oldest stars seem to have relatively more
-sub-day peak periods.
+Stars younger than about 200 Myr (the first two age bins) also tend
+to be bluer.
+The oldest stars, between about 450 Myr and 1 Gyr, show a hint in
+the detected periods of being ``bottom-heavy'', {\it i.e.}, there are
+relatively more short-period objects in this sample.
+The reason why is unclear~--~the effect could be due to systematic
+differences in the stellar samples, rather than being astrophysical.
+More investigation will be required.
 
 
 
@@ -2084,7 +2096,7 @@ sub-day peak periods.
 \section{Discussion}
 \label{sec:discussion}
 
-Maybe JH or JNW could contribute these subsections?
+Maybe JH or JNW could work on these subsections?
 
 \subsection{The planet candidates require more observations}
 Additional observations are needed for two major goals:
@@ -2107,7 +2119,7 @@ measurements, and even an isochronal analysis, would be helpful.
 \subsection{Eclipsing binary and stellar variability analyses may also
 be feasible}
 
-
+JH?
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2115,36 +2127,59 @@ be feasible}
 \label{sec:conclusion}
 
 %FIXME: paraphrase / improve all the below
-In this study, we made \numberlcs light curves of candidate young
-stars, across \numberclusters distinct clusters.
-Each light curve represents between 20 and 25 days of observations
-of a star brighter than $G_{Rp}=16$, sampled at 30 minute cadence.
+In this study, we first collected an all-sky sample of about one million
+candidate young stars brighter than $G_{\rm Rp}$ of 16.
+82\% of the target star sample resides in a ``cluster'', a generic
+term we adopted for open clusters, stellar associations, and moving
+groups.
+The remaining stars have photometric or astrometric indications of
+their youth, and either reside on the pre-main-sequence or upper
+main sequence.
 
-In the process of making the light curves, we learned X, Y, and Z.
-One point in particular was that image subtraction analyses seem to
-do fine at detecting variability in the galactic plane.
+We then reduced TESS full frame images taken over the course of about
+two months (Sectors 6 and 7; the first fields very close to the galactic
+plane).
+We performed difference imaging in order to minimize the complications
+of the crowded background.
+Using forced aperture photometry, we made light curves for all stars
+brighter than $G_{\rm Rp}$ of 13, and went three magnitudes deeper for
+our target star sample.
+This yielded \numberlcs light curves of candidate young stars across
+\numberclusters distinct clusters.
 
-In analyzing the noise properties of our light curves, we found that
-at the faint end, contamination from unresolved background stars
-dominated over other noise sources.
+The light curves seem to be limited in precision by photon noise at
+the bright end, and by unresolved background stars at the faint end.
+Though the raw light curves show significant red noise, decorrelating
+against a set of template stars led to an ensemble of light curves
+with very nearly gaussian noise properties.
 
-From a cursory transiting planet search, we identified \numberpcs
-planet candidates, which need additional spectroscopic, photometric,
-and imaging observations to verify (i) whether these candidates are
-planets and (ii) whether the host stars are cluster members.
-The vetting reports are available at \stscilink, and the planet
-candidate parameters are on exoFOP-TESS.
+An initial search for transiting planets, along with subsequent
+vetting to remove obvious non-cluster members and photometric blends,
+has revealed \numberpcs planet candidates.
+\numberclusterpcs of these candidates are candidate cluter members,
+and the remaining \numberzaripcs have indications of youth, relative
+to field stars.
+The latter sub-sample is the less interesting one for this work, but
+may be of interest for other studies.
+Substantial follow-up efforts on these objects are needed to determine
+(i) whether the candidates are planets and (ii) whether the host stars
+are truly cluster members.
+We suspect that a sizeable fraction of our planet candidates may
+be eclipsing binaries, however it likely also includes real planets.
+The vetting reports are available at \stscivetlink, and also documented
+in Appendix~\ref{appendix:vetreport}.
+The planet candidate parameters are on exoFOP-TESS.
 
-We also briefly explored the age-evolution of extremely high-SNR
-variability in the space of dominant period versus color
-(Figure~\ref{fig:ls_peak_vs_time}).
-This seems to show X, and Y.
-
-The overall takeaway is that the sample of light curves and vetting
-reports we have made should prove useful for doing some astrophysics.
-%  We also comment on the possible utility of the light curve sample for
-%  studies of stellar rotation evolution, and binary eccentricity
-%  damping.
+We also briefly explored other forms of photometric variability in the
+dataset.
+The age-evolution of extremely high-SNR variability seems to show some
+evolution in the space of LS peak-period versus color
+(Figure~\ref{fig:ls_peak_vs_time}), but interpreting this result will
+require a more careful exploration.
+In searching for transiting planets, we found many eclipsing binaries,
+as well as stellar rotation and pulsation signals.
+Those who wish to explore the time-evolution in these and any other
+systems are invited to explore the data at \stscilink.
 
 
 
