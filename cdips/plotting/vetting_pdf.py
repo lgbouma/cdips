@@ -1200,8 +1200,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
 
             _yval = nparr(
                 df['phot_g_mean_mag[20]']
-                + 5*np.log10(df['Parallax[mas][6]']/1e3)
-                + 5
+                #+ 5*np.log10(df['Parallax[mas][6]']/1e3) # NOTE: adds noise
+                #+ 5
                 #- df['a_g_val[38]']   # NOTE: too many nans
             )
             _xval = nparr(
@@ -1216,7 +1216,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         ylim = ax3.get_ylim()
         ax3.set_ylim((max(ylim),min(ylim)))
         ax3.legend(loc='best')
-        ax3.set_ylabel('G + 5$\log_{{10}}\omega_{{\mathrm{{as}}}}$ + 5', fontsize='large') # - $A_G$
+        ax3.set_ylabel('G', fontsize='large') # - $A_G$
+        #ax3.set_ylabel('G + 5$\log_{{10}}\omega_{{\mathrm{{as}}}}$ + 5', fontsize='large') # - $A_G$
         ax3.set_xlabel('Bp - Rp', fontsize='large') #  - E(Bp-Rp)
 
     #
