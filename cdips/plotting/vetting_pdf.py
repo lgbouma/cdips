@@ -766,6 +766,10 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
 
     # TODO add any of the kharchenko "notes" from his table 3 if u find a match
 
+    #FIXME
+    assert 0
+
+    #FIXME
     #
     # first, given cluster name(s), you need to search for kharchenko match.
     #

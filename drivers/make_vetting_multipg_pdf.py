@@ -340,6 +340,10 @@ def main(sector=None, cdips_cat_vnum=None):
                   'CDIPS_LCS/sector-{}/'.format(sector))
 
     cdips_df = ccl.get_cdips_catalog(ver=cdips_cat_vnum)
+    cddf = ccl.get_cdips_pub_catalog(ver=cdips_cat_vnum)
+    import IPython; IPython.embed()
+    assert 0
+    #FIXME
 
     supppath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
                 'cdips_lc_stats/sector-{}/'.format(sector)+
