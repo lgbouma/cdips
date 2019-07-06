@@ -38,6 +38,13 @@ def _given_mag_get_flux(mag):
     return flux
 
 
+def _insert_newlines(string, every=64):
+    lines = []
+    for i in range(0, len(string), every):
+        lines.append(string[i:i+every])
+    return '\n'.join(lines)
+
+
 def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
                               mask_orbit_edges=True, fluxap='TFASR2',
                               nworkers=32):
@@ -755,24 +762,9 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
         return fig, d
 
 
-def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)):
+def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
+                             figsize=(30,20)):
 
-    #FIXME FIXME
-    # TODO: turn the next ~200 lines into a call from "construct unique cluster
-    # name column", or something similar
-    #FIXME FIXME
-    #FIXME FIXME
-    #FIXME FIXME
-
-    # TODO add any of the kharchenko "notes" from his table 3 if u find a match
-
-    #FIXME
-    assert 0
-
-    #FIXME
-    #
-    # first, given cluster name(s), you need to search for kharchenko match.
-    #
     getfile = '../data/cluster_data/Kharchenko_2013_MWSC.vot'
     vot = parse(getfile)
     tab = vot.get_first_table().to_table()
@@ -782,186 +774,63 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     k13['Type'] = k13['Type'].str.decode('utf-8')
     k13['MWSC'] = k13['MWSC'].str.decode('utf-8')
 
+    #
+    # note: assumption is that
+    # /cdips/catalogbuild/construct_unique_cluster_name_column.py has been run.
+    # collect all relevant name-parsing info.
+    #
     have_name_match = False
-    have_mwsc_id_match = False
-
     cluster = str(supprow['cluster'].iloc[0])
-
     clustersplt = cluster.split(',')
-    trystrs = []
-    for c in clustersplt:
-        trystrs.append(c)
-        trystrs.append(c.replace(' ','_'))
 
-    for trystr in trystrs:
-        if trystr in nparr(k13['Name']):
-            have_name_match=True
-            name_match = trystr
-            break
+    if ~pd.isnull(mdf['k13_name_match'].iloc[0]):
+        have_name_match = True
+        name_match = mdf['k13_name_match'].iloc[0]
 
-    #
-    # try if SIMBAD's name matcher has anything.
-    #
-    if not have_name_match:
-        for c in clustersplt:
-            res = Simbad.query_objectids(c)
-            try:
-                resdf = res.to_pandas()
-            except AttributeError:
-                print('simbad no matches')
-                continue
+    comment = ''
+    if ~pd.isnull(mdf['comment'].iloc[0]):
+        have_comment = True
+        comment = mdf['comment'].iloc[0]
 
-            resdf['ID'] = resdf['ID'].str.decode('utf-8')
-            smatches = nparr(resdf['ID'])
-
-            # some names have format 'Name M 42'
-            clean_smatches = [s.lstrip('NAME ') for s in smatches]
-            # some names have format '[KPS2012] MWSC 0531'
-            for ix, s in enumerate(clean_smatches):
-                strm = re.search("\[.*\]\ ", s)
-                if strm is not None:
-                    clean_smatches[ix] = s.lstrip(strm.group())
-            # some names have variable length whitespace... e.g., 'NGC  2224'
-
-            # first set of attempts: everything in clean matches (irrespective if
-            # MWSC number exists)
-            trystrs = []
-            for _c in clean_smatches:
-                trystrs.append(_c)
-                trystrs.append(_c.replace(' ','_'))
-
-            for trystr in trystrs:
-                if trystr in nparr(k13['Name']):
-                    have_name_match = True
-                    name_match = trystr
-                    break
-
-            # only then: check if you have MWSC identifier.
-            inds = ['MWSC' in _c for _c in clean_smatches]
-            mwsc_match = nparr(clean_smatches)[inds]
-            if len(mwsc_match) > 1:
-                pass
-            if len(mwsc_match) == 1:
-                have_mwsc_id_match = True
-                mwsc_id_match = mwsc_match[0].replace('MWSC ','')
-            if len(mwsc_match) == 0:
-                pass
-
-            if have_mwsc_id_match:
-                break
-
-    #
-    # try searching K13 within circles of 5,10,...arcminutes of the quoted
-    # position
-    #
-    if not have_name_match and not have_mwsc_id_match:
-
-        ra,dec = float(supprow['RA[deg][2]']), float(supprow['Dec[deg][3]'])
-
-        c = SkyCoord(ra, dec, unit=(u.deg,u.deg), frame='icrs')
-
-        k13_c = SkyCoord(nparr(k13['RAJ2000']), nparr(k13['DEJ2000']),
-                         frame='icrs', unit=(u.deg,u.deg))
-
-        seps = k13_c.separation(c)
-
-        CUTOFFS = [5*u.arcmin, 10*u.arcmin, 15*u.arcmin, 20*u.arcmin]
-
-        for CUTOFF in CUTOFFS:
-            cseps = seps < CUTOFF
-
-            if len(cseps[cseps]) == 1:
-                have_name_match=True
-                name_match = k13.loc[cseps, 'Name'].iloc[0]
-
-            elif len(cseps[cseps]) > 1:
-                print('got too many matches within {} arcminutes!'.
-                      format(CUTOFF))
-                pass
-
-            else:
-                pass
-
-            if have_name_match:
-                break
-
-    #
-    # Check against known asterisms reported by Sulentic+ 1973
-    #
     is_known_asterism = False
-    for c in clustersplt:
-        if 'NGC' in c:
-            getfile = '/nfs/phn12/ar0/H/PROJ/lbouma/cdips/data/cluster_data/Sulentic_1973_NGC_known_asterisms.vot'
-            vot = parse(getfile)
-            tab = vot.get_first_table().to_table()
-            ddf = tab.to_pandas()
-            del tab
+    if ~pd.isnull(mdf['is_known_asterism'].iloc[0]):
+        is_known_asterism = bool(mdf['is_known_asterism'].iloc[0])
 
-            ngc_asterisms = nparr(ddf['NGC'])
+    # In [3]: np.unique(cddf['why_not_in_k13'][~pd.isnull(cddf['why_not_in_k13'])])
+    # Out[3]:
+    # array(['K13index: duplicated/coincides with other cluster',
+    #        'K13index: possibly this is a cluster, but parameters are not determined',
+    #        'K13index: this is not a cluster',
+    #        'Majaess IR cluster match missing in K13', 'is_bell_mg',
+    #        'is_gagne_mg', 'is_gaia_member', 'is_kraus_mg', 'is_oh_mg',
+    #        'is_rizzuto_mg', 'known missing from K13'], dtype=object)
+    why_not_in_k13 = ''
+    if not have_name_match:
+        if ~pd.isnull(mdf['why_not_in_k13']):
+            why_not_in_k13 = str(mdf['why_not_in_k13'].iloc[0])
+            if 'K13index' in why_not_in_k13:
+                why_not_in_k13 = 'K13index extra info...'
 
-            if c.startswith('NGC '):
-                c = c.lstrip('NGC ')
-            elif c.startswith('NGC_'):
-                c = c.lstrip('NGC_')
-            elif c.startswith('NGC'):
-                c = c.lstrip('NGC')
+    if ('Zari_2018_UMS' in supprow['reference'].iloc[0]
+        or 'Zari_2018_PMS' in supprow['reference'].iloc[0]
+       ):
 
-            # https://en.wikipedia.org/wiki/NGC_2451
-            if c.endswith('A'):
-                c = c.rstrip('A')
-            if c.endswith('B'):
-                c = c.rstrip('B')
-
-            if int(c) in ngc_asterisms:
-                is_known_asterism = True
-                break
-
-            # identified by Kos+2018, MNRAS 480 5242-5259 as asterisms
-            if int(c) in [1252, 6994, 7772, 7826]:
-                is_known_asterism = True
-                break
-
-    is_gagne_mg = False
-    if 'Gagne' in supprow['reference'].iloc[0]:
-        is_gagne_mg = True
-
-    is_oh_mg = False
-    if 'Oh' in supprow['reference'].iloc[0]:
-        is_oh_mg = True
-
-    is_zari_ums = False
-    if 'Zari_2018_UMS' in supprow['reference'].iloc[0]:
-        is_zari_ums = True
-
-    is_zari_pms = False
-    if 'Zari_2018_PMS' in supprow['reference'].iloc[0]:
-        is_zari_pms = True
-
-    is_gaia_member = False
-    if not pd.isnull(supprow['cluster'].iloc[0]):
-        if ( ('Gulliver' in supprow['cluster'].iloc[0] and 'CantatGaudin_2018'
-              in supprow['reference'].iloc[0])
-            or
-             ('Teutsch_12' in supprow['cluster'].iloc[0] and
-              'CantatGaudin_2018' in supprow['reference'].iloc[0])
-           ):
-            is_gaia_member = True
+        why_not_in_k13 = str(supprow['reference'].iloc[0])
 
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
-    elif have_mwsc_id_match:
-        _k13 = k13.loc[k13['MWSC'].astype(str) == str(mwsc_id_match)]
-        name_match = str(_k13['Name'].iloc[0])
-    elif (
-        is_known_asterism or is_gagne_mg or
-        is_oh_mg or is_zari_pms or is_zari_ums
-        or is_gaia_member
-    ):
+    elif is_known_asterism or ~pd.isnull(why_not_in_k13):
         pass
     else:
-        #FIXME: there are probably hella edge cases for this
-        print('ERR! didnt get name match for {}'.format(hdr['Gaia-ID']))
+        errmsg = 'ERR! didnt get name match for {}'.format(hdr['Gaia-ID'])
+        raise AssertionError(errmsg)
 
+    #FIXME FIXME: there are some k13 name matches with parameters not
+    #determined now. figure out hwow to deal with these
+    #FIXME
+    #FIXME
+    #FIXME
+    #FIXME
 
     ##########################################
 
@@ -982,7 +851,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     #
     # ax0: parallax probabilities. (boxplot).
     #
-    if have_name_match or have_mwsc_id_match:
+    if have_name_match:
 
         k13_plx_mas = (1/float(_k13['d'].iloc[0]))*1e3  # "truth"
 
@@ -1014,9 +883,6 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         cluster = str(supprow['cluster'].iloc[0])
         if have_name_match:
             cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
-        elif have_mwsc_id_match:
-            name_match = str(_k13["Name"].iloc[0])
-            cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
 
         ax0.scatter(
             0.666*np.ones_like(cluster_df['Parallax[mas][6]'])
@@ -1035,7 +901,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     #
     # ax1: proper motion. just use error bars in 2d.
     #
-    if have_name_match or have_mwsc_id_match:
+    if have_name_match:
         ax1.errorbar(_k13['pmRA'], _k13['pmDE'], yerr=_k13['e_pm'],
                      xerr=_k13['e_pm'], fmt='o', ecolor='C0', capthick=2,
                      color='C0', label='K13 cluster', zorder=3)
@@ -1045,13 +911,10 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
                      xerr=supprow['PMRA_error[mas/yr][10]'].iloc[0],
                      yerr=supprow['PMDec_error[mas/yr][11]'].iloc[0], fmt='o',
                      ecolor='C1', capthick=2, color='C1', label='DR2 target star',
-                     zorder=4)
+                     ms=15, zorder=4)
 
         cluster = str(supprow['cluster'].iloc[0])
         if have_name_match:
-            cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
-        elif have_mwsc_id_match:
-            name_match = str(_k13["Name"].iloc[0])
             cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
         ax1.scatter(
             cluster_df['PM_RA[mas/yr][8]'],
@@ -1067,7 +930,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     #
     # ax2: big text
     #
-    if have_name_match or have_mwsc_id_match:
+    if have_name_match:
         mwscid = str(_k13['MWSC'].iloc[0])
         n1sr2 = float(_k13['N1sr2'])
         logt = float(_k13['logt'])
@@ -1080,39 +943,15 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         name_match = cluster
         n1sr2 = np.nan
         logt = np.nan
-        k13type = 'KNOWN ASTERISM (SULENTIC 1973)'
+        k13type = 'KNOWN ASTERISM'
         k13dist = np.nan
         k13_plx_mas = np.nan
-    elif is_gagne_mg or is_oh_mg:
-        mwscid = 'N/A'
-        name_match = cluster
-        n1sr2 = np.nan
-        logt = np.nan
-        k13type = 'MG (Gagne, Oh)'
-        k13dist = np.nan
-        k13_plx_mas = np.nan
-    elif is_zari_pms or is_zari_ums:
-        mwscid = 'N/A'
-        name_match = 'ZariPMS' if is_zari_pms else 'ZariUMS'
-        n1sr2 = np.nan
-        logt = np.nan
-        k13type = 'Pre-MS' if is_zari_pms else 'Upper-MS'
-        k13dist = np.nan
-        k13_plx_mas = np.nan
-    elif is_gaia_member:
+    elif ~pd.isnull(why_not_in_k13):
         mwscid = 'N/A'
         name_match = 'N/A'
         n1sr2 = np.nan
         logt = np.nan
-        k13type = 'cluster from CG18'
-        k13dist = np.nan
-        k13_plx_mas = np.nan
-    else:
-        mwscid = 'N/A'
-        name_match = 'N/A'
-        n1sr2 = np.nan
-        logt = np.nan
-        k13type = 'N/A'
+        k13type = why_not_in_k13
         k13dist = np.nan
         k13_plx_mas = np.nan
 
@@ -1175,8 +1014,17 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
         outstr = 'clusterdetails: got bug {}'.format(e)
         print(outstr)
 
+    if ~pd.isnull(comment) and isinstance(comment,str):
+        if len(comment)>=1:
+            comment = _insert_newlines(comment, every=45)
+            outstr = textwrap.dedent(outstr) + '\nNote: '+comment
+        else:
+            outstr = textwrap.dedent(outstr)
+    else:
+        outstr = textwrap.dedent(outstr)
+
     txt_x, txt_y = 0.01, 0.99
-    ax2.text(txt_x, txt_y, textwrap.dedent(outstr),
+    ax2.text(txt_x, txt_y, outstr,
              ha='left', va='top', fontsize=36, zorder=2,
              transform=ax2.transAxes)
     ax2.set_axis_off()
@@ -1184,20 +1032,17 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     #
     # ax3: HR diagram
     #
-    if have_name_match or have_mwsc_id_match:
+    if have_name_match:
 
         cluster = str(supprow['cluster'].iloc[0])
 
         if have_name_match:
             cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
-        elif have_mwsc_id_match:
-            name_match = str(_k13["Name"].iloc[0])
-            cluster_df = suppfulldf.loc[suppfulldf['cluster'] == name_match]
 
         dfs = [cluster_df, supprow]
         zorders = [1,2]
         sizes = [30,150]
-        colors = ['k','orangered']
+        colors = ['k','C1']
         labels = [cluster,'target star']
 
         for df,zorder,color,s,l in zip(dfs,zorders,colors,sizes,labels):
@@ -1227,12 +1072,12 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
     #
     # ax4: spatial positions
     #
-    if have_name_match or have_mwsc_id_match:
+    if have_name_match:
 
         dfs = [cluster_df, supprow]
         zorders = [1,2]
         sizes = [20,150]
-        colors = ['k','orangered']
+        colors = ['k','C1']
         labels = [cluster,'target star']
 
         for df,zorder,color,s,l in zip(dfs,zorders,colors,sizes, labels):
@@ -1244,7 +1089,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, figsize=(30,20)
                 df['Dec[deg][3]']
             )
 
-            ax4.scatter(_xval, _yval, c=color, alpha=0.9, zorder=zorder, s=s,
+            ax4.scatter(_xval, _yval, c=color, alpha=1., zorder=zorder, s=s,
                         rasterized=True, linewidths=0, label=l)
 
         ax4.legend(loc='best')

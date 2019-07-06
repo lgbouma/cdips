@@ -145,7 +145,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # page 5
         ##########
         fig = vp.cluster_membership_check(hdr, supprow, infodict, suppfulldf,
-                                          figsize=(30,16))
+                                          mdf, figsize=(30,16))
         pdf.savefig(fig)
         plt.close()
 
@@ -341,9 +341,30 @@ def main(sector=None, cdips_cat_vnum=None):
 
     cdips_df = ccl.get_cdips_catalog(ver=cdips_cat_vnum)
     cddf = ccl.get_cdips_pub_catalog(ver=cdips_cat_vnum)
-    import IPython; IPython.embed()
-    assert 0
-    #FIXME
+    uniqpath = (
+        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_v{}_uniq.csv'.
+        format(cdips_cat_vnum)
+    )
+    udf = pd.read_csv(uniqpath, sep=';')
+
+    subdf = udf[['unique_cluster_name', 'k13_name_match', 'how_match',
+                 'have_name_match', 'have_mwsc_id_match', 'is_known_asterism',
+                 'not_in_k13', 'why_not_in_k13', 'cluster']]
+
+    fdf = cdips_df.merge(subdf, on='cluster', how='left')
+
+    cdips_df = cdips_df.sort_values(by='source_id')
+    cddf = cddf.sort_values(by='source_id')
+    fdf = fdf.sort_values(by='source_id')
+
+    np.testing.assert_array_equal(cddf['source_id'], cdips_df['source_id'])
+    np.testing.assert_array_equal(cddf['source_id'], fdf['source_id'])
+
+    cddf['dist'] = cdips_df['dist']
+    cddf['is_known_asterism'] = fdf['is_known_asterism']
+    cddf['why_not_in_k13'] = fdf['why_not_in_k13']
+
+    del cdips_df, udf
 
     supppath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
                 'cdips_lc_stats/sector-{}/'.format(sector)+
@@ -365,10 +386,10 @@ def main(sector=None, cdips_cat_vnum=None):
     # make pdfs for.
     tfa_sr_paths = glob(os.path.join(tfasrdir, '*_llc.fits'))
 
-    make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
+    make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cddf,
                   supplementstatsdf, pfdf, toidf, sector=sector)
 
 
 if __name__ == "__main__":
 
-    main(sector=7, cdips_cat_vnum=0.3)
+    main(sector=6, cdips_cat_vnum=0.3)
