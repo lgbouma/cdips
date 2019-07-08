@@ -1208,6 +1208,14 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
 
     ##########################################
 
+    import matplotlib as mpl
+    mpl.rcParams['axes.titlesize'] = 'xx-large'
+    mpl.rcParams['axes.labelsize'] = 'xx-large'
+    mpl.rcParams['xtick.direction'] = 'in'
+    mpl.rcParams['ytick.direction'] = 'in'
+    mpl.rcParams['xtick.labelsize'] = 'xx-large'
+    mpl.rcParams['ytick.labelsize'] = 'xx-large'
+
     plt.close('all')
     fig = plt.figure(figsize=figsize)
 
@@ -1519,13 +1527,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
 
 
     ##########################################
-    for ax in [ax0,ax1,ax2,ax3,ax4,ax5,ax6,ax7]:
-        ax.get_yaxis().set_tick_params(which='both', direction='in',
-                                       labelsize='xx-large')
-        ax.get_xaxis().set_tick_params(which='both', direction='in',
-                                       labelsize='xx-large')
-
-    fig.tight_layout(pad=2, h_pad=1.7)
+    fig.tight_layout(pad=3.0, h_pad=1.7)
 
     ax5.text(txt_x, txt_y, outstr, ha='left', va='top',
              fontsize=22, zorder=2, transform=ax5.transAxes)
