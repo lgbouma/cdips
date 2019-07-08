@@ -763,7 +763,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
 
 
 def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
-                             figsize=(30,20)):
+                             k13_notes_df, figsize=(30,20)):
 
     getfile = '../data/cluster_data/Kharchenko_2013_MWSC.vot'
     vot = parse(getfile)
@@ -788,9 +788,12 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         name_match = mdf['k13_name_match'].iloc[0]
 
     comment = ''
-    if not pd.isnull(mdf['comment'].iloc[0]):
-        have_comment = True
-        comment = mdf['comment'].iloc[0]
+    have_comment = False
+    if have_name_match:
+        nrow = k13_notes_df[k13_notes_df['Name'] == name_match]
+        if not pd.isnull(nrow['Note'].iloc[0]):
+            have_comment = True
+            comment = nrow['Note'].iloc[0]
 
     is_known_asterism = False
     if not pd.isnull(mdf['is_known_asterism'].iloc[0]):
@@ -1015,10 +1018,10 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         outstr = 'clusterdetails: got bug {}'.format(e)
         print(outstr)
 
-    if ~pd.isnull(comment) and isinstance(comment,str):
+    if have_comment:
         if len(comment)>=1:
-            comment = _insert_newlines(comment, every=45)
-            outstr = textwrap.dedent(outstr) + '\nNote: '+comment
+            comment = _insert_newlines(comment, every=30)
+            outstr = textwrap.dedent(outstr) + '\nK13Note: '+comment
         else:
             outstr = textwrap.dedent(outstr)
     else:

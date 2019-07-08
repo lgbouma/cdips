@@ -19,11 +19,11 @@ from datetime import datetime
 
 from astropy.coordinates import SkyCoord
 from astropy import units as u
+from astroquery.vizier import Vizier
 
 def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                              supprow, suppfulldf, pfdf, pfrow, toidf, sector,
-                             mask_orbit_edges=True,
-                             nworkers=40):
+                             k13_notes_df, mask_orbit_edges=True, nworkers=40):
     """
     args:
 
@@ -145,7 +145,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # page 5
         ##########
         fig = vp.cluster_membership_check(hdr, supprow, infodict, suppfulldf,
-                                          mdf, figsize=(30,16))
+                                          mdf, k13_notes_df, figsize=(30,16))
         pdf.savefig(fig)
         plt.close()
 
@@ -258,7 +258,7 @@ def _get_supprow(sourceid, supplementstatsdf):
 
 
 def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
-                  supplementstatsdf, pfdf, toidf, sector=6,
+                  supplementstatsdf, pfdf, toidf, k13_notes_df, sector=6,
                   cdipsvnum=1):
 
     for tfa_sr_path in tfa_sr_paths:
@@ -313,8 +313,7 @@ def make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
             make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
                                      sourceid, supprow, suppfulldf, pfdf,
-                                     pfrow,
-                                     toidf, sector)
+                                     pfrow, toidf, sector, k13_notes_df)
         else:
             print('found {}, continue'.format(outpath))
 
@@ -381,13 +380,20 @@ def main(sector=None, cdips_cat_vnum=None):
               'cdips/data/toi-plus-2019-06-25.csv')
     toidf = pd.read_csv(toipath)
 
+    Vizier.ROW_LIMIT = -1
+    catalog_list = Vizier.find_catalogs('J/A+A/558/A53')
+    catalogs = Vizier.get_catalogs(catalog_list.keys())
+    k13_notes_df = catalogs[2].to_pandas()
+    for c in k13_notes_df.columns:
+            k13_notes_df[c] = k13_notes_df[c].str.decode('utf-8')
+
     # reconstructive_tfa/RunTFASR.sh applied the threshold cutoff on TFA_SR
     # lightcurves. use whatever is in `tfasrdir` to determine which sources to
     # make pdfs for.
     tfa_sr_paths = glob(os.path.join(tfasrdir, '*_llc.fits'))
 
-    make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cddf,
-                  supplementstatsdf, pfdf, toidf, sector=sector)
+    make_all_pdfs(tfa_sr_paths, lcbasedir, resultsdir, cddf, supplementstatsdf,
+                  pfdf, toidf, k13_notes_df, sector=sector)
 
 
 if __name__ == "__main__":
