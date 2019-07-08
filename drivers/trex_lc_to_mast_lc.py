@@ -79,14 +79,14 @@ def trex_lc_to_mast_lc(
 
                     if len(lcpaths) > 0:
 
-                       # NOTE: nt actually faster
-                       #rlm.parallel_reformat_headers(lcpaths, camccddir,
-                       #                              sector, cdipsvnum,
-                       #                              nworkers=1,
-                       #                              maxworkertasks=1000)
+                       # #NOTE: nt actually faster
+                       # rlm.parallel_reformat_headers(lcpaths, camccddir,
+                       #                               sector, cdipsvnum,
+                       #                               nworkers=1,
+                       #                               maxworkertasks=1000)
 
                        rlm.reformat_headers(lcpaths, camccddir, sector,
-                                             cdipsvnum)
+                                            cdipsvnum)
 
 
 if __name__ == "__main__":

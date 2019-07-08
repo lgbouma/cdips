@@ -14,6 +14,12 @@ import multiprocessing as mp
 
 from cdips.utils import collect_cdips_lightcurves as ccl
 
+def _get_tic(mrow, key):
+    if isinstance(mrow[key], np.ma.core.MaskedConstant):
+        return 'nan'
+    else:
+        return mrow[key]
+
 def _map_timeseries_key_to_comment(k):
     kcd = {
         "tmid_utc": "Exp mid-time in JD_UTC (from DATE-OBS,DATE-END)",
@@ -201,9 +207,8 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
 
     #
     # TIC xmatch info:
-    # for TICv7,
-    # require Tmag within 1 mag of Stassun 2019 prediction.
-    # then take the closest such star to Gaia position.
+    # for TICv8, search within 1 arcminute, then require my Gaia-DR2 ID be
+    # equal to the TICv8 gaia ID.
     #
     ra, dec = primaryhdr['RA_OBJ'], primaryhdr['DEC_OBJ']
     targetcoord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
@@ -229,17 +234,36 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
                 + 0.0891337 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**2
                 - 0.633923 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])
                 + 0.0324473)
-    Tmag_cutoff = 1
 
-    selstars = stars[np.abs(stars['Tmag'] - Tmag_pred)<Tmag_cutoff]
+    #
+    # search for neighbors within 1 arcminute, with finite Gaia-DR2 entry values.
+    #
+    sel = ~stars['GAIA'].mask
+    selstars = stars[sel]
 
     if len(selstars)>=1:
-        mrow = selstars[np.argmin(selstars['dstArcSec'])]
 
-        # TICv8 rebasing on GaiaDR2 allows this
-        if not int(mrow['GAIA']) == int(hdr['GAIA-ID']):
-            # TODO: should just instead query selstars by Gaia ID u want...
-            raise ValueError
+        #
+        # TICv8 rebased on GaiaDR2: enforce that my Gaia-DR2 to TICv8 xmatch is
+        # the same as what TICv8 says it should be.
+        #
+        if np.any(
+            np.in1d(np.array(selstars['GAIA']).astype(int),
+                    np.array(int(primaryhdr['GAIA-ID'])))
+        ):
+
+            ind = (
+                int(np.where(np.in1d(np.array(selstars['GAIA']).astype(int),
+                                 np.array(int(primaryhdr['GAIA-ID']))))[0])
+            )
+
+            mrow = selstars[ind]
+
+        else:
+
+            errmsg = 'FAILED TO GET TIC MATCH. CRITICAL ERROR. PLZ SOLVE.'
+            import IPython; IPython.embed()
+            raise NotImplementedError(errmsg)
 
         primaryhdr.set('TICVER',
                        mrow['version'],
@@ -256,21 +280,45 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
         primaryhdr.set('TMAGPRED',
                        Tmag_pred,
                        '[mag] predicted Tmag via Stassun+19 Eq1')
-        try:
-            primaryhdr.set('TICCONT',
-                           mrow['contratio'],
-                           'TIC contratio of xmatch ')
-        except ValueError:
-            if isinstance(mrow['contratio'], np.ma.core.MaskedConstant):
-                primaryhdr.set('TICCONT',
-                               'nan',
-                               'TIC contratio of xmatch ')
-            else:
-                raise ValueError
+
+        primaryhdr.set('TICCONT',
+                       _get_tic(mrow, 'contratio'),
+                       'TIC contratio of xmatch')
 
         primaryhdr.set('TICDIST',
                        mrow['dstArcSec'],
                        '[arcsec] xmatch dist btwn Gaia & TIC')
+
+        primaryhdr.set('TICTEFF',
+                       _get_tic(mrow,'Teff'),
+                       '[K] TIC effective temperature')
+
+        primaryhdr.set('TICRAD',
+                       _get_tic(mrow,'rad'),
+                       '[Rsun] TIC stellar radius')
+
+        primaryhdr.set('TICRAD_E',
+                       _get_tic(mrow,'e_rad'),
+                       '[Rsun] TIC stellar radius uncertainty')
+
+        primaryhdr.set('TICMASS',
+                       _get_tic(mrow,'mass'),
+                       '[Msun] TIC stellar mass')
+
+        primaryhdr.set('TICLOGG',
+                       _get_tic(mrow, 'logg'),
+                       '[cgs] TIC log10(surface gravity)')
+
+        primaryhdr.set('TICGDIST',
+                       _get_tic(mrow, 'd'),
+                       '[pc] TIC geometric distance (Bailer-Jones+2018)')
+
+        primaryhdr.set('TICEBmV',
+                       _get_tic(mrow, 'ebv'),
+                       '[mag] TIC E(B-V) color excess')
+
+
+
     else:
         primaryhdr.set('TICVER',
                        'nan',
@@ -290,6 +338,27 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
         primaryhdr.set('TICDIST',
                        'nan',
                        '[arcsec] xmatch dist btwn Gaia & TIC')
+        primaryhdr.set('TICTEFF',
+                       'nan',
+                       '[K] TIC effective temperature')
+        primaryhdr.set('TICRAD',
+                       'nan',
+                       '[Rsun] TIC stellar radius')
+        primaryhdr.set('TICRAD_E',
+                       'nan',
+                       '[Rsun] TIC stellar radius uncertainty')
+        primaryhdr.set('TICMASS',
+                       'nan',
+                       '[Msun] TIC stellar mass')
+        primaryhdr.set('TICLOGG',
+                       'nan',
+                       '[cgs] TIC log10(surface gravity)')
+        primaryhdr.set('TICGDIST',
+                       'nan',
+                       '[pc] TIC geometric distance (Bailer-Jones+2018)')
+        primaryhdr.set('TICEBmV',
+                       'nan',
+                       '[mag] TIC E(B-V) color excess')
 
     #
     # who dun it
@@ -432,7 +501,3 @@ def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum):
             _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum)
         else:
             print('found {}'.format(outfile))
-
-
-def mask_orbit_start_and_end(lcpaths):
-    pass
