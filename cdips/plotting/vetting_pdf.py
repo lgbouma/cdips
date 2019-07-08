@@ -87,6 +87,10 @@ def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
         else:
             objectinfo[k] = np.nan
 
+    import matplotlib as mpl
+    mpl.rcParams['axes.titlesize'] = 'xx-large'
+    mpl.rcParams['axes.labelsize'] = 'xx-large'
+
     fig = checkplot.twolsp_checkplot_png(tlsp, spdm, time, flux, err,
                                          magsarefluxes=True,
                                          objectinfo=objectinfo,
@@ -96,6 +100,14 @@ def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
                                          phasebinms=14.0, unphasedms=6.0,
                                          figsize=(30,24), returnfigure=True,
                                          circleoverlay=1.5*21, yticksize=20)
+
+    axs = fig.get_axes()
+
+    for ax in axs:
+        ax.get_yaxis().set_tick_params(which='both', direction='in',
+                                       labelsize='xx-large')
+        ax.get_xaxis().set_tick_params(which='both', direction='in',
+                                       labelsize='xx-large')
 
     return fig, tlsp, spdm
 
@@ -213,12 +225,12 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
                 stattxt = '$\sigma$ = {:.3f} mmag{}'.format(stdmmag, customstr)
                 ndigits = 4
             _ = ax.text(txt_x, txt_y, stattxt, horizontalalignment='right',
-                    verticalalignment='top', fontsize='large', zorder=3,
+                    verticalalignment='top', fontsize='xx-large', zorder=3,
                     transform=ax.transAxes)
         ax.get_yaxis().set_tick_params(which='both', direction='in',
-                                       labelsize='large')
+                                       labelsize='xx-large')
         ax.get_xaxis().set_tick_params(which='both', direction='in',
-                                       labelsize='large')
+                                       labelsize='xx-large')
 
         if isinstance(obsd_midtimes, np.ndarray):
             ylim = ax.get_ylim()
@@ -231,7 +243,8 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
             ylim = ax.get_ylim()
             ax.set_ylim((min(ylim), max(ylim)))
 
-    axs[-1].set_xlabel(xlabel, fontsize='large')
+    axs[-1].set_xlabel(xlabel, fontsize='xx-large')
+    axs[-1].xaxis.get_offset_text().set_fontsize('xx-large')
 
     # make the y label
     ax_hidden = fig.add_subplot(111, frameon=False)
@@ -239,14 +252,14 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
                           left=False, right=False)
 
     if not is_pspline_dtr:
-        axs[0].set_ylabel('raw flux IRM2', fontsize='large', labelpad=27)
-        axs[1].set_ylabel('detrended flux TFASR2', fontsize='large', labelpad=27)
-        axs[2].set_ylabel('background [ADU]', fontsize='large', labelpad=27)
+        axs[0].set_ylabel('raw flux IRM2', fontsize='xx-large', labelpad=27)
+        axs[1].set_ylabel('detrended flux TFASR2', fontsize='xx-large', labelpad=27)
+        axs[2].set_ylabel('background [ADU]', fontsize='xx-large', labelpad=27)
     else:
-        axs[0].set_ylabel('raw flux IRM2', fontsize='large', labelpad=27)
-        axs[1].set_ylabel('tfa flux TFA2', fontsize='large', labelpad=27)
-        axs[2].set_ylabel('detrended flux DTR2', fontsize='large', labelpad=27)
-        axs[3].set_ylabel('background [ADU]', fontsize='large', labelpad=27)
+        axs[0].set_ylabel('raw flux IRM2', fontsize='xx-large', labelpad=27)
+        axs[1].set_ylabel('tfa flux TFA2', fontsize='xx-large', labelpad=27)
+        axs[2].set_ylabel('detrended flux DTR2', fontsize='xx-large', labelpad=27)
+        axs[3].set_ylabel('background [ADU]', fontsize='xx-large', labelpad=27)
 
     if not savpath:
         savpath = 'temp_{:s}.png'.format(apstr)
@@ -320,11 +333,11 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
                 stattxt = '$\sigma$ = {:.3f} mmag{}'.format(stdmmag, customstr)
                 ndigits = 4
             _ = ax.text(txt_x, txt_y, stattxt, horizontalalignment='right',
-                    verticalalignment='top', fontsize='large', zorder=3,
+                    verticalalignment='top', fontsize='xx-large', zorder=3,
                     transform=ax.transAxes)
 
         ax.get_yaxis().set_tick_params(which='both', direction='in',
-                                       labelsize=26)
+                                       labelsize='xx-large')
         ax.get_xaxis().set_tick_params(which='both', direction='in',
                                        labelsize='xx-large')
 
@@ -351,7 +364,8 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
                       linestyle='--', zorder=1, lw=2, alpha=0.3)
             ax.set_ylim((ymin, ymax))
 
-    axs[-1].set_xlabel(xlabel, fontsize='large')
+    axs[-1].set_xlabel(xlabel, fontsize='xx-large')
+    axs[-1].xaxis.get_offset_text().set_fontsize('xx-large')
 
     # make the y label
     ax_hidden = fig.add_subplot(111, frameon=False)
@@ -359,7 +373,7 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
                           left=False, right=False)
     ax_hidden.set_title('flux vs time. top: smallest aperture. middle: '+
                         'detection (medium) aperture. bottom: biggest',
-                        fontsize='large')
+                        fontsize='xx-large')
 
     fig.tight_layout(h_pad=1)
     if returnfig:
@@ -556,11 +570,12 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     #
     ax0.scatter(stime, sflux, c='black', alpha=0.9, zorder=2, s=50,
                 rasterized=True, linewidths=0)
-    ax0.set_xlabel('BJDTDB')
+    ax0.set_xlabel('BJDTDB', fontsize='xx-large')
+    ax0.xaxis.get_offset_text().set_fontsize('xx-large')
     if not is_pspline_dtr:
-        ax0.set_ylabel('TFASR2')
+        ax0.set_ylabel('TFASR2 flux', fontsize='xx-large')
     else:
-        ax0.set_ylabel('DTR2 (TFA then PSPLINE)')
+        ax0.set_ylabel('DTR2 flux (TFA & PSPLINE)', fontsize='xx-large')
 
     if isinstance(obsd_midtimes, np.ndarray):
         ylim = ax0.get_ylim()
@@ -583,7 +598,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     """
     P = {period:.3f} day
     $t_0$ = {t0:.3f} BJD
-    $R_p$ = {rp:s} $R_\oplus$ (TICCONT {ticcont:s} not applied)
+    $R_p$ = {rp:s} $R_\oplus$ (TICCONT {ticcont:s} not needed)
     $R_p/R_\star$ = {rp_rs:.3f}
     $T_{{14}}/P$ = {tdur_by_period:.3f}
     $T_{{14}}$ = {duration:.2f} hr
@@ -683,7 +698,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                     minbinelems, plotxlim, 'tls',
                                     xliminsetmode=False, magsarefluxes=True,
                                     phasems=6.0, phasebinms=12.0, verbose=True,
-                                    lowerleftstr='primary')
+                                    lowerleftstr='primary',
+                                    lowerleftfontsize='xx-large')
     except (TypeError, ValueError) as e:
         print('ERR! phased magseries ax2 failed {}'.format(repr(e)))
         pass
@@ -698,7 +714,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                     minbinelems, plotxlim, 'tls',
                                     xliminsetmode=False, magsarefluxes=True,
                                     phasems=6.0, phasebinms=12.0, verbose=True,
-                                    lowerleftstr='secondary')
+                                    lowerleftstr='secondary',
+                                    lowerleftfontsize='xx-large')
     except (TypeError, ValueError) as e:
         print('ERR! phased magseries ax3 failed {}'.format(repr(e)))
         pass
@@ -730,7 +747,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                     minbinelems, plotxlim, 'tls',
                                     xliminsetmode=False, magsarefluxes=True,
                                     phasems=6.0, phasebinms=12.0, verbose=True,
-                                    lowerleftstr='odd')
+                                    lowerleftstr='odd',
+                                    lowerleftfontsize='xx-large')
     except (TypeError, ValueError) as e:
         print('ERR! phased magseries ax4 failed {}'.format(repr(e)))
         pass
@@ -746,7 +764,8 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                     minbinelems, plotxlim, 'tls',
                                     xliminsetmode=False, magsarefluxes=True,
                                     phasems=6.0, phasebinms=12.0, verbose=True,
-                                    lowerleftstr='even')
+                                    lowerleftstr='even',
+                                    lowerleftfontsize='xx-large')
     except (TypeError, ValueError) as e:
         print('ERR! phased magseries ax4 failed {}'.format(repr(e)))
         pass
@@ -756,7 +775,17 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
              ha='left', va='center', fontsize=32, zorder=2,
              transform=ax1.transAxes)
 
-    fig.tight_layout(h_pad=0)
+    for ax in [ax0,ax2,ax3,ax4,ax5]:
+        ax.get_yaxis().set_tick_params(which='both', direction='in',
+                                       labelsize='xx-large')
+        ax.get_xaxis().set_tick_params(which='both', direction='in',
+                                       labelsize='xx-large')
+    for ax in [ax2,ax3,ax4,ax5]:
+        ax.set_title('')
+        ax.set_xlabel('phase', fontsize='xx-large')
+        ax.set_ylabel('flux', fontsize='xx-large')
+
+    fig.tight_layout(h_pad=0, w_pad=0.5)
 
     if returnfig:
         return fig, d
@@ -881,7 +910,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         # ax0.boxplot(dr2_samples, showfliers=False, whis=[5, 95], zorder=3)
 
         ax0.axhline(k13_plx_mas, lw=3, alpha=0.3, color='C0', zorder=2,
-                    label='K13 cluster')
+                    label='K13 {}'.format(name_match))
 
         cluster = str(supprow['cluster'].iloc[0])
         if have_name_match:
@@ -892,14 +921,14 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
             + np.random.normal(0,0.03,len(cluster_df)),
             cluster_df['Parallax[mas][6]'],
             c='k', alpha=0.9, zorder=2, s=30, rasterized=True, linewidths=0,
-            label='K13 cluster Gaia xmatches'
+            label='K13 {} Gaia xmatches'.format(name_match)
         )
 
         ax0.legend(loc='best')
         ax0.set_xticklabels('')
         ax0.set_xlabel('[horizontally separated for readability]',
-                       fontsize='medium')
-        ax0.set_ylabel('star parallax [mas]', fontsize='large')
+                       fontsize='xx-large')
+        ax0.set_ylabel('star parallax [mas]', fontsize='xx-large')
 
     #
     # ax1: proper motion. just use error bars in 2d.
@@ -908,7 +937,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         if have_cluster_parameters:
             ax1.errorbar(_k13['pmRA'], _k13['pmDE'], yerr=_k13['e_pm'],
                          xerr=_k13['e_pm'], fmt='o', ecolor='C0', capthick=2,
-                         color='C0', label='K13 cluster', zorder=3)
+                         color='C0', label='K13 {}'.format(name_match),
+                         zorder=3)
 
         ax1.errorbar(supprow['PM_RA[mas/yr][8]'].iloc[0],
                      supprow['PM_Dec[mas/year][9]'].iloc[0],
@@ -924,12 +954,15 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
             cluster_df['PM_RA[mas/yr][8]'],
             cluster_df['PM_Dec[mas/year][9]'],
             c='k', alpha=0.9, zorder=2, s=30, rasterized=True, linewidths=0,
-            label='K13 cluster Gaia xmatches'
+            label='K13 {} Gaia xmatches'.format(name_match)
         )
 
         ax1.legend(loc='best')
-        ax1.set_xlabel('pmRA [mas/yr]', fontsize='large')
-        ax1.set_ylabel('pmDEC [mas/yr]', fontsize='large')
+
+        ax1.set_xlabel(r'pmRA, $\mu_{{\alpha}} \cos\delta$ [mas/yr]',
+                       fontsize='xx-large')
+        ax1.set_ylabel('pmDEC, $\mu_{{\delta}}$ [mas/yr]',
+                       fontsize='xx-large')
 
     #
     # ax2: big text
@@ -1069,9 +1102,9 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         ylim = ax3.get_ylim()
         ax3.set_ylim((max(ylim),min(ylim)))
         ax3.legend(loc='best')
-        ax3.set_ylabel('G', fontsize='large') # - $A_G$
+        ax3.set_ylabel('G', fontsize='xx-large') # - $A_G$
         #ax3.set_ylabel('G + 5$\log_{{10}}\omega_{{\mathrm{{as}}}}$ + 5', fontsize='large') # - $A_G$
-        ax3.set_xlabel('Bp - Rp', fontsize='large') #  - E(Bp-Rp)
+        ax3.set_xlabel('Bp - Rp', fontsize='xx-large') #  - E(Bp-Rp)
 
     #
     # ax4: spatial positions
@@ -1097,16 +1130,16 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
                         rasterized=True, linewidths=0, label=l)
 
         ax4.legend(loc='best')
-        ax4.set_xlabel('RA [deg]', fontsize='large')
-        ax4.set_ylabel('DEC [deg]', fontsize='large')
+        ax4.set_xlabel(r'RA, $\alpha$ [deg]', fontsize='xx-large')
+        ax4.set_ylabel('Dec, $\delta$ [deg]', fontsize='xx-large')
 
     ##########################################
 
     for ax in [ax0,ax1,ax3,ax4]:
         ax.get_yaxis().set_tick_params(which='both', direction='in',
-                                       labelsize='large')
+                                       labelsize='xx-large')
         ax.get_xaxis().set_tick_params(which='both', direction='in',
-                                       labelsize='large')
+                                       labelsize='xx-large')
 
     fig.tight_layout(h_pad=0.5)
     return fig
@@ -1219,7 +1252,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     ax0.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
              markersize=25, marker='*', color='k', lw=0)
 
-    ax0.set_title('OOT (cyan o: centroid for each OOT window)', fontsize='large')
+    ax0.set_title('OOT (cyan o: centroid for each OOT window)', fontsize='xx-large')
 
     cb0 = fig.colorbar(cset0, ax=ax0, extend='neither', fraction=0.046, pad=0.04)
 
@@ -1239,7 +1272,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     ax1.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
              markersize=25, marker='*', color='k', lw=0)
 
-    ax1.set_title('in transit  (cyan o: centroid for each transit)', fontsize='large')
+    ax1.set_title('in transit  (cyan o: centroid for each transit)', fontsize='xx-large')
 
     cb1 = fig.colorbar(cset1, ax=ax1, extend='neither', fraction=0.046, pad=0.04)
 
@@ -1273,7 +1306,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     cset2 = ax2.imshow(np.zeros_like(cd['m_oot_minus_intra_flux']),
                        cmap=whitecmap, origin='lower', zorder=1)
 
-    ax2.set_title('nbhd info. (starid,Tmag)', fontsize='large')
+    ax2.set_title('neighborhood info. (starid,Tmag)', fontsize='xx-large')
     cb2 = fig.colorbar(cset2, ax=ax2, extend='neither', fraction=0.046,
                        pad=0.04, drawedges=False)
 
@@ -1303,7 +1336,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     ax3.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
              markersize=25, marker='*', color='k', lw=0)
 
-    ax3.set_title('OOT - in. (cyan *: centroid per transit)', fontsize='large')
+    ax3.set_title('OOT - in. (cyan *: centroid per transit)', fontsize='xx-large')
 
     cb3 = fig.colorbar(cset3, ax=ax3, extend='neither', fraction=0.046, pad=0.04)
 
@@ -1313,7 +1346,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
 
     cset4 = ax4.imshow(cd['m_oot_minus_intra_snr'], cmap='YlGnBu_r',
                        origin='lower', zorder= 1)
-    ax4.set_title('(OOT - in)/noise', fontsize='large')
+    ax4.set_title('(OOT - in)/noise', fontsize='xx-large')
 
     ax4.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
                 linewidths=1)
@@ -1453,7 +1486,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     cset6 = ax6.imshow(dss, origin='lower', cmap=plt.cm.gray_r)
 
     ax6.grid(ls='--', alpha=0.5)
-    ax6.set_title('DSS2 Red linear', fontsize='large')
+    ax6.set_title('DSS2 Red linear', fontsize='xx-large')
     cb6 = fig.colorbar(cset6, ax=ax6, extend='neither', fraction=0.046,
                        pad=0.04)
 
@@ -1474,7 +1507,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     cset7 = ax7.imshow(dss, origin='lower', cmap=plt.cm.gray_r, norm=norm)
 
     ax7.grid(ls='--', alpha=0.5)
-    ax7.set_title('DSS2 Red logstretch', fontsize='large')
+    ax7.set_title('DSS2 Red logstretch', fontsize='xx-large')
     cb7 = fig.colorbar(cset7, ax=ax7, extend='neither', fraction=0.046,
                        pad=0.04)
 
@@ -1486,6 +1519,11 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
 
 
     ##########################################
+    for ax in [ax0,ax1,ax2,ax3,ax4,ax5,ax6,ax7]:
+        ax.get_yaxis().set_tick_params(which='both', direction='in',
+                                       labelsize='xx-large')
+        ax.get_xaxis().set_tick_params(which='both', direction='in',
+                                       labelsize='xx-large')
 
     fig.tight_layout(pad=2, h_pad=1.7)
 
