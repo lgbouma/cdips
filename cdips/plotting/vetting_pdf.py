@@ -783,17 +783,17 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     cluster = str(supprow['cluster'].iloc[0])
     clustersplt = cluster.split(',')
 
-    if ~pd.isnull(mdf['k13_name_match'].iloc[0]):
+    if not pd.isnull(mdf['k13_name_match'].iloc[0]):
         have_name_match = True
         name_match = mdf['k13_name_match'].iloc[0]
 
     comment = ''
-    if ~pd.isnull(mdf['comment'].iloc[0]):
+    if not pd.isnull(mdf['comment'].iloc[0]):
         have_comment = True
         comment = mdf['comment'].iloc[0]
 
     is_known_asterism = False
-    if ~pd.isnull(mdf['is_known_asterism'].iloc[0]):
+    if not pd.isnull(mdf['is_known_asterism'].iloc[0]):
         is_known_asterism = bool(mdf['is_known_asterism'].iloc[0])
 
     # In [3]: np.unique(cddf['why_not_in_k13'][~pd.isnull(cddf['why_not_in_k13'])])
@@ -806,7 +806,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     #        'is_rizzuto_mg', 'known missing from K13'], dtype=object)
     why_not_in_k13 = ''
     if not have_name_match:
-        if ~pd.isnull(mdf['why_not_in_k13']):
+        if not pd.isnull(mdf['why_not_in_k13'].iloc[0]):
             why_not_in_k13 = str(mdf['why_not_in_k13'].iloc[0])
             if 'K13index' in why_not_in_k13:
                 why_not_in_k13 = 'K13index extra info...'
@@ -817,20 +817,19 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
 
         why_not_in_k13 = str(supprow['reference'].iloc[0])
 
+    have_cluster_parameters = False
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
+        have_cluster_parameters = True
     elif is_known_asterism or ~pd.isnull(why_not_in_k13):
         pass
     else:
         errmsg = 'ERR! didnt get name match for {}'.format(hdr['Gaia-ID'])
         raise AssertionError(errmsg)
 
-    #FIXME FIXME: there are some k13 name matches with parameters not
-    #determined now. figure out hwow to deal with these
-    #FIXME
-    #FIXME
-    #FIXME
-    #FIXME
+    if have_name_match and 'K13' in why_not_in_k13:
+        # no parameters, so by definition here no true name match
+        have_cluster_parameters = False
 
     ##########################################
 
@@ -853,7 +852,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     #
     if have_name_match:
 
-        k13_plx_mas = (1/float(_k13['d'].iloc[0]))*1e3  # "truth"
+        if have_cluster_parameters:
+            k13_plx_mas = (1/float(_k13['d'].iloc[0]))*1e3  # "truth"
 
         dr2_plx = supprow['Parallax[mas][6]'].iloc[0]
         dr2_plx_err = supprow['Parallax_error[mas][7]'].iloc[0]
@@ -902,9 +902,10 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     # ax1: proper motion. just use error bars in 2d.
     #
     if have_name_match:
-        ax1.errorbar(_k13['pmRA'], _k13['pmDE'], yerr=_k13['e_pm'],
-                     xerr=_k13['e_pm'], fmt='o', ecolor='C0', capthick=2,
-                     color='C0', label='K13 cluster', zorder=3)
+        if have_cluster_parameters:
+            ax1.errorbar(_k13['pmRA'], _k13['pmDE'], yerr=_k13['e_pm'],
+                         xerr=_k13['e_pm'], fmt='o', ecolor='C0', capthick=2,
+                         color='C0', label='K13 cluster', zorder=3)
 
         ax1.errorbar(supprow['PM_RA[mas/yr][8]'].iloc[0],
                      supprow['PM_Dec[mas/year][9]'].iloc[0],
@@ -930,7 +931,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     #
     # ax2: big text
     #
-    if have_name_match:
+    if have_name_match and have_cluster_parameters:
         mwscid = str(_k13['MWSC'].iloc[0])
         n1sr2 = float(_k13['N1sr2'])
         logt = float(_k13['logt'])
@@ -1043,7 +1044,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         zorders = [1,2]
         sizes = [30,150]
         colors = ['k','C1']
-        labels = [cluster,'target star']
+        labels = ['K13 '+cluster+' members','target star']
 
         for df,zorder,color,s,l in zip(dfs,zorders,colors,sizes,labels):
 
@@ -1078,7 +1079,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         zorders = [1,2]
         sizes = [20,150]
         colors = ['k','C1']
-        labels = [cluster,'target star']
+        labels = ['K13 '+cluster+' members','target star']
 
         for df,zorder,color,s,l in zip(dfs,zorders,colors,sizes, labels):
 
