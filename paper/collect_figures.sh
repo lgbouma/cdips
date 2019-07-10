@@ -17,17 +17,17 @@ cp ${fdir}trex_overview.pdf ${pdir}pipelineoverview.pdf
 # rms vs mag 
 fdir=../results/paper_figures/
 
-cp ${fdir}rms_vs_mag.png ${pdir}rms_vs_mag.png
-cp ${fdir}avg_acf.png ${pdir}avg_acf.png
+cp ${fdir}rms_vs_mag.pdf ${pdir}rms_vs_mag.pdf
+cp ${fdir}avg_acf.pdf ${pdir}avg_acf.pdf
 
-cp ${fdir}tls_sde_vs_period_scatter.png \
-   ${pdir}tls_sde_vs_period_scatter.png
+cp ${fdir}tls_sde_vs_period_scatter.pdf \
+   ${pdir}tls_sde_vs_period_scatter.pdf
 
 # quilt of PCs
-cp ${fdir}quilt_PCs.png ${pdir}quilt_PCs.png
+cp ${fdir}quilt_PCs.pdf ${pdir}quilt_PCs.pdf
 
 # time evolution of LS peak period
-cp ${fdir}LS_period_vs_color_and_age.png ${pdir}LS_period_vs_color_and_age.png
+cp ${fdir}LS_period_vs_color_and_age.pdf ${pdir}LS_period_vs_color_and_age.pdf
 
 # positions of lightcurves
 cp ${fdir}sector6_cam[1]_ccd[1-2-3-4]cluster_field_star_positions.png \
@@ -38,43 +38,43 @@ cp ${fdir}cluster_field_star_positions.png \
    ${pdir}cluster_field_star_positions.png
 
 # positions of lightcurves
-cp ${fdir}galacticcoords_cluster_field_star_positions.png \
-   ${pdir}galacticcoords_cluster_field_star_positions.png
+cp ${fdir}galacticcoords_cluster_field_star_positions.pdf \
+   ${pdir}galacticcoords_cluster_field_star_positions.pdf
 
 # CDF of T mags of LCs
-cp ${fdir}cdf_T_mag.png ${pdir}cdf_T_mag.png
+cp ${fdir}cdf_T_mag.pdf ${pdir}cdf_T_mag.pdf
 
 # HRDs of close and entire LC subsets
-cp ${fdir}hrd_scat_all_CDIPS_LCs.png ${pdir}hrd_scat_all_CDIPS_LCs.png
-cp ${fdir}hrd_scat_close_subset.png ${pdir}hrd_scat_close_subset.png
+cp ${fdir}hrd_scat_all_CDIPS_LCs.pdf ${pdir}hrd_scat_all_CDIPS_LCs.pdf
+cp ${fdir}hrd_scat_close_subset.pdf ${pdir}hrd_scat_close_subset.pdf
 
 # HRDs of close and entire LC subsets
-cp ${fdir}pm_scat_all_CDIPS_LCs.png ${pdir}pm_scat_all_CDIPS_LCs.png
-cp ${fdir}pm_scat_close_subset.png ${pdir}pm_scat_close_subset.png
+cp ${fdir}pm_scat_all_CDIPS_LCs.pdf ${pdir}pm_scat_all_CDIPS_LCs.pdf
+cp ${fdir}pm_scat_close_subset.pdf ${pdir}pm_scat_close_subset.pdf
 
 # counts of the CDIPS target star catalog
-cp ${fdir}target_star_cumulative_counts.png \
-   ${pdir}target_star_cumulative_counts.png
+cp ${fdir}target_star_cumulative_counts.pdf \
+   ${pdir}target_star_cumulative_counts.pdf
 
-cp ${fdir}target_star_hist_logt.png \
-   ${pdir}target_star_hist_logt.png
+cp ${fdir}target_star_hist_logt.pdf \
+   ${pdir}target_star_hist_logt.pdf
 
-cp ${fdir}target_star_reference_pie_chart.png \
-   ${pdir}target_star_reference_pie_chart.png
+cp ${fdir}target_star_reference_pie_chart.pdf \
+   ${pdir}target_star_reference_pie_chart.pdf
 
 # catalog matching statistics
-cp ${fdir}catalog_to_gaia_match_statistics_MWSC.png \
-   ${pdir}mwscmatchstats.png
+cp ${fdir}catalog_to_gaia_match_statistics_MWSC.pdf \
+   ${pdir}mwscmatchstats.pdf
 
-cp ${fdir}catalog_to_gaia_match_statistics_Dias14.png \
-   ${pdir}dias14matchstats.png
+cp ${fdir}catalog_to_gaia_match_statistics_Dias14.pdf \
+   ${pdir}dias14matchstats.pdf
 
 # wcs
-cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_sep_hist.png \
-   ${pdir}astromresidual_hist.png
+cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_sep_hist.pdf \
+   ${pdir}astromresidual_hist.pdf
 
-cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_quiver_meas_proj_sep.png \
-   ${pdir}astromresidual_quiver.png
+cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_quiver_meas_proj_sep.pdf \
+   ${pdir}astromresidual_quiver.pdf
 
 # pdftk burst the chosen vetting pdf
 pdftk vet_hlsp_cdips_tess_ffi_gaiatwo0005541111035713815552-0007_tess_v01_llc.pdf burst output gaiatwo0005541111035713815552-0007_page%02d.pdf
