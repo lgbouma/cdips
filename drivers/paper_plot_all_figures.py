@@ -42,13 +42,13 @@ def main():
     sectors = [6,7]
 
     # fig N: tls_sde_vs_period_scatter
-    plot_tls_sde_vs_period_scatter(sectors, overwrite=1)
+    plot_tls_sde_vs_period_scatter(sectors, overwrite=0)
 
     # fig N: average autocorrelation fn of LCs
-    plot_avg_acf(sectors, overwrite=1, cleanprevacf=True)
+    plot_avg_acf(sectors, overwrite=0, cleanprevacf=True)
 
     # fig N: 3x2 quilty of phased PC
-    plot_quilt_PCs(overwrite=1)
+    # plot_quilt_PCs(overwrite=1)
 
     # fig N: LS period vs color evolution in time
     plot_LS_period_vs_color_and_age(sectors, overwrite=1, OC_MG_CAT_ver=0.3)
