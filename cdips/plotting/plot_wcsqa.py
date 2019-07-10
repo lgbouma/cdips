@@ -14,6 +14,8 @@ from astropy import wcs
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+from cdips.plotting import savefig
+
 def main(
     fitsfile='proj1500-s0006-cam1-ccd1-combinedphotref-onenight.fits',
     refbasedir='/nfs/phtess2/ar0/TESS/FFI/BASE/reference-frames/',
@@ -108,7 +110,7 @@ def plot_scatter_x_y_sep(df, outpath):
     cbar = f.colorbar(cax, extend='both')
     cbar.set_label(r'$|\vec{{x}}_{{\mathrm{{measured}}}} - \vec{{x}}_{{\mathrm{{projected}}}}|$ [pixels]')
 
-    f.savefig(outpath, bbox_inches='tight', dpi=300)
+    savefig(f, outpath)
 
 
 def plot_sep_hist(df, outpath):
@@ -138,7 +140,7 @@ def plot_sep_hist(df, outpath):
     ax.get_yaxis().set_tick_params(which='both', direction='in')
     ax.get_xaxis().set_tick_params(which='both', direction='in')
 
-    f.savefig(outpath, bbox_inches='tight', dpi=300)
+    savefig(f, outpath)
 
 
 
@@ -172,4 +174,4 @@ def plot_quiver_meas_proj_sep(df, outpath):
     ax.get_yaxis().set_tick_params(which='both', direction='in')
     ax.get_xaxis().set_tick_params(which='both', direction='in')
 
-    f.savefig(outpath, bbox_inches='tight', dpi=400)
+    savefig(f, outpath)

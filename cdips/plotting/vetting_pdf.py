@@ -406,8 +406,9 @@ def _get_full_infodict(tlsp, hdr, mdf):
     c = mdf.T.to_dict().popitem()[1]
 
     h = {
-        'teff':hdr['teff_val'],
-        'rstar':hdr['radius_val'],
+        'teff':hdr['TICTEFF'],
+        'rstar':hdr['TICRAD'],
+        'mstar':hdr['TICMASS'],
         'AstExcNoiseSig':hdr['AstExcNoiseSig'], # N-sigma of astrometric detection
         'TICID':hdr['TICID'],
         'TESSMAG':hdr['TESSMAG'],
@@ -415,16 +416,18 @@ def _get_full_infodict(tlsp, hdr, mdf):
         'TICCONT':hdr['TICCONT']
     }
 
-    if h['rstar'] != 'NaN':
+    if h['rstar'] != 'nan':
         rp = (d['rp_rs'] *  h['rstar']*u.Rsun).to(u.Rearth).value
         d['rp'] = '{:.2f}'.format(rp)
     else:
-        d['rp'] = 'NaN'
+        d['rp'] = 'nan'
 
-    if h['teff'] != 'NaN':
+    if h['teff'] != 'nan':
         h['teff'] = '{:.0f}'.format(h['teff'])
-    if h['rstar'] != 'NaN':
+    if h['rstar'] != 'nan':
         h['rstar'] = '{:.2f}'.format(h['rstar'])
+    if h['mstar'] != 'nan':
+        h['mstar'] = '{:.2f}'.format(h['mstar'])
     if h['TICCONT'] != 'nan':
         h['TICCONT'] = '{:.2f}'.format(h['TICCONT'])
 
@@ -433,7 +436,14 @@ def _get_full_infodict(tlsp, hdr, mdf):
     mamadf = pd.read_csv('../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
                          delim_whitespace=True)
 
-    if h['rstar'] != 'NaN':
+    if h['rstar'] != 'nan' and h['mstar'] != 'nan':
+        mstar = float(h['mstar'])
+        rstar = float(h['rstar'])*u.Rsun
+        a = _get_a_given_P_and_Mstar(d['period']*u.day, mstar*u.Msun)
+        tdur_circ = (rstar*(d['period']*u.day)/(np.pi*a)).to(u.hr).value
+        h['circduration'] = '{:.1f}'.format(tdur_circ)
+
+    elif h['rstar'] != 'nan' and h['mstar'] == 'nan':
 
         #
         # mass monotonically decreases, but radius does not (in Mamajek's
@@ -466,16 +476,9 @@ def _get_full_infodict(tlsp, hdr, mdf):
         h['mstar'] = '{:.2f}'.format(mstar)
         h['circduration'] = '{:.1f}'.format(tdur_circ)
 
-    #FIXME TODO
-    # if you're not given gaia radius, but do have teff, then estimate Rstar
-    # using the relations worked out in TIC8.
-    #
-    # NOTE: you need the extinction to be subtracted for this ---
-    # G = Gobs - A_G
-
     else:
-        h['mstar'] = 'NaN'
-        h['circduration'] = 'NaN'
+        h['mstar'] = 'nan'
+        h['circduration'] = 'nan'
 
     megad = {**d, **c, **h}
 
@@ -615,7 +618,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     G = {phot_g_mean_mag:.1f}, Rp = {phot_rp_mean_mag:.1f}, Bp = {phot_bp_mean_mag:.1f}, T = {tessmag:.1f}
     pmRA = {pmra:.1f}, pmDEC = {pmdec:.1f}
     $\omega$ = {plx_mas:.2f} $\pm$ {plx_mas_err:.2f} mas
-    d = 1/$\omega_{{as}}$ = {dist_pc:.0f} pc
+    $d_{{\mathrm{{geom}}}}$ = {dist_pc:.0f} pc
     AstExc: {AstExcNoiseSig:.1f} $\sigma$
     $R_\star$+$M_\star$->$T_{{b0}}$: {circduration:s} hr
 
@@ -666,7 +669,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
             pmdec=float(d['pmdec']),
             plx_mas=float(supprow['Parallax[mas][6]']),
             plx_mas_err=float(supprow['Parallax_error[mas][7]']),
-            dist_pc=1/(1e-3 * float(hdr['Parallax[mas]'])),
+            dist_pc=float(hdr['TICGDIST']),
             AstExcNoiseSig=d['AstExcNoiseSig'],
             cluster='N/A' if pd.isnull(d['cluster']) else d['cluster'],
             reference=d['reference'],
@@ -785,6 +788,11 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
         ax.set_xlabel('phase', fontsize='xx-large')
         ax.set_ylabel('flux', fontsize='xx-large')
 
+    ylim = ax2.get_ylim()
+    for ax in [ax2,ax3,ax4,ax5]:
+        # consistent ylims across each subplot
+        ax.set_ylim(ylim)
+
     fig.tight_layout(h_pad=0, w_pad=0.5)
 
     if returnfig:
@@ -837,11 +845,10 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     #        'is_gagne_mg', 'is_gaia_member', 'is_kraus_mg', 'is_oh_mg',
     #        'is_rizzuto_mg', 'known missing from K13'], dtype=object)
     why_not_in_k13 = ''
-    if not have_name_match:
-        if not pd.isnull(mdf['why_not_in_k13'].iloc[0]):
-            why_not_in_k13 = str(mdf['why_not_in_k13'].iloc[0])
-            if 'K13index' in why_not_in_k13:
-                why_not_in_k13 = 'K13index extra info...'
+    if not pd.isnull(mdf['why_not_in_k13'].iloc[0]):
+        why_not_in_k13 = str(mdf['why_not_in_k13'].iloc[0])
+        if 'K13index' in why_not_in_k13:
+            why_not_in_k13 = 'K13index extra info...'
 
     if ('Zari_2018_UMS' in supprow['reference'].iloc[0]
         or 'Zari_2018_PMS' in supprow['reference'].iloc[0]
@@ -853,6 +860,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
         have_cluster_parameters = True
+        if len(_k13) == 0:
+            have_cluster_parameters = False
     elif is_known_asterism or ~pd.isnull(why_not_in_k13):
         pass
     else:
@@ -886,6 +895,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
 
         if have_cluster_parameters:
             k13_plx_mas = (1/float(_k13['d'].iloc[0]))*1e3  # "truth"
+        else:
+            k13_plx_mas = np.nan
 
         dr2_plx = supprow['Parallax[mas][6]'].iloc[0]
         dr2_plx_err = supprow['Parallax_error[mas][7]'].iloc[0]

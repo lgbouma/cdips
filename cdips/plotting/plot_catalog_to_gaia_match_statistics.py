@@ -9,6 +9,8 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u, constants as c
 from astropy.io.votable import from_table, writeto, parse
 
+from cdips.plotting import savefig
+
 def get_mwsc_gaia_xmatch_statistics():
 
     # first, get statistics for the MWSC to Gaia match.
@@ -100,8 +102,7 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
         ax.get_xaxis().set_tick_params(which='both', direction='in')
 
     f.tight_layout()
-    f.savefig(outpath, dpi=450, bbox_inches='tight')
-    print('saved {}'.format(outpath))
+    savefig(f, outpath)
 
 
 if __name__=="__main__":
