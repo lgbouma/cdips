@@ -57,19 +57,19 @@ def main():
     plot_target_star_reference_pie_chart(OC_MG_CAT_ver=0.3, overwrite=1)
 
     # fig N: T magnitude CDF for all CDIPS target stars.
-    plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=0)
+    plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1)
 
     # fig N: wcs quality verification for one photometric reference
     plot_wcs_verification(overwrite=1)
 
     # fig N: catalog_to_gaia_match_statistics for CDIPS target stars
-    plot_catalog_to_gaia_match_statistics(overwrite=0)
+    plot_catalog_to_gaia_match_statistics(overwrite=1)
 
     # fig N: histogram of CDIPS target star age.
     plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1)
 
     # fig N: RMS vs catalog T mag for LC stars
-    plot_rms_vs_mag(sectors, overwrite=0)
+    plot_rms_vs_mag(sectors, overwrite=1)
 
     # fig N: histogram (or CDF) of T magnitude for LC stars
     plot_cdf_T_mag(sectors, overwrite=1)
@@ -86,7 +86,7 @@ def main():
     plot_pm_scat(sectors, overwrite=1, close_subset=0)
 
     # fig N: positions of field and cluster LC stars (currently all cams)
-    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=0,
+    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=1,
                                         galacticcoords=True)
     plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=0)
     plot_cluster_and_field_star_scatter(sectors=[6], overwrite=0, cams=[1],
@@ -101,6 +101,8 @@ def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
 
+    fig.savefig(figpath.replace('.png','.pdf'), bbox_inches='tight')
+    print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
 
 def plot_tls_sde_vs_period_scatter(sectors, overwrite=1):
 

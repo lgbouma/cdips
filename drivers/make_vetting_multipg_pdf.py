@@ -385,7 +385,7 @@ def main(sector=None, cdips_cat_vnum=None):
     catalogs = Vizier.get_catalogs(catalog_list.keys())
     k13_notes_df = catalogs[2].to_pandas()
     for c in k13_notes_df.columns:
-            k13_notes_df[c] = k13_notes_df[c].str.decode('utf-8')
+        k13_notes_df[c] = k13_notes_df[c].str.decode('utf-8')
 
     # reconstructive_tfa/RunTFASR.sh applied the threshold cutoff on TFA_SR
     # lightcurves. use whatever is in `tfasrdir` to determine which sources to
