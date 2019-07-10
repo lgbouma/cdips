@@ -42,10 +42,10 @@ def main():
     sectors = [6,7]
 
     # fig N: tls_sde_vs_period_scatter
-    plot_tls_sde_vs_period_scatter(sectors, overwrite=0)
+    plot_tls_sde_vs_period_scatter(sectors, overwrite=1)
 
     # fig N: average autocorrelation fn of LCs
-    plot_avg_acf(sectors, overwrite=0, cleanprevacf=True)
+    plot_avg_acf(sectors, overwrite=1, cleanprevacf=False)
 
     # fig N: 3x2 quilty of phased PC
     # plot_quilt_PCs(overwrite=1)
@@ -102,7 +102,7 @@ def savefig(fig, figpath):
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
 
     pdffigpath = figpath.replace('.png','.pdf')
-    fig.savefig(pdffigpath, bbox_inches='tight')
+    fig.savefig(pdffigpath, bbox_inches='tight', rasterized=True, dpi=450)
     print('{}: made {}'.format(datetime.utcnow().isoformat(), pdffigpath))
 
 def plot_tls_sde_vs_period_scatter(sectors, overwrite=1):
