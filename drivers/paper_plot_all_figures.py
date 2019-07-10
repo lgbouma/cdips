@@ -1268,8 +1268,7 @@ def plot_cluster_and_field_star_positions(df, outpath, figsize, galacticcoords):
         xlim = ax.get_xlim()
         ax.set_xlim((max(xlim),min(xlim)))
 
-    f.savefig(outpath, bbox_inches='tight', dpi=450)
-    print('made {}'.format(outpath))
+    savefig(f, outpath)
 
 
 def get_lc_stats(lcpaths, cdipslcdir, outpath, sector, cdipsvnum=1,
@@ -1496,8 +1495,8 @@ def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
             tick.label.set_fontsize('small')
 
     fig.tight_layout(h_pad=-0.3, pad=0.2)
-    fig.savefig(outpath, dpi=400)
-    print('%sZ: made plot: %s' % (datetime.utcnow().isoformat(), outpath))
+
+    savefig(fig, outpath)
 
 
 
