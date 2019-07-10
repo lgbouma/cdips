@@ -409,8 +409,8 @@ photometric catalogs that were of interest: the studies of
 \citet{cantat-gaudin_gaia_2018} used an unsupervised membership
 assignment algorithm to identify clusters in the three-dimensional
 astrometric space of proper motion and parallax. They used {\it Gaia}
-photometry and radial velocities to then verify the claimed
-membership properties.  From their Table~2, we collect an initial 401{,}448
+photometry and radial velocities to then verify the claimed membership
+properties.  From their Table~2, we collect an initial 401{,}448
 cluster members, in 1229 clusters, down to their limiting magnitude of
 $G=18$.
 
@@ -421,14 +421,14 @@ $500\,{\rm pc}$. While this work also included memberships for
 globular clusters, we omitted these from consideration.
 
 In our photometric reduction,  our default identifier for all sources
-is the Gaia-DR2 \texttt{source\_id}.
-The TIC identifiers are found through a spatial cross-match after the light 
-curves have been made
-\citep{stassun_TIC_2018,stassun_TIC8_2019}
-This is because Gaia-DR2 is the base-catalog used to project
-sources from celestial coordinates to the imaging plane (\S~\ref{sec:method}).
-It also has the advantage that for any Gaia-derived cluster memberships, 
-we preform cross-matching directly via the source identifiers.
+is the Gaia-DR2 \texttt{source\_id}.  The TIC identifiers are found
+through a spatial cross-match after the light curves have been made,
+subject to the requirement that the Gaia-DR2 source identifiers match
+\citep{stassun_TIC_2018,stassun_TIC8_2019}.  We take this approach
+because Gaia-DR2 is the base-catalog used to project sources from
+celestial coordinates to the imaging plane (\S~\ref{sec:method}).  It
+also has the advantage that for any Gaia-derived cluster memberships,
+we can cross-match directly against source identifiers.
 
 
 
@@ -2360,14 +2360,14 @@ be in open clusters.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Page 1: period-search summary.} Periodograms from TLS and 
+		{\bf Transit search summary.} Periodograms from TLS and 
 		phase-dispersion minimization, as calculated 
 		with \texttt{astrobase.periodbase}, are shown in the top left and top center 
 		\citep{bhatti_astrobase_2018,hippke_TLS_2019,stellingwerf_period_1978}.
 		The top three peaks from each 
 		method are shown in the second and third rows; the raw light curve is in the 
 		top-right. A small finder chart from DSS is inset to the top left, with
-		the 1.5-pixel radius aperture used to extract the light curve in orange (CITE).
+		the 1.5-pixel radius aperture used to extract the light curve in orange.
 		\label{fig:pg1}
 	}
 \end{figure*}
@@ -2379,7 +2379,7 @@ be in open clusters.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Page 2: light curve diagnostics.} 
+		{\bf Light curve diagnostics.} 
 		Time-series of raw flux (\texttt{IRM2}),  TFA-detrended flux (\texttt{TF2}), stellar-variability
 		detrended flux, and the background are shown as a function of
 		barycentric Julian date.
@@ -2402,15 +2402,16 @@ be in open clusters.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-    {\bf Page 3: Transit diagnostics.} The plots show the
+    {\bf Transit diagnostics.} The plots show the
     maximally-detrended light curve (top); the phase-folded light
     curve centered over $\pm3$ transit durations of the primary
     transit (middle left); the secondary eclipse (middle right); the
     odd-numbered transits (lower left); and the even-numbered transits
     (lower right).
-    The stellar parameters ($T_{\rm eff}, R_\star$) are taken from
-    Gaia-DR2 Apsis pipeline results when available
-    \citep{andrae_apsis_2018}.
+    The stellar parameters ($T_{\rm eff}, R_\star, M_\star$) are taken from
+    TICv8 when available \citep{stassun_TIC8_2019}.
+    %Gaia-DR2 Apsis pipeline results when available
+    %\citep{andrae_apsis_2018}.
     The first eight lines of text are parameters determined from the
     best-fitting TLS model.
     The one exception is the planet radius, which uses the stellar
@@ -2424,9 +2425,12 @@ be in open clusters.
     likelihood by a sum of two gaussians.
     ``AstExc'' refers to the Gaia-DR2 astrometric excess, which can
     indicate hints of astrometric binarity in the system.
+    ``$d_{\rm geom}$'' is the geometric distance from
+    \citet{bailer-jones_distances_2018}.
     ``$R_\star + M_\star \rightarrow T_{b0}$'' gives the duration of a
-    zero-eccentricity central transit based on the Gaia-DR2 stellar
-    radius, and a stellar mass interpolated from the
+    zero-eccentricity central transit based on the TICv8 stellar
+    radius and mass if available. If the mass is not available, a
+    stellar mass is interpolated from the
     \citet{pecaut_intrinsic_2013} table, under the assumption that the
     star is a dwarf.
     %\footnote{\url{http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt}}.
@@ -2441,7 +2445,7 @@ be in open clusters.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Page 4: Light curves for increasing aperture sizes.} 
+		{\bf Light curves for increasing aperture sizes.} 
 		Apertures of radius 1, 1.5, and 2.25 pixels are shown from top to bottom.
 		The blue line is the reference transit depth from the best-fitting TLS model.
 		Any changes in depth with aperture size might indicate the need for a 
@@ -2457,7 +2461,7 @@ be in open clusters.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Page 5: Cluster membership assessment diagnostics.}
+		{\bf Cluster membership assessment diagnostics.}
 		The star was considered a candidate cluster member by the source(s) listed under
 		``Reference'', in this case \citet{dias_proper_2014}.
 		The name used in the Dias catalog in this case was \texttt{264-025831}, a
@@ -2494,7 +2498,7 @@ be in open clusters.
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-		{\bf Page 6: Imaging variability diagnostics.} 
+		{\bf Imaging variability diagnostics.} 
 		This page is intended to help diagnose which stars are producing the observed
 		variability.
 		Top-left and top-center are the mean out-of-transit (OOT) and mean in-transit 
