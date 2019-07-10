@@ -788,6 +788,11 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
         ax.set_xlabel('phase', fontsize='xx-large')
         ax.set_ylabel('flux', fontsize='xx-large')
 
+    ylim = ax2.get_ylim()
+    for ax in [ax2,ax3,ax4,ax5]:
+        # consistent ylims across each subplot
+        ax.set_ylim(ylim)
+
     fig.tight_layout(h_pad=0, w_pad=0.5)
 
     if returnfig:
@@ -840,11 +845,10 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     #        'is_gagne_mg', 'is_gaia_member', 'is_kraus_mg', 'is_oh_mg',
     #        'is_rizzuto_mg', 'known missing from K13'], dtype=object)
     why_not_in_k13 = ''
-    if not have_name_match:
-        if not pd.isnull(mdf['why_not_in_k13'].iloc[0]):
-            why_not_in_k13 = str(mdf['why_not_in_k13'].iloc[0])
-            if 'K13index' in why_not_in_k13:
-                why_not_in_k13 = 'K13index extra info...'
+    if not pd.isnull(mdf['why_not_in_k13'].iloc[0]):
+        why_not_in_k13 = str(mdf['why_not_in_k13'].iloc[0])
+        if 'K13index' in why_not_in_k13:
+            why_not_in_k13 = 'K13index extra info...'
 
     if ('Zari_2018_UMS' in supprow['reference'].iloc[0]
         or 'Zari_2018_PMS' in supprow['reference'].iloc[0]
@@ -856,6 +860,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     if have_name_match:
         _k13 = k13.loc[k13['Name'] == name_match]
         have_cluster_parameters = True
+        if len(_k13) == 0:
+            have_cluster_parameters = False
     elif is_known_asterism or ~pd.isnull(why_not_in_k13):
         pass
     else:
@@ -889,6 +895,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
 
         if have_cluster_parameters:
             k13_plx_mas = (1/float(_k13['d'].iloc[0]))*1e3  # "truth"
+        else:
+            k13_plx_mas = np.nan
 
         dr2_plx = supprow['Parallax[mas][6]'].iloc[0]
         dr2_plx_err = supprow['Parallax_error[mas][7]'].iloc[0]
