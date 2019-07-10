@@ -101,8 +101,9 @@ def savefig(fig, figpath):
     fig.savefig(figpath, dpi=450, bbox_inches='tight')
     print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
 
-    fig.savefig(figpath.replace('.png','.pdf'), bbox_inches='tight')
-    print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
+    pdffigpath = figpath.replace('.png','.pdf')
+    fig.savefig(pdffigpath, bbox_inches='tight')
+    print('{}: made {}'.format(datetime.utcnow().isoformat(), pdffigpath))
 
 def plot_tls_sde_vs_period_scatter(sectors, overwrite=1):
 
