@@ -8,6 +8,7 @@ import astropy.coordinates as coord
 from astropy import units as u, constants as c
 
 from cdips.utils import collect_cdips_lightcurves as ccl
+from cdips.plotting import savefig
 pfrespath = '../../results/cdips_lc_periodfinding/sector-6/initial_period_finding_results_supplemented.csv'
 
 def main():
@@ -37,10 +38,6 @@ def main():
         star_catalog_cmd(df)
     if do_star_catalog_hrd_scat:
         star_catalog_hrd_scat(df)
-
-def savefig(fig, figpath):
-    fig.savefig(figpath, dpi=450, bbox_inches='tight')
-    print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
 
 def star_catalog_skymap(df, pfdf, closesubset=False):
 

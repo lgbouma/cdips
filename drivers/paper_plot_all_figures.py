@@ -27,6 +27,7 @@ from cdips.utils import tess_noise_model as tnm
 from cdips.plotting import plot_star_catalog as psc
 from cdips.plotting import plot_catalog_to_gaia_match_statistics as xms
 from cdips.plotting import plot_wcsqa as wcsqa
+from cdips.plotting import savefig
 from cdips.utils import collect_cdips_lightcurves as ccl
 
 from skim_cream import plot_initial_period_finding_results
@@ -41,6 +42,15 @@ def main():
 
     sectors = [6,7]
 
+    # fig N: wcs quality verification for one photometric reference
+    plot_wcs_verification(overwrite=1)
+
+    # fig N: catalog_to_gaia_match_statistics for CDIPS target stars
+    plot_catalog_to_gaia_match_statistics(overwrite=1)
+
+    # fig N: target star provenance
+    plot_target_star_reference_pie_chart(OC_MG_CAT_ver=0.3, overwrite=1)
+
     # fig N: tls_sde_vs_period_scatter
     plot_tls_sde_vs_period_scatter(sectors, overwrite=1)
 
@@ -48,22 +58,13 @@ def main():
     plot_avg_acf(sectors, overwrite=1, cleanprevacf=False)
 
     # fig N: 3x2 quilty of phased PC
-    # plot_quilt_PCs(overwrite=1)
+    plot_quilt_PCs(overwrite=1)
 
     # fig N: LS period vs color evolution in time
     plot_LS_period_vs_color_and_age(sectors, overwrite=1, OC_MG_CAT_ver=0.3)
 
-    # fig N: target star provenance
-    plot_target_star_reference_pie_chart(OC_MG_CAT_ver=0.3, overwrite=1)
-
     # fig N: T magnitude CDF for all CDIPS target stars.
     plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1)
-
-    # fig N: wcs quality verification for one photometric reference
-    plot_wcs_verification(overwrite=1)
-
-    # fig N: catalog_to_gaia_match_statistics for CDIPS target stars
-    plot_catalog_to_gaia_match_statistics(overwrite=1)
 
     # fig N: histogram of CDIPS target star age.
     plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1)
@@ -96,14 +97,6 @@ def main():
     # calculated for CTL stars, so by definition it has limited use
     plot_cdf_cont(sectors, overwrite=0)
 
-
-def savefig(fig, figpath):
-    fig.savefig(figpath, dpi=450, bbox_inches='tight')
-    print('{}: made {}'.format(datetime.utcnow().isoformat(), figpath))
-
-    pdffigpath = figpath.replace('.png','.pdf')
-    fig.savefig(pdffigpath, bbox_inches='tight', rasterized=True, dpi=450)
-    print('{}: made {}'.format(datetime.utcnow().isoformat(), pdffigpath))
 
 def plot_tls_sde_vs_period_scatter(sectors, overwrite=1):
 
