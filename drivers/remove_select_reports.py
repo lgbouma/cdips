@@ -2,7 +2,7 @@ import os
 from glob import glob
 import pandas as pd, numpy as np
 
-sector=6
+sector=7
 
 if sector==6:
     date = '20190616'
@@ -18,7 +18,7 @@ df = pd.read_csv(csvpath)
 
 for n in np.array(df['Name']):
 
-    pdfname = n+'.pdf'
+    pdfname = 'vet_'+n+'_llc.pdf'
 
     pdfdir = '/home/luke/local/cdips/vetting/sector-{}/pdfs/'.format(sector)
 
