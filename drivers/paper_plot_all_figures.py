@@ -42,6 +42,12 @@ def main():
 
     sectors = [6,7]
 
+    # fig N: average autocorrelation fn of LCs
+    plot_avg_acf(sectors, overwrite=1, cleanprevacf=False)
+
+    # fig N: histogram of CDIPS target star age.
+    plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1)
+
     # fig N: wcs quality verification for one photometric reference
     plot_wcs_verification(overwrite=1)
 
@@ -54,9 +60,6 @@ def main():
     # fig N: tls_sde_vs_period_scatter
     plot_tls_sde_vs_period_scatter(sectors, overwrite=1)
 
-    # fig N: average autocorrelation fn of LCs
-    plot_avg_acf(sectors, overwrite=1, cleanprevacf=False)
-
     # fig N: 3x2 quilty of phased PC
     plot_quilt_PCs(overwrite=1)
 
@@ -65,9 +68,6 @@ def main():
 
     # fig N: T magnitude CDF for all CDIPS target stars.
     plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1)
-
-    # fig N: histogram of CDIPS target star age.
-    plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1)
 
     # fig N: RMS vs catalog T mag for LC stars
     plot_rms_vs_mag(sectors, overwrite=1)
@@ -186,10 +186,12 @@ def plot_avg_acf(sectors, size=10000, overwrite=0, percentiles=[25,50,75],
 
     if not os.path.exists(acfdir):
         os.mkdir(acfdir)
-    lcs.parallel_compute_acf_statistics(
-        lcpaths, acfdir, nworkers=40,
-        eval_times_hr=np.arange(1,301,1),
-        skipepd=True)
+    acfstatfiles = glob(os.path.join(acfdir,'*_acf_stats.csv'))
+    if len(acfstatfiles)<10:
+        lcs.parallel_compute_acf_statistics(
+            lcpaths, acfdir, nworkers=40,
+            eval_times_hr=np.arange(1,301,1),
+            skipepd=True)
     acfstatfiles = glob(os.path.join(acfdir,'*_acf_stats.csv'))
     df = lcs.read_acf_stat_files(acfstatfiles)
 
@@ -213,19 +215,23 @@ def plot_avg_acf(sectors, size=10000, overwrite=0, percentiles=[25,50,75],
             percentile_dict[timelag][percentile] = np.round(val,7)
         pctile_df = pd.DataFrame(percentile_dict)
 
-    ind = 0
-    for ix, row in pctile_df.iterrows():
-        pctile = row.name
-        label = '{}%'.format(str(pctile))
-        timelags = nparr(row.index)
-        vals = nparr(row)
+    ax.plot(timelags, pctile_df.loc[50], ls='-', color='gray', zorder=2)
+    ax.fill_between(timelags, pctile_df.loc[25], pctile_df.loc[75], alpha=0.3,
+                    color='gray', zorder=-2, linewidth=0)
 
-        ax.plot(timelags, vals, ls=linestyles[ind], color='gray', zorder=2)
-        ax.text(0.75, 0.8, 'Raw', ha='center', va='center',
-                fontsize='medium', transform=ax.transAxes, color='gray')
+    #ind = 0
+    #for ix, row in pctile_df.iterrows():
+    #    pctile = row.name
+    #    label = '{}%'.format(str(pctile))
+    #    timelags = nparr(row.index)
+    #    vals = nparr(row)
 
+    #    ax.plot(timelags, vals, ls=linestyles[ind], color='gray', zorder=2)
+    #    ind += 1
 
-        ind += 1
+    ax.text(0.75, 0.8, 'Raw', ha='center', va='center',
+            fontsize='medium', transform=ax.transAxes, color='gray')
+
 
     #
     # plot TFA lines
@@ -241,21 +247,25 @@ def plot_avg_acf(sectors, size=10000, overwrite=0, percentiles=[25,50,75],
             percentile_dict[timelag][percentile] = np.round(val,7)
         pctile_df = pd.DataFrame(percentile_dict)
 
-    ind = 0
-    for ix, row in pctile_df.iterrows():
-        pctile = row.name
-        label = '{}%'.format(str(pctile))
-        timelags = nparr(row.index)
-        vals = nparr(row)
+    ax.plot(timelags, pctile_df.loc[50], ls='-', color='black', zorder=2)
+    ax.fill_between(timelags, pctile_df.loc[25], pctile_df.loc[75], alpha=0.55,
+                    color='black', zorder=-1, linewidth=0)
 
-        ax.plot(timelags, vals, label=label, ls=linestyles[ind], color='black',
-                zorder=3)
-        ind += 1
+    #ind = 0
+    #for ix, row in pctile_df.iterrows():
+    #    pctile = row.name
+    #    label = '{}%'.format(str(pctile))
+    #    timelags = nparr(row.index)
+    #    vals = nparr(row)
 
-        ax.text(0.42, 0.42, 'TFA detrended', ha='center', va='top',
-                fontsize='medium', transform=ax.transAxes)
+    #    ax.plot(timelags, vals, label=label, ls=linestyles[ind], color='black',
+    #            zorder=3)
+    #    ind += 1
 
-    ax.legend(loc='lower left', fontsize='medium')
+    ax.text(0.42, 0.42, 'TFA detrended', ha='center', va='top',
+            fontsize='medium', transform=ax.transAxes)
+
+    #ax.legend(loc='lower left', fontsize='medium')
 
     ax.set_yscale('linear')
     ax.set_xscale('log')
@@ -694,11 +704,14 @@ def plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1):
 
     f,ax = plt.subplots(figsize=(4,3))
 
-    bins = np.arange(5.5,
-                     10.5,
-                     0.5)
-    ax.hist(mdf['k13_logt'], bins=bins, cumulative=False, color='black',
+    bins = np.logspace(5.5, 10.5, 11)
+    ax.hist(10**mdf['k13_logt'], bins=bins, cumulative=False, color='black',
             fill=False, linewidth=0.5)
+    #bins = np.arange(5.5,
+    #                 10.5,
+    #                 0.5)
+    #ax.hist(mdf['k13_logt'], bins=bins, cumulative=False, color='black',
+    #        fill=False, linewidth=0.5)
 
     txtstr = '$N_{{\mathrm{{total}}}}$: {}'.format(n_total)
     txtstr += '\n$N_{{\mathrm{{with\ ages}}}}$: {}'.format(n_with_age)
@@ -718,10 +731,12 @@ def plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1):
         tick.label.set_fontsize('small')
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize('small')
-    ax.set_xlabel('log$_{10}$(age [years])')
+    #ax.set_xlabel('log$_{10}$(age [years])')
+    ax.set_xlabel('Age [years]')
     ax.set_ylabel('Number per bin')
+    ax.set_xscale('log')
     ax.set_yscale('log')
-    ax.set_xlim([5.5, 10.5])
+    ax.set_xlim([10**5.5, 10**10.5])
     ax.set_ylim([3e3, 3e5])
 
     f.tight_layout(pad=0.2)
