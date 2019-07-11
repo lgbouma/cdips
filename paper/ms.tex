@@ -98,7 +98,7 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   % Results
   We then highlight the \numberpcs planet candidates we identified in
   an initial search.
-  \numberclusterpcs of these planet candidates are candidate cluter
+  \numberclusterpcs of these planet candidates are candidate cluster
   members, and the remaining \numberzaripcs have indications of youth
   relative to field stars.
   We describe the vetting procedures that these objects have survived,
@@ -165,7 +165,7 @@ uncovered in the late 1990s \citep{zuckerman_young_2004}.  The ages of
 these stellar ensembles are inferred through isochrone analyses of
 color-magnitude diagrams, using an appropriate combination of
 main-sequence turnoff locations, pre-main-sequence turnon locations,
-and possibly averaged MS isochronal ages across known cluster members
+and averaged MS isochronal ages across known cluster members
 \citep[{\it e.g.},][Section 3.4.3]{kharchenko_global_2012}.  Once
 calibrated, gyrochronology can also be used to verify the age of a
 stellar ensemble \citep[{\it
@@ -174,7 +174,7 @@ The ages of planets discovered in these cluster stars are then assumed
 to equal the age of the larger stellar ensemble.
 
 The first planets to be detected in open clusters were found through
-radial velocity (RV) measurements of evolved stars in the Hyades and
+radial velocity (RV) measurements of red giants in the Hyades and
 NGC~2423 \citep{Sato_et_al_2007,lovis_mayor_2007}.
 Subsequent spectroscopic searches in Praesepe led to the detection of
 the first hot Jupiter in a cluster \citep{Quinn_et_al_2012}, and also
@@ -188,18 +188,29 @@ A final RV survey of note was conducted by
 years.  They reported detections of three hot Jupiters around main
 sequence stars, and of one giant planet around an evolved star.
 
-The transit method was comparatively slow to catch up, despite deep
-searches of M~37 by \citet{hartman_MMT_IV_2009}, as well as searches
-of nine young clusters in the solar neighborhood by the Monitor
-project
+The transit method was comparatively slow to catch up.  Deep transit
+searches typically comprising days to weeks of observations were
+performed for NGC~2158, 6791, and 1245, among other clusters
+\citep{mochejska_planets_2005,mochejska_planets_2006,burke_survey_2006}.
+Related projects include a search of M~37 by
+\citet{hartman_MMT_IV_2009}, of Praesepe by
+\citet{pepper_photometric_2008}, and of nine young clusters in the
+solar neighborhood by the Monitor team
 \citep{aigrain_monitor_2007,irwin_monitordata_2007,miller_monitor_2008}.
-While these studies led to measurements of stellar rotation
-periods \citep{hartman_rotation_2009,Irwin_NGC2516_2007} as well as
-the discovery of pre-main-sequence (PMS) eclipsing binaries (EBs)
-\citep{irwin_monitor_PMSEB_2007}, no transiting planets in open
-clusters were found.  Transit searches in globular clusters were
+Though these studies led to measurements of stellar rotation periods
+\citep{hartman_rotation_2009,Irwin_NGC2516_2007} as well as the
+discovery of pre-main-sequence (PMS) eclipsing binaries (EBs)
+\citep{irwin_monitor_PMSEB_2007}, no definitive transiting planets in
+open clusters were found.  Transit searches in globular clusters were
 similarly met with null results \citep{gilliland_lack_2000,
-weldrake_searching_2006}.
+weldrake_searching_2006}.  These searches were typically sensitive to
+planets larger than Jupiter, on $\lesssim 3$ day orbital periods.  Hot
+Jupiter occurrence rate limits were derived at the $\lesssim 5\%$
+level \citep[{\it e.g.},][]{burke_survey_2006, hartman_MMT_IV_2009}.
+The modern 0.5-1\% occurrence rate suggests that these early transit
+surveys needed a greater data volume, at higher precision for
+detection to be possible
+\citep{mayor_harps_2011,wright_frequency_2012,howard_planet_2012,petigura_metallicity_2018}.
 
 Kepler \citep{borucki_kepler_2010} observed enough stars for long
 enough and with sufficient precision to detect transiting planets in
@@ -218,8 +229,7 @@ the planet is contracting, or losing its atmosphere \citep[{\it
 e.g.},][]{Fortney_et_al_2007,Owen_Wu_2013,Fulton_et_al_2017}.  The
 super-Neptune sized K2-33b ($P\approx 5.4\,{\rm d}$), found in Upper
 Sco, showed that at least some close-in planets must form within about
-10 Myr, excluding long-timescale migration as an explanation for its
-origin \citep{Mann_K2_33b_2016,David_et_al_2017}.  Further discoveries
+10 Myr \citep{Mann_K2_33b_2016,David_et_al_2017}.  Further discoveries
 included six transiting planets in Praesepe
 \citep{obermeier_k2_2016,Mann_et_al_2017}, a long-period candidate
 super-Earth in the Hyades \citep{vanderburg_zeitVII_2018}, the
@@ -257,20 +267,21 @@ e.g.},][]{roser_nine_RSG_2016,cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019}
 % young stars, perhaps one-third of which are bonafide cluster members
 % (see \S~\ref{sec:starselection}).
 
-One of the major barriers to deriving precise photometry from the
-TESS images is the relatively poor angular resolution ($\approx 21''$
-per pixel).  Almost all clusters are within 10 degrees of the Galactic
+One of the major barriers to deriving precise photometry from the TESS
+images is the relatively poor angular resolution ($\approx 21''$ per
+pixel).  Almost all clusters are within 10 degrees of the Galactic
 plane. The problems with crowding and complex backgrounds are so
 severe near the galactic plane that the TESS Candidate Target List has
-deprioritized all objects at galactic latitudes less than $\approx
-15^\circ$~\citep{stassun_TIC_2018,stassun_TIC8_2019}, which includes
-almost all star clusters\footnote{TICv8 has updated this to $10^\circ$,
-but for the first year of TESS observations, the number used when
-selecting target stars was $15^\circ$.}.  This is sensible, given that
-the large pixel size and the high stellar surface density make
-aperture photometry unreliable.  However, it also means that a large
-number of stars in clusters that could yield transiting planets will
-go unprocessed by the official {\it TESS} data reduction pipeline.
+deprioritized 2-minute targets at galactic latitudes less than
+$\approx 15^\circ$~\citep{stassun_TIC_2018,stassun_TIC8_2019}, which
+includes almost all star clusters\footnote{TICv8 has updated this to
+$10^\circ$, but for the first year of TESS observations, the number
+used when selecting target stars was $15^\circ$.}.  This is sensible,
+since the large pixel size and the high stellar surface density
+make aperture photometry unreliable.  However, it also means that a
+large number of stars in clusters that could yield transiting planets
+will go unprocessed by the official {\it TESS} data reduction
+pipeline.
 
 Of course, not all young stars are in crowded fields.  TESS
 observations of a few nearby non-crowded stellar assocations have
@@ -288,7 +299,7 @@ TESS images of any star that could be a member of a coeval group.  We
 are also including some stars that we suspect are young due to
 combined photometric and astrometric indicators.  We are using the
 difference imaging technique because of its benefits in modelling
-complex backgrouds in crowded regions.  While we hope to discover at
+complex backgrounds in crowded regions.  While we hope to discover at
 least a few giant transiting planets, a separate hope is that the
 dataset might be useful to those wishing to study the time evolution
 of stellar processes.
@@ -389,8 +400,8 @@ candidate members of open clusters.  \S~\ref{subsec:mg} describes the
 catalogs we used to identify candidate members of moving groups,
 stellar associations, as well as young stars identified through
 combined Gaia photometry and astrometry.  \S~\ref{subsec:ocmgsummary}
-then reports summary statistics for the entire sample of about one
-million target stars.
+and Figure~\ref{fig:cdips_targets} describe summary statistics for the
+entire sample of about one million target stars.
 
 %FIXME: make table
 
@@ -406,13 +417,13 @@ photometric catalogs that were of interest: the studies of
 
 \paragraph{{\it Gaia}-derived OC memberships}
 
-\citet{cantat-gaudin_gaia_2018} used an unsupervised membership
-assignment algorithm to identify clusters in the three-dimensional
-astrometric space of proper motion and parallax. They used {\it Gaia}
-photometry and radial velocities to then verify the claimed membership
-properties.  From their Table~2, we collect an initial 401{,}448
-cluster members, in 1229 clusters, down to their limiting magnitude of
-$G=18$.
+\citet{cantat-gaudin_gaia_2018} used the UPMASK unsupervised membership
+assignment algorithm \citep{krone-martins_upmask_2014} to identify cluster
+members using Gaia-DR2 positions, proper motions, and parallaxes.
+They used {\it Gaia} photometry and radial velocities to then verify the
+claimed membership properties.  From their Table~2, we collect an initial
+401{,}448 cluster members, in 1229 clusters, down to their limiting magnitude
+of $G=18$.
 
 \citet{gaia_hr_2018} reported memberships for stars in a smaller, more
 select group of well-studied open clusters. From their Table~A1, we
@@ -420,15 +431,20 @@ collect 40{,}903 cluster members, in 41 open clusters, mostly within
 $500\,{\rm pc}$. While this work also included memberships for
 globular clusters, we omitted these from consideration.
 
-In our photometric reduction,  our default identifier for all sources
-is the Gaia-DR2 \texttt{source\_id}.  The TIC identifiers are found
-through a spatial cross-match after the light curves have been made,
-subject to the requirement that the Gaia-DR2 source identifiers match
-\citep{stassun_TIC_2018,stassun_TIC8_2019}.  We take this approach
-because Gaia-DR2 is the base-catalog used to project sources from
-celestial coordinates to the imaging plane (\S~\ref{sec:method}).  It
-also has the advantage that for any Gaia-derived cluster memberships,
-we can cross-match directly against source identifiers.
+Given the unprecedented quality of Gaia-DR2 astrometry, these two
+membership sources are our most reliable sources of membership
+information.  In our photometric reduction,  our default identifier
+for all sources is correspondingly the Gaia-DR2 \texttt{source\_id}.
+The TIC identifiers are found through a spatial cross-match after the
+light curves have been made, subject to the requirement that the
+Gaia-DR2 source identifiers match
+\citep{stassun_TIC_2018,stassun_TIC8_2019}.  
+
+% We take this approach
+% because Gaia-DR2 is the base-catalog used to project sources from
+% celestial coordinates to the imaging plane (\S~\ref{sec:method}).  It
+% also has the advantage that for any Gaia-derived cluster memberships,
+% we can cross-match directly against source identifiers.
 
 
 
@@ -437,15 +453,16 @@ we can cross-match directly against source identifiers.
 \citep[][a combination of USNO-B1{.}0 and 2MASS
 astrometry]{roeser_ppmxl_2010} and near-infrared photometry from 2MASS
 \citep{skrutskie_tmass_2006} to report the existence of 2859 open
-clusters and stellar associations (globular clusters were
-omitted by excluding any entry of type \texttt{'g'}).
-We selected ``$1\sigma$'' members according to the
-combined photometric, kinematic, and spatial criteria described by
-\citet{kharchenko_global_2012}.  Then, to obtain {\it Gaia}-DR2 source
-identifiers for the members, we performed a crossmatch for {\it
-Gaia}-DR2 sources within 5 arcseconds of the listed positions.  As an
-additional constraint, we used the 2MASS photometry to predict the
-$G$-band magnitudes\footnote{See
+clusters and stellar associations (globular clusters were omitted by
+excluding any entry of type \texttt{'g'}).  We selected the most
+probable cluster members (``$1\sigma$ members'') using the combined
+photometric, kinematic, and spatial criteria described by
+\citet[][Section~3.3]{kharchenko_global_2012}.  Then, to obtain {\it
+Gaia}-DR2 source identifiers for the members, we performed a
+crossmatch for {\it Gaia}-DR2 sources within 5 arcseconds of the
+listed positions.  To improve the quality of the cross-match, we
+additionally used the 2MASS photometry to predict the $G$-band
+magnitudes\footnote{See
 \url{https://gea.esac.esa.int/archive/documentation/GDR2/Data_processing/chap_cu5pho/sec_cu5pho_calibr/ssec_cu5pho_PhotTransf.html},
 online, \texttt{2019-03-29}, or \citet{carrasco_gaia_2016}}, and
 required that the measured $G$-magnitude fall within 2 magnitudes of
@@ -458,7 +475,8 @@ between two neighbors for 17{,}774 stars.
 %FIXME is this it?
 The second (non-{\it Gaia} derived) open cluster membership catalog we
 used was the \citet{dias_proper_2014} catalog, which was based on
-UCAC4 proper motions.
+UCAC4 proper motions acquired by the US Naval Observatory
+\citep{zacharias_fourth_2013}.
 From their 1805 reported open clusters, we selected sources with
 quoted membership probability above 50\%.
 To obtain {\it Gaia}-DR2 source identifiers for the members, we
@@ -561,6 +579,7 @@ $G_{\rm Rp}$, and $G_{\rm Bp}$ magnitudes, as well as their
 astrometric measurements $(\alpha, \delta, \mu_\alpha, \mu_\delta,
 \pi)$.  Finally, we required that $G_{\rm Rp} < 16$.  
 
+
 All told, this procedure yielded 1{,}061{,}447 unique stars, from 13 distinct
 membership catalogs.
 
@@ -645,7 +664,7 @@ by the Science Processing Operations Center at NASA Ames
 (\S~\ref{subsec:observations}).  We then perform a collection of
 preparatory steps, including source extraction of bright stars,
 astrometric verification, and coarse simple aperture photometry of
-bright stars (\S~\ref{subsec:preparation}).  Using the metadata
+bright stars (\S~\ref{subsec:preparation}).  Using the information
 collected from these initial steps, we select an astrometric reference
 frame to which we transform all of the calibrated images.  We
 construct a photometric reference by stacking a subset of these
@@ -671,7 +690,7 @@ The TESS spacecraft began science operations on July 25, 2018.  To
 keep its cameras pointed opposite the Sun, the spacecraft advances by
 $\approx$$28$ degrees east in ecliptic longitude every lunar month.
 Data acquired throughout each ``sector'' are downlinked at spacecraft
-perigee through the Deep Space Network.  Verbose descriptions of the
+perigee through the Deep Space Network.  Descriptions of the
 spacecraft's design and operations are given by
 \citet{ricker_transiting_2015} and the instrument handbook
 \citep{vanderspek_2018}.
@@ -682,7 +701,7 @@ produce a manageable telemetric load, the resulting pixel values are
 averaged by the onboard computer into 30 minute exposures. An on-board
 cosmic ray mitigation algorithm is applied \citep[][\S
 5.1]{vanderspek_2018}. Once transmitted to the ground, the raw images
-are calibrated by the Science Processing Operations Center.  The
+are calibrated by the Science Processing Operations Center (SPOC).  The
 calibration process includes an overscan, bias, and dark current
 correction, and also divides out a flat field.  Details are discussed
 by \citet{clarke_kepler_2017}, and the resulting science data products
@@ -722,14 +741,16 @@ some frames due to scattered light from the Earth and Moon
 subtract the large-scale background.  We do this by temporarily
 masking out pixels more than $2\sigma$ from the image median, and then
 pass a $48\times48$ median box filter over each pixel in the image,
-with reflective boundary conditions.  We blur the resulting background
-estimate with a gaussian kernel, which produces a smooth background
-estimate for each image.  These steps also remove a low-level
-vignetting present in the corners of many images, which remains even
-after flat-fielding \citep[see][\S 7.3.5]{vanderspek_2018}.  With the
-exception of scattered-light caustics, which remain over small areas
-of less than 10\% of the frames, our ad-hoc procedure seems to
-adequately remove large spatial scale scattered light patches.
+with reflective boundary conditions.  The resulting background
+estimate has low-amplitude structure over spatial scales of a few
+pixels, so we then blur it with a gaussian kernel to produce a smooth
+background estimate for each image.  These steps also remove a
+low-level vignetting present in the corners of many images, which
+remains even after flat-fielding \citep[see][\S
+7.3.5]{vanderspek_2018}.  With the exception of scattered-light
+caustics, which remain over small areas of less than 10\% of the
+frames, our ad-hoc procedure seems to adequately remove large spatial
+scale scattered light patches.
 
 % We found this background subtraction step to be particularly important
 % in our subsequent difference imaging analysis. In its absense, the
@@ -741,30 +762,32 @@ adequately remove large spatial scale scattered light patches.
 % scale.  Such features may affect flux measurements at specific times
 % in a small subset of light curves.
 
-After subtracting the background, we mask out saturated stars using a
+After subtracting the background, we mask out saturated pixels using a
 fixed saturation level of $8\times10^4\,{\rm ADU}$. This value was
 chosen based on the onset of bleeding charge trails in the images, and
-is slightly greater than the expected saturation level quoted by
-\citet{vanderspek_2018}.  As described by \citet{Pal_2009}, our masks
-are metadata to the image, and are only applied to the pixel values
-during the specific image processing steps in which they are necessary
-({\it e.g.}, convolution). We also extend the masks beyond purely
-saturated pixels to ``bloomed'' pixels horizontally and vertically
-adjacent to the saturated pixels (see Figure~6 of \citealt{Pal_2009}).
+is slightly greater than the saturation level of $2\times10^5$
+electrons, or about $4\times10^4\,{\rm ADU}$, quoted by
+\citet{vanderspek_2018}. 
+We correspondingly do not analyze stars brighter than $T\approx 6.5$.
+As described by \citet{Pal_2009}, the pixel masks are metadata to the
+image, and are only applied to the pixel values during the specific
+image processing steps in which they are necessary ({\it e.g.},
+convolution). We also extend the masks beyond purely saturated pixels
+to ``bloomed'' pixels horizontally and vertically adjacent to the
+saturated pixels (see Figure~6 of \citealt{Pal_2009}).
 
 Finally, for frames with the \texttt{DQUALITY} bit-flag corresponding
 to the ``momentum dumps'' and ``coarse pointing modes'' described by
 \citet{vanderspek_2018}, we omit the entire frame.  This removes on
-average a few frames per sector. Through visual inspection, we see
-that the stars on these frames are extremely smeared, and are unlikely
-to produce useful science data.  In addition, we use the
-sector-specific data release notes\footnote{\url{
+average a few frames per sector, out of about one thousand. Through
+visual inspection, we see that the stars on these frames are extremely
+smeared, and are unlikely to produce useful science data.  In
+addition, we use the sector-specific data release notes\footnote{\url{
   archive.stsci.edu/tess/tess_drn.html}} to identify further times
 with anomalous spacecraft performance, which we omit from
-consideration.
-For Sectors 6 and 7, this included three days at the beginning of
-Sector 6 dedicated to acquiring pixel response function data, and no
-additional gaps in Sector 7.
+consideration.  For Sectors 6 and 7, this included three days at the
+beginning of Sector 6 dedicated to acquiring pixel response function
+data, and no additional gaps in Sector 7.
 %For Sectors 1 through 5, these
 %include coarse pointing windows from orbits 10, 13, 14, and an
 %instrumetal anomaly window in orbit 15.
@@ -804,9 +827,10 @@ additional gaps in Sector 7.
 Having prepared the images, we perform some initial analysis steps to
 produce metadata needed during image subtraction.  
 
-First, we use \texttt{fistar} to perform source extraction on bright
-stars in each image.  During the initial source extraction, we also
-fit elongated gaussians to the bright stars, yielding the shape
+First, we use \texttt{fistar} to perform source extraction on the
+thousand or so brightest, non-saturated stars in each image.  The
+source extraction derives centroid positions for these stars, and also
+fits elongated gaussians to their profiles, yielding the shape
 parameters $(s,d,k)$, where the flux $f$ as a function of position
 $(x,y)$ in the CCD image plane is assumed to take the form
 \begin{align}
@@ -831,7 +855,8 @@ fitting process shows that stars closer to the
 center of each camera's field are round, while
 stars near the field edges are more triangular.
 
-For the astrometric solution, we use the WCS and SIP coefficients
+For the astrometric solution, we use the World Coordinate System (WCS)
+and fourth-order Simple Imaging Polynomial (SIP) coefficients
 derived by SPOC and included in the FFI headers
 \citep[][Sec.~8]{pence_fits_2010}.  We explored the possibility of
 using \texttt{astrometry.net} \citep{lang_2010} to derive our own
@@ -840,7 +865,7 @@ residual (the mean separation between projected and measured
 positions) was consistently a factor of 1.5-2 times higher in our WCS
 solutions than in those given by SPOC.  This was perhaps because
 we did not invest major amounts of time developing a robust
-algorith to select non-blended stars of intermediate brightness before
+algorithm to select non-blended stars of intermediate brightness before
 measuring their positions.
 
 With the resulting WCS information, we then project a source catalog
@@ -867,8 +892,9 @@ The source catalog look-up is performed using
 \texttt{gaia2read}\footnote{\url{github.com/samuelyeewl/gaia2read}}
 \citep{kim_2018_gaia2read}.
 
-The astrometric residual is displayed for one photometric reference
-frame in Figure~\ref{fig:astromresid}.
+The residual between the measured and projected stellar centroid
+positions is displayed for one photometric reference frame in
+Figure~\ref{fig:astromresid}.
 The construction of this frame will be described shortly, however
 a few salient points can first be made.
 First, the typical median precision of the WCS solution is a bit below
@@ -886,11 +912,10 @@ where the corrections required by the SIP coefficients are largest.
 %gives some context for our chosen aperture radii of 1, 1.5, and 2.25
 %pixels.
 
-As a final step of metadata collection, we use \texttt{fiphot}
-to perform aperture photometry on the
-bright stars from the
-source list, by summing the counts inside appropriately-weighted
-circular apertures centered on the projected positions. 
+As a final step of metadata collection, we perform aperture photometry on the
+bright stars by summing the counts inside appropriately-weighted
+circular apertures centered on the projected positions. This task is
+performed using \texttt{fiphot}.
 The pixel weights are equal to the fraction of the pixel
 that falls within the aperture.  They are thus unity for pixels
 entirely within the aperture, and fractional along the aperture
@@ -946,10 +971,10 @@ taken to be a constant.
 The procedure described above was first proposed by \citet{Alard_Lupton_1998}.
 It was reviewed and clarified by \citet{miller_optimal_2008}.
 The choice of how to decompose the kernel was further explored by
-\citet{bramich_new_2008}, who showed that using a delta function
-had a few select advantages compared to a basis of gaussians.
-We perform the convolution using \texttt{ficonv}, and opt for
-the implementation of Bramich's method (see \citealt{Pal_2009} \S~2.8).
+\citet{bramich_new_2008}, who showed that using a linear combination
+of delta functions had advantages compared to a basis of gaussians.
+We perform the convolution using \texttt{ficonv}, and opt for the
+implementation of Bramich's method (see \citealt{Pal_2009} \S~2.8).
 
 
 \subsubsection{Astrometric registration}
@@ -1062,13 +1087,13 @@ the convolution.
 The norm $|| K ||_1$ is defined by \citet{Pal_2009}~Equation~81.
 
 \subsection{Choice of convolution kernel}
-A few brief notes on the algorithm to actually solve for the 
-coefficients to the convolution kernel.
-The procedure implemented in \texttt{ficonv} is to grid
-the image, and within each grid element find the brightest non-saturated
-star. These isolated ``stamp'' stars are then used to solve for the
-coefficients of the kernel, by minimizing
-Equation~\ref{eq:chisq_conv} over the sum of all stamps.
+A few brief notes on the algorithm to actually solve for the
+coefficients to the convolution kernel.  The procedure implemented in
+\texttt{ficonv} is to subdivide the image, and within each grid
+element find the brightest non-saturated star. These isolated
+``stamp'' stars are then used to solve for the coefficients of the
+kernel, by minimizing Equation~\ref{eq:chisq_conv} over the sum of all
+stamps.
 
 %NOTE : this is kind of incomprehensible
 %CHECK: does the polynomial weighting actually do what you want it to do?
@@ -1185,7 +1210,7 @@ Figure~\ref{fig:external_parameter_timeseries}.
 The final step is to then decorrelate the measured brightnesses of
 stars against each other (TFA, \citealt{kovacs_trend_2005}).  This
 accounts for variations due to unknown systematic instrument changes
-that affect many stars.  This latter step is effectively a principle
+that affect many stars.  This latter step is effectively a principal
 component analysis of all the light curves, in which the components
 are chosen as a subset of the light curves.
 In this sense TFA is similar to the PDC-MAP and ARC2 methods
@@ -1202,7 +1227,7 @@ light curves, particularly during the large shifts that happen as the
 spacecraft nears perigee.  The non-linear models showed some promise,
 but often seemed to overfit stellar variability signals.  One thought
 that we did not try but may explore in future work is to decorrelate
-against the scatter of the spacecraft quartnerion time-series
+against the standard deviation of the spacecraft quartnerion time-series
 \citep{vanderburg_hr858_2019}.
 
 Given these complications, for the time being we omit the step of
@@ -1657,27 +1682,24 @@ of template light curves used during TFA detrending.
 The correction in the denominator penalizes the natural degree of
 overfitting inherent to the TFA algorithm.
 
-The observed RMS (black points) follows the usual shape,
-with photon noise dominating from $T=9$ to $T=12$, beyond which the
-onset of the ``sky'' background changes the overall slope of the
-curve to be more steep.
-For the brightest stars ($T\lesssim 9$), a ``systematic floor'' was an
-expected part of the mission's error budget \citep{ricker_transiting_2015}, 
-but 
-has not been observed in early
+The observed RMS (black points) follows the usual shape, with photon
+noise dominating from $T=9$ to $T=12$, beyond which the onset of the
+``sky'' background changes the overall slope of the curve to be more
+steep.  For the brightest stars ($T\lesssim 9$), a ``systematic
+floor'' was part of the mission's error budget
+\citep{ricker_transiting_2015}, but has not been observed in early
 reports of the photometric performance of various aperture photometry
 pipelines ({\it e.g.,} the SPOC pipeline \citealt{jenkins_spoc_2010},
 the MIT-QLP \citealt{huang_tess_2018}, and \texttt{eleanor}
-\citealt{feinstein_eleanor_2019}).
-The fact that our light curves for the brightests stars are above this
-purported ``floor'', rather than below it, suggests that our
-image subtraction techniques could be introducing some small degree of
-noise to the light curves of the brightest stars.
-It is also true however that our largest aperture contains only about
-16 pixels, which is sub-optimal for stars brighter than $T\approx9$
-\citep[see][Figure~14]{Sullivan_et_al_2015}.
-Since the brightest stars are not the focus of the present work, we
-leave this issue unaddressed for the time being.
+\citealt{feinstein_eleanor_2019}).  The fact that our light curves for
+the brightest stars are above this purported ``floor'', rather than
+below it, suggests that our image subtraction techniques could be
+introducing some small degree of noise to the light curves of the
+brightest stars.  It is also true however that our largest aperture
+contains only about 16 pixels, which is sub-optimal for stars brighter
+than $T\approx9$ \citep[see][Figure~14]{Sullivan_et_al_2015}.  Since
+the brightest stars are not the focus of the present work, we leave
+this issue unaddressed for the time being.
 
 Importantly, the faint stars do not noticeably exhibit
 the typical effects of crowding at the faint end 
@@ -1826,8 +1848,8 @@ the beginning and end of each spacecraft orbit, to mitigate the
 presence of correlated red noise in the results.  This shrank the data
 volume by about 5\%, but also lowered the number of systematic false
 positives in subsequent vetting.  We then performed an asymmetric
-sigma-clipping of $(50\sigma,5\sigma)$ to preserve transits while
-omitting flares and other positive flux excursions. 
+sigma-clipping of $(50\sigma,5\sigma)$ about the median to preserve
+transits while omitting flares and other positive flux excursions. 
 
 A number of the light curves show residual variability, often of
 stellar origin.  This is expected for a sample of young stars; the
@@ -1863,7 +1885,8 @@ number of spline knots is set to 50, which for each TESS sector
 ($\approx 25\,{\rm days}$) is commensurate with a $\approx0.5\,{\rm
 day}$ window.
 
-We verified by injecting and recovering a 2.5 mmag central-transit
+We verified by injecting and recovering a 2.5 mmag, zero impact
+parameter 
 planet with variable period that this detrending approach marginally
 improved the recovery probability, compared to not doing anything.
 The main cases for which it helps are those with large residual
@@ -2156,7 +2179,7 @@ with very nearly gaussian noise properties.
 An initial search for transiting planets, along with subsequent
 vetting to remove obvious non-cluster members and photometric blends,
 has revealed \numberpcs planet candidates.
-\numberclusterpcs of these candidates are candidate cluter members,
+\numberclusterpcs of these candidates are candidate cluster members,
 and the remaining \numberzaripcs have indications of youth, relative
 to field stars.
 The latter sub-sample is the less interesting one for this work, but
