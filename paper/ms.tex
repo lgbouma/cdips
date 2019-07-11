@@ -1076,7 +1076,8 @@ g \left(T_{\rm cat} \right)
 \end{align}
 The function $g$ takes as input the target star's
 catalog magnitude $T_{\rm cat}$, and returns the reference flux.
-Its coefficients have been fit per the procedure  just discussed.
+Its coefficients have been fit per the procedure just discussed,
+independently for each aperture.
 The difference image $D$ is equal to $I -  R\otimes K$,
 where as in Equation~\ref{eq:imagemodel}, $I$ is the target image 
 transformed to the astrometric
@@ -1440,6 +1441,9 @@ vectors to choose in PDC-MAP or ARC2 \citep{aigrain_robust_2017}.
 While the number of template stars can be optimized by constructing
 and minimizing a BIC-like quantity, a little overfitting is acceptable
 for our pupose of finding planetary transits.
+For other applications, {\it e.g.,} stellar rotation period searches,
+it is almost certainly preferable to adopt a less forceful
+detrending approach.
 
 Once the template stars were selected, we use the \texttt{VARTOOLS}
 program to perform the detrending \citep{Hartman_Bakos_2016}.
@@ -1451,10 +1455,10 @@ separately.
 \section{Results}
 \label{sec:results}
 
-\begin{figure}[!t]
+\begin{figure*}[!t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.47\textwidth]{galacticcoords_cluster_field_star_positions.pdf}
+		\includegraphics[width=0.9\textwidth]{galacticcoords_cluster_field_star_positions.pdf}
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
@@ -1466,7 +1470,7 @@ separately.
 		the galactic plane.
 		\label{fig:lcgalactic}
 	}
-\end{figure}
+\end{figure*}
 
 %\begin{figure}[!t]
 %	\begin{center}
@@ -1559,11 +1563,13 @@ separately.
 	\vspace{-0.5cm}
   \caption{
     Average autocorrelations of $10^4$ randomly selected light curves
-    from each sector. The 25$^{\rm th}$, 50$^{\rm th}$, and 75$^{\rm
-    th}$ percentiles at time lags spaced by one hour are shown by
-    dashed, solid, and dotted lines respectively.  The raw light
-    curves (column name \texttt{IRM}) are shown in gray, and the
-    TFA-detrended light curves are in black.
+    from each sector.
+    The medians at time lags spaced by one hour are shown for 
+    raw light
+    curves (column name \texttt{IRM}) in gray, and for
+    TFA-detrended light curves in black.
+    The gray bands display the 25$^{\rm th}$ to 75$^{\rm th}$ percentile
+    range for each type of light curve.
   \label{fig:avg_acf}
 	}
 \end{figure}
@@ -1596,7 +1602,7 @@ Though most of the targets are faint, $\approx3\times10^4$ are
 brighter than $T=13$. These targets are more promising for any
 detailed follow-up observtions.
 
-An HR diagram for the entire sample of stars on silicon
+An HR diagram for the entire sample of CDIPS stars on silicon
 is shown in Figure~\ref{fig:hrd} (top).
 The sub-sample of stars with
 measured positive parallaxes and naive distances less than
@@ -1613,13 +1619,12 @@ red giants, and helium-burning red-clump stars.
 We failed to obtain light curves for roughly $5\%$ of the stars on silicon, 
 primarily due to our masking of saturated stars and their nearby pixels.
 
-Finally, 
-Figure~\ref{fig:propermotions} shows the proper motions
-of the entire and close samples of stars on silicon.
-Each clump signifies a different star cluster. The central
-blob in the top figure is in fact two separate blobs,
-due to the different directions in the Galaxy being observed
-in Sectors 6 and 7.
+Finally, Figure~\ref{fig:propermotions} shows the proper motions of
+the entire and close samples of stars on silicon.  Each clump
+signifies a different star cluster. The largest overdensity in the top
+figure is composed mainly of field star contaminants. It has two
+subcomponents, due to the two different directions in the Galaxy being
+observed in Sectors 6 and 7.
 
 
 
@@ -2049,11 +2054,11 @@ which the TIC stellar temperatures and/or radii were not available,
 but the Gaia values were.  In these cases, we used the Gaia $T_{\rm
 eff}$ and $R_\star$ values \citep{andrae_apsis_2018}, and a stellar
 mass interpolated from the \citet{pecaut_intrinsic_2013} table
-(assuming the star is a dwarf) to estimate $\log g$.  The
-uncertainties in e.g., the planetary radii and impact parameters were
-found using linear error propagation theory, under the idealized
-assumption that the covariance between all stellar and planetary
-parameters was zero.
+(assuming the star is a dwarf) to estimate $\log g$ for the
+limb-darkening.  The uncertainties in e.g., the planetary radii and
+impact parameters were found using linear error propagation theory,
+under the idealized assumption that the covariance between all stellar
+and planetary parameters was zero.
 
 Finally, to assign the names of the planet candidates -- and determine
 whether they had already been identified as TOIs or cTOIs -- we used
