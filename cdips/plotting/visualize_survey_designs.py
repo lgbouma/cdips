@@ -223,7 +223,7 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
             yval = c.dec.value
 
         _ = ax.scatter(np.radians(xval[::5]), np.radians(yval[::5]), c='C0',
-                       s=0.3, lw=0, zorder=42, marker='o', rasterized=True)
+                       s=0.3, lw=0, zorder=-1, marker='o', rasterized=True)
 
 
     if overplot_k2_fields:
@@ -472,7 +472,7 @@ def get_n_observations(dirnfile, outpath, n_stars, merged=False,
     print('saved {}'.format(outpath))
 
 
-def only_extended_only_primary(for_proposal=False,
+def only_extended_only_primary(overplot_galactic_plane=True, for_proposal=False,
                                overplot_k2_fields=False,
                                plot_tess=True, overplot_cdips=False):
     """
@@ -548,28 +548,28 @@ def only_extended_only_primary(for_proposal=False,
                      origin=0, size=size, title=title,
                      projection='mollweide', savdir=savdir,
                      savname=s,
-                     overplot_galactic_plane=True, is_tess=True, coordsys=c,
-                     cbarbounds=cbarbounds,
+                     overplot_galactic_plane=overplot_galactic_plane,
+                     is_tess=True, coordsys=c, cbarbounds=cbarbounds,
                      for_proposal=for_proposal,
                      overplot_k2_fields=overplot_k2_fields,
-                     overplot_cdips=overplot_cdips,
-                     plot_tess=plot_tess)
+                     overplot_cdips=overplot_cdips, plot_tess=plot_tess)
 
 
 if __name__=="__main__":
 
     # BEGIN OPTIONS
 
-    for_proposal=1          # true to activate options only for the proposal
-    overplot_k2_fields=0    # true to activate k2 field overplot
-    plot_tess=1             # true to activate tess field overplot
-    overplot_cdips=1        # true to overplot CDIPS target stars
-    overplot_sfr_labels=1   # true to overplot names of nearby star forming regions
-    #FIXME implement?!
+    for_proposal=1             # true to activate options only for the proposal
+    overplot_k2_fields=0       # true to activate k2 field overplot
+    plot_tess=1                # true to activate tess field overplot
+    overplot_cdips=1           # true to overplot CDIPS target stars
+    overplot_sfr_labels=1      # TODO true to overplot names of nearby star forming regions
+    overplot_galactic_plane=0  # ...
 
     # END OPTIONS
 
-    only_extended_only_primary(for_proposal=for_proposal,
+    only_extended_only_primary(overplot_galactic_plane=overplot_galactic_plane,
+                               for_proposal=for_proposal,
                                overplot_k2_fields=overplot_k2_fields,
                                plot_tess=plot_tess,
                                overplot_cdips=overplot_cdips)
