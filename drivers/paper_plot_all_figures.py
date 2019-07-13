@@ -42,6 +42,11 @@ def main():
 
     sectors = [6,7]
 
+    plot_raw_light_curve_systematics(sector=7, cam=2, ccd=4, overwrite=1,
+                                     seed=42)
+    plot_raw_light_curve_systematics(sector=6, cam=1, ccd=2, overwrite=1,
+                                     seed=43)
+
     # fig N: average autocorrelation fn of LCs
     plot_avg_acf(sectors, overwrite=1, cleanprevacf=False)
 
@@ -96,6 +101,115 @@ def main():
     # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
     # calculated for CTL stars, so by definition it has limited use
     plot_cdf_cont(sectors, overwrite=0)
+
+
+def get_Tmag(fitspath):
+    with fits.open(fitspath) as hdulist:
+        mag = hdulist[0].header['TESSMAG']
+    return mag
+
+def get_mag(fitspath, ap='IRM2'):
+    with fits.open(fitspath) as hdulist:
+        mag = hdulist[1].data[ap]
+    return mag
+
+def plot_raw_light_curve_systematics(sector=None, cam=None, ccd=None,
+                                     overwrite=False, N_to_plot=20, seed=42):
+
+    """
+    get a random sample of IRM2 light curves from the same camera & ccd. plot
+    them all together to show how we are systematics dominated.
+    """
+
+    outpath = os.path.join(
+        OUTDIR,
+        'raw_light_curve_systematics_sec{}cam{}ccd{}.png'.
+        format(sector, cam, ccd)
+    )
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    dfpath = os.path.join(
+        OUTDIR,
+        'raw_light_curve_systematics_sec{}cam{}ccd{}.csv'.
+        format(sector, cam, ccd)
+    )
+    if not os.path.exists(dfpath):
+        lcdir = (
+            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/cam{}_ccd{}'.
+            format(sector, cam, ccd)
+        )
+        lcpaths = glob(os.path.join(lcdir, '*_llc.fits'))
+        Tmags = np.array([get_Tmag(l) for l in lcpaths])
+
+        df = pd.DataFrame({'lcpaths':lcpaths,'Tmags':Tmags})
+        df.to_csv(dfpath, index=False, sep=',')
+    else:
+        df = pd.read_csv(dfpath, sep=',')
+
+    sel = (df['Tmags'] > 13) & (df['Tmags'] < 14)
+
+    lcpaths = nparr(df['lcpaths'][sel])
+    Tmags = nparr(df['Tmags'][sel])
+
+    np.random.seed(seed)
+    spaths = np.random.choice(lcpaths, size=2*N_to_plot, replace=False)
+
+    # shape: (N_to_plot x N_observations)
+    mags = nparr([get_mag(s) for s in spaths])
+
+    time = fits.open(spaths[0])[1].data['TMID_BJD']
+
+    assert time.shape[0] == mags.shape[1]
+
+    f, ax = plt.subplots(figsize=(4,8))
+
+    colors = plt.cm.tab20b( list(range(N_to_plot)) )
+
+    ind = 0
+    for i in range(N_to_plot):
+
+        ind += 1
+
+        mag = mags[ind,:]
+        if np.all(pd.isnull(mag)):
+            continue
+
+        mag -= np.nanmean(mag)
+
+        offset = i*0.15
+
+        expected_norbits = 2
+        orbitgap = 0.5
+        norbits, groups = lcmath.find_lc_timegroups(time, mingap=orbitgap)
+
+        if norbits != expected_norbits:
+            errmsg = 'got {} orbits, expected {}. groups are {}'.format(
+                norbits, expected_norbits, repr(groups))
+            raise AssertionError
+
+        for group in groups:
+
+            tg_time = time[group]
+            tg_mag = mag[group]
+
+            ax.plot(tg_time, tg_mag+offset, c=colors[i], lw=0.5,
+                    rasterized=True)
+
+    ax.set_xlabel('Time $\mathrm{{BJD}}_{{\mathrm{{TDB}}}}$ [days]')
+    ax.set_ylabel('Magnitude [arbitrary offset]')
+
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    ax.get_yaxis().set_tick_params(which='both', direction='in')
+    ax.get_xaxis().set_tick_params(which='both', direction='in')
+
+    f.tight_layout(pad=0.2)
+    savefig(f, outpath)
+
+
+
 
 
 def plot_tls_sde_vs_period_scatter(sectors, overwrite=1):
