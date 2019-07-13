@@ -33,11 +33,11 @@ def _shift_lon_get_x(lon, origin):
     return x
 
 
-def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
-             projection='mollweide',savdir='../results/',savname='mwd_0.pdf',
-             overplot_galactic_plane=True, is_tess=False, is_radec=None,
-             cbarbounds=None, for_proposal=False, overplot_k2_fields=False,
-             for_GRR=False, plot_tess=True):
+def plot_mwd(lon, dec, color_val, origin=0, size=3,
+             title='Mollweide projection', projection='mollweide', savdir='../results/',
+             savname='mwd_0.pdf', overplot_galactic_plane=True, is_tess=False,
+             coordsys=None, cbarbounds=None, for_proposal=False,
+             overplot_k2_fields=False, overplot_cdips=False, plot_tess=True):
 
     '''
     args, kwargs:
@@ -45,7 +45,7 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
         lon, lat are arrays of same length. they can be (RA,dec), or (ecliptic
             long, ecliptic lat). lon takes values in [0,360), lat in [-90,90],
 
-        is_radec: mandatory. True if (RA,dec), else elong/elat.
+        coordsys (str): one of 'ecliptic', 'icrs', 'galactic'
 
         title is the title of the figure.
 
@@ -54,7 +54,7 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
     comments: see
     http://balbuceosastropy.blogspot.com/2013/09/the-mollweide-projection.html.
     '''
-    if is_radec == None:
+    if coordsys == None:
         raise AssertionError
 
     # for matplotlib mollweide projection, x and y values (usually RA/dec, or
@@ -70,50 +70,18 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
 
     if is_tess:
 
-        if for_proposal or for_GRR:
-            # # 13-color (no "0" stars)
-            # colors = ["#e7d914", "#ceb128", "#b58a3d", "#866c50", "#515263",
-            #           "#1b3876", "#002680", "#001d80", "#001480", "#000c80",
-            #           "#000880", "#000480", "#000080"]
+        if for_proposal:
 
             # 14 color
-            if len(cbarbounds) < 15:
+            if len(cbarbounds) < 17:
 
+                # orange to purple
                 colors = ["#ffffff", "#e7d914", "#ceb128", "#b58a3d",
                           "#866c50", "#515263", "#1b3876", "#002680",
                           "#001d80", "#001480", "#000c80", "#000880",
                           "#000480", "#000080"]
 
-            # 28 color (kind of)
-            elif len(cbarbounds) < 30:
-
-                # first three orbits obsd get different colors. some difference
-                # between 1yr and 2yr too.
-                # take 1
-                colors0 = ["#ffffff", "#e7d914", "#ceb128",
-                          "#b58a3d", "#b58a3d", "#b58a3d", "#b58a3d",
-                          "#866c50", "#866c50", "#866c50", "#866c50",
-                          "#515263", "#515263", "#515263", "#515263",
-                          "#1b3876", "#1b3876", "#1b3876", "#1b3876",
-                          "#002680", "#002680", "#002680", "#002680",
-                          "#000c80", "#000880", "#000880", "#000880",
-                          "#000c80"]
-
-                colors1 = ["#ffffff", # N=0 white
-                          "#e7d914", # N=1 pale yellow
-                          "#e7a013", # N=2 a little more saturated
-                          "#f7781d", # N=3-5 a little more saturated
-                          "#f7781d", # N=6-11 saturated orange
-                          "#f7781d", "#e86000", "#e86000",
-                          "#e86000", "#e86000", "#e86000", "#e86000",
-                          "#e80000", "#e80000", # N=12,13 saturated red
-                          "#12aee7", # N=14-20 different blue
-                          "#12aee7","#12aee7","#12aee7",
-                          "#12aee7","#12aee7","#12aee7",
-                          "#126ae7", # N=21-26 saturated blue
-                          "#126ae7", "#126ae7", "#126ae7",
-                          "#126ae7", "#126ae7", "#126ae7"]
-
+                # blues
                 colors = ["#ffffff", # N=0 white
                           "#84ccff", # N=1 pale blue
                           "#35aaff", # N=2 a little more saturated
@@ -121,13 +89,17 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
                           "#279aea", # N=6-11 more saturated blue
                           "#279aea", "#1f77b4", "#1f77b4",
                           "#1f77b4", "#1f77b4", "#1f77b4", "#1f77b4",
-                          "#126199", "#126199", # N=12,13 saturated blue
-                          "#ffa251", # N=14-20 light orange
-                          "#ffa251","#ffa251","#ffa251",
-                          "#ffa251","#ffa251","#ffa251",
-                          "#ff7f0e", # N=21-26 saturated orange
-                          "#ff7f0e", "#ff7f0e", "#ff7f0e",
-                          "#ff7f0e", "#ff7f0e", "#ff7f0e"]
+                          "#126199", "#126199"] # N=12,13 saturated blue
+
+                # grays
+                colors = ["#ffffff", # N=0 white
+                          "#dedede", # N=1 pale gray
+                          "#b3b3b3", # N=2 a little more saturated
+                          "#9c9c9c", # N=3-5 a little more saturated
+                          "#9c9c9c", # N=6-11 more saturated blue
+                          "#9c9c9c", "#757575", "#757575",
+                          "#757575", "#757575", "#757575", "#757575",
+                          "#363636", "#363636"] # N=12,13 saturated gray
 
             cmap = LinearSegmentedColormap.from_list(
                 'my_cmap', colors, N=len(colors))
@@ -142,9 +114,9 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
 
         norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
 
-        # plot the stars
-        cax = ax.scatter(np.radians(x[::100]),np.radians(dec[::100]),
-                         c=color_val[::100],
+        # plot zero-size for colorbar
+        cax = ax.scatter(np.radians(x[::1000]),np.radians(dec[::1000]),
+                         c=color_val[::1000],
                          s=0, lw=0, zorder=2, cmap=cmap, norm=norm,
                          rasterized=True)
 
@@ -168,33 +140,8 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
                            marker='s',
                            rasterized=True)
 
-        # #FIXME WORKS!
-        # _ = ax.scatter(np.radians(x[sel]),np.radians(dec[sel]),
-        #                c=color_val[sel], s=size,
-        #                lw=0, zorder=-1, cmap=cmap, norm=norm,
-        #                marker='o',
-        #                rasterized=True)
-
-        # _ = ax.scatter(np.radians(x[~sel]),np.radians(dec[~sel]),
-        #                c=color_val[~sel],
-        #                s=size/4, lw=0, zorder=0, cmap=cmap, norm=norm,
-        #                marker='s',
-        #                rasterized=True)
-        # #FIXME WORKS!
-
-        # set up colorbar
-        if len(colors) < 15:
-            ticks = 27.32*(np.arange(-1,13)+1)
-            ylabels = list(map(str,np.round(27.32*(np.arange(0,13)),1)))
-            ylabels[-1] = '$\geq \! 328$'
-        elif len(colors) < 30:
-            #ticks = 27.32*(np.arange(-1,26)+1) #FIXME
-            #ylabels = list(map(str,np.round(27.32*(np.arange(0,27)),1)))
-            #ylabels[-1] = '$\geq \! 710$'
-
-            ticks = (np.arange(-1,26)+1)
-            ylabels = list(map(str,np.round((np.arange(0,27)),1)))
-
+        ticks = (np.arange(-1,13)+1)
+        ylabels = list(map(str,np.round((np.arange(0,14)),1)))
 
         cbar = fig.colorbar(cax, cmap=cmap, norm=norm, boundaries=bounds,
                             fraction=0.025, pad=0.03,
@@ -221,27 +168,63 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
         gplane_ra, gplane_dec = coords.icrs.ra.value, coords.icrs.dec.value
         gplane_elon = coords.barycentrictrueecliptic.lon.value
         gplane_elat = coords.barycentrictrueecliptic.lat.value
-        if is_radec:
-            gplane_x = _shift_lon_get_x(gplane_ra, origin)
-        else:
+        gplane_glon = coords.galactic.l.value
+        gplane_glat = coords.galactic.b.value
+
+        if coordsys == 'ecliptic':
             gplane_x = _shift_lon_get_x(gplane_elon, origin)
             gplane_dec = gplane_elat
+        elif coordsys == 'galactic':
+            gplane_x = _shift_lon_get_x(gplane_glon, origin)
+            gplane_dec = gplane_glat
+        elif coordsys == 'icrs':
+            gplane_x = _shift_lon_get_x(gplane_ra, origin)
+
         ax.scatter(np.radians(gplane_x),np.radians(gplane_dec),
                    c='lightgray', s=0.2, zorder=3, rasterized=True)
         gcenter = SkyCoord('17h45m40.04s', '-29d00m28.1s', frame='icrs')
         gcenter_ra, gcenter_dec = gcenter.icrs.ra.value, gcenter.icrs.dec.value
         gcenter_elon = gcenter.barycentrictrueecliptic.lon.value
         gcenter_elat = gcenter.barycentrictrueecliptic.lat.value
-        if is_radec:
-            gcenter_x = _shift_lon_get_x(np.array(gcenter_ra), origin)
-        else:
+        gcenter_glon = gcenter.galactic.l.value
+        gcenter_glat = gcenter.galactic.b.value
+
+        if coordsys == 'ecliptic':
             gcenter_x = _shift_lon_get_x(np.array(gcenter_elon), origin)
             gcenter_dec = gcenter_elat
+        elif coordsys == 'galactic':
+            gcenter_x = _shift_lon_get_x(np.array(gcenter_glon), origin)
+            gcenter_dec = gcenter_glat
+        elif coordsys == 'icrs':
+            gcenter_x = _shift_lon_get_x(np.array(gcenter_ra), origin)
+
         ax.scatter(np.radians(gcenter_x),np.radians(gcenter_dec),
                    c='black', s=2, zorder=4, marker='X')
         ax.text(np.radians(gcenter_x), np.radians(gcenter_dec), 'GC',
                 fontsize='x-small', ha='left', va='top')
         ##########
+
+    if overplot_cdips:
+
+        from cdips.utils import collect_cdips_lightcurves as ccl
+        df = ccl.get_cdips_catalog(ver=0.3)
+
+        c = SkyCoord(np.array(df['ra'])*u.deg, np.array(df['dec'])*u.deg,
+                     frame='icrs')
+
+        if coordsys == 'ecliptic':
+            xval = _shift_lon_get_x(c.barycentrictrueecliptic.lon.value, origin)
+            yval = c.barycentrictrueecliptic.lat.value
+        elif coordsys == 'galactic':
+            xval = _shift_lon_get_x(c.galactic.l.value, origin)
+            yval = c.galactic.b.value
+        elif coordsys == 'icrs':
+            xval = _shift_lon_get_x(c.ra.value, origin)
+            yval = c.dec.value
+
+        _ = ax.scatter(np.radians(xval[::5]), np.radians(yval[::5]), c='C0',
+                       s=0.3, lw=0, zorder=-1, marker='o', rasterized=True)
+
 
     if overplot_k2_fields:
 
@@ -297,12 +280,14 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
                 elon = nparr(this['corners_elon'])
                 elat = nparr(this['corners_elat'])
 
-                if is_radec:
-                    ch_x = _shift_lon_get_x(np.array(ra), origin)
-                    ch_y = np.array(dec)
-                else:
+                if coordsys == 'ecliptic':
                     ch_x = _shift_lon_get_x(np.array(elon), origin)
                     ch_y = np.array(elat)
+                elif coordsys == 'galactic':
+                    raise NotImplementedError
+                elif coordsys == 'icrs':
+                    ch_x = _shift_lon_get_x(np.array(ra), origin)
+                    ch_y = np.array(dec)
 
                 # draw the outline of the fields -- same as fill.
                 #ax.plot(np.radians(ch_x), np.radians(ch_y), c='gray',
@@ -325,9 +310,9 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
             os.path.join(datadir,"k2-footprint.json")))
 
         for cn in np.sort(list(footprint_dictionary.keys())):
-            if cn in ['c1','c10'] and is_radec:
+            if cn in ['c1','c10'] and coordsys=='icrs':
                 continue
-            if cn in ['c1','c10'] and not is_radec:
+            if cn in ['c1','c10'] and coordsys=='ecliptic':
                 continue
             print(cn)
 
@@ -338,15 +323,17 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
                 ra = channel["corners_ra"] + channel["corners_ra"][:1]
                 dec = channel["corners_dec"] + channel["corners_dec"][:1]
 
-                if is_radec:
+                if coordsys=='icrs':
                     ch_x = _shift_lon_get_x(np.array(ra), origin)
                     ch_y = np.array(dec)
-                else:
+                elif coordsys=='ecliptic':
                     ch_coord = SkyCoord(ra*u.deg, dec*u.deg, frame='icrs')
                     ch_elon = ch_coord.barycentrictrueecliptic.lon.value
                     ch_elat = ch_coord.barycentrictrueecliptic.lat.value
                     ch_x = _shift_lon_get_x(np.array(ch_elon), origin)
                     ch_y = np.array(ch_elat)
+                else:
+                    raise NotImplementedError
 
                 # draw the outline of the fields -- same as fill
                 # ax.plot(np.radians(ch_x), np.radians(ch_y), c='gray',
@@ -379,18 +366,21 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
     if not for_proposal:
         ax.set_title(title, y=1.05, fontsize='small')
 
-    if is_radec:
-        ax.set_xlabel('Right ascension', fontsize='x-small')
-        ax.set_ylabel('Declination', fontsize='x-small')
-    else:
+    if coordsys == 'ecliptic':
         ax.set_xlabel('Ecliptic longitude', fontsize='x-small')
         ax.set_ylabel('Ecliptic latitude', fontsize='x-small')
+    elif coordsys == 'galactic':
+        ax.set_xlabel('Galactic longitude', fontsize='x-small')
+        ax.set_ylabel('Galactic latitude', fontsize='x-small')
+    elif coordsys == 'icrs':
+        ax.set_xlabel('Right ascension', fontsize='x-small')
+        ax.set_ylabel('Declination', fontsize='x-small')
 
     #ax.set_axisbelow(True)
     ax.grid(color='lightgray', linestyle='--', linewidth=0.5, zorder=-3,
             alpha=0.15)
 
-    if not for_proposal and not for_GRR:
+    if not for_proposal:
         ax.text(0.99,0.01,'github.com/lgbouma/extend_tess',
                 fontsize='4',transform=ax.transAxes,
                 ha='right',va='bottom')
@@ -402,7 +392,7 @@ def plot_mwd(lon,dec,color_val,origin=0,size=3,title='Mollweide projection',
 
 
 def get_n_observations(dirnfile, outpath, n_stars, merged=False,
-                       is_deming=False, withgaps=True,
+                       withgaps=True,
                        aligncelestial=False):
 
     np.random.seed(42)
@@ -419,17 +409,6 @@ def get_n_observations(dirnfile, outpath, n_stars, merged=False,
 
     theta = (2*np.pi*rand0 * u.rad).to(u.deg).value
     phi = (np.arccos(2*rand1 - 1) * u.rad).to(u.deg).value - 90
-
-    if is_deming:
-        x, y = np.meshgrid(
-            np.arange(-90,91,1),
-            np.arange(0,361,1),
-            indexing='ij'
-        )
-        # dumb
-        theta = np.array(y.flatten())
-        phi = np.array(x.flatten())
-        withgaps=False
 
     ras = theta*u.deg
     decs = phi*u.deg
@@ -493,9 +472,9 @@ def get_n_observations(dirnfile, outpath, n_stars, merged=False,
     print('saved {}'.format(outpath))
 
 
-def only_extended_only_primary(is_deming=False, for_proposal=False,
-                               overplot_k2_fields=False, for_GRR=False,
-                               plot_tess=True):
+def only_extended_only_primary(overplot_galactic_plane=True, for_proposal=False,
+                               overplot_k2_fields=False,
+                               plot_tess=True, overplot_cdips=False):
     """
     make plots the primary mission.
     (no merging)
@@ -523,16 +502,15 @@ def only_extended_only_primary(is_deming=False, for_proposal=False,
 
         if for_proposal:
             eclsavname = eclsavname.replace('.png','_forproposal.png')
-            icrssavname = icrssavname.replace('.png','_forproposal.png')
             size=0.5
-
         if overplot_k2_fields:
-            eclsavname = eclsavname.replace('.png','_forproposal_k2overplot.png')
-            icrssavname = icrssavname.replace('.png','_forproposal_k2overplot.png')
-
+            eclsavname = eclsavname.replace('.png','_k2overplot.png')
         if not plot_tess:
             eclsavname = eclsavname.replace('.png','_notess.png')
-            icrssavname = icrssavname.replace('.png','_notess.png')
+        if overplot_cdips:
+            eclsavname = eclsavname.replace('.png','_cdipsoverplot.png')
+        icrssavname = eclsavname.replace('eclmap','icrsmap')
+        galsavname = eclsavname.replace('eclmap','galacticmap')
 
         obsdstr = '' if not for_proposal else '_forproposal'
         obsdpath = dirnfile.replace(
@@ -545,57 +523,53 @@ def only_extended_only_primary(is_deming=False, for_proposal=False,
             else:
                 npts = 1e5
 
-            if for_GRR:
-                get_n_observations(dirnfile, obsdpath, int(npts),
-                                   is_deming=is_deming, aligncelestial=True)
-            else:
-                get_n_observations(dirnfile, obsdpath, int(npts),
-                                   is_deming=is_deming)
+            get_n_observations(dirnfile, obsdpath, int(npts))
 
         df = pd.read_csv(obsdpath, sep=';')
         df['obs_duration'] = orbit_duration_days*df['n_observations']
+        c = SkyCoord(np.array(df['ra'])*u.deg, np.array(df['dec'])*u.deg,
+                     frame='icrs')
+        df['glon'] = c.galactic.l.value
+        df['glat'] = c.galactic.b.value
 
-        # post 20190131
-        #cbarbounds = np.arange(-27.32/2, 2*13.5*27.32, 27.32)
-        cbarbounds = np.arange(-1/2, 27, 1) #FIXME
-
+        cbarbounds = np.arange(-1/2, 14, 1)
         sel_durn = (nparr(df['obs_duration']) >= 0)
 
-        plot_mwd(nparr(df['elon'])[sel_durn],
-                 nparr(df['elat'])[sel_durn],
-                 nparr(df['obs_duration'])[sel_durn],
-                 origin=0, size=size, title=title,
-                 projection='mollweide', savdir=savdir,
-                 savname=eclsavname,
-                 overplot_galactic_plane=True, is_tess=True, is_radec=False,
-                 cbarbounds=cbarbounds,
-                 for_proposal=for_proposal,
-                 overplot_k2_fields=overplot_k2_fields,
-                 for_GRR=for_GRR, plot_tess=plot_tess)
+        coordsyss = ['galactic','ecliptic','icrs']
+        lons = ['glon','elon','ra']
+        lats = ['glat','elat','dec']
+        savnames = [galsavname, eclsavname, icrssavname]
 
-        plot_mwd(nparr(df['ra'])[sel_durn],
-                 nparr(df['dec'])[sel_durn],
-                 nparr(df['obs_duration'])[sel_durn],
-                 origin=0, size=size, title=title,
-                 projection='mollweide', savdir=savdir,
-                 savname=icrssavname,
-                 overplot_galactic_plane=True, is_tess=True, is_radec=True,
-                 cbarbounds=cbarbounds,
-                 for_proposal=for_proposal,
-                 overplot_k2_fields=overplot_k2_fields,
-                 for_GRR=for_GRR, plot_tess=plot_tess)
+        for c, lon, lat, s in zip(coordsyss, lons, lats, savnames):
+
+            plot_mwd(nparr(df[lon])[sel_durn],
+                     nparr(df[lat])[sel_durn],
+                     nparr(df['obs_duration'])[sel_durn],
+                     origin=0, size=size, title=title,
+                     projection='mollweide', savdir=savdir,
+                     savname=s,
+                     overplot_galactic_plane=overplot_galactic_plane,
+                     is_tess=True, coordsys=c, cbarbounds=cbarbounds,
+                     for_proposal=for_proposal,
+                     overplot_k2_fields=overplot_k2_fields,
+                     overplot_cdips=overplot_cdips, plot_tess=plot_tess)
 
 
 if __name__=="__main__":
 
     # BEGIN OPTIONS
 
-    for_proposal=1          # true to activate options only for the proposal
-    overplot_k2_fields=1    # true to activate k2 field overplot
-    plot_tess=0             # true to activate tess field overplot
+    for_proposal=1             # true to activate options only for the proposal
+    overplot_k2_fields=0       # true to activate k2 field overplot
+    plot_tess=1                # true to activate tess field overplot
+    overplot_cdips=1           # true to overplot CDIPS target stars
+    overplot_sfr_labels=1      # TODO true to overplot names of nearby star forming regions
+    overplot_galactic_plane=0  # ...
 
     # END OPTIONS
 
-    only_extended_only_primary(for_proposal=for_proposal,
+    only_extended_only_primary(overplot_galactic_plane=overplot_galactic_plane,
+                               for_proposal=for_proposal,
                                overplot_k2_fields=overplot_k2_fields,
-                               plot_tess=plot_tess)
+                               plot_tess=plot_tess,
+                               overplot_cdips=overplot_cdips)
