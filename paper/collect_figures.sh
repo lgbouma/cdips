@@ -23,6 +23,11 @@ cp ${fdir}primary_mission_galacticmap_forproposal_cdipsoverplot.png \
 cp ${fdir}rms_vs_mag.pdf ${pdir}rms_vs_mag.pdf
 cp ${fdir}avg_acf.pdf ${pdir}avg_acf.pdf
 
+cp ${fdir}raw_light_curve_systematics_sec7cam2ccd4.pdf \
+   ${pdir}raw_light_curve_systematics_sec7cam2ccd4.pdf
+cp ${fdir}raw_light_curve_systematics_sec6cam1ccd2.pdf \
+   ${pdir}raw_light_curve_systematics_sec6cam1ccd2.pdf
+
 cp ${fdir}tls_sde_vs_period_scatter.pdf \
    ${pdir}tls_sde_vs_period_scatter.pdf
 

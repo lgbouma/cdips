@@ -53,7 +53,7 @@
 \correspondingauthor{L. G. Bouma}
 \email{luke@astro.princeton.edu}
 
-\author[0000-0002-0514-5538]{L. G. Bouma (ORDER TBD)}
+\author[0000-0002-0514-5538]{L. G. Bouma}
 \affiliation{ Department of Astrophysical Sciences, Princeton
 University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 %
@@ -1183,6 +1183,22 @@ at any given time, we used the
 \subsection{Light curve detrending}
 \label{subsec:lcdetrending}
 
+\begin{figure*}[!t]
+	\gridline{
+    \fig{raw_light_curve_systematics_sec6cam1ccd2.pdf}{0.48\textwidth}{}
+    \fig{raw_light_curve_systematics_sec7cam2ccd4.pdf}{0.48\textwidth}{}
+  }
+	\vspace{-0.5cm}
+	\caption{
+	Twenty randomly selected raw image-subtracted light curves drawn
+	from the same sector, camera,
+	and CCD, for stars with $T$-band magnitudes between 13 and 14.
+	A number of systematic trends are shared across the light curves.
+	The sector, camera, and CCD numbers are 6, 1, 2 (left) and 7, 2, 4 (right).
+	\label{fig:lc_systematics}
+	}
+\end{figure*}
+
 \begin{figure}[!t]
 	\begin{center}
 		\leavevmode
@@ -1201,7 +1217,6 @@ at any given time, we used the
 		\label{fig:external_parameter_timeseries}
 	}
 \end{figure}
-
 The preceding steps produce light curves that include both
 instrumental systematics as well as astrophysical variability.  The
 detrending approach adopted by the HAT group to remove systematic
@@ -1228,12 +1243,14 @@ Figure~\ref{fig:external_parameter_timeseries}.
 The final step is to then decorrelate the measured brightnesses of
 stars against each other (TFA, \citealt{kovacs_trend_2005}).  This
 accounts for variations due to unknown systematic instrument changes
-that affect many stars.  This latter step is effectively a principal
+that affect many stars.  This latter step is similar to a principal
 component analysis of all the light curves, in which the components
 are chosen as a subset of the light curves.
-In this sense TFA is similar to the PDC-MAP and ARC2 methods
-\citep{smith_pdc_2012,aigrain_robust_2017} except that these latter
-two methods are much more careful in their choice of basis vectors.
+In this sense TFA is similar to the Sys-Rem, PDC, and ARC2 methods
+\citep{tamuz_correcting_2005,smith_pdc_2012,aigrain_robust_2017}
+except that these latter methods make different choices for the basis
+vectors, and apply different procedures for determining the
+best-fitting coefficients of the linear model.
 
 We explored the possibility of fitting linear models of flux as
 functions of {\it e.g.,} temperature, shape parameters, centroid
@@ -2367,6 +2384,10 @@ The procedure described above failed to yield matches for a few of the
 infrared clusters identified by \citet{majaess_discovering_2013} and
 included in the \citet{dias_proper_2014} catalog.
 For these cases, we used the name given by \citet{dias_proper_2014}.
+The larger set of ``FSR'' infrared clusters from
+\citet{froebrich_FSR_2007} was incorporated to
+\citet{Kharchenko_et_al_2013}, and so did not present any
+complications.
 
 The Hyades and a number of other nearby moving groups were also
 missed, since they were not in the \citet{Kharchenko_et_al_2013}
