@@ -54,5 +54,17 @@ def main():
     df.to_csv(outpath, index=False, sep='|')
     print('made {}'.format(outpath))
 
+    scols = ['target', 'flag', 'disp','tag', 'group', 'RA_OBJ', 'DEC_OBJ',
+             'CDIPSREF', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+             'phot_rp_mean_mag', 'TICID', 'TESSMAG', 'Gaia-ID']
+    sdf = df[scols]
+
+    outpath = ("/home/lbouma/proj/cdips/results/fit_gold/"
+               "{}_sector6_and_sector7_gold_observer_info.csv".
+               format(today_YYYYMMDD()))
+    sdf.to_csv(outpath, index=False, sep='|')
+    print('made {}'.format(outpath))
+
+
 if __name__=="__main__":
     main()
