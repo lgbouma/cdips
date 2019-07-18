@@ -223,7 +223,7 @@ discoveries made by K2 through its surveys of the Pleiades, Hyades,
 Praesepe, and Upper Sco were a major inspiration for the present work.
 
 K2-25b, discovered in the Hyades, has a radius ($3.43\,R_\oplus$) that
-is larger than older Kepler planets at similar insolation levels
+is larger than older Kepler planets around M dwarfs at similar insolation levels
 \citep{Mann_K2_25_2016}.  This inflated radius is perhaps a hint that
 the planet is contracting, or losing its atmosphere \citep[{\it
 e.g.},][]{Fortney_et_al_2007,Owen_Wu_2013,Fulton_et_al_2017}.  The
@@ -259,9 +259,13 @@ comprehensive cluster photometric survey in history.  More
 quantitatively, the \citet{Kharchenko_et_al_2013} cluster member
 database indicates that $\approx 2\times10^5$ open cluster members
 brighter than $T=16$ will be observed in the full-frame images over
-the first two years of TESS observations.  The actual number may be
-larger, as cluster membership catalogs are not yet complete, even at
-these relatively bright magnitudes \citep[{\it
+the first two years of TESS observations.  This count includes the
+``most probable'' members within each cluster's radius, which by the
+\citet[][]{kharchenko_global_2012} definition requires the independent
+kinematic, photometric, and spatial membership probabilities to each
+exceed 61\%.  The actual number of stars in clusters may be larger, as
+the membership catalogs are not yet complete, even at these relatively
+bright magnitudes \citep[{\it
 e.g.},][]{roser_nine_RSG_2016,cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019}.
 % Our target list currently sits at $\approx 1.0\times10^6$ candidate
 % young stars, perhaps one-third of which are bonafide cluster members
@@ -278,10 +282,30 @@ includes almost all star clusters\footnote{TICv8 has updated this to
 $10^\circ$, but for the first year of TESS observations, the number
 used when selecting target stars was $15^\circ$.}.  This is sensible,
 since the large pixel size and the high stellar surface density
-make aperture photometry unreliable.  However, it also means that a
+make aperture photometry unreliable.  
+However, it also means that a
 large number of stars in clusters that could yield transiting planets
 will go unprocessed by the official {\it TESS} data reduction
 pipeline.
+
+One way to quantify the blending problem is to ask what fraction of
+the total flux in a photometric aperture is contributed by a
+particular target star. Aperture photometry is reliable if this
+fraction is close to unity.  Based on the
+\citet{Kharchenko_et_al_2013} cluster membership data, and the density
+of background stars, we find that the median dilution fraction of
+stars with $T< 16$ is 0.13 for an aperture radius of 2 pixels.
+
+By combining difference imaging with forced-aperture photometry, we
+can avoid the primary effects of blending.  This is because in
+forced-aperture photometry the reference flux is determined from a
+calibrated catalog magnitude-to-flux relation.  The deviation from the
+reference is measured on the difference image.  Assuming that only a
+single source is causing the variability, blended neighbor stars only
+act to increase the poisson noise, and down not ``dilute'' transit
+signals, down to the angular resoution of the source catalog being
+used to determine the reference flux.  This is one of the main
+benefits of performing image subtraction in crowded fields.
 
 Of course, not all young stars are in crowded fields.  TESS
 observations of a few nearby non-crowded stellar assocations have
@@ -404,13 +428,15 @@ Instead, we have opted to collect and concatenate appropriate catalogs
 from across the literature.  We then use the resulting meta-catalog to
 identify our target stars within the TESS images.
 
-In our initial stellar selection our aim is completeness, not
-accuracy.  If there has been a claim in the literature that a star
-should be considered a cluster member, or a young star, we would like
-to report a light curve for the star.  For stars that are
-photometrically interesting, we can perform post-hoc quality checks
-using Gaia-DR2 astrometry and photometry to assess cluster membership
-and youth.
+The probabilistic criteria for inclusion in our target star list is
+necessarily heterogeneous across different catalogs.  However, in our
+initial stellar selection our aim is completeness, not accuracy.  If
+there has been a claim in the literature that a star should be
+considered a cluster member, or a young star, we would like to err on
+the side of reporting a light curve for the star.  For stars that are
+photometrically interesting, we can then perform post-hoc quality
+checks using Gaia-DR2 astrometry and photometry to assess cluster
+membership and youth.
 
 \S~\ref{subsec:oc} describes the catalogs we used to identify
 candidate members of open clusters.  \S~\ref{subsec:mg} describes the
@@ -507,9 +533,11 @@ between two neighbors for 8.7\% of the remaining sample.
 The distributions of various cross-matching statistics are shown in
 Figure~\ref{fig:xmatch_info}.  The distances between matches is
 typically below 1 arcsecond.  The Dias catalog shows somewhat stronger
-crowding effects at the faint end compared to the Kharchenko catalog.
-The Kharchenko catalog also has a more lop-sided distribution of true
-{\it vs.}$\,$predicted $G$-band magnitudes.
+crowding effects at the faint end compared to the Kharchenko catalog,
+and likely has a larger number of false matches.
+At their faint ends, both catalogs show a tendency for true $G$-band
+magnitudes being somewhat larger than predicted $G$-band magnitudes,
+due to dust reddening.
 
 
 \subsection{Smaller catalogs: moving groups and stellar associations}
@@ -589,25 +617,51 @@ forming regions justifies their inclusion in our search sample.
 \label{subsec:ocmgsummary}
 
 
-After collecting the aforementioned lists, we
-merged them into a single table. We then queried the
-\texttt{gaiadr2.gaia\_source} table to retrieve their photometric $G$,
-$G_{\rm Rp}$, and $G_{\rm Bp}$ magnitudes, as well as their
-astrometric measurements $(\alpha, \delta, \mu_\alpha, \mu_\delta,
-\pi)$.  Finally, we required that $G_{\rm Rp} < 16$.  
+After collecting the aforementioned lists, we merged them into a
+single table. We queried the \texttt{gaiadr2.gaia\_source} table to
+retrieve their photometric $G$, $G_{\rm Rp}$, and $G_{\rm Bp}$
+magnitudes, as well as their astrometric measurements $(\alpha,
+\delta, \mu_\alpha, \mu_\delta, \pi)$.  Finally, we required that
+$G_{\rm Rp} < 16$, which is roughly where the 1-hour photometric
+precision of TESS is predicted to reach 1\%
+\citep{ricker_transiting_2015}.
 
+All told, this procedure yielded 1{,}061{,}447 unique stars, from 13
+distinct membership catalogs.
 
-All told, this procedure yielded 1{,}061{,}447 unique stars, from 13 distinct
-membership catalogs.
-
-107{,}647 of these stars, or about
-10\% of the collection, have cluster memberships reported by
-multiple authors.  The largest number of stars come from
-\citealt{dias_proper_2014} (44.3\% of stars), \citealt{Kharchenko_et_al_2013}
-(17.3\%), \citealt{cantat-gaudin_gaia_2018} (16.7\%), and \citealt{zari_3d_2018}
-(11.1\%). %FIXME how many in PMS vs UMS?
+The relative fractions of stars from each catalog are shown in
+Figure~\ref{fig:cdips_targets}.
+The largest number of stars come from \citealt{dias_proper_2014}
+(44.3\% of stars), \citealt{Kharchenko_et_al_2013} (17.3\%),
+\citealt{cantat-gaudin_gaia_2018} (16.7\%), and \citealt{zari_3d_2018}
+(11.1\%, of which 7.8\% are OBA stars, and 3.3\% are pre-MS stars).
+107{,}647 of the stars, or about 10\%
+of the collection, have cluster memberships reported by multiple
+authors.  Since the membership probability calculations often use
+independent data and methods, agreement between multiple investigators
+on a given star's cluster membership is a helpful indication of it
+being a bonafide member.
 Stars reported in multiple catalogs have all available reference information
 concatenated.  
+
+The fraction of target stars from each catalog which are bonafide
+cluster members should be understood to be heterogeneous.  For the
+\citet{dias_proper_2014} catalog, their membership calculation
+included only spatial and kinematic information, and we used a
+relatively low probability threshold when including their stars (based
+on the criteria \citealt{dias_proper_2014} used for their star
+counts).  The \citet{Kharchenko_et_al_2013} catalog combined spatial,
+kinematic, and photometric information to derive their membership
+probabilities.  We also used a somewhat more restrictive membership
+probability cut (again, following the criteria they used for their
+star counts), and so this sub-sample is likely less contaminated
+with field interlopers.
+\citet{cantat-gaudin_gaia_2018} used spatial, kinematic, and
+astrometric information from Gaia-DR2. Despite the lack of
+photometric information, the quality of the Gaia data suggest that the
+field contamination rate will be lowest for the
+\citet{cantat-gaudin_gaia_2018} sample.
+
 
 To assign unique cluster names, we adopted the name matched against
 \citet{Kharchenko_et_al_2013} whenever possible.
@@ -725,11 +779,11 @@ by \citet{clarke_kepler_2017}, and the resulting science data products
 are described by \citet{tess_data_product_description_2018}.
 
 We perform our processing using the calibrated images, their
-uncertainty maps, and their associated headers.  The spacecraft has
-four cameras, and each camera has four CCDs.  In the following
-analysis, all image-level operations are thus performed on the images
-for each CCD, so that at any instant of time there are 16 independent
-images that require analysis.
+corresponding uncertainty images, and the associated headers.  The
+spacecraft has four cameras, and each camera has four CCDs.  In the
+following analysis, all image-level operations are thus performed on
+the images for each CCD, so that at any instant of time there are 16
+independent images that require analysis.
 
 While we performed numerous initial tests on the first sectors of
 data, by geometric coincidence Sectors 1--5 were pointed away from the
@@ -741,16 +795,20 @@ on sectors in which there were more stars of interest for our intended
 science.  These begin in Sector 6 (2018-12-12, spacecraft orbit \#19).
 For this run of processing, they conclude at the end of Sector 7
 (2019-02-01, spacecraft orbit \#22).
+Sectors 6 and 7 cover galactic longitudes from roughly 200$^\circ$ to 280$^\circ$, 
+with fair coverage within $\pm 20^\circ$ of the galactic plane
+(Figure~\ref{fig:cdips_targets_positions}).
+
 
 \subsection{Image preparation \& background removal}
 \label{subsec:preparation}
 
 Before we can perform any kind of photometry, a few janitorial tasks
 are required.
-First, we convert the calibrated image from MAST into a
-single-extension FITS image, and trim to remove virtual rows and
-columns using the \texttt{SCIROWS}, \texttt{SCIROWE}, \texttt{SCCSA},
-and \texttt{SCCED} header values.
+First, we convert the multi-extension calibrated FITS image from MAST
+into a single-extension FITS image, and trim to remove virtual rows
+and columns using the \texttt{SCIROWS}, \texttt{SCIROWE},
+\texttt{SCCSA}, and \texttt{SCCED} header values.
 
 In order to pre-emptively address the background variations present in
 some frames due to scattered light from the Earth and Moon
@@ -764,8 +822,8 @@ pixels, so we then blur it with a gaussian kernel to produce a smooth
 background estimate for each image.  These steps also remove a
 low-level vignetting present in the corners of many images, which
 remains even after flat-fielding \citep[see][\S
-7.3.5]{vanderspek_2018}.  With the exception of scattered-light
-caustics, which remain over small areas of less than 10\% of the
+7.3.5]{vanderspek_2018}.  With the exception of scattered light
+patches, which remain over small areas of less than 10\% of the
 frames, our ad-hoc procedure seems to adequately remove large spatial
 scale scattered light patches.
 
