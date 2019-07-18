@@ -30,6 +30,12 @@ from cdips.plotting import plot_wcsqa as wcsqa
 from cdips.plotting import savefig
 from cdips.utils import collect_cdips_lightcurves as ccl
 
+import imageutils as iu
+import matplotlib.colors as colors
+from matplotlib import cm
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 from skim_cream import plot_initial_period_finding_results
 
 from collections import Counter
@@ -38,7 +44,131 @@ OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
 LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
+def plot_stages_of_image_processing(niceimage=1, overwrite=0):
+
+    if niceimage:
+        outpath = os.path.join(
+            OUTDIR, 'stages_of_image_processing_good.png')
+    else:
+        outpath = os.path.join(
+            OUTDIR, 'stages_of_image_processing_bad.png')
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    if niceimage:
+        # mid orbit, good registration
+        imgid = 'tess2018363152939'
+    else:
+        # near periapse, during scattered light, bad registration
+        imgid = 'tess2018358075939'
+
+    datadir = '/nfs/phtess2/ar0/TESS/FFI/RED/sector-6/cam1_ccd2/'
+    bkgdfile = os.path.join(
+        datadir,imgid+'-s0006-1-2-0126_cal_img_bkgd.fits')
+    calfile = os.path.join(
+        datadir,imgid+'-s0006-1-2-0126_cal_img.fits')
+
+    diffdir = '/nfs/phtess2/ar0/TESS/FFI/RED_IMGSUB/FULL/s0006/RED_1-2-1501_ISP'
+    difffile = os.path.join(
+        diffdir,
+        'rsub-d2f9343c-{}-s0006-1-2-0126_cal_img_bkgdsub-xtrns.fits'.
+        format(imgid)
+    )
+
+    ##########################################
+
+    vmin, vmax = 10, int(1e3)
+
+    bkgd_img, _ = iu.read_fits(bkgdfile)
+    cal_img, _ = iu.read_fits(calfile)
+    diff_img, _ = iu.read_fits(difffile)
+
+    plt.close('all')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+
+    fig, axs = plt.subplots(ncols=2, nrows=3)
+
+    # top right: log of calibrated image
+    lognorm = colors.LogNorm(vmin=vmin, vmax=vmax)
+
+    cset1 = axs[0,1].imshow(cal_img, cmap='binary_r', vmin=vmin, vmax=vmax,
+                            norm=lognorm)
+
+    diff_vmin, diff_vmax = -1000, 1000
+
+    diffnorm = colors.SymLogNorm(linthresh=0.03, linscale=0.03, vmin=diff_vmin,
+                                 vmax=diff_vmax)
+
+    # top left: background map
+    axs[0,0].imshow(bkgd_img - np.median(cal_img), cmap='RdBu_r',
+                    vmin=diff_vmin, vmax=diff_vmax, norm=diffnorm)
+
+    # middle left: calibrated - background
+    cset2 = axs[1,0].imshow(cal_img - bkgd_img, cmap='RdBu_r', vmin=diff_vmin,
+                            vmax=diff_vmax, norm=diffnorm)
+
+    # middle right: calibrated - median
+    axs[1,1].imshow(cal_img - np.median(cal_img), cmap='RdBu_r',
+                    vmin=diff_vmin, vmax=diff_vmax, norm=diffnorm)
+
+    # lower left:  difference image (full)
+    toplen = 57
+    top = cm.get_cmap('Oranges_r', toplen)
+    bottom = cm.get_cmap('Blues', toplen)
+    newcolors = np.vstack((top(np.linspace(0, 1, toplen)),
+                           np.zeros(((256-2*toplen),4)),
+                           bottom(np.linspace(0, 1, toplen))))
+    newcmp = ListedColormap(newcolors, name='lgb_cmap')
+
+    cset3 = axs[2,0].imshow(diff_img, cmap='RdBu_r', vmin=diff_vmin,
+                            vmax=diff_vmax, norm=diffnorm)
+
+    # lower right: difference image (zoom)
+    sel = [slice(300,800), slice(300,800)]
+    axs[2,1].imshow(diff_img[sel], cmap='RdBu_r',
+                    vmin=diff_vmin, vmax=diff_vmax, norm=diffnorm)
+
+    for ax in axs.flatten():
+        ax.set_xticklabels('')
+        ax.set_yticklabels('')
+        ax.get_xaxis().set_tick_params(which='both', direction='in')
+        ax.get_yaxis().set_tick_params(which='both', direction='in')
+        ax.xaxis.set_ticks_position('none')
+        ax.yaxis.set_ticks_position('none')
+
+    divider0 = make_axes_locatable(axs[0,1])
+    divider1 = make_axes_locatable(axs[1,1])
+    divider2 = make_axes_locatable(axs[2,1])
+
+    cax0 = divider0.append_axes('right', size='5%', pad=0.05)
+    cax1 = divider1.append_axes('right', size='5%', pad=0.05)
+    cax2 = divider2.append_axes('right', size='5%', pad=0.05)
+
+    cb1 = fig.colorbar(cset1, ax=axs[0,1], cax=cax0, extend='both')
+    cb2 = fig.colorbar(cset2, ax=axs[1,1], cax=cax1, extend='both')
+    cb3 = fig.colorbar(cset3, ax=axs[2,1], cax=cax2, extend='both')
+
+    cb2.set_ticks([-1e3,-1e2,-1e1,0,1e1,1e2,1e3])
+    cb2.set_ticklabels(['-$10^3$','-$10^2$','-$10^1$','0',
+                        '$10^1$','$10^2$','$10^3$'])
+    cb3.set_ticks([-1e3,-1e2,-1e1,0,1e1,1e2,1e3])
+    cb3.set_ticklabels(['-$10^3$','-$10^2$','-$10^1$','0',
+                        '$10^1$','$10^2$','$10^3$'])
+
+    fig.tight_layout(h_pad=0, w_pad=-14, pad=0)
+
+    fig.savefig(outpath, bbox_inches='tight', dpi=400)
+    print('{}: made {}'.format(datetime.utcnow().isoformat(), outpath))
+
+
+
 def main():
+
+    plot_stages_of_image_processing(niceimage=1, overwrite=0)
+    plot_stages_of_image_processing(niceimage=0, overwrite=0)
+    assert 0
 
     sectors = [6,7]
 
