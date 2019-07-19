@@ -17,6 +17,8 @@ from astropy import units as u, constants as const
 from astropy.coordinates import SkyCoord
 import multiprocessing as mp
 
+from sklearn.linear_model import LinearRegression
+
 from cdips.utils import collect_cdips_lightcurves as ccl
 
 def _get_tic(mrow, key):
@@ -138,15 +140,74 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
     )
     hdul.close()
 
-    #FIXME
+    ##########################################
+    # begin PCA.
     #
     # first, get ensemble pca magnitude vectors. these will be appended.
+    # (in an annoying order. so be it).
     #
-    import IPython; IPython.embed()
-    assert 0
-    #FIXME
+    # eigenvecs shape: N_templates x N_times
+    #
+    # model: 
+    # y(w, x) = w_0 + w_1 x_1 + ... + w_p x_p.
+    #
+    # X is matrix of (n_samples, n_features), so each template is a "sample",
+    # and each time is a "feature". Analogous to e.g., doing PCA to reconstruct
+    # a spectrum, and you want each wavelength bin to be a feature.
+    #
+    #
+    primaryhdr['DTR_PCA'] = False
 
+    pca_mags = {}
 
+    for ix, eigenvecs in enumerate(eigveclist):
+
+        ap = ix+1
+
+        n_components = int(n_comp_df['fa_cv_ap{}'.format(ap)])
+
+        reg = LinearRegression(fit_intercept=True)
+
+        y = data['IRM{}'.format(ap)]
+        mean_mag = np.nanmean(y)
+
+        _X = eigenvecs[:n_components, :]
+        reg.fit(_X.T, y-mean_mag)
+
+        model_mag = reg.intercept_ + (reg.coef_ @ _X)
+
+        model_mag += mean_mag
+
+        pca_mags['PCA{}'.format(ap)] = model_mag
+
+        primaryhdr['PCA{}NCMP'.format(ap)] = (
+            n_components,
+            'N principal components PCA{}'.format(ap)
+        )
+
+    #
+    # now merge the timeseries, as from TFA merge...
+    #
+    pcanames = ['PCA{}'.format(ap) for ap in range(1,4)]
+    pcaformats = ['D'] * len(pcanames)
+    pcadatacols = [pca_mags[k] for k in pcanames]
+
+    pcacollist = [fits.Column(name=n, format=f, array=a) for n,f,a in
+                  zip(pcanames, pcaformats, pcadatacols)]
+
+    pcahdu = fits.BinTableHDU.from_columns(pcacollist)
+
+    inhdulist = fits.open(lcpath)
+    new_columns = inhdulist[1].columns + pcahdu.columns
+
+    #
+    # update the flag for whether detrending has been performed
+    #
+    primaryhdr['DTR_PCA'] = True
+
+    # end PCA.
+    ##########################################
+    # begin header reformatting
 
     lcgaiaid = os.path.basename(lcpath).split('_')[0]
     info = cdips_df.loc[cdips_df['source_id'] == np.int64(lcgaiaid)]
@@ -427,9 +488,12 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
     #
     # write it (!)
     #
+
     primary_hdu = fits.PrimaryHDU(header=primaryhdr)
-    timeseries_hdu = fits.BinTableHDU(header=hdr, data=data)
+
+    timeseries_hdu = fits.BinTableHDU.from_columns(new_columns, header=hdr)
     timeseries_hdu.header = hdr
+
     outhdulist = fits.HDUList([primary_hdu, timeseries_hdu])
 
     outname = (
@@ -448,7 +512,10 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
     print('{}: reformatted {}, wrote to {}'.format(
         datetime.utcnow().isoformat(), lcpath, outfile))
 
+    import IPython; IPython.embed()
+
     outhdulist.close()
+    inhdulist.close()
 
 
 def reformat_worker(task):

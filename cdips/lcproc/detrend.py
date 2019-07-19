@@ -92,6 +92,19 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
     if not os.path.exists(pcadir):
         os.mkdir(pcadir)
 
+    csvpath = os.path.join(pcadir, 'optimal_n_components.csv')
+    if os.path.exists(csvpath):
+
+        comppaths = [os.path.join(pcadir,
+                                  'principal_component_ap{}.txt'.format(ap))
+                     for ap in range(1,4)]
+
+        eigveclist = [np.genfromtxt(f) for f in comppaths]
+
+        n_comp_df = pd.read_csv(csvpath)
+
+        return eigveclist, n_comp_df
+
     #
     # path, x, y. space-separated. for all ~30k light curves to do TFA on.
     #
@@ -277,8 +290,7 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         optimal_n_comp['fa_cv_ap{}'.format(ap)] = n_components_fa_cv
 
     optimal_n_comp_df = pd.DataFrame(optimal_n_comp, index=[0])
-    outpath = os.path.join(pcadir, 'optimal_n_components.csv')
-    optimal_n_comp_df.to_csv(outpath, index=False)
-    print('made {}'.format(outpath))
+    optimal_n_comp_df.to_csv(csvpath, index=False)
+    print('made {}'.format(csvpath))
 
     return eigveclist, optimal_n_comp_df
