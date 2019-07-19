@@ -1,6 +1,11 @@
 """
 Given directories of symlinked PIPE-TREX-output FTIS LCs, make the headers
-presentable, and apply minor changes to improve their BLS-searchability.
+presentable; apply minor changes to improve their BLS-searchability; and append
+PCA-detrended light curves.
+
+reformat_headers
+reformat_worker
+parallel_reformat_headers
 """
 
 import pandas as pd, numpy as np
@@ -51,14 +56,18 @@ def _map_timeseries_key_to_comment(k):
         "irm3"  : "Instrumental mag in aperture 3",
         "ire3"  : "Instrumental mag error for aperture 3",
         "irq3"  : "Instrumental quality flag ap 3, 0/G OK, X bad",
-        'tfa1'  : "Trend-filtered magnitude in aperture 1",
-        'tfa2'  : "Trend-filtered magnitude in aperture 2",
-        'tfa3'  : "Trend-filtered magnitude in aperture 3",
+        'tfa1'  : "TFA Trend-filtered magnitude in aperture 1",
+        'tfa2'  : "TFA Trend-filtered magnitude in aperture 2",
+        'tfa3'  : "TFA Trend-filtered magnitude in aperture 3",
+        'pca1'  : "PCA Trend-filtered magnitude in aperture 1",
+        'pca2'  : "PCA Trend-filtered magnitude in aperture 2",
+        'pca3'  : "PCA Trend-filtered magnitude in aperture 3",
         "ccdtemp" : "Mean CCD temperature S_CAM_ALCU_sensor_CCD",
         "ntemps"  : "Number of temperatures avgd to get ccdtemp",
         'dtr_isub': "Img subtraction photometry performed",
         'dtr_epd' : "EPD detrending performed",
         'dtr_tfa' : "TFA detrending performed",
+        'dtr_pca' : "PCA detrending performed",
         'projid' :  "PIPE-TREX identifier for software version",
         'btc_ra' : "Right ascen in barycentric time correction",
         'btc_dec' : "Declination in barycentric time correction",
@@ -102,11 +111,15 @@ def _map_timeseries_key_to_unit(k):
         'tfa1'  : "mag",
         'tfa2'  : "mag",
         'tfa3'  : "mag",
+        'pca1'  : "mag",
+        'pca2'  : "mag",
+        'pca3'  : "mag",
         "ccdtemp" : "degcelcius",
         "ntemps"  : "unitless",
         'dtr_isub': "bool",
         'dtr_epd' : "bool",
         'dtr_tfa' : "bool",
+        'dtr_pca' : "bool",
         'projid' :  "unitless",
         'btc_ra' : "deg",
         'btc_dec' : "deg",
@@ -116,13 +129,24 @@ def _map_timeseries_key_to_unit(k):
     return kcd[k]
 
 
-def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum):
+def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
+                     eigveclist=None, n_comp_df=None):
 
     hdul = fits.open(lcpath)
     primaryhdr, hdr, data = (
         hdul[0].header, hdul[1].header, hdul[1].data
     )
     hdul.close()
+
+    #FIXME
+    #
+    # first, get ensemble pca magnitude vectors. these will be appended.
+    #
+    import IPython; IPython.embed()
+    assert 0
+    #FIXME
+
+
 
     lcgaiaid = os.path.basename(lcpath).split('_')[0]
     info = cdips_df.loc[cdips_df['source_id'] == np.int64(lcgaiaid)]
@@ -454,6 +478,7 @@ def reformat_worker(task):
 
 def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
                               nworkers=56, maxworkertasks=1000):
+    # NOTE: no speed increase, b/c it's an i/o limited process.
 
     cdips_df = ccl.get_cdips_catalog(ver=0.3)
 
@@ -477,7 +502,8 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
 
 
 
-def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum):
+def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, eigveclist=None,
+                     n_comp_df=None):
 
     cdips_df = ccl.get_cdips_catalog(ver=0.3)
 
@@ -498,6 +524,7 @@ def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum):
         outfile = os.path.join(outdir, outname)
 
         if not os.path.exists(outfile):
-            _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum)
+            _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
+                             eigveclist=eigveclist, n_comp_df=n_comp_df)
         else:
             print('found {}'.format(outfile))

@@ -20,6 +20,9 @@ from glob import glob
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.lcproc import reformat_lcs_for_mast as rlm
 from cdips.lcproc import mask_orbit_edges as moe
+from cdips.lcproc import detrend as dtr
+
+import imageutils as iu
 
 def main():
 
@@ -54,11 +57,9 @@ def trex_lc_to_mast_lc(
         ccl.plot_cdips_lcs(sectors=sectors, cams=cams)
 
     if reformat_lcs:
-
         for sector in sectors:
 
             sectordir = os.path.join(outdir, 'sector-{}'.format(sector))
-
             if not os.path.exists(sectordir):
                 os.mkdir(sectordir)
 
@@ -73,20 +74,17 @@ def trex_lc_to_mast_lc(
                     lcpaths = glob(os.path.join(symlinkdir,
                                                 'sector-{}'.format(sector),
                                                 'cam{}_ccd{}'.format(cam,ccd),
-                                                '*_llc.fits'
-                                               )
-                                  )
-
+                                                '*_llc.fits'))
                     if len(lcpaths) > 0:
 
-                       # #NOTE: nt actually faster
-                       # rlm.parallel_reformat_headers(lcpaths, camccddir,
-                       #                               sector, cdipsvnum,
-                       #                               nworkers=1,
-                       #                               maxworkertasks=1000)
+                        projid = iu.get_header_keyword(lcpaths[0], 'PROJID')
 
-                       rlm.reformat_headers(lcpaths, camccddir, sector,
-                                            cdipsvnum)
+                        eigveclist, n_comp_df = dtr.prepare_pca(
+                            cam, ccd, sector, projid)
+
+                        rlm.reformat_headers(lcpaths, camccddir, sector,
+                                             cdipsvnum, eigveclist=eigveclist,
+                                             n_comp_df=n_comp_df)
 
 
 if __name__ == "__main__":
