@@ -698,7 +698,7 @@ typical age of 100$\,$Myr.
 \section{Method: Photometry}
 \label{sec:method}
 
-\begin{figure}[t]
+\begin{figure}[!t]
 	\begin{center}
 		\leavevmode
 		\includegraphics[width=0.3\textwidth]{pipelineoverview.pdf}
@@ -713,6 +713,48 @@ typical age of 100$\,$Myr.
 	\label{fig:pipeline}
 	}
 \end{figure}
+
+\begin{figure*}[!t]
+    \begin{center}
+        \leavevmode
+        \includegraphics[width=0.95\textwidth]{stages_of_image_processing_good.png}
+    \end{center}
+    \vspace{-0.6cm}
+    \caption{
+        Stages of image processing for an image taken during the middle
+        of an orbit.
+        {\it Top right}. Calibrated image.
+        {\it Top left}. Smooth background estimate.
+        {\it Middle right}. Calibrated image minus its median pixel value.
+        {\it Middle left}. Calibrated image minus smooth background.
+        {\it Bottom left}. Registered difference image.
+        {\it Bottom right}. Zoom of difference image.
+        Each image is $(2048\times2048)$ pixels, except for the bottom-right 
+        image, which is $(500\times500)$.
+        All images except the top-right have the same color map.
+        The sector, camera, and CCD are (6, 1, 2).
+        \label{fig:stages_good}
+    }
+\end{figure*}
+
+\begin{figure*}[!t]
+    \begin{center}
+        \leavevmode
+        \includegraphics[width=0.95\textwidth]{stages_of_image_processing_bad.png}
+    \end{center}
+    \vspace{-0.6cm}
+    \caption{
+        Same sector, camera and CCD as Figure~\ref{fig:stages_good}, but for an image taken during
+        perigee passage, when scattered light from the Earth is
+        prominent.
+        A number of systematic artifacts are present,
+        including vertical ``straps'' and small-scale structure in scattered light
+        patches.
+        The quality of astrometric registration in the difference image is also
+        worse, leading to larger residuals in the lower-right panel.
+        \label{fig:stages_bad}
+    }
+\end{figure*}
 
 \subsection{Overview}
 
@@ -810,7 +852,7 @@ into a single-extension FITS image, and trim to remove virtual rows
 and columns using the \texttt{SCIROWS}, \texttt{SCIROWE},
 \texttt{SCCSA}, and \texttt{SCCED} header values.
 
-In order to pre-emptively address the background variations present in
+In order to preemptively address the background variations present in
 some frames due to scattered light from the Earth and Moon
 \citep[see][\S 7.3.1--7.3.4]{vanderspek_2018}, we then estimate and
 subtract the large-scale background.  We do this by temporarily
@@ -822,10 +864,11 @@ pixels, so we then blur it with a gaussian kernel to produce a smooth
 background estimate for each image.  These steps also remove a
 low-level vignetting present in the corners of many images, which
 remains even after flat-fielding \citep[see][\S
-7.3.5]{vanderspek_2018}.  With the exception of scattered light
-patches, which remain over small areas of less than 10\% of the
-frames, our ad-hoc procedure seems to adequately remove large spatial
-scale scattered light patches.
+7.3.5]{vanderspek_2018}.  
+The results are shown in the upper four panels of Figures~\ref{fig:stages_good}
+and~\ref{fig:stages_bad}.
+Features with spatial scales smaller than $\approx$48 pixel remain, 
+and large spatial scale scattered light patches are removed.
 
 % We found this background subtraction step to be particularly important
 % in our subsequent difference imaging analysis. In its absense, the
@@ -1043,17 +1086,24 @@ $D_{xy} = I_{xy} - M_{xy}$.
 For the present reduction, the uncertainty in each target image pixel was
 taken to be a constant.	
 
-The procedure described above was first proposed by \citet{Alard_Lupton_1998}.
+The general procedure described above was first proposed by \citet{Alard_Lupton_1998}.
 It was reviewed and clarified by \citet{miller_optimal_2008}.
 The choice of how to decompose the kernel was further explored by
 \citet{bramich_new_2008}, who showed that using a linear combination
 of delta functions had advantages compared to a basis of gaussians.
 We perform the convolution using \texttt{ficonv}, and opt for the
 implementation of Bramich's method (see \citealt{Pal_2009} \S~2.8).
+The lower panels of
+Figure~\ref{fig:stages_good} show the procedure
+working well, and producing a ``clean'' difference image.
+Figure~\ref{fig:stages_bad} shows what happens for an
+image taken when scattered light from the Earth causes the
+model image $M_{xy}$ to be a poor fit to the target image $I_{xy}$, 
+leading to a number of systematic artificats.
 
 
 \subsubsection{Astrometric registration}
-We now describe a few implementation details we used to make the
+We now describe some implementation details we used to make the
 above high-level picture work.
 First, we needed to select two ``reference frames'' for image subtraction:
 (1) the astrometric reference; and (2) the photometric reference.
@@ -2371,6 +2421,7 @@ The Digitized Sky Surveys were produced at the Space Telescope Science Institute
   \texttt{pyGAM} \citep{serven_pygam_2018_1476122}
   \texttt{psycopg2} (\url{initd.org/psycopg})
   \texttt{scipy} \citep{jones_scipy_2001},
+  \texttt{scikit-learn} \citep{sklearn_2011},
   \texttt{TagSpaces} (\url{tagspaces.org}),
   \texttt{tesscut} \citep{brasseur_astrocut_2019},
   \texttt{VARTOOLS} \citep{Hartman_Bakos_2016}

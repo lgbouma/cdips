@@ -17,6 +17,12 @@ cp ${fdir}trex_overview.pdf ${pdir}pipelineoverview.pdf
 # rms vs mag 
 fdir=../results/paper_figures/
 
+cp ${fdir}stages_of_image_processing_good.png \
+   ${pdir}stages_of_image_processing_good.png
+
+cp ${fdir}stages_of_image_processing_bad.png \
+   ${pdir}stages_of_image_processing_bad.png
+
 cp ${fdir}primary_mission_galacticmap_forproposal_cdipsoverplot.png \
    ${pdir}target_star_positions.png
 
