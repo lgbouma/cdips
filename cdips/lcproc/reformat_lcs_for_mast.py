@@ -15,11 +15,15 @@ from datetime import datetime
 from astroquery.mast import Catalogs
 from astropy import units as u, constants as const
 from astropy.coordinates import SkyCoord
+
 import multiprocessing as mp
+from copy import deepcopy
 
 from sklearn.linear_model import LinearRegression
 
 from cdips.utils import collect_cdips_lightcurves as ccl
+
+from astrobase.lcmath import find_lc_timegroups
 
 def _get_tic(mrow, key):
     if isinstance(mrow[key], np.ma.core.MaskedConstant):
@@ -169,21 +173,86 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
         reg = LinearRegression(fit_intercept=True)
 
         y = data['IRM{}'.format(ap)]
-        mean_mag = np.nanmean(y)
 
-        _X = eigenvecs[:n_components, :]
-        reg.fit(_X.T, y-mean_mag)
+        if np.all(pd.isnull(y)):
+            # if all nan, job is easy
+            model_mag = y
+            pca_mags['PCA{}'.format(ap)] = model_mag
+            primaryhdr['PCA{}NCMP'.format(ap)] = (
+                'nan',
+                'N principal components PCA{}'.format(ap)
+            )
+        elif np.any(pd.isnull(y)):
+            #
+            # if some nan, tricky. strategy: impose the same nans onto the
+            # eigenvectors. then fit without nans. then put nans back in.
+            #
+            mean_mag = np.nanmean(y)
 
-        model_mag = reg.intercept_ + (reg.coef_ @ _X)
+            _X = eigenvecs[:n_components, :]
 
-        model_mag += mean_mag
+            _X = _X[:, ~pd.isnull(y)]
 
-        pca_mags['PCA{}'.format(ap)] = model_mag
+            reg.fit(_X.T, y[~pd.isnull(y)] - mean_mag)
 
-        primaryhdr['PCA{}NCMP'.format(ap)] = (
-            n_components,
-            'N principal components PCA{}'.format(ap)
-        )
+            model_mag = reg.intercept_ + (reg.coef_ @ _X)
+
+            model_mag += mean_mag
+
+            #
+            # now insert nans where they were in original target light curve.
+            # typically nans occur in groups. insert by groups. this is a
+            # tricky procedure, so test after to ensure nan indice in the model
+            # and target light curves are the same.
+            #
+            naninds = np.argwhere(pd.isnull(y)).flatten()
+
+            ngroups, groups = find_lc_timegroups(naninds, mingap=1)
+
+            for group in groups:
+
+                thisgroupnaninds = naninds[group]
+
+                model_mag = np.insert(model_mag,
+                                      np.min(thisgroupnaninds),
+                                      [np.nan]*len(thisgroupnaninds))
+
+            np.testing.assert_(
+                model_mag.shape == y.shape
+            )
+            np.testing.assert_(
+                (len((model_mag-y)[pd.isnull(model_mag-y)])
+                 ==
+                 len(y[pd.isnull(y)])
+                ),
+                'got different nan indices in model mag than target mag'
+            )
+
+            pca_mags['PCA{}'.format(ap)] = model_mag
+
+            primaryhdr['PCA{}NCMP'.format(ap)] = (
+                n_components,
+                'N principal components PCA{}'.format(ap)
+            )
+
+        else:
+            # otherwise, just directly fit the principal components
+            mean_mag = np.nanmean(y)
+
+            _X = eigenvecs[:n_components, :]
+
+            reg.fit(_X.T, y-mean_mag)
+
+            model_mag = reg.intercept_ + (reg.coef_ @ _X)
+
+            model_mag += mean_mag
+
+            pca_mags['PCA{}'.format(ap)] = model_mag
+
+            primaryhdr['PCA{}NCMP'.format(ap)] = (
+                n_components,
+                'N principal components PCA{}'.format(ap)
+            )
 
     #
     # now merge the timeseries, as from TFA merge...
@@ -455,6 +524,9 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
     #
     # set timeseries extension header key comments. also set the units.
     #
+    timeseries_hdu = fits.BinTableHDU.from_columns(new_columns)
+    hdr = timeseries_hdu.header
+
     tfields = hdr['TFIELDS'] # number of table fields
     hdrkv = {}
     for ind in range(1,tfields+1):
@@ -491,9 +563,6 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
 
     primary_hdu = fits.PrimaryHDU(header=primaryhdr)
 
-    timeseries_hdu = fits.BinTableHDU.from_columns(new_columns, header=hdr)
-    timeseries_hdu.header = hdr
-
     outhdulist = fits.HDUList([primary_hdu, timeseries_hdu])
 
     outname = (
@@ -511,8 +580,6 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
     outhdulist.writeto(outfile, overwrite=False)
     print('{}: reformatted {}, wrote to {}'.format(
         datetime.utcnow().isoformat(), lcpath, outfile))
-
-    import IPython; IPython.embed()
 
     outhdulist.close()
     inhdulist.close()

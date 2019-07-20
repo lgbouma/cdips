@@ -11,7 +11,7 @@ CDIPS project. they include:
     according to who?). further, during this reformatting: add any niceties
     needed for public use.
 
-python -u trex_lc_to_mast_lc.py &> logs/reformat_trex_to_mast_s6_cam1to4_ccd1to4.log &
+python -u -W"ignore" trex_lc_to_mast_lc.py &> logs/reformat_trex_to_mast_s6_cam1to4_ccd1to4.log &
 """
 
 import os, shutil
