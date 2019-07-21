@@ -151,6 +151,12 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         )
 
         #
+        # for the fit, require that for each tempalte light curve is only made
+        # of finite values. this might drop a row or two.
+        #
+        mags = mags[~np.isnan(mags).any(axis=1)]
+
+        #
         # subtract mean, as is standard in PCA.
         #
         mean_mags = np.nanmean(mags, axis=1)
