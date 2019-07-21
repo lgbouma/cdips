@@ -213,35 +213,35 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
                 # X is matrix of (n_samples, n_features).
                 #
 
-                # either linear regression or bayesian ridge regression seems fine
-                reg = LinearRegression(fit_intercept=True)
-                #reg = BayesianRidge(fit_intercept=True)
-
-                y = mag
-                _X = eigenvecs[:n_components, :]
-
                 try:
+                    # either linear regression or bayesian ridge regression seems fine
+                    reg = LinearRegression(fit_intercept=True)
+                    #reg = BayesianRidge(fit_intercept=True)
+
+                    y = mag
+                    _X = eigenvecs[:n_components, :]
+
                     reg.fit(_X.T, y)
-                except ValueError:
+
+                    model_mag = reg.intercept_ + (reg.coef_ @ _X)
+
+                    time = nparr(df_dates['btjd'])
+
+                    ax.scatter(time, mag + mean_mag, c='k', alpha=0.9,
+                               zorder=2, s=1, rasterized=True, linewidths=0)
+                    ax.plot(time, model_mag + mean_mag, c='C0', zorder=1,
+                            rasterized=True, lw=0.5, alpha=0.7 )
+
+                    txt = '{} components'.format(n_components)
+                    ax.text(0.02, 0.02, txt, ha='left', va='bottom',
+                            fontsize='medium', transform=ax.transAxes)
+
+                    ax_r.scatter(time, mag-model_mag, c='k', alpha=0.9, zorder=2,
+                                 s=1, rasterized=True, linewidths=0)
+                    ax_r.plot(time, model_mag-model_mag, c='C0', zorder=1,
+                              rasterized=True, lw=0.5, alpha=0.7)
+                except:
                     continue
-
-                model_mag = reg.intercept_ + (reg.coef_ @ _X)
-
-                time = nparr(df_dates['btjd'])
-
-                ax.scatter(time, mag + mean_mag, c='k', alpha=0.9,
-                           zorder=2, s=1, rasterized=True, linewidths=0)
-                ax.plot(time, model_mag + mean_mag, c='C0', zorder=1,
-                        rasterized=True, lw=0.5, alpha=0.7 )
-
-                txt = '{} components'.format(n_components)
-                ax.text(0.02, 0.02, txt, ha='left', va='bottom',
-                        fontsize='medium', transform=ax.transAxes)
-
-                ax_r.scatter(time, mag-model_mag, c='k', alpha=0.9, zorder=2,
-                             s=1, rasterized=True, linewidths=0)
-                ax_r.plot(time, model_mag-model_mag, c='C0', zorder=1,
-                          rasterized=True, lw=0.5, alpha=0.7)
 
             for a in axs[:,0]:
                 a.set_ylabel('raw mag')
