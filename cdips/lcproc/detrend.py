@@ -220,7 +220,10 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
                 y = mag
                 _X = eigenvecs[:n_components, :]
 
-                reg.fit(_X.T, y)
+                try:
+                    reg.fit(_X.T, y)
+                except ValueError:
+                    continue
 
                 model_mag = reg.intercept_ + (reg.coef_ @ _X)
 
