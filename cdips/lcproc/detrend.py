@@ -2,6 +2,8 @@ from wotan import flatten
 import os, shutil
 from glob import glob
 
+import matplotlib
+matplotlib.use("AGG")
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from astropy.io import fits
 
