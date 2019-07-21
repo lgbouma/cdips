@@ -91,7 +91,9 @@ cp ${fdir}proj1500-s0006-cam1-ccd1-combinedphotref-onenight_spocwcs_quiver_meas_
    ${pdir}astromresidual_quiver.pdf
 
 # pdftk burst the chosen vetting pdf
-pdftk vet_hlsp_cdips_tess_ffi_gaiatwo0005541111035713815552-0007_tess_v01_llc.pdf burst output gaiatwo0005541111035713815552-0007_page%02d.pdf
+pdftk \
+  vet_hlsp_cdips_tess_ffi_gaiatwo0005599752663752776192-0007_tess_v01_llc.pdf \
+  burst output gaiatwo0005599752663752776192-0007_page%02d.pdf
 
 ##########################################
 
