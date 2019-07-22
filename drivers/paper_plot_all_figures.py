@@ -46,24 +46,23 @@ LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
 def main():
 
-    #FIXME NEED TO VERIFY THIS WORKS
-    plot_detrended_light_curves(sector=6, cam=1, ccd=2, overwrite=1, seed=43)
+    # timeseries figures
+    plot_detrended_light_curves(
+        sector=6, cam=1, ccd=1, overwrite=1, seed=42)
 
-    assert 0
+    plot_external_parameters_vs_time(
+        sector=6, cam=1, ccd=1, overwrite=1, seed=43)
+
+    plot_raw_light_curve_systematics(
+        sector=6, cam=1, ccd=2, overwrite=1, seed=43)
+
+    plot_raw_light_curve_systematics(
+        sector=7, cam=2, ccd=4, overwrite=1, seed=42)
 
     sectors = [6,7]
 
-    plot_external_parameters_vs_time(sector=6, cam=1, ccd=1, overwrite=1,
-                                     seed=43)
-
     # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
     plot_rms_vs_mag(sectors, overwrite=1)
-
-    plot_raw_light_curve_systematics(sector=6, cam=1, ccd=2, overwrite=1,
-                                     seed=43)
-
-    plot_raw_light_curve_systematics(sector=7, cam=2, ccd=4, overwrite=1,
-                                     seed=42)
 
     # fig N: average autocorrelation fn of LCs
     plot_avg_acf(sectors, overwrite=1, cleanprevacf=False)
@@ -431,21 +430,27 @@ def plot_detrended_light_curves(sector=None, cam=None, ccd=None,
     colors = plt.cm.tab20b( list(range(N_to_plot)) )
 
     ind = 0
-    for i in range(N_to_plot):
+    i = 0
+    while i < N_to_plot-1:
 
         ind += 1
 
         rawmag = rawmags[ind,:]
         pcamag = pcamags[ind,:]
         tfamag = tfamags[ind,:]
-        if np.all(pd.isnull(rawmag)):
+        if (
+            np.any(np.isnan(rawmag)) or
+            np.any(np.isnan(pcamag)) or
+            np.any(np.isnan(tfamag))
+        ):
             continue
 
         rawmag -= np.nanmean(rawmag)
         pcamag -= np.nanmean(pcamag)
         tfamag -= np.nanmean(tfamag)
 
-        offset = i*0.3
+        offset = i*0.45
+        i += 1
 
         expected_norbits = 2
         orbitgap = 0.5
@@ -465,9 +470,9 @@ def plot_detrended_light_curves(sector=None, cam=None, ccd=None,
 
             ax.plot(tg_time, tg_rawmag+offset, c=colors[i], lw=0.5,
                     rasterized=True)
-            ax.plot(tg_time, tg_pcamag+offset-0.06, c=colors[i], lw=0.5,
+            ax.plot(tg_time, tg_pcamag+offset-0.07, c=colors[i], lw=0.5,
                     rasterized=True)
-            ax.plot(tg_time, tg_tfamag+offset-0.12, c=colors[i], lw=0.5,
+            ax.plot(tg_time, tg_tfamag+offset-0.14, c=colors[i], lw=0.5,
                     rasterized=True)
 
     ax.set_xlabel('Time $\mathrm{{BJD}}_{{\mathrm{{TDB}}}}$ [days]')
