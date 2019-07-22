@@ -189,6 +189,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
                 'nan',
                 'N principal components PCA{}'.format(ap)
             )
+
         elif np.any(pd.isnull(y)):
             #
             # if some nan in target light curve, tricky. strategy: impose the
@@ -236,7 +237,10 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
                 'got different nan indices in model mag than target mag'
             )
 
-            pca_mags['PCA{}'.format(ap)] = model_mag
+            #
+            # save result as IRM mag - PCA model mag + mean IRM mag
+            #
+            pca_mags['PCA{}'.format(ap)] = y - model_mag + mean_mag
 
             primaryhdr['PCA{}NCMP'.format(ap)] = (
                 n_components,
@@ -255,7 +259,10 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
 
             model_mag += mean_mag
 
-            pca_mags['PCA{}'.format(ap)] = model_mag
+            #
+            # save result as IRM mag - PCA model mag + mean IRM mag
+            #
+            pca_mags['PCA{}'.format(ap)] = y - model_mag + mean_mag
 
             primaryhdr['PCA{}NCMP'.format(ap)] = (
                 n_components,
