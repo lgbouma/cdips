@@ -46,11 +46,15 @@ LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
 def main():
 
+    #FIXME NEED TO VERIFY THIS WORKS
     plot_detrended_light_curves(sector=6, cam=1, ccd=2, overwrite=1, seed=43)
 
     assert 0
 
     sectors = [6,7]
+
+    plot_external_parameters_vs_time(sector=6, cam=1, ccd=1, overwrite=1,
+                                     seed=43)
 
     # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
     plot_rms_vs_mag(sectors, overwrite=1)
@@ -128,6 +132,140 @@ def get_mag(fitspath, ap='IRM2'):
     with fits.open(fitspath) as hdulist:
         mag = hdulist[1].data[ap]
     return mag
+
+
+def plot_external_parameters_vs_time(sector=6, cam=1, ccd=2, overwrite=1,
+                                     seed=42):
+
+    outpath = os.path.join(
+        OUTDIR,
+        'external_parameters_vs_time_sec{}cam{}ccd{}.png'.
+        format(sector, cam, ccd)
+    )
+    if os.path.exists(outpath) and not overwrite:
+        print('found {} and not overwrite; return'.format(outpath))
+        return
+
+    #
+    # data dir with what lcs exist, and what their T mags are.
+    #
+    dfpath = os.path.join(
+        OUTDIR,
+        'detrended_light_curves_sec{}cam{}ccd{}.csv'.
+        format(sector, cam, ccd)
+    )
+    if not os.path.exists(dfpath):
+        lcdir = (
+            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/cam{}_ccd{}'.
+            format(sector, cam, ccd)
+        )
+        lcpaths = glob(os.path.join(lcdir, '*_llc.fits'))
+        Tmags = np.array([get_Tmag(l) for l in lcpaths])
+
+        df = pd.DataFrame({'lcpaths':lcpaths,'Tmags':Tmags})
+        df.to_csv(dfpath, index=False, sep=',')
+    else:
+        df = pd.read_csv(dfpath, sep=',')
+
+    sel = (df['Tmags'] > 13) & (df['Tmags'] < 14)
+
+    lcpaths = nparr(df['lcpaths'][sel])
+
+    np.random.seed(seed)
+    spath = np.random.choice(lcpaths, size=1, replace=False)[0]
+
+    #
+    # define some keys. open the chosen lc. and get the times of momentum dumps.
+    #
+
+    lc = fits.open(spath)[1].data
+
+    magtype = 'IRM2'
+    keys = [magtype, 'XIC', 'YIC', 'FSV', 'FDV', 'FKV', 'CCDTEMP', 'BGV']
+    labels = [magtype, 'x', 'y', 's', 'd', 'k', 'T [$^\circ$C]', 'bkgd [ADU]']
+
+    time = lc['TMID_BJD']
+
+    baddir = (
+        '/nfs/phtess2/ar0/TESS/FFI/RED_IMGSUB/FULL/'+
+        's{}/'.format(str(sector).zfill(4))+
+        'RED_{}-{}-15??_ISP/badframes'.format(cam, ccd)
+    )
+    badframes = glob(os.path.join(baddir, '*.fits'))
+
+    mom_dump_times = []
+    qualitys = []
+
+    for badframe in badframes:
+
+        quality = iu.get_header_keyword(badframe, 'DQUALITY')
+
+        if not quality > 0 :
+            continue
+
+        tstart = iu.get_header_keyword(badframe, 'TSTART')
+        telapse = iu.get_header_keyword(badframe, 'TELAPSE')
+        bjdrefi = iu.get_header_keyword(badframe, 'BJDREFI')
+
+        tmid = bjdrefi + tstart + telapse / 2
+
+        mom_dump_times.append(tmid)
+        qualitys.append(quality)
+
+    #
+    # now make the plot
+    #
+
+    plt.close('all')
+
+    fig,axs = plt.subplots(nrows=len(keys), ncols=1,
+                           figsize=(4, 1.2*len(keys)), sharex=True)
+    axs = axs.flatten()
+
+    for ax, key, label in zip(axs, keys, labels):
+
+        xval = time
+        yval = lc[key]
+
+        if label in ['x','y']:
+            yoffset = int(np.mean(yval))
+            yval -= yoffset
+            label += '- {:d} [px]'.format(yoffset)
+
+        elif label in [magtype]:
+            yoffset = np.round(np.median(yval), decimals=1)
+            yval -= yoffset
+            yval *= 1e3
+            label += '- {:.1f} [mmag]'.format(yoffset)
+
+        ax.scatter(xval, yval, rasterized=True, alpha=0.8, zorder=3, c='k',
+                   lw=0, s=3)
+
+        ax.set_ylabel(label, fontsize='small')
+
+        ax.yaxis.set_ticks_position('both')
+        ax.xaxis.set_ticks_position('both')
+        ax.get_yaxis().set_tick_params(which='both', direction='in')
+        ax.get_xaxis().set_tick_params(which='both', direction='in')
+        ax.xaxis.set_tick_params(labelsize='small')
+        ax.yaxis.set_tick_params(labelsize='small')
+
+        if label in [magtype]:
+            ylim = ax.get_ylim()
+            ax.set_ylim((max(ylim), min(ylim)))
+
+        ylim = ax.get_ylim()
+        ax.vlines(mom_dump_times, min(ylim), max(ylim), color='orangered',
+                  linestyle='--', zorder=0, lw=1, alpha=0.3)
+        ax.set_ylim((min(ylim), max(ylim)))
+
+    ax.set_xlabel('Time $\mathrm{{BJD}}_{{\mathrm{{TDB}}}}$ [days]',
+                  fontsize='small')
+
+    fig.tight_layout(h_pad=-0.5, pad=0.2)
+
+    savefig(fig, outpath)
+
 
 
 def plot_raw_light_curve_systematics(sector=None, cam=None, ccd=None,
