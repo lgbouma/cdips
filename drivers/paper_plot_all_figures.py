@@ -48,6 +48,9 @@ def main():
 
     # timeseries figures
     plot_detrended_light_curves(
+        sector=6, cam=1, ccd=2, overwrite=1, seed=43)
+
+    plot_detrended_light_curves(
         sector=6, cam=1, ccd=1, overwrite=1, seed=42)
 
     plot_external_parameters_vs_time(
