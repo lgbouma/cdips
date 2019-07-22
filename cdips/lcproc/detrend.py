@@ -6,6 +6,7 @@ import matplotlib
 matplotlib.use("AGG")
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from astropy.io import fits
+from datetime import datetime
 
 from numpy import array as nparr, all as npall, isfinite as npisfinite
 
@@ -28,11 +29,6 @@ def detrend_flux(time, flux):
     return flat_flux, trend_flux
 
 
-def _get_mag(fitspath, ap):
-    with fits.open(fitspath) as hdulist:
-        mag = hdulist[1].data[ap]
-    return mag
-
 def compute_scores(X, n_components):
     pca = PCA()
     fa = FactorAnalysis()
@@ -44,6 +40,60 @@ def compute_scores(X, n_components):
         fa_scores.append(np.mean(cross_val_score(fa, X, cv=5)))
 
     return pca_scores, fa_scores
+
+
+def insert_nans_given_rstfc(mag, mag_rstfc, full_rstfc):
+    """
+    args:
+
+        mag: the vector of magnitudes that needs nans inserted
+
+        mag_rstfc: RSTFC frame id vector of same length as mag
+
+        full_rstfc: RSTFC frame id vector of larger length, that will be
+        matched against.
+
+    returns:
+
+        full_mag: vector of magnitudes with nans inserted, of same length as
+        full_rstfc
+    """
+
+    if not len(full_rstfc) >= len(mag_rstfc):
+
+        raise AssertionError('full_rstfc needs to be the big one')
+
+    if len(full_rstfc) == len(mag_rstfc):
+
+        return mag
+
+    else:
+        # input LC has too few frame stamps (for whatever reason -- often
+        # because NaNs are treated differently by VARTOOLS TFA or other
+        # detrenders, so they are omitted). The following code finds entries in
+        # the TFA lightcurve that are missing frameids, and put nans in those
+        # cases. It does this by first making an array of NaNs with length
+        # equal to the original RAW data. It then puts the magnitude values at
+        # the appropriate indices, through the frame-id matching ("RSTFC" ids).
+
+        inarr = np.in1d(full_rstfc, mag_rstfc)
+
+        inds_to_put = np.argwhere(inarr).flatten()
+
+        full_mag = (
+            np.ones_like(np.arange(len(full_rstfc),
+                                   dtype=np.float))*np.nan
+        )
+
+        full_mag[ inds_to_put ] = mag
+
+        wrn_msg = (
+            '{} WRN!: found missing frameids. added NaNs'.
+            format(datetime.utcnow().isoformat())
+        )
+        print(wrn_msg)
+
+        return full_mag
 
 
 def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
@@ -143,9 +193,19 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
 
         mags = nparr(
             list(
-                map(_get_mag,
-                    nparr(df_template_stars['path']),
-                    np.repeat('IRM{}'.format(ap), len(df_template_stars))
+                map(iu.get_data_keyword,
+                    nparr(df_template_stars['path']), # file,
+                    np.repeat('IRM{}'.format(ap), len(df_template_stars)), # keyword
+                    np.repeat(1, len(df_template_stars)) # extension
+                   )
+            )
+        )
+        mag_rstfc = nparr(
+            list(
+                map(iu.get_data_keyword,
+                    nparr(df_template_stars['path']), # file,
+                    np.repeat('RSTFC', len(df_template_stars)), # keyword
+                    np.repeat(1, len(df_template_stars)) # extension
                    )
             )
         )
@@ -154,13 +214,13 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         # for the fit, require that for each tempalte light curve is only made
         # of finite values. this might drop a row or two.
         #
-        mags = mags[~np.isnan(mags).any(axis=1)]
+        fmags = mags[~np.isnan(mags).any(axis=1)]
 
         #
         # subtract mean, as is standard in PCA.
         #
-        mean_mags = np.nanmean(mags, axis=1)
-        X = mags - mean_mags[:, None]
+        mean_mags = np.nanmean(fmags, axis=1)
+        X = fmags - mean_mags[:, None]
 
         pca = PCA()
         pca.fit(X)
@@ -194,14 +254,19 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
                 continue
 
             np.random.seed(i)
-            mag = _get_mag(np.random.choice(lcpaths, size=1)[0],
-                           'IRM{}'.format(ap))
+            this_lcpath = np.random.choice(lcpaths, size=1)[0]
+            mag = iu.get_data_keyword(this_lcpath, 'IRM{}'.format(ap))
+            mag_rstfc = iu.get_data_keyword(this_lcpath, 'RSTFC')
+
             if np.all(pd.isnull(mag)):
                 while np.all(pd.isnull(mag)):
-                    mag = _get_mag(np.random.choice(lcpaths, size=1)[0],
-                                   'IRM{}'.format(ap))
+                    next_lcpath = np.random.choice(lcpaths, size=1)[0]
+                    mag = iu.get_data_keyword(next_lcpath, 'IRM{}'.format(ap))
+                    mag_rstfc = iu.get_data_keyword(next_lcpath, 'RSTFC')
+
             mean_mag = np.nanmean(mag)
             mag = mag - mean_mag
+            mag = mag[~pd.isnull(mag)]
 
             component_list = [1, 2, 4, 8, 12, 16, 20]
 
@@ -219,35 +284,53 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
                 # X is matrix of (n_samples, n_features).
                 #
 
+                #FIXME FIXME. probably have a shape related bug?!?!?!?!?!!?!?!?!?
+                # either linear regression or bayesian ridge regression seems fine
+                reg = LinearRegression(fit_intercept=True)
+                #reg = BayesianRidge(fit_intercept=True)
+
+                #FIXME : you need to simultaneously cast the eigenvectors and
+                # magnitudes to the same shape of nans?!
+
+                y = mag
+                _X = eigenvecs[:n_components, :]
+
                 try:
-                    # either linear regression or bayesian ridge regression seems fine
-                    reg = LinearRegression(fit_intercept=True)
-                    #reg = BayesianRidge(fit_intercept=True)
-
-                    y = mag
-                    _X = eigenvecs[:n_components, :]
-
                     reg.fit(_X.T, y)
-
-                    model_mag = reg.intercept_ + (reg.coef_ @ _X)
-
-                    time = nparr(df_dates['btjd'])
-
-                    ax.scatter(time, mag + mean_mag, c='k', alpha=0.9,
-                               zorder=2, s=1, rasterized=True, linewidths=0)
-                    ax.plot(time, model_mag + mean_mag, c='C0', zorder=1,
-                            rasterized=True, lw=0.5, alpha=0.7 )
-
-                    txt = '{} components'.format(n_components)
-                    ax.text(0.02, 0.02, txt, ha='left', va='bottom',
-                            fontsize='medium', transform=ax.transAxes)
-
-                    ax_r.scatter(time, mag-model_mag, c='k', alpha=0.9, zorder=2,
-                                 s=1, rasterized=True, linewidths=0)
-                    ax_r.plot(time, model_mag-model_mag, c='C0', zorder=1,
-                              rasterized=True, lw=0.5, alpha=0.7)
-                except:
+                except Exception as e:
+                    print(e)
+                    print(n_components)
                     continue
+                    #import IPython; IPython.embed() #FIXME error is here.
+
+                model_mag = reg.intercept_ + (reg.coef_ @ _X)
+
+                # given "true" (full) RSTFC list, and the actual list
+                # ("rstfc" above), need a function that gives model mags
+                # (or data mags) with nans in correct place
+
+                time = nparr(df_dates['btjd'])
+                full_rstfc = nparr(df_dates['rstfc'])
+
+                full_mag = insert_nans_given_rstfc(mag, mag_rstfc, full_rstfc)
+
+                full_model_mag = insert_nans_given_rstfc(
+                    model_mag, mag_rstfc, full_rstfc
+                )
+
+                ax.scatter(time, full_mag + mean_mag, c='k', alpha=0.9,
+                           zorder=2, s=1, rasterized=True, linewidths=0)
+                ax.plot(time, full_model_mag + mean_mag, c='C0', zorder=1,
+                        rasterized=True, lw=0.5, alpha=0.7 )
+
+                txt = '{} components'.format(n_components)
+                ax.text(0.02, 0.02, txt, ha='left', va='bottom',
+                        fontsize='medium', transform=ax.transAxes)
+
+                ax_r.scatter(time, full_mag-full_model_mag, c='k', alpha=0.9, zorder=2,
+                             s=1, rasterized=True, linewidths=0)
+                ax_r.plot(time, full_model_mag-full_model_mag, c='C0', zorder=1,
+                          rasterized=True, lw=0.5, alpha=0.7)
 
             for a in axs[:,0]:
                 a.set_ylabel('raw mag')

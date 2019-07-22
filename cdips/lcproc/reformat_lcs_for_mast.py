@@ -162,6 +162,10 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
     #
     primaryhdr['DTR_PCA'] = False
 
+    assert 0
+    #FIXME FIXME: you need to add nans in the correct place, using the tool you
+    #wrote in the detrend module
+
     pca_mags = {}
 
     for ix, eigenvecs in enumerate(eigveclist):
