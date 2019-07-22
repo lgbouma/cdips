@@ -1,12 +1,11 @@
-from wotan import flatten
-import os, shutil
-from glob import glob
-
 import matplotlib
 matplotlib.use("AGG")
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from astropy.io import fits
+
 from datetime import datetime
+import os, shutil
+from glob import glob
 
 from numpy import array as nparr, all as npall, isfinite as npisfinite
 
@@ -15,6 +14,9 @@ import imageutils as iu
 from sklearn.decomposition import PCA, FactorAnalysis
 from sklearn.linear_model import LinearRegression, BayesianRidge
 from sklearn.model_selection import cross_val_score
+
+from wotan import flatten
+
 
 def detrend_flux(time, flux):
 

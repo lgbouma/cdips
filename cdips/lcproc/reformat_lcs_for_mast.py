@@ -1,7 +1,7 @@
 """
 Given directories of symlinked PIPE-TREX-output FTIS LCs, make the headers
-presentable; apply minor changes to improve their BLS-searchability; and append
-PCA-detrended light curves.
+presentable; apply minor changes to improve their BLS-searchability; compute &
+append PCA-detrended light curves.
 
 reformat_headers
 reformat_worker
@@ -22,6 +22,7 @@ from copy import deepcopy
 from sklearn.linear_model import LinearRegression
 
 from cdips.utils import collect_cdips_lightcurves as ccl
+from cdips.tests import verify_lightcurves as vl
 
 from astrobase.lcmath import find_lc_timegroups
 
@@ -580,6 +581,8 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
     )
 
     outfile = os.path.join(outdir, outname)
+
+    vl.verify_lightcurve(outhdulist)
 
     outhdulist.writeto(outfile, overwrite=False)
     print('{}: reformatted {}, wrote to {}'.format(
