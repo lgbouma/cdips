@@ -44,12 +44,12 @@ def test_nan_placement(hdulist):
 
         #
         # if any nan values in the IRM light curve are NOT nan in the PCA light
-        # curve, raise an error.
+        # curve, raise an error. note we know the lengths are the same.
         #
         if np.any(
             np.in1d(
-                pd.isnull(hdulist[1].data[irm_key]),
-                ~pd.isnull(hdulist[1].data[pca_key])
+                np.argwhere(np.isnan(hdulist[1].data[irm_key])),
+                np.argwhere(~np.isnan(hdulist[1].data[pca_key]))
             )
         ):
             errmsg = (
@@ -66,14 +66,16 @@ def test_nan_placement(hdulist):
         #
         if np.any(
             np.in1d(
-                pd.isnull(hdulist[1].data[irm_key]),
-                ~pd.isnull(hdulist[1].data[tfa_key])
+                np.argwhere(np.isnan(hdulist[1].data[irm_key])),
+                np.argwhere(~np.isnan(hdulist[1].data[tfa_key]))
             )
         ):
             errmsg = (
                 'got nan values in {irm_key} LC that are NOT nan in {tfa_key} LC'.
                 format(irm_key=irm_key, tfa_key=tfa_key)
             )
+            print(errmsg)
+            import IPython; IPython.embed()
             raise AssertionError(errmsg)
         else:
             print('verified that no nans in {irm_key} are NOT nan in {tfa_key}'.

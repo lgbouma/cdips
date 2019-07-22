@@ -186,7 +186,7 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         lcpaths = glob(os.path.join(lcdir, '*_llc.fits'))
 
         #
-        # prepare data as a (N_template_stars x N_times) matrix. We have N=200
+        # prepare data as a (N_template_stars x N_times) matrix. We have N~=200
         # template light curves, with K=N_times measurements in each. Think of
         # these as N vectors in a K-dimensional space. I.e. the flux at each
         # time point is a "measured feature". So we have N samples (light

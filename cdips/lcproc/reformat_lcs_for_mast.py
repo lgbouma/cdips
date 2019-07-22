@@ -22,7 +22,7 @@ from copy import deepcopy
 from sklearn.linear_model import LinearRegression
 
 from cdips.utils import collect_cdips_lightcurves as ccl
-from cdips.tests import verify_lightcurves as vl
+from cdips.tests import verify_lightcurves as test
 
 from astrobase.lcmath import find_lc_timegroups
 
@@ -138,6 +138,8 @@ def _map_timeseries_key_to_unit(k):
 
 def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
                      eigveclist=None, n_comp_df=None):
+    # eigveclist: length 3, each with a np.ndarray of eigenvectors given by
+    # dtr.prepare_pca
 
     hdul = fits.open(lcpath)
     primaryhdr, hdr, data = (
@@ -163,13 +165,13 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
     #
     primaryhdr['DTR_PCA'] = False
 
-    assert 0
-    #FIXME FIXME: you need to add nans in the correct place, using the tool you
-    #wrote in the detrend module
-
     pca_mags = {}
 
     for ix, eigenvecs in enumerate(eigveclist):
+
+        if np.any(pd.isnull(eigenvecs)):
+            print('got nans in eigvecs. bad!')
+            import IPython; IPython.embed()
 
         ap = ix+1
 
@@ -189,8 +191,9 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
             )
         elif np.any(pd.isnull(y)):
             #
-            # if some nan, tricky. strategy: impose the same nans onto the
-            # eigenvectors. then fit without nans. then put nans back in.
+            # if some nan in target light curve, tricky. strategy: impose the
+            # same nans onto the eigenvectors. then fit without nans. then put
+            # nans back in.
             #
             mean_mag = np.nanmean(y)
 
@@ -582,7 +585,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
 
     outfile = os.path.join(outdir, outname)
 
-    vl.verify_lightcurve(outhdulist)
+    test.verify_lightcurve(outhdulist)
 
     outhdulist.writeto(outfile, overwrite=False)
     print('{}: reformatted {}, wrote to {}'.format(
