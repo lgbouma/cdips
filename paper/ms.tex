@@ -1298,14 +1298,39 @@ at any given time, we used the
   }
 	\vspace{-0.5cm}
 	\caption{
-	Twenty randomly selected raw image-subtracted light curves drawn
+	Twenty randomly selected stars drawn
 	from the same sector, camera,
 	and CCD, for stars with $T$-band magnitudes between 13 and 14.
+
+  %#FIXME CAPTIOIN
+raw image-subtracted light curves
+
 	A number of systematic trends are shared across the light curves.
 	The sector, camera, and CCD numbers are 6, 1, 2 (left) and 7, 2, 4 (right).
-	\label{fig:lc_systematics}
+	\label{fig:lc_systematics_detrended}
 	}
 \end{figure*}
+
+\begin{figure}[!t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=0.47\textwidth]{detrended_light_curves_sec6cam1ccd1.pdf}
+	\end{center}
+	\vspace{-0.5cm}
+	\caption{
+    Twenty randomly selected light curves drawn
+    from the same sector, camera,
+    and CCD, for stars with $T$-band magnitudes between 13 and 14.
+    Each light curve is shown from top to bottom in raw, PCA-detrended, and
+    TFA-detrended forms.
+    Stellar rotation signals are usually preserved in the PCA light curves,
+    while TFA tends to either filter them out, or to distort them.
+		\label{fig:detrended}
+	}
+\end{figure}
+
+
+
 
 \begin{figure}[!t]
 	\begin{center}
@@ -1328,28 +1353,9 @@ at any given time, we used the
 	}
 \end{figure}
 
-\begin{figure}[!t]
-	\begin{center}
-		\leavevmode
-		\includegraphics[width=0.47\textwidth]{detrended_light_curves_sec6cam1ccd1.pdf}
-	\end{center}
-	\vspace{-0.5cm}
-	\caption{
-    Twenty randomly selected light curves drawn
-    from the same sector, camera,
-    and CCD, for stars with $T$-band magnitudes between 13 and 14.
-    Each light curve is shown from top to bottom in raw, PCA-detrended, and
-    TFA-detrended forms.
-    Stellar rotation signals are usually preserved in the PCA light curves,
-    while TFA tends to either filter them out, or to distort them.
-		\label{fig:detrended}
-	}
-\end{figure}
-
-
 The preceding steps produce light curves that include both
 instrumental systematics as well as astrophysical variability.
-Figure~\ref{fig:lc_systematics} shows twenty stars of
+Figure~\ref{fig:lc_systematics_detrended} shows twenty stars of
 comparable brightness randomly selected from two CCDs.  Stars that are
 far apart on the same CCD share similar changes in flux.
 In other words, the instrumental systematics seem to dominate.
