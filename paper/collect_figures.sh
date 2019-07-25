@@ -17,6 +17,12 @@ cp ${fdir}trex_overview.pdf ${pdir}pipelineoverview.pdf
 # rms vs mag 
 fdir=../results/paper_figures/
 
+cp ${fdir}detrended_light_curves_sec7cam2ccd4.pdf \
+   ${pdir}detrended_light_curves_sec7cam2ccd4.pdf
+
+cp ${fdir}detrended_light_curves_sec6cam1ccd2.pdf \
+   ${pdir}detrended_light_curves_sec6cam1ccd2.pdf
+
 cp ${fdir}detrended_light_curves_sec6cam1ccd1.pdf \
    ${pdir}detrended_light_curves_sec6cam1ccd1.pdf
 
