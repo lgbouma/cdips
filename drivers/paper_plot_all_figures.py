@@ -20,7 +20,7 @@ from astropy import units as u
 from astrobase import lcmath
 from astrobase.lcmath import phase_magseries
 
-from aperturephot import get_lc_statistics
+from lcstatistics import compute_lc_statistics_fits
 import lcstatistics as lcs
 
 from cdips.utils import tess_noise_model as tnm
@@ -46,12 +46,20 @@ LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
 def main():
 
-    # timeseries figures
-    plot_detrended_light_curves(
-        sector=6, cam=1, ccd=2, overwrite=1, seed=43)
+    sectors = [6,7]
 
-    plot_detrended_light_curves(
-        sector=6, cam=1, ccd=1, overwrite=1, seed=42)
+    # timeseries figures
+    for sector in range(6,8):
+        for cam in range(1,5):
+            for ccd in range(1,5):
+                try:
+                    plot_detrended_light_curves(
+                        sector=sector, cam=cam, ccd=ccd, overwrite=0, seed=42
+                    )
+                except Exception as e:
+                    print('{}-{}-{} failed, because {}'.
+                          format(sector,cam,ccd,repr(e)))
+                    pass
 
     plot_external_parameters_vs_time(
         sector=6, cam=1, ccd=1, overwrite=1, seed=43)
@@ -61,11 +69,6 @@ def main():
 
     plot_raw_light_curve_systematics(
         sector=7, cam=2, ccd=4, overwrite=1, seed=42)
-
-    sectors = [6,7]
-
-    # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
-    plot_rms_vs_mag(sectors, overwrite=1)
 
     # fig N: average autocorrelation fn of LCs
     plot_avg_acf(sectors, overwrite=1, cleanprevacf=False)
@@ -118,6 +121,9 @@ def main():
     # fig N: stages of image processing.
     plot_stages_of_image_processing(niceimage=1, overwrite=0)
     plot_stages_of_image_processing(niceimage=0, overwrite=0)
+
+    # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
+    plot_rms_vs_mag(sectors, overwrite=1)
 
     # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
     # calculated for CTL stars, so by definition it has limited use
@@ -1825,6 +1831,16 @@ def get_lc_stats(lcpaths, cdipslcdir, outpath, sector, cdipsvnum=1,
              'ndet_tf1','ndet_tf2','ndet_tf3',
              'stdev_sigclip_tf1','stdev_sigclip_tf2','stdev_sigclip_tf3',
              'mad_sigclip_tf1','mad_sigclip_tf2','mad_sigclip_tf3',
+             'stdev_pm1','stdev_pm2','stdev_pm3',
+             'mad_pm1','mad_pm2','mad_pm3',
+             'ndet_pm1','ndet_pm2','ndet_pm3',
+             'stdev_sigclip_pm1','stdev_sigclip_pm2','stdev_sigclip_pm3',
+             'mad_sigclip_pm1','mad_sigclip_pm2','mad_sigclip_pm3',
+             'stdev_rm1','stdev_rm2','stdev_rm3',
+             'mad_rm1','mad_rm2','mad_rm3',
+             'ndet_rm1','ndet_rm2','ndet_rm3',
+             'stdev_sigclip_rm1','stdev_sigclip_rm2','stdev_sigclip_rm3',
+             'mad_sigclip_rm1','mad_sigclip_rm2','mad_sigclip_rm3'
             ]
 
     hd = {}
@@ -1851,9 +1867,9 @@ def get_lc_stats(lcpaths, cdipslcdir, outpath, sector, cdipsvnum=1,
 
         # get the LC statistics as a dictionary on sigclipped, orbit-edge
         # masked lightcurves
-        d = get_lc_statistics(selpath, sigclip=4.0, tfalcrequired=True,
-                              epdlcrequired=False, fitslcnottxt=True,
-                              istessandmaskedges=True)
+        d = compute_lc_statistics_fits(selpath, sigclip=4.0, num_aps=3,
+                                       desired_stages=['IRM','PCA', 'TFA'],
+                                       verbose=True, istessandmaskedges=True)
 
         for skey in skeys:
             hd[skey].append(d[skey])
@@ -1888,8 +1904,10 @@ def plot_rms_vs_mag(sectors, overwrite=0):
     N_max = 100000
 
     prestr = 'sector{}_'.format(sectors[0]) if len(sectors)==1 else ''
+    stages = ['IRM', 'PCA', 'TFA']
+    stagestr = '-'.join(stages) + '_'
 
-    outpath = os.path.join(OUTDIR, prestr+'rms_vs_mag.png')
+    outpath = os.path.join(OUTDIR, prestr+stagestr+'rms_vs_mag.png')
     if os.path.exists(outpath) and not overwrite:
         print('found {} and not overwrite; return'.format(outpath))
         return
@@ -1916,10 +1934,178 @@ def plot_rms_vs_mag(sectors, overwrite=0):
 
     df = pd.concat((pd.read_csv(f) for f in csvpaths))
 
-    _plot_rms_vs_mag(df, outpath, overwrite=overwrite, yaxisval='RMS')
+    #
+    # make plot for all three stages
+    #
+    _plot_rms_vs_mag_stages(df, stages, outpath, overwrite=overwrite,
+                            yaxisval='RMS')
+
+    #
+    # make plot for TFA only
+    #
+    stages = ['TFA']
+    stagestr = '-'.join(stages) + '_'
+    outpath = os.path.join(OUTDIR, prestr+stagestr+'rms_vs_mag.png')
+
+    _plot_rms_vs_mag_stages(df, stages, outpath, overwrite=overwrite,
+                            yaxisval='RMS')
+
+    #_plot_rms_vs_mag_tfa(df, outpath, overwrite=overwrite, yaxisval='RMS')
 
 
-def _plot_rms_vs_mag(df, outpath, overwrite=0, yaxisval='RMS'):
+def _plot_rms_vs_mag_stages(df, stages, outpath, overwrite=0, yaxisval='RMS'):
+
+    if yaxisval != 'RMS':
+        raise AssertionError('so far only RMS implemented')
+    # available:
+    # hdrkeys = ['Gaia-ID','XCC','YCC','RA[deg]','Dec[deg]',
+    #            'phot_g_mean_mag','phot_bp_mean_mag','phot_rp_mean_mag',
+    #            'TESSMAG', 'TMAGPRED', 'TICCONT']
+    # skeys = ['stdev_tf1','stdev_tf2','stdev_tf3',
+    #          'mad_tf1','mad_tf2','mad_tf3',
+    #          'stdev_sigclip_tf1','stdev_sigclip_tf2','stdev_sigclip_tf3',
+    #          'mad_sigclip_tf1','mad_sigclip_tf2','mad_sigclip_tf3',
+    #         ]
+    # pm1, rm1 as well!
+
+    stage_to_key_dict = {
+        'IRM':'rm',
+        'TFA':'tf',
+        'IFL':'rf',
+        'PCA':'pm',
+        'EPD':'ep'
+    }
+
+    mags = {}
+    rms = {}
+    for stage in stages:
+        k = stage_to_key_dict[stage]
+        rms[stage] = nparr([nparr(df['stdev_{}1'.format(k)]),
+                            nparr(df['stdev_{}2'.format(k)]),
+                            nparr(df['stdev_{}3'.format(k)])]).min(axis=0)
+        mags[stage] = nparr(df['TESSMAG'])
+
+    if 'TFA' in stages:
+        # TFA overfits by default -- instead of standard deviation need to have
+        # "N-1" be "N_pt - N_TFA - 1".
+        N_pt = nparr(df['ndet_tf2'])
+        N_TFA = 200 # number of template stars used in TFA
+
+        sel = N_pt >= 202 # need LCs with points
+        mags['TFA'] = mags['TFA'][sel]
+        rms['TFA'] = rms['TFA'][sel]
+        N_pt = N_pt[sel]
+        corr = (N_pt - 1)/(N_pt -1 - N_TFA)
+        rms['TFA'] = rms['TFA']*np.sqrt(corr.astype(float))
+
+    plt.close('all')
+    ncols = len(stages)
+    if len(stages) == 1:
+        width=4
+    else:
+        width=3
+    fig, axs = plt.subplots(nrows=2, ncols=ncols, sharex=True,
+                               figsize=(width*ncols,5),
+                               gridspec_kw= {'height_ratios':[3, 1.5]})
+
+    for ix, stage in enumerate(stages):
+
+        if len(stages) > 1:
+            a0, a1 =  axs[:, ix]
+        else:
+            a0, a1 = axs
+
+        a0.scatter(mags[stage], rms[stage], c='k', alpha=0.2, zorder=-5, s=0.5,
+                   rasterized=True, linewidths=0)
+
+        if yaxisval=='RMS':
+            Tmag = np.linspace(6, 16, num=200)
+
+            # RA, dec. (90, -66) is southern ecliptic pole. these are "good
+            # coords", but we aren't plotting sky bkgd anyway!
+            fra, fdec = 120, 0  # sector 6 cam 1 center
+            coords = np.array([fra*np.ones_like(Tmag), fdec*np.ones_like(Tmag)]).T
+            out = tnm.noise_model(Tmag, coords=coords, exptime=1800)
+
+            noise_star = out[2,:]
+            noise_sky = out[3,:]
+            noise_ro = out[4,:]
+            noise_sys = out[5,:]
+            noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2 + noise_sky**2
+                                         + noise_sys**2)
+
+            a0.plot(Tmag, noise_star_plus_ro, ls='-', zorder=-2, lw=1, color='C1',
+                    label='Model = photon + read + sky + floor')
+            a0.plot(Tmag, noise_star, ls='--', zorder=-3, lw=1, color='gray',
+                    label='Photon')
+            a0.plot(Tmag, noise_ro, ls='-.', zorder=-4, lw=1, color='gray',
+                    label='Read')
+            a0.plot(Tmag, noise_sky, ls=':', zorder=-4, lw=1, color='gray',
+                    label='Unresolved stars (sky)')
+            a0.plot(Tmag, noise_sys, ls='-', zorder=-4, lw=0.5, color='gray',
+                    label='Systematic floor')
+
+        a1.plot(Tmag, noise_star_plus_ro/noise_star_plus_ro, ls='-', zorder=-2,
+                lw=1, color='C1', label='Photon + read')
+
+        coords = np.array([fra*np.ones_like(mags[stage]), fdec*np.ones_like(mags[stage])]).T
+        out = tnm.noise_model(mags[stage], coords=coords, exptime=1800)
+        noise_star = out[2,:]
+        noise_sky = out[3,:]
+        noise_ro = out[4,:]
+        noise_sys = out[5,:]
+        noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2 + noise_sky**2 +
+                                     noise_sys**2)
+        a1.scatter(mags[stage], rms[stage]/noise_star_plus_ro, c='k', alpha=0.2,
+                   zorder=-5, s=0.5, rasterized=True, linewidths=0)
+
+        if ix == len(stages)-1:
+            a0.legend(loc='lower right', fontsize='xx-small')
+        #a0.legend(loc='upper left', fontsize='xx-small')
+        a0.set_yscale('log')
+        if len(stages) > 1:
+            if ix == 1:
+                a1.set_xlabel('TESS magnitude', labelpad=0.8, fontsize='large')
+        else:
+            a1.set_xlabel('TESS magnitude', labelpad=0.8, fontsize='large')
+        if ix == 0:
+            a0.set_ylabel('RMS [30 minutes]', labelpad=0.8, fontsize='large')
+            a1.set_ylabel('RMS / Model', labelpad=1, fontsize='large')
+
+        if len(stages)>1:
+            txt = stage
+            a0.text(0.04, 0.96, txt, ha='left', va='top', fontsize='medium',
+                    transform=a0.transAxes)
+
+        a0.set_ylim([1e-5, 1e-1])
+        a1.set_ylim([0.5,25])
+        a1.set_yscale('log')
+        for a in (a0,a1):
+            a.set_xlim([5.8,16.2])
+            a.yaxis.set_ticks_position('both')
+            a.xaxis.set_ticks_position('both')
+            a.get_yaxis().set_tick_params(which='both', direction='in')
+            a.get_xaxis().set_tick_params(which='both', direction='in')
+            for tick in a.xaxis.get_major_ticks():
+                tick.label.set_fontsize('small')
+            for tick in a.yaxis.get_major_ticks():
+                tick.label.set_fontsize('small')
+
+        if ix >= 1:
+            a0.set_yticklabels([])
+            a1.set_yticklabels([])
+
+    if len(stages)>1:
+        fig.tight_layout(w_pad=0.2, h_pad=-0.3, pad=0.2)
+    else:
+        fig.tight_layout(h_pad=-0.3, pad=0.2)
+
+    savefig(fig, outpath)
+
+
+
+
+def _plot_rms_vs_mag_tfa(df, outpath, overwrite=0, yaxisval='RMS'):
 
     if yaxisval != 'RMS':
         raise AssertionError('so far only RMS implemented')
