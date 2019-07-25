@@ -35,7 +35,7 @@ cp ${fdir}stages_of_image_processing_bad.png \
 cp ${fdir}primary_mission_galacticmap_forproposal_cdipsoverplot.png \
    ${pdir}target_star_positions.png
 
-cp ${fdir}rms_vs_mag.pdf ${pdir}rms_vs_mag.pdf
+cp ${fdir}IRM-PCA-TFA_rms_vs_mag.pdf ${pdir}IRM-PCA-TFA_rms_vs_mag.pdf
 cp ${fdir}avg_acf.pdf ${pdir}avg_acf.pdf
 
 cp ${fdir}raw_light_curve_systematics_sec7cam2ccd4.pdf \

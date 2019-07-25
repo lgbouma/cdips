@@ -101,7 +101,8 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   studies of stellar rotation evolution, and binary eccentricity
   damping.
   %
-  The light curves are available at \stscilink.
+  The light curves, which cover about one sixth of the galactic plane,
+  are available at \stscilink.
 \end{abstract}
 
 \keywords{
@@ -1614,17 +1615,18 @@ header of each light curve.
 	\label{fig:propermotions}
 \end{figure}
 
-\begin{figure}[!t]
+\begin{figure*}[!t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.47\textwidth]{rms_vs_mag.pdf}
+		\includegraphics[width=0.97\textwidth]{IRM-PCA-TFA_rms_vs_mag.pdf}
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-    Standard deviation of TFA-detrended CDIPS light curves as a
-    function of catalog TESS-band magnitude.  Black points correspond
-    to the minimum RMS across the available three aperture sizes.  The
-    model (orange and gray lines) assumes aperture sizes reported by
+    Standard deviation of CDIPS light curves as a function of catalog
+    TESS-band magnitude.  Left-to-right are raw, PCA-detrended, and
+    TFA-detrended light curves. Black points correspond to the minimum
+    RMS across the available three aperture sizes.  The model (orange
+    and gray lines) assumes aperture sizes reported by
     \citet{Sullivan_et_al_2015}, and the effective area from
     \citet{vanderspek_2018}.  The noise from unresolved background
     stars (dotted gray line) is a function of galactic latitude, and
@@ -1634,7 +1636,7 @@ header of each light curve.
     \S~\ref{subsubsec:rmsvsmag}).
 		\label{fig:rms_vs_mag}
 	}
-\end{figure}
+\end{figure*}
 
 \begin{figure}[!t]
 	\begin{center}
@@ -1899,8 +1901,23 @@ any other signals via matched-filter techniques).
 	\label{fig:tlsresults}
 \end{figure}
 
-We will discuss our search for transiting planets in an upcoming
-report.  To identify an initial set of transiting planets, strong
+Below, we provide a few examples of how one might go about identifying
+pulsating stars, strong stellar rotators, eclipsing binaries, and
+transiting planets in the light curves.
+
+\paragraph{Sinusoidal signals}
+For pulsating stars and strong stellar rotators, the Lomb-Scargle
+periodogram (CITE) is a tried-and-true discovery method.
+
+
+
+
+We measured rotation periods for stars in X, Y clean cluster.
+
+A figure is given here. 
+
+
+To identify an initial set of transiting planets, strong
 stellar rotators, and eclipsing binaries, we performed a few steps of
 post-processing on the light curves.  This processing was done
 independently of the data release, since it was quite specific to our
