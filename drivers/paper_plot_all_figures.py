@@ -91,6 +91,9 @@ def main():
     # fig N: 3x2 quilty of phased PC
     plot_quilt_PCs(overwrite=1)
 
+    # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
+    plot_rms_vs_mag(sectors, overwrite=1)
+
     # fig N: LS period vs color evolution in time
     plot_LS_period_vs_color_and_age(sectors, overwrite=1, OC_MG_CAT_ver=0.3)
 
@@ -121,9 +124,6 @@ def main():
     # fig N: stages of image processing.
     plot_stages_of_image_processing(niceimage=1, overwrite=0)
     plot_stages_of_image_processing(niceimage=0, overwrite=0)
-
-    # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
-    plot_rms_vs_mag(sectors, overwrite=1)
 
     # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
     # calculated for CTL stars, so by definition it has limited use
@@ -714,108 +714,55 @@ def plot_avg_acf(sectors, size=10000, overwrite=0, percentiles=[25,50,75],
         lcs.parallel_compute_acf_statistics(
             lcpaths, acfdir, nworkers=40,
             eval_times_hr=np.arange(1,301,1),
-            skipepd=True)
+            dtrtypes=['IRM','PCA','TFA']
+        )
     acfstatfiles = glob(os.path.join(acfdir,'*_acf_stats.csv'))
     df = lcs.read_acf_stat_files(acfstatfiles)
 
     plt.close('all')
-    fig, ax = plt.subplots(figsize=(4,3))
+    fig, axs = plt.subplots(ncols=3, figsize=(2.5*3,3))
 
     linestyles = ['--','-',':']
 
-    #
-    # plot raw lines
-    #
-    apstr = 'RAW2'
-    timelags = np.sort(np.unique(df['LAG_TIME_HR']))
+    apstrs = ['IRM2','PCA2','TFA2']
 
-    percentile_dict = {}
-    for timelag in timelags:
-        percentile_dict[timelag] = {}
-        sel = df['LAG_TIME_HR']==timelag
-        for percentile in percentiles:
-            val = np.nanpercentile(df[sel][apstr+'_ACF'], percentile)
-            percentile_dict[timelag][percentile] = np.round(val,7)
-        pctile_df = pd.DataFrame(percentile_dict)
+    for ax, apstr in zip(axs, apstrs):
 
-    ax.plot(timelags, pctile_df.loc[50], ls='-', color='gray', zorder=2)
-    ax.fill_between(timelags, pctile_df.loc[25], pctile_df.loc[75], alpha=0.3,
-                    color='gray', zorder=-2, linewidth=0)
+        timelags = np.sort(np.unique(df['LAG_TIME_HR']))
 
-    #ind = 0
-    #for ix, row in pctile_df.iterrows():
-    #    pctile = row.name
-    #    label = '{}%'.format(str(pctile))
-    #    timelags = nparr(row.index)
-    #    vals = nparr(row)
+        percentile_dict = {}
+        for timelag in timelags:
+            percentile_dict[timelag] = {}
+            sel = df['LAG_TIME_HR']==timelag
+            for percentile in percentiles:
+                val = np.nanpercentile(df[sel][apstr+'_ACF'], percentile)
+                percentile_dict[timelag][percentile] = np.round(val,7)
+            pctile_df = pd.DataFrame(percentile_dict)
 
-    #    ax.plot(timelags, vals, ls=linestyles[ind], color='gray', zorder=2)
-    #    ind += 1
+        ax.plot(timelags, pctile_df.loc[50], ls='-', color='black', zorder=2)
+        ax.fill_between(timelags, pctile_df.loc[25], pctile_df.loc[75],
+                        alpha=0.5, color='gray', zorder=-2, linewidth=0)
 
-    ax.text(0.75, 0.8, 'Raw', ha='center', va='center',
-            fontsize='medium', transform=ax.transAxes, color='gray')
+        txt = apstr[:-1] if apstr != 'IRM2' else 'RAW'
+        ax.text(0.95, 0.05, txt, ha='right', va='bottom',
+                fontsize='medium', transform=ax.transAxes, color='black')
 
+        ax.set_yscale('linear')
+        ax.set_xscale('log')
+        ax.set_ylim((-1,1))
 
-    #
-    # plot TFA lines
-    #
-    apstr = 'TFA2'
+        ax.yaxis.set_ticks_position('both')
+        ax.xaxis.set_ticks_position('both')
+        ax.get_yaxis().set_tick_params(which='both', direction='in')
+        ax.get_xaxis().set_tick_params(which='both', direction='in')
 
-    percentile_dict = {}
-    for timelag in timelags:
-        percentile_dict[timelag] = {}
-        sel = df['LAG_TIME_HR']==timelag
-        for percentile in percentiles:
-            val = np.nanpercentile(df[sel][apstr+'_ACF'], percentile)
-            percentile_dict[timelag][percentile] = np.round(val,7)
-        pctile_df = pd.DataFrame(percentile_dict)
+    axs[1].set_yticklabels([])
+    axs[2].set_yticklabels([])
 
-    ax.plot(timelags, pctile_df.loc[50], ls='-', color='black', zorder=2)
-    ax.fill_between(timelags, pctile_df.loc[25], pctile_df.loc[75], alpha=0.55,
-                    color='black', zorder=-1, linewidth=0)
+    axs[1].set_xlabel('Time lag [hr]', fontsize='large')
+    axs[0].set_ylabel('Autocorrelation', fontsize='large')
 
-    #ind = 0
-    #for ix, row in pctile_df.iterrows():
-    #    pctile = row.name
-    #    label = '{}%'.format(str(pctile))
-    #    timelags = nparr(row.index)
-    #    vals = nparr(row)
-
-    #    ax.plot(timelags, vals, label=label, ls=linestyles[ind], color='black',
-    #            zorder=3)
-    #    ind += 1
-
-    ax.text(0.42, 0.42, 'TFA detrended', ha='center', va='top',
-            fontsize='medium', transform=ax.transAxes)
-
-    #ax.legend(loc='lower left', fontsize='medium')
-
-    ax.set_yscale('linear')
-    ax.set_xscale('log')
-    ax.set_xlabel('Time lag [hr]')
-    ax.set_ylabel('Autocorrelation')
-
-    # titlestr = '{:s} - {:d} ACFs - {:s}'.format(
-    #     outprefix,
-    #     len(acfstatfiles),
-    #     '{:s} percentiles'.format(repr(percentiles))
-    # )
-    # ax.set_title(titlestr, fontsize='small')
-
-    #plt.gca().grid(color='#a9a9a9',
-    #               alpha=0.9,
-    #               zorder=0,
-    #               linewidth=1.0,
-    #               linestyle=':')
-
-    ax.set_ylim((-1,1))
-
-    ax.yaxis.set_ticks_position('both')
-    ax.xaxis.set_ticks_position('both')
-    ax.get_yaxis().set_tick_params(which='both', direction='in')
-    ax.get_xaxis().set_tick_params(which='both', direction='in')
-
-    fig.tight_layout(h_pad=0.35, pad=0.2)
+    fig.tight_layout(w_pad=0.1, h_pad=0.35, pad=0.2)
     savefig(fig, outpath)
 
 
@@ -2060,7 +2007,7 @@ def _plot_rms_vs_mag_stages(df, stages, outpath, overwrite=0, yaxisval='RMS'):
                    zorder=-5, s=0.5, rasterized=True, linewidths=0)
 
         if ix == len(stages)-1:
-            a0.legend(loc='lower right', fontsize='xx-small')
+            a0.legend(loc='lower right', fontsize='xx-small', framealpha=1)
         #a0.legend(loc='upper left', fontsize='xx-small')
         a0.set_yscale('log')
         if len(stages) > 1:
@@ -2074,6 +2021,8 @@ def _plot_rms_vs_mag_stages(df, stages, outpath, overwrite=0, yaxisval='RMS'):
 
         if len(stages)>1:
             txt = stage
+            if txt == 'IRM':
+                txt = 'RAW'
             a0.text(0.04, 0.96, txt, ha='left', va='top', fontsize='medium',
                     transform=a0.transAxes)
 
@@ -2102,114 +2051,6 @@ def _plot_rms_vs_mag_stages(df, stages, outpath, overwrite=0, yaxisval='RMS'):
 
     savefig(fig, outpath)
 
-
-
-
-def _plot_rms_vs_mag_tfa(df, outpath, overwrite=0, yaxisval='RMS'):
-
-    if yaxisval != 'RMS':
-        raise AssertionError('so far only RMS implemented')
-    # available:
-    # hdrkeys = ['Gaia-ID','XCC','YCC','RA[deg]','Dec[deg]',
-    #            'phot_g_mean_mag','phot_bp_mean_mag','phot_rp_mean_mag',
-    #            'TESSMAG', 'TMAGPRED', 'TICCONT']
-    # skeys = ['stdev_tf1','stdev_tf2','stdev_tf3',
-    #          'mad_tf1','mad_tf2','mad_tf3',
-    #          'stdev_sigclip_tf1','stdev_sigclip_tf2','stdev_sigclip_tf3',
-    #          'mad_sigclip_tf1','mad_sigclip_tf2','mad_sigclip_tf3',
-    #         ]
-
-    mags = nparr(df['TESSMAG'])
-    rms = nparr(
-        [nparr(df['stdev_tf1']), nparr(df['stdev_tf2']),
-         nparr(df['stdev_tf3'])]
-    ).min(axis=0)
-
-    N_pt = nparr(df['ndet_tf2'])
-    N_TFA = 200 # number of template stars used in TFA
-
-    # TFA overfits by default -- instead of standard deviation need to have
-    # "N-1" be "N_pt - N_TFA - 1".
-    sel = N_pt >= 202 # need LCs with points
-    mags = mags[sel]
-    rms = rms[sel]
-    N_pt = N_pt[sel]
-    corr = (N_pt - 1)/(N_pt -1 - N_TFA)
-    rms = rms*np.sqrt(corr.astype(float))
-
-    plt.close('all')
-    fig, (a0, a1) = plt.subplots(nrows=2, ncols=1, sharex=True,
-                               figsize=(4,5),
-                               gridspec_kw= {'height_ratios':[3, 1.5]})
-
-    a0.scatter(mags, rms, c='k', alpha=0.2, zorder=-5, s=0.5,
-               rasterized=True, linewidths=0)
-
-    if yaxisval=='RMS':
-        Tmag = np.linspace(6, 16, num=200)
-
-        # RA, dec. (90, -66) is southern ecliptic pole. these are "good
-        # coords", but we aren't plotting sky bkgd anyway!
-        fra, fdec = 120, 0  # sector 6 cam 1 center
-        coords = np.array([fra*np.ones_like(Tmag), fdec*np.ones_like(Tmag)]).T
-        out = tnm.noise_model(Tmag, coords=coords, exptime=1800)
-
-        noise_star = out[2,:]
-        noise_sky = out[3,:]
-        noise_ro = out[4,:]
-        noise_sys = out[5,:]
-        noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2 + noise_sky**2
-                                     + noise_sys**2)
-
-        a0.plot(Tmag, noise_star_plus_ro, ls='-', zorder=-2, lw=1, color='C1',
-                label='Model = photon + read + sky + floor')
-        a0.plot(Tmag, noise_star, ls='--', zorder=-3, lw=1, color='gray',
-                label='Photon')
-        a0.plot(Tmag, noise_ro, ls='-.', zorder=-4, lw=1, color='gray',
-                label='Read')
-        a0.plot(Tmag, noise_sky, ls=':', zorder=-4, lw=1, color='gray',
-                label='Unresolved stars (sky)')
-        a0.plot(Tmag, noise_sys, ls='-', zorder=-4, lw=0.5, color='gray',
-                label='Systematic floor')
-
-    a1.plot(Tmag, noise_star_plus_ro/noise_star_plus_ro, ls='-', zorder=-2,
-            lw=1, color='C1', label='Photon + read')
-
-    coords = np.array([fra*np.ones_like(mags), fdec*np.ones_like(mags)]).T
-    out = tnm.noise_model(mags, coords=coords, exptime=1800)
-    noise_star = out[2,:]
-    noise_sky = out[3,:]
-    noise_ro = out[4,:]
-    noise_sys = out[5,:]
-    noise_star_plus_ro = np.sqrt(noise_star**2 + noise_ro**2 + noise_sky**2 +
-                                 noise_sys**2)
-    a1.scatter(mags, rms/noise_star_plus_ro, c='k', alpha=0.2, zorder=-5,
-               s=0.5, rasterized=True, linewidths=0)
-
-    a0.legend(loc='lower right', fontsize='xx-small')
-    #a0.legend(loc='upper left', fontsize='xx-small')
-    a0.set_yscale('log')
-    a1.set_xlabel('TESS magnitude', labelpad=0.8)
-    a0.set_ylabel('RMS [30 minutes]', labelpad=0.8)
-    a1.set_ylabel('RMS / Model', labelpad=1)
-
-    a0.set_ylim([1e-5, 1e-1])
-    a1.set_ylim([0.5,10])
-    a1.set_yscale('log')
-    for a in (a0,a1):
-        a.set_xlim([5.8,16.2])
-        a.yaxis.set_ticks_position('both')
-        a.xaxis.set_ticks_position('both')
-        a.get_yaxis().set_tick_params(which='both', direction='in')
-        a.get_xaxis().set_tick_params(which='both', direction='in')
-        for tick in a.xaxis.get_major_ticks():
-            tick.label.set_fontsize('small')
-        for tick in a.yaxis.get_major_ticks():
-            tick.label.set_fontsize('small')
-
-    fig.tight_layout(h_pad=-0.3, pad=0.2)
-
-    savefig(fig, outpath)
 
 
 
