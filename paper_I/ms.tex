@@ -1638,10 +1638,10 @@ header of each light curve.
 	}
 \end{figure*}
 
-\begin{figure}[!t]
+\begin{figure*}[!t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.47\textwidth]{avg_acf.pdf}
+		\includegraphics[width=0.97\textwidth]{avg_acf.pdf}
 	\end{center}
 	\vspace{-0.5cm}
   \caption{
@@ -1653,7 +1653,7 @@ header of each light curve.
     of light curve.
   \label{fig:avg_acf}
 	}
-\end{figure}
+\end{figure*}
 
 
 \subsection{Light Curve Statistics}
@@ -1663,46 +1663,37 @@ header of each light curve.
 
 The on-sky locations of the light curves from Sectors 6 and 7 are
 shown in Figure~\ref{fig:lcgalactic}.  Black stars are the field stars
-for which we performed photometry, and of which a subset were used as
-template stars during TFA.  The blue stars are the \numberlcs stars
-with light curves available from \stscilink.  Most of the target stars
-are quite close to the galactic plane.  Gaps between CCD chips are
-also visible.  The highly clumped nature of the target stars is also
-apparent.
-
-%A zoom-in of Figure~\ref{fig:lcgalactic} is shown in Figure~\ref{fig:lcradeczoom}
-%for the Camera 1, Sector 6 field. The effects of galactic-latitude
-%dependent extinction are visible through the decreasing density of black
-%points towards the right of the image.
+for which we performed photometry, and from which we selected template
+stars for TFA, as well as the construction of the PCA eigenvectors.
+Blue points are the \numberlcs stars with light curves available from
+\stscilink.  Most of the target stars are quite close to the galactic
+plane.  Gaps between CCD chips are also visible.  The highly clumped
+nature of the target stars is also apparent.
 
 Figure~\ref{fig:cdf_T_mag} shows the cumulative distribution of TESS
 $T$-band magnitudes for the target stars.  Though most of the targets
-are faint, $\approx3\times10^4$ are brighter than $T=13$. These
-targets are more promising for any detailed follow-up observtions.
+are faint, $\approx3\times10^4$ are brighter than $T=13$. The brighter
+targets will be more amenable to detailed spectroscopic observtions,
+should the need arise.
 
 An HR diagram for the entire sample of CDIPS stars on silicon is shown
 in Figure~\ref{fig:hrd} (top).  The sub-sample of stars with measured
 positive parallaxes and naive distances less than $1\,{\rm kpc}$ is
 also shown (bottom).  About one-third of the stars are in this latter
-sample.  The close stars are predominantly on the main-sequence, or
-the pre-main-sequence.  A relatively large fraction of these come from
+sample.  Of the close stars, a relatively large fraction come from
 \citet{zari_3d_2018}, and are either on the PMS or upper
 main-sequence.  The latter set of OBA dwarf stars, while ``younger''
 than the typical field dwarf, are likely the least interesting subset
 of our target sample from the perspective of age analyses.  In the
 entire sample (Figure~\ref{fig:hrd} top), a much larger fraction of
 stars are sub-giants, red giants, and helium-burning red-clump stars.
-We failed to obtain light curves for roughly $5\%$ of the stars on
-silicon, primarily due to our masking of saturated stars and their
-nearby pixels.
 
 Finally, Figure~\ref{fig:propermotions} shows the proper motions of
 the entire and close samples of stars on silicon.  Each clump
-signifies a different star cluster. The largest overdensity in the top
-figure is composed mainly of field star contaminants. It has two
+signifies a different star cluster. The large overdensity in the top
+panel is composed mainly of field star contaminants. It has two
 subcomponents, due to the two different directions in the Galaxy being
 observed in Sectors 6 and 7.
-
 
 
 \subsubsection{Cluster membership provenance}
