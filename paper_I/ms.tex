@@ -28,9 +28,9 @@
 \newcommand{\numberpcs}{39\ }  % 2019/06/28 unanimous gold
 \newcommand{\numberzaripcs}{10\ }  % 2019/06/28 unanimous gold
 \newcommand{\numberclusterpcs}{29\ }  % 2019/06/28 unanimous gold
-\newcommand{\sVInumberlcs}{67{,}601\ }  % 2019/06/20 not allnan
-\newcommand{\sVIInumberlcs}{91{,}736\ }  % 2019/06/20 not allnan
-\newcommand{\numberlcs}{159{,}337\ } % 2019/06/20 sum
+\newcommand{\sVInumberlcs}{67{,}612\ }  % 2019/07/27 not allnan
+\newcommand{\sVIInumberlcs}{91{,}731\ }  % 2019/07/27 not allnan
+\newcommand{\numberlcs}{159{,}343\ } % 2019/06/20 sum
 \newcommand{\numberclusters}{596\ } % 2019/07/01 paper_plot_all_figures.py
 \newcommand{\pctoflcswithage}{77} %  2019/07/02 from hist_logt.png
 
@@ -1725,6 +1725,26 @@ probability exceeding 50\%.  To create cleaner sub-samples, we advise
 use of the \texttt{CDEXTCAT} header keyword, which can be used to
 merge against the original source catalog to obtain the membership
 probabilities claimed by the original catalog.
+
+Despite our goal being completeness, there may be clusters with
+missing members, if those members were not included in any of our
+membership catalogs.
+A good example is the Orion Nebula (M42; NGC 1976).
+While it was observed by TESS in Sector~6, our reduction process resulted in
+only 85 light curves being made for its members.
+It is known to have far more (CITE OLD PAPER).
+This is an issue partially with the membership catalogs, and perhaps
+partially with our selection
+criteria from them.
+For instance,
+\cite{cantat-gaudin_gaua_2018} failed to detect it.
+\citet{Kharchenko_et_al_2013} lists 42 ``1$\sigma$'' members within
+the angular radius of the cluster.
+(CITE) DIAS lists 221 objects with prob gt 50, and finite i mags.
+A number of the Dias objects maybe were lost in cross-match?! Or else
+maybe the stars were dropped or flagged as bad photometry b/c of the
+high background?
+
 
 \paragraph{Sector 7}
 In Sector 7, \sVIInumberlcs light curves of candidate cluster stars
