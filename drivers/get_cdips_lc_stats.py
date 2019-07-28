@@ -22,7 +22,7 @@ def get_cdips_lc_stats(
     sector=6,
     cdipssource_vnum=0.3,
     nworkers=32,
-    overwrite=False
+    overwrite=0
 ):
 
     projdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips'
@@ -101,26 +101,33 @@ def supplement_stats_file(
     )
     outpath = statsfile.replace('cdips_lc_statistics',
                                 'supplemented_cdips_lc_statistics')
+    outdir = os.path.dirname(outpath)
 
     stats = ap.read_stats_file(statsfile, fovcathasgaiaids=True)
     df = pd.DataFrame(stats)
     del stats
 
-    df['lcobj'].to_csv('temp.csv',index=False)
+    lcobjcsv = os.path.join(outdir, 'sector{}_lcobj.csv'.format(sector))
+    lcobjtxt = os.path.join(outdir, 'sector{}_lcobj.txt'.format(sector))
+    df['lcobj'].to_csv(lcobjcsv, index=False)
 
     # run the gaia2read on this list
-    if not os.path.exists('temp.txt'):
-        gaia2readcmd = "gaia2read --header --extra --idfile temp.csv > temp.txt"
-        proc = subprocess.run(shlex.split(gaia2readcmd))
+    if not os.path.exists(lcobjtxt):
 
-        if proc.returncode != 0:
-            # NOTE: this is buggy. runs from terminal, not from script. WHY?
-            print('gaia2read cmd failed!!')
-            import IPython; IPython.embed()
-            assert 0
+        gaia2readcmd = (
+            "gaia2read --header --extra --idfile {} > {}".format(
+                lcobjcsv, lcobjtxt
+            )
+        )
+        returncode = os.system(gaia2readcmd)
+
+        if returncode != 0:
+            raise AssertionError('gaia2read cmd failed!!')
+        else:
+            print('ran {}'.format(gaia2readcmd))
 
     # merge statsfile against (most of) gaia dr2
-    gdf = pd.read_csv('temp.txt',delim_whitespace=True)
+    gdf = pd.read_csv(lcobjtxt, delim_whitespace=True)
 
     desiredcols = ['#Gaia-ID[1]', 'RA[deg][2]', 'Dec[deg][3]',
                    'RAError[mas][4]', 'DecError[mas][5]',
@@ -154,11 +161,13 @@ def supplement_stats_file(
     del df, cgdf, gdf
 
     # merge against CDIPS catalog info
-    cdips_df = ccl.get_cdips_catalog(ver=cdipssource_vnum)
+    cdips_df = ccl.get_cdips_pub_catalog(ver=cdipssource_vnum)
 
-    dcols = 'cluster;ext_catalog_name;reference;source_id'
+    dcols = (
+        'cluster;ext_catalog_name;reference;source_id;unique_cluster_name;k13_logt'
+    )
     dcols = dcols.split(';')
-    ccdf = cdipsdf[dcols]
+    ccdf = cdips_df[dcols]
     ccdf['source_id'] = ccdf['source_id'].astype(np.int64)
 
     megadf = mdf.merge(ccdf, how='left', left_on='lcobj', right_on='source_id')
@@ -166,9 +175,6 @@ def supplement_stats_file(
     # finally save
     megadf.to_csv(outpath, index=False, sep=';')
     print('made {}'.format(outpath))
-
-    #os.remove('temp.txt')
-    #os.remove('temp.csv')
 
 
 
@@ -281,20 +287,22 @@ def move_allnan_lcs(sector=None, cdipsvnum=None):
 
 if __name__ == "__main__":
 
-    sector=7
+    sector=6
     cdipssource_vnum=0.3
     cdipsvnum=1
 
-    get_stats=0
-    make_supp_stats=0
-    print_metadata=0
+    overwrite=1
+    get_stats=1
+    make_supp_stats=1
+    print_metadata=1
     move_allnan=1
 
     if get_stats:
         get_cdips_lc_stats(
             sector=sector,
             cdipssource_vnum=cdipssource_vnum,
-            nworkers=40
+            nworkers=40,
+            overwrite=overwrite
         )
     if make_supp_stats:
         supplement_stats_file(
