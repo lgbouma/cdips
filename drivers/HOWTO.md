@@ -63,6 +63,7 @@ TO COMMUNICATE RESULTS
 
 1. `paper_plot_all_figures`: plots figures for paper I.
 
-2. `paper_get_CDIPS_star_stats`: analyze stats of cdips stars.  how many are
-   there total?  what fraction come from which sources?  how many are
-   single-source claims?  how many are multi-source claims?
+2. `paper_get_LC_and_target_star_stats`: analyze stats of all CDIPS target
+   stars. also stats of all CDIPS LCs.  how many are there total?  what
+   fraction come from which references?  how many are single-source claims?  how
+   many are multi-source claims?  what clusters are important?

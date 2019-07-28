@@ -48,6 +48,9 @@ def main():
 
     sectors = [6,7]
 
+    # fig N: average autocorrelation fn of LCs
+    plot_avg_acf(sectors, size=10000, overwrite=1, cleanprevacf=False)
+
     # timeseries figures
     for sector in range(6,8):
         for cam in range(1,5):
@@ -69,9 +72,6 @@ def main():
 
     plot_raw_light_curve_systematics(
         sector=7, cam=2, ccd=4, overwrite=1, seed=42)
-
-    # fig N: average autocorrelation fn of LCs
-    plot_avg_acf(sectors, overwrite=1, cleanprevacf=False)
 
     # fig N: histogram of CDIPS target star age.
     plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1)
