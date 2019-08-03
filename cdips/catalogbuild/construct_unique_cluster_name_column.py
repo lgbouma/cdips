@@ -700,7 +700,8 @@ def get_k13_name_match(task):
     is_known_asterism = False
     for c in clustersplt:
         # Baumgardt 1998.
-        if c in ['Collinder 399', 'Upgren 1', 'NGC 1252', 'Melotte 227']:
+        if c in ['Collinder 399', 'Upgren 1', 'NGC 1252', 'Melotte 227',
+                 'NGC 1746']:
             is_known_asterism = True
             break
 
