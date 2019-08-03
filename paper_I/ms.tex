@@ -1698,6 +1698,7 @@ observed in Sectors 6 and 7.
 
 \subsubsection{Cluster membership provenance}
 
+
 \paragraph{Sector 6}
 In Sector 6, \sVInumberlcs light curves of candidate cluster stars
 were made. The provenance of the claimed cluster origin of these
@@ -1708,42 +1709,17 @@ main-sequence table and 1\% of sources from their PMS table;
 \citet{cantat-gaudin_gaia_2018} for 6\% of sources, and more than two
 catalogs for the remaining 10\% of sources.
 
-The clusters with the largest claimed numbers of sources are the
-Platais~6, Platais~5, and Mamajek~3 moving groups, all from
-\citet{dias_proper_2014}, composing about 7000, 7000, and 3500 sources
-respectively. These membership claims should be regarded with some
+Table~\ref{tbl:s6_lcs} shows the clusters with the largest claimed 
+numbers of sources. The top 4 are all moving groups or stellar
+associations from
+\citet{dias_proper_2014}: Platais~5, Platais~6, Mamajek~, and Collinder~70.
+These membership claims should be regarded with serious
 skepticism on a source-by-source basis.  For Platais~6,
 \citet{Kharchenko_et_al_2013} claimed only about 400 probable members
 (1$\sigma$) to exist within the angular radius of the cluster.
-Mamajek~3 (= 32$\,$Ori) has only about 50 confirmed members
+Mamajek~3 (= 32$\,$Ori) similarly has only about 50 confirmed members
 \citep{bell_32ori_2017}.
 
-We remind the reader that our goal in creating our target catalog was
-completeness, rather than fidelity. The \citet{dias_proper_2014} stars
-in particular were included if they were listed with membership
-probability exceeding 50\%.  To create cleaner sub-samples, we advise
-use of the \texttt{CDEXTCAT} header keyword, which can be used to
-merge against the original source catalog to obtain the membership
-probabilities claimed by the original catalog.
-
-Despite our goal being completeness, there may be clusters with
-missing members, if those members were not included in any of our
-membership catalogs.
-A good example is the Orion Nebula (M42; NGC 1976).
-While it was observed by TESS in Sector~6, our reduction process resulted in
-only 85 light curves being made for its members.
-It is known to have far more (CITE OLD PAPER).
-This is an issue partially with the membership catalogs, and perhaps
-partially with our selection
-criteria from them.
-For instance,
-\cite{cantat-gaudin_gaua_2018} failed to detect it.
-\citet{Kharchenko_et_al_2013} lists 42 ``1$\sigma$'' members within
-the angular radius of the cluster.
-(CITE) DIAS lists 221 objects with prob gt 50, and finite i mags.
-A number of the Dias objects maybe were lost in cross-match?! Or else
-maybe the stars were dropped or flagged as bad photometry b/c of the
-high background?
 
 
 \paragraph{Sector 7}
@@ -1942,6 +1918,35 @@ online\footnote{\url{github.com/lgbouma/cdips}, commit
 %FIXME
 %FIXME
 
+\section{Discussion}
+\label{sec: discussion}
+
+We remind the reader that our goal in creating our target catalog was
+completeness, rather than fidelity. The \citet{dias_proper_2014} stars
+in particular were included if they were listed with membership
+probability exceeding 50\%.  To create cleaner sub-samples, we advise
+use of the \texttt{CDEXTCAT} header keyword, which can be used to
+merge against the original source catalog to obtain the membership
+probabilities claimed by the original catalog.
+
+Despite our goal of completeness, some clusters may still be missing
+members~--~the census of nearby coeval stellar populations is still
+very much in flux ({\it e.g.}, \citealt{sim_open_2019};
+\citealt{kounkel_untangling_2019}).  One particular area for concern in
+the present work is sub-clusters of broader star-forming complexes,
+for instance the Orion Nebula (M42; NGC 1976).  While it was observed
+by TESS in Sector~6, searching our light curves for stars within 40
+arcminutes, and 100 parsecs of the Orion Nebula's center yielded only
+180 light curves, with 85 labelled members.  The Orion Nebula has
+thousands of known members \citep{jones_proper_1988}.  However, due to
+a combination of the spatially distributed nature of the broader
+complex, as well as differential extinction, the automated methods of
+the \citet{Kharchenko_et_al_2013} and \citet{dias_proper_2014}
+assigned the Orion Nebula only 44 and 326 members, respectively.
+\citet{cantat-gaudin_gaia_2018} explicitly excluded young star-forming
+regions from their search, since the underlying assumption of their
+clustering method (uniformity in the field star distribution) breaks
+down in highly clustered star-forming regions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
@@ -2075,6 +2080,75 @@ with the permission of these institutions.
   \texttt{VARTOOLS} \citep{Hartman_Bakos_2016}
   \texttt{wotan} \citep{hippke_wotan_2019},
 }
+
+\begin{deluxetable}{lll}
+	\tablecaption{Counts of light curves per cluster in Sector 6, sorted
+		in descending order.  \label{tbl:s6_lcs}}
+	\tablenum{2}
+	
+	\tablehead{
+		\colhead{\hspace{.9cm}Name}\hspace{.9cm}
+		& \colhead{\hspace{.9cm}$N_{\rm lc}$}\hspace{.9cm}
+		& \colhead{\hspace{.9cm}Description}\hspace{.2cm}
+	}
+	
+	\startdata
+	\input{table_s6_most_common_clusters.tex}
+	\enddata
+	
+	\tablecomments{
+		Table~\ref{tbl:s6_lcs} is published in its entirety in a machine-readable format.
+		A portion is shown here for guidance regarding its form and content.
+		Names are matched against \citet{Kharchenko_et_al_2013} as
+		described in Appendix~\ref{appendix:uniquenames}, and $N_{\rm lc}$
+		is the number of light curves associated with the cluster from this
+		data release.
+		The description column matches \citet{Kharchenko_et_al_2013},
+		and is in the format ``\texttt{a},\texttt{b},\texttt{c},\texttt{d}''.
+		Meanings of displayed symbols are as follows.
+		\texttt{a}:
+		``='' = cluster parameters were determined,
+		``\&'' = duplicated/coincides with other cluster;
+		\texttt{b}:
+		``blank'' = open cluster,
+		``a'' =	association,
+		``m'' =	moving group,
+		``n'' =	nebulosity;
+		\texttt{c}:
+		``o'' = object,
+		``c'' = candidate;
+		\texttt{d}:
+		``ass'' =	stellar association,
+		``var'' =	clusters with variable extinction.
+	}
+	
+	\vspace{-1cm}
+\end{deluxetable}
+
+\begin{deluxetable}{lll}
+	\tablecaption{Counts of light curves per cluster in Sector 7, sorted
+		in descending order.  \label{tbl:s7_lcs}}
+	\tablenum{3}
+	
+	\tablehead{
+		\colhead{\hspace{.9cm}Name}\hspace{.9cm}
+		& \colhead{\hspace{.9cm}$N_{\rm lc}$}\hspace{.9cm}
+		& \colhead{\hspace{.9cm}Description}\hspace{.2cm}
+	}
+	
+	\startdata
+	\input{table_s7_most_common_clusters.tex}
+	\enddata
+	
+	\tablecomments{
+		Table~\ref{tbl:s7_lcs} is published in its entirety in a machine-readable format.
+		A portion is shown here for guidance regarding its form and content.
+		Format is same as Table~\ref{tbl:s6_lcs}.
+	}
+	
+	\vspace{-1cm}
+\end{deluxetable}
+
 
 \clearpage
 \newpage
