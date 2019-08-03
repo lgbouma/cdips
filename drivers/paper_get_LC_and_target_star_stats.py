@@ -104,6 +104,8 @@ def get_CDIPS_stats(df, ncluster_cut=100, find_cluster_prox=False):
     cnt = Counter(refs)
     mostcommon = cnt.most_common(n=20)
 
+    fracmostcommon = [(k, np.round(v/len(df), 3)) for k,v in mostcommon]
+
     ismult = np.array([',' in r for r in refs])
     issing = ~ismult
 
@@ -120,6 +122,9 @@ def get_CDIPS_stats(df, ncluster_cut=100, find_cluster_prox=False):
     Top 20 most common references are:
     {mostcommon}
 
+    By fraction, top 20 most common references are:
+    {fracmostcommon}
+
     There are {n_single} single-source claims.
 
     There are {n_mult} claims from multiple sources.
@@ -128,6 +133,7 @@ def get_CDIPS_stats(df, ncluster_cut=100, find_cluster_prox=False):
         ncluster_cut=ncluster_cut,
         cname_mostcommon=repr(cname_mostcommon),
         mostcommon=repr(mostcommon),
+        fracmostcommon=repr(fracmostcommon),
         n_single=n_single,
         n_mult=n_mult
     )
