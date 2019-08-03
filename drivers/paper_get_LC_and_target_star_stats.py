@@ -10,9 +10,12 @@ python -u paper_get_LC_and_target_star_stats.py &> logs/get_LC_and_target_star_s
 """
 
 import pandas as pd, numpy as np
+from numpy import array as nparr
 from collections import Counter
 from cdips.utils import collect_cdips_lightcurves as ccl
 import os
+from astropy import units as u, constants as c
+from astropy.coordinates import SkyCoord
 
 def main():
     print('#'*42)
@@ -22,7 +25,7 @@ def main():
     print('#'*42)
     paper_get_CDIPS_star_stats()
 
-def paper_get_CDIPS_LC_stats(sector=None, ndet_cut=300, ncluster_cut=200):
+def paper_get_CDIPS_LC_stats(sector=None, ndet_cut=500, ncluster_cut=200):
 
     statdir = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/'+
@@ -36,7 +39,7 @@ def paper_get_CDIPS_LC_stats(sector=None, ndet_cut=300, ncluster_cut=200):
     df = df[df['ndet_rm2'] > ndet_cut]
 
     print('Sector {}'.format(sector))
-    get_CDIPS_stats(df, ncluster_cut=ncluster_cut)
+    get_CDIPS_stats(df, ncluster_cut=ncluster_cut, find_cluster_prox=True)
 
 
 def paper_get_CDIPS_star_stats():
@@ -46,7 +49,7 @@ def paper_get_CDIPS_star_stats():
     get_CDIPS_stats(df)
 
 
-def get_CDIPS_stats(df, ncluster_cut=100):
+def get_CDIPS_stats(df, ncluster_cut=100, find_cluster_prox=False):
     """
     df (pd.DataFrame): dataframe with stats information from either the
     (publication-level) target star catalog (ccl.get_cdips_catalog), or the
@@ -54,6 +57,44 @@ def get_CDIPS_stats(df, ncluster_cut=100):
     """
 
     n_stars = len(df)
+
+    #
+    # I was worried about whether we had many stars at all in the Orion
+    # vicinity.
+    #
+    if find_cluster_prox:
+
+        ra = nparr(df['RA[deg][2]'])
+        dec = nparr(df['Dec[deg][3]'])
+
+        lc_coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
+
+        m42_c = "05 35 17.3 -05 23 28"
+        m42_coord = SkyCoord(m42_c, unit=(u.hourangle, u.deg))
+
+        seps = m42_coord.separation(lc_coord)
+
+        # http://spider.seds.org/ngc/revngcic.cgi?NGC1976
+        r_cut = 40 * u.arcmin
+
+        d_pc = 412
+        d_lower = d_pc - 100
+        d_upper = d_pc + 100
+
+        plx_upper = 1/d_lower
+        plx_lower = 1/d_upper
+
+        plx = nparr(df['Parallax[mas][6]'])/1e3
+
+        sel = (seps < r_cut) & (plx > plx_lower) & (plx < plx_upper)
+
+        m42_stars = df[sel]
+
+        N_m42_stars = len(m42_stars)
+
+        print('Got {} LCs in the vicinity of M42 (100pc, 40 arcmin)'.
+              format(N_m42_stars))
+
 
     ucname = np.array(df['unique_cluster_name'])
     cname_cnt = Counter(ucname)
