@@ -11,7 +11,8 @@ where comment is like "flag,Type,n_Type,SType" from Kharchenko.
 unique name. More light curves in these cluisters may exist in the dataset, but
 as unlabelled neighbor stars.
 
-
+To make the latex header tables and associated csv files:
+$ python table_of_most_common_clusters.py
 """
 
 import os
@@ -54,9 +55,6 @@ def get_k13_index():
             k13_index[c] = k13_index[c].str.decode('utf-8')
 
     return k13_index
-
-
-
 
 def make_table():
 
@@ -120,20 +118,26 @@ def make_table():
     # sector 6                         sector 7
     # unique name | N_LCs | comment    unique name | N_LCs | comment
     #
-    # where comment is like "flag,Type,n_Type,SType" from Kharchenko.
+    # where comment (or description) is like "flag,Type,n_Type,SType" from
+    # Kharchenko.
     tab_s6 = pd.DataFrame(allentries[0], columns=['name','n_lc','description'])
     tab_s7 = pd.DataFrame(allentries[1], columns=['name','n_lc','description'])
 
     outfull_s6 = '../paper_I/table_s6_most_common_clusters_full.csv'
     outfull_s7 = '../paper_I/table_s7_most_common_clusters_full.csv'
-    outtab_s6 = '../paper_I/table_s6_most_common_clusters.tex'
-    outtab_s7 = '../paper_I/table_s7_most_common_clusters.tex'
+    outtex_s6 = '../paper_I/table_s6_most_common_clusters.tex'
+    outtex_s7 = '../paper_I/table_s7_most_common_clusters.tex'
+    outpaths = [outfull_s6, outfull_s7, outtex_s6, outfull_s7]
 
     tab_s6.to_csv(outfull_s6, index=False)
     tab_s7.to_csv(outfull_s7, index=False)
 
+    tab_s6.head(n=20).to_latex(outtex_s6, index=False)
+    tab_s7.head(n=20).to_latex(outtex_s7, index=False)
 
-    import IPython; IPython.embed()
+    for p in outpaths:
+        print('made {}'.format(p))
+
 
 if __name__ == "__main__":
     make_table()
