@@ -1,0 +1,77 @@
+Created TAP+ (v1.0.1) - Connection:
+	Host: gea.esac.esa.int
+	Use HTTPS: False
+	Port: 80
+	SSL Port: 443
+##########################################
+816.01
+           source_id    cluster reference  sep_arcsec
+ 5586963797326969856  NGC 2451B  Dias2014    9.767906
+ 5586965412234653696  NGC 2451B  Dias2014  168.324290
+ 5586966855343708160  NGC 2451B  Dias2014  184.657288
+
+
+##########################################
+450.01
+           source_id cluster               reference   sep_arcsec
+ 4827527233363019776     COL  Gagne_2018_BANYAN_XIII     0.458340
+ 4827724526980902656     NaN           Zari_2018_UMS  1374.801571
+ 4827392646267912064     NaN           Zari_2018_UMS  2986.385169
+
+
+##########################################
+681.01
+           source_id                                    cluster                                          reference  sep_arcsec
+ 5290968085934209152  NGC_2516,NGC2516,nan,NGC_2516,NGC2516,nan  CantatGaudin_2018,GaiaCollaboration2018_tab1b,...    0.228250
+ 5290971212673716224                                 ESO_123-26                                     Kharchenko2013  118.453896
+ 5290967776699890944                                 ESO_123-26                                     Kharchenko2013  130.682290
+
+
+##########################################
+580.01
+           source_id                  cluster                                          reference  sep_arcsec
+ 5519619186857962112  Pozzo_1,nan,Pozzo_1,nan  CantatGaudin_2018,Zari_2018_UMS,CantatGaudin_2...    0.139251
+ 5519619156803766272            Collinder 173                                           Dias2014   50.400364
+ 5519618916285611648  Pozzo_1,nan,Pozzo_1,nan  CantatGaudin_2018,Zari_2018_PMS,CantatGaudin_2...   77.106342
+
+
+##########################################
+581.01
+           source_id                          cluster                                          reference  sep_arcsec
+ 5525188767305211904  Trumpler_10,nan,Trumpler_10,nan  CantatGaudin_2018,Zari_2018_UMS,CantatGaudin_2...    0.198315
+ 5525142656536288640                    Collinder_197                                  CantatGaudin_2018  442.797302
+ 5525186533922251008                      Trumpler_10                                  CantatGaudin_2018  474.230954
+
+
+##########################################
+550.02
+           source_id cluster          reference   sep_arcsec
+ 3276738375272416256  Hyades  Roser_2011_Hyades     1.951385
+ 3276675668750983680     NaN      Zari_2018_UMS  1254.692316
+ 3277525178922105984     NaN      Zari_2018_UMS  2162.965971
+
+
+##########################################
+550.01
+           source_id cluster          reference   sep_arcsec
+ 3276738375272416256  Hyades  Roser_2011_Hyades     1.951385
+ 3276675668750983680     NaN      Zari_2018_UMS  1254.692316
+ 3277525178922105984     NaN      Zari_2018_UMS  2162.965971
+
+
+##########################################
+517.01
+           source_id                    cluster                                          reference  sep_arcsec
+ 5290752787819629056           NGC2516,NGC_2516      GaiaCollaboration2018_tab1b,CantatGaudin_2018    0.187047
+ 5290753062697353856                   NGC_2516                                  CantatGaudin_2018   97.945313
+ 5290752341143029120  NGC_2516,NGC_2516,NGC2516  Kharchenko2013,CantatGaudin_2018,GaiaCollabora...  209.288943
+
+
+##########################################
+496.01
+           source_id           cluster                                      reference  sep_arcsec
+ 3064530810048196352  NGC2548,NGC_2548  GaiaCollaboration2018_tab1b,CantatGaudin_2018    0.015772
+ 3064527855110695296          NGC_2548                                 Kharchenko2013   53.427713
+ 3064531016206613248          NGC_2548                                 Kharchenko2013  106.740892
+
+
