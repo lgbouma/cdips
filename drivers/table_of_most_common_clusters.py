@@ -120,8 +120,8 @@ def make_table():
     #
     # where comment (or description) is like "flag,Type,n_Type,SType" from
     # Kharchenko.
-    tab_s6 = pd.DataFrame(allentries[0], columns=['name','n_lc','description'])
-    tab_s7 = pd.DataFrame(allentries[1], columns=['name','n_lc','description'])
+    tab_s6 = pd.DataFrame(allentries[0], columns=['Name','$N_{\\mathrm{lc}}$','Description'])
+    tab_s7 = pd.DataFrame(allentries[1], columns=['Name','$N_{\\mathrm{lc}}$','Description'])
 
     outfull_s6 = '../paper_I/table_s6_most_common_clusters_full.csv'
     outfull_s7 = '../paper_I/table_s7_most_common_clusters_full.csv'
@@ -132,11 +132,27 @@ def make_table():
     tab_s6.to_csv(outfull_s6, index=False)
     tab_s7.to_csv(outfull_s7, index=False)
 
-    tab_s6.head(n=20).to_latex(outtex_s6, index=False)
-    tab_s7.head(n=20).to_latex(outtex_s7, index=False)
+    tab_s6.head(n=20).to_latex(outtex_s6, index=False, column_format='lll')
+    tab_s7.head(n=20).to_latex(outtex_s7, index=False, column_format='lll')
 
     for p in outpaths:
         print('made {}'.format(p))
+
+    for p in [outtex_s6, outtex_s7]:
+        print('{}: cutting head and bottom off tabular tables...'.format(p))
+        with open(p, 'r') as f:
+            lines = f.readlines()
+
+        startline = [ix for ix, l in enumerate(lines) if
+                     l.startswith(r'\midrule')][0]
+        endline = [ix for ix, l in enumerate(lines) if
+                   l.startswith(r'\bottomrule')][0]
+
+        sel_lines = lines[startline+1: endline]
+
+        with open(p, 'w') as f:
+            f.writelines(sel_lines)
+
 
 
 if __name__ == "__main__":
