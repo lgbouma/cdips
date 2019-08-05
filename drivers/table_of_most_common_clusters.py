@@ -22,10 +22,10 @@ from numpy import array as nparr
 from collections import Counter
 
 from cdips.utils import collect_cdips_lightcurves as ccl
+from cdips.utils import get_vizier_catalogs as gvc
 
 from astropy import units as u, constants as c
 from astropy.coordinates import SkyCoord
-from astroquery.vizier import Vizier
 
 def get_supp_stats_df(sector=None, ndet_cut=500):
 
@@ -42,25 +42,11 @@ def get_supp_stats_df(sector=None, ndet_cut=500):
 
     return df
 
-def get_k13_index():
-    #
-    # the ~3784 row table
-    #
-    Vizier.ROW_LIMIT = -1
-    catalog_list = Vizier.find_catalogs('J/A+A/558/A53')
-    catalogs = Vizier.get_catalogs(catalog_list.keys())
-    k13_index = catalogs[1].to_pandas()
-    for c in k13_index.columns:
-        if c != 'N':
-            k13_index[c] = k13_index[c].str.decode('utf-8')
-
-    return k13_index
-
 def make_table():
 
     df_s6 = get_supp_stats_df(sector=6)
     df_s7 = get_supp_stats_df(sector=7)
-    k13_index = get_k13_index()
+    k13_index = gvc.get_k13_index()
 
     allentries = []
     for df in [df_s6, df_s7]:
