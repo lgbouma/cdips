@@ -164,7 +164,7 @@ def main(cdipssource_vnum=0.3):
     # sparse observer info cut
     #
     scols = ['target', 'flag', 'disp','tag', 'group', 'RA_OBJ', 'DEC_OBJ',
-             'CDIPSREF', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+             'CDIPSREF', 'CDCLSTER', 'phot_g_mean_mag', 'phot_bp_mean_mag',
              'phot_rp_mean_mag', 'TICID', 'TESSMAG', 'TICTEFF', 'TICRAD',
              'TICMASS', 'Gaia-ID'
             ]
@@ -180,7 +180,7 @@ def main(cdipssource_vnum=0.3):
     # full observer info cut
     #
     scols = ['target', 'flag', 'disp','tag', 'group', 'RA_OBJ', 'DEC_OBJ',
-             'CDIPSREF', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+             'CDIPSREF', 'CDCLSTER', 'phot_g_mean_mag', 'phot_bp_mean_mag',
              'phot_rp_mean_mag', 'TICID', 'TESSMAG', 'TICTEFF', 'TICRAD',
              'TICMASS', 'Gaia-ID',
              'period', 'period_unc', 'epoch', 'epoch_unc', 'depth',
