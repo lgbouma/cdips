@@ -13,6 +13,11 @@ from astropy import units as u
 
 from astrobase import lcmath
 from astrobase.lcmath import phase_magseries
+from cdips.plotting import savefig
+
+OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
+CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
+LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
 def plot_quilt_PCs(overwrite=1):
 

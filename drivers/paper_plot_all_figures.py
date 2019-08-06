@@ -24,12 +24,14 @@ from lcstatistics import compute_lc_statistics_fits
 import lcstatistics as lcs
 
 from cdips.utils import tess_noise_model as tnm
+from cdips.utils import collect_cdips_lightcurves as ccl
+
 from cdips.plotting import plot_star_catalog as psc
 from cdips.plotting import plot_catalog_to_gaia_match_statistics as xms
 from cdips.plotting import plot_wcsqa as wcsqa
-from cdips.plotting import savefig
 from cdips.plotting import plot_quilt_PCs as pqp
-from cdips.utils import collect_cdips_lightcurves as ccl
+from cdips.plotting import plot_quilt_s6_s7 as pqps
+from cdips.plotting import savefig
 
 import imageutils as iu
 import matplotlib.colors as colors
@@ -46,6 +48,8 @@ CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
 LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
 def main():
+
+    pqps.plot_quilt_s6_s7(overwrite=1)
 
     sectors = [6,7]
 
@@ -89,7 +93,7 @@ def main():
     # fig N: tls_sde_vs_period_scatter
     plot_tls_sde_vs_period_scatter(sectors, overwrite=1)
 
-    # fig N: 3x2 quilty of phased PC
+    # fig N: 3x2 quilt of phased PC
     pqp.plot_quilt_PCs(overwrite=1)
 
     # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
