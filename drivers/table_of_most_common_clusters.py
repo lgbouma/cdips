@@ -1,5 +1,5 @@
 """
-make table like:
+make TeX table like:
 
     sector 6                       sector 7
 
