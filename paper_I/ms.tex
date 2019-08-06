@@ -1655,6 +1655,31 @@ header of each light curve.
 	}
 \end{figure*}
 
+\begin{figure*}[!t]
+	\begin{center}
+		\leavevmode
+		\includegraphics[width=1\textwidth]{quilt_s6_s7.pdf}
+	\end{center}
+	\vspace{-0.8cm}
+	\caption{
+		Phased light curves for a few objects of interest.
+		{\it Top row, left to right}:
+		TOI~496, in NGC 2548;
+		TOI~625;
+		an eccentric EB, masquerading as a planet.
+		{\it Middle row, left to right}:
+		A detached EB in a 80~Myr old cluster;
+		V684 Mon (a 10 Myr old detached EB);
+		a semi-detached EB in NGC 2548.
+		{\it Bottom row, left to right}:
+		Spotted rotator in NGC 2184;
+		Pulsator or perhaps EB, flagged by \citet{zari_3d_2018} as a pre-MS star;
+		Quasi-periodic pulsator, also with a pre-MS host.
+		Gaia source identifiers are given in a footnote.
+	\label{fig:quilt}
+	}
+\end{figure*}
+
 
 \subsection{Light Curve Statistics}
 \label{subsec:lcstatistics}
@@ -1894,30 +1919,28 @@ any other signals via matched-filter techniques).
 \subsection{A Few Objects of Interest}
 \label{subsec:identifying_variability}
 
-\begin{figure}[!t]
-	\gridline{\fig{tls_sde_vs_period_scatter.pdf}{0.45\textwidth}{}}
-	\vspace{-0.8cm}
-	\caption{
-    Transiting planet search periodogram summary.
-    Each point represents the TLS periodogram peak signal detection
-    efficiency (SDE) and corresponding period from one light curve.
-    Significance thresholds (orange lines) are empirically defined for
-    the transiting planet search described in
-    \S~\ref{subsec:identifying_variability}.  
-    {\it Top.} Sector 6.  {\it Bottom.} Sector 7.
-	}
-	\label{fig:tlsresults}
-\end{figure}
-
-Below, we provide a few examples of how one might go about identifying
-pulsating stars, strong stellar rotators, eclipsing binaries, and
-transiting planets in the light curves.
+A detailed search for transiting planets will be the subject of future
+work.
+The light curves provide opportunities for studying many other types of
+variables, including
+pulsating stars, rotators, and eclipsing binaries.
+A few hand-picked examples are shown in Figure~\ref{fig:quilt}.
+The soure identifiers are in a footnote\footnote{
+	Top-left to bottom-right:
+	3064530810048196352, 
+	3080104185367102592, 
+	3027361888196408832,
+	3125738423345810048,
+	3326715714242517248,
+	3064487241899832832,
+	3024952755135530496,
+	2949587413510194688, 
+	5274902193830445312 
+}.
 
 \paragraph{Sinusoidal signals}
 For pulsating stars and strong stellar rotators, the Lomb-Scargle
 periodogram (CITE) is a tried-and-true discovery method.
-
-
 
 
 We measured rotation periods for stars in X, Y clean cluster.
@@ -1933,11 +1956,6 @@ own scientific interests.  The code used to do this additional
 processing is also available
 online\footnote{\url{github.com/lgbouma/cdips}, commit
 \texttt{348eea7}.}.
-
-%FIXME
-%FIXME
-%FIXME
-%FIXME
 
 \section{Discussion}
 \label{sec: discussion}

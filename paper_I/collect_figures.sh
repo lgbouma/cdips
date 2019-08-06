@@ -46,8 +46,9 @@ cp ${fdir}raw_light_curve_systematics_sec6cam1ccd2.pdf \
 cp ${fdir}tls_sde_vs_period_scatter.pdf \
    ${pdir}tls_sde_vs_period_scatter.pdf
 
-# quilt of PCs
+# quilts
 cp ${fdir}quilt_PCs.pdf ${pdir}quilt_PCs.pdf
+cp ${fdir}quilt_s6_s7.pdf ${pdir}quilt_s6_s7.pdf
 
 # time evolution of LS peak period
 cp ${fdir}LS_period_vs_color_and_age.pdf ${pdir}LS_period_vs_color_and_age.pdf
