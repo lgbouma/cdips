@@ -335,8 +335,6 @@ combined Gaia photometry and astrometry.  \S~\ref{subsec:ocmgsummary}
 and Figure~\ref{fig:cdips_targets} describe summary statistics for the
 entire sample of about one million target stars.
 
-%FIXME: make table
-
 \subsection{Big catalogs: open clusters}
 \label{subsec:oc}
 
@@ -577,12 +575,11 @@ young stars from \citet{zari_3d_2018}.
 Ages and their uncertainties are then merged against the 
 parameters reported by \citet{Kharchenko_et_al_2013}.
 
-%FIXME: make table
-The resulting CDIPS target star list is given in Table~\ref{tbl:cdips_targets}.
-The cumulative distribution of target star brightnesses, as well as a
-histogram of the ages, is shown in Figure~\ref{fig:cdips_targets}.
-Relative to field stars, our target star sample is young, with a
-typical age of 100$\,$Myr.
+The resulting CDIPS target star list is given in
+Table~\ref{tbl:cdips_targets}.  The cumulative distribution of target
+star brightnesses, as well as a histogram of the ages, is shown in
+Figure~\ref{fig:cdips_targets}.  Relative to field stars, our target
+star sample is young, with a typical age of 100$\,$Myr.
 
 
 
@@ -2159,19 +2156,36 @@ with the permission of these institutions.
 \clearpage
 \newpage
 
-\begin{deluxetable}{lll}
+\begin{rotatetable*}
+\begin{deluxetable*}
     \tablecaption{CDIPS target stars collected for the present work.  
     \label{tbl:cdips_targets}}
     \tablenum{1}
     
     \tablehead{
-        \colhead{\hspace{.9cm}Name}\hspace{.9cm}
-        & \colhead{\hspace{.9cm}$N_{\rm lc}$}\hspace{.9cm}
-        & \colhead{\hspace{.9cm}Description}\hspace{.2cm}
+      \colhead{ID} &
+      \colhead{Cluster} &
+      \colhead{Reference} &
+      \colhead{Ext catalog name} &
+      \colhead{RA} &
+      \colhead{Dec} &
+      \colhead{PMra} &
+      \colhead{PMdec} &
+      \colhead{Plx} &
+      \colhead{$G$} &
+      \colhead{$G_{\rm Bp}$} &
+      \colhead{$G_{\rm Rp}$} &
+      \colhead{K13 name match} &
+      \colhead{Unique cluster name} &
+      \colhead{How match} &
+      \colhead{Not in K13?} &
+      \colhead{Comment} &
+      \colhead{K13 logt} &
+      \colhead{K13 err logt}
     }
-    
+
     \startdata
-    \input{table_s6_most_common_clusters.tex}
+    \input{table_cdips_targets.tex}
     \enddata
     
     \tablecomments{
@@ -2181,7 +2195,8 @@ with the permission of these institutions.
     }
     
     \vspace{-1cm}
-\end{deluxetable}
+\end{rotatetable*}
+\end{deluxetable*}
 
 \begin{deluxetable}{lll}
 	\tablecaption{Counts of light curves per cluster in Sector 6, sorted
