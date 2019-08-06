@@ -49,9 +49,13 @@ LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
 def main():
 
+    sectors = [6,7]
+
+    # fig N: quilt of interesting light curves, phase-folded
     pqps.plot_quilt_s6_s7(overwrite=1)
 
-    sectors = [6,7]
+    # fig N: catalog_to_gaia_match_statistics for CDIPS target stars
+    plot_catalog_to_gaia_match_statistics(overwrite=1)
 
     # fig N: average autocorrelation fn of LCs
     plot_avg_acf(sectors, size=10000, overwrite=1, cleanprevacf=False)
@@ -83,9 +87,6 @@ def main():
 
     # fig N: wcs quality verification for one photometric reference
     plot_wcs_verification(overwrite=1)
-
-    # fig N: catalog_to_gaia_match_statistics for CDIPS target stars
-    plot_catalog_to_gaia_match_statistics(overwrite=1)
 
     # fig N: target star provenance
     plot_target_star_reference_pie_chart(OC_MG_CAT_ver=0.3, overwrite=1)

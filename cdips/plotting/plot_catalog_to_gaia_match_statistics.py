@@ -61,8 +61,8 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
     axs[0].hist(dist_arcsec.value, bins=np.arange(0,5.5,0.5), color='black',
                 fill=False, linewidth=0.5)
 
-    axs[0].set_xlabel('Distance [arcsec]')
-    axs[0].set_ylabel('Number per bin')
+    axs[0].set_xlabel('Distance [arcsec]', fontsize='x-large')
+    axs[0].set_ylabel('Number per bin', fontsize='x-large')
     axs[0].set_yscale('log')
 
     if isD14:
@@ -75,8 +75,8 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
                     fill=False, linewidth=0.5)
 
     axs[1].set_xlabel('$\mathrm{G}_{\mathrm{true}}$ - '
-                      '$\mathrm{G}_{\mathrm{pred}}$')
-    axs[1].set_ylabel('Number per bin')
+                      '$\mathrm{G}_{\mathrm{pred}}$', fontsize='x-large')
+    axs[1].set_ylabel('Number per bin', fontsize='x-large')
     axs[1].set_xlim([-2.1,2.1])
     axs[1].set_yscale('log')
 
@@ -89,9 +89,9 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
                        s=5, alpha=0.1, rasterized=True, linewidths=0,
                        color='black')
 
-    axs[2].set_xlabel('$\mathrm{G}_{\mathrm{true}}$')
+    axs[2].set_xlabel('$\mathrm{G}_{\mathrm{true}}$', fontsize='x-large')
     axs[2].set_ylabel('$\mathrm{G}_{\mathrm{true}}$ - '
-                      '$\mathrm{G}_{\mathrm{pred}}$')
+                      '$\mathrm{G}_{\mathrm{pred}}$', fontsize='x-large')
     axs[2].set_xlim([4,18])
     axs[2].set_ylim([-2.1,2.1])
 
@@ -100,8 +100,12 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
         ax.xaxis.set_ticks_position('both')
         ax.get_yaxis().set_tick_params(which='both', direction='in')
         ax.get_xaxis().set_tick_params(which='both', direction='in')
+        for tick in ax.xaxis.get_major_ticks():
+            tick.label.set_fontsize('large')
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize('large')
 
-    f.tight_layout()
+    f.tight_layout(pad=0.2, w_pad=0.5)
     savefig(f, outpath)
 
 
@@ -122,5 +126,3 @@ if __name__=="__main__":
     d14_df = pd.read_csv('../data/cluster_data/Dias14_seplt5arcsec_Gdifflt2.csv')
     outpath = '../results/catalog_to_gaia_match_statistics_Dias14.png'
     plot_catalog_to_gaia_match_statistics(d14_df, outpath, isD14=True)
-
-    import IPython; IPython.embed()

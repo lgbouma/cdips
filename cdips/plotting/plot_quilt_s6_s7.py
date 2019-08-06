@@ -51,7 +51,7 @@ def plot_quilt_s6_s7(overwrite=1):
         5274902193830445312  # sick PMS star. pulsating? spots??
     ]
 
-    lctypes = ['PCA2']*3 + ['IRM2']*3 + ['PCA2']*3
+    lctypes = ['PCA2']*9
     pgtypes = ['tls']*3 + ['gls'] + ['tls']*2 + ['gls','tls','gls']
     peakindices = [0,0,0,
                    0,1,0,
@@ -86,12 +86,12 @@ def plot_quilt_s6_s7(overwrite=1):
 
     inds = ['']*len(lcpaths)
 
-    f, axs = plt.subplots(nrows=3,ncols=3,figsize=(6,4.5))
+    f, axs = plt.subplots(nrows=3,ncols=3,figsize=(7.5,4.5))
     axs = axs.flatten()
 
     ix = 0
 
-    overwritecsv = 1 # option to save time
+    overwritecsv = 0 # option to save time
 
     for fpath, ax, a, ind, lctype, pgtype, peakindex in zip(
         lcpaths, axs, alphas, inds, lctypes, pgtypes, peakindices
@@ -121,6 +121,8 @@ def plot_quilt_s6_s7(overwrite=1):
         ax.get_xaxis().set_tick_params(which='both', direction='in')
 
         for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize('small')
+        for tick in ax.xaxis.get_major_ticks():
             tick.label.set_fontsize('small')
 
     f.text(0.5,-0.02, 'Phase', ha='center', fontsize='medium')
