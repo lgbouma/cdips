@@ -131,7 +131,7 @@ e.g.},][]{skumanich_time_1972,barnes_color-period_2015,meibom_spin-down_2015,cur
 By measuring eccenticities as a function age, we can study the tidal
 circularization of binaries
 \citep{meibom_robust_2005,milliman_wiyn_2014,price-whelan_binary_2018}.
-The detection of eclipsing binaries can also lead to the precise
+The detection of eclipsing binaries (EBs) can also lead to the precise
 determination of the absolute dimensions of the stars and stringent
 tests of stellar-evolutionary models
 \citep{luhman_formation_2012,stassun_review_2014,kraus_mass-radius_2015}.
@@ -235,32 +235,32 @@ data processing will enable.
 \section{Method: Star Selection}
 \label{sec:starselection}
 
-\begin{figure}[!t]
+\begin{figure*}[!t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.48\textwidth]{target_star_positions.png}
+		\includegraphics[width=0.9\textwidth]{target_star_positions.png}
 		%\gridline{\fig{target_star_cumulative_counts.pdf}{0.41\textwidth}{}}
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
-    Target star positions (blue) and predicted TESS observing
+    Target star positions (blue) and nominal TESS observing
     footprint (gray).  Target stars are either candidate members of
     clusters, or else have other youth indicators (see
     \S~\ref{sec:starselection}).  Most will be observed for one or two
     lunar months over the TESS Prime Mission.
     \label{fig:cdips_targets_positions}
 	}
-\end{figure}
+\end{figure*}
 
 \begin{figure}[!t]
 	\begin{center}
 		\leavevmode
 		%\includegraphics[width=0.45\textwidth]{target_star_cumulative_counts.png}
-		\gridline{\fig{target_star_cumulative_counts.pdf}{0.41\textwidth}{}}
+		\gridline{\fig{target_star_cumulative_counts.pdf}{0.43\textwidth}{}}
 		\vspace{-0.8cm}
-		\gridline{\fig{target_star_hist_logt.pdf}{0.41\textwidth}{}}
+		\gridline{\fig{target_star_hist_logt.pdf}{0.43\textwidth}{}}
 		\vspace{-0.8cm}
-		\gridline{\fig{target_star_reference_pie_chart.pdf}{0.41\textwidth}{}}
+		\gridline{\fig{target_star_reference_pie_chart.pdf}{0.43\textwidth}{}}
 	\end{center}
 	\vspace{-0.8cm}
 	\caption{
@@ -285,9 +285,9 @@ data processing will enable.
 \end{figure}
 
 \begin{figure*}[!t]
-	\gridline{\fig{mwscmatchstats.pdf}{0.75\textwidth}{}}
-	\vspace{-0.8cm}
-	\gridline{\fig{dias14matchstats.pdf}{0.75\textwidth}{}}
+	\gridline{\fig{mwscmatchstats.pdf}{0.83\textwidth}{}}
+	\vspace{-1.1cm}
+	\gridline{\fig{dias14matchstats.pdf}{0.83\textwidth}{}}
 	\vspace{-0.8cm}
 	\caption{
 		{\it Top.} Quality diagnostics from cross-matching
@@ -577,7 +577,8 @@ young stars from \citet{zari_3d_2018}.
 Ages and their uncertainties are then merged against the 
 parameters reported by \citet{Kharchenko_et_al_2013}.
 
-The resulting CDIPS target star list is given in Table~N.
+%FIXME: make table
+The resulting CDIPS target star list is given in Table~\ref{tbl:cdips_targets}.
 The cumulative distribution of target star brightnesses, as well as a
 histogram of the ages, is shown in Figure~\ref{fig:cdips_targets}.
 Relative to field stars, our target star sample is young, with a
@@ -595,15 +596,12 @@ typical age of 100$\,$Myr.
 \begin{figure}[!t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.3\textwidth]{pipelineoverview.pdf}
+		\includegraphics[width=0.25\textwidth]{pipelineoverview.pdf}
 	\end{center}
 	\vspace{-0.2cm}
 	\caption{
     Conceptual overview of photometric reduction pipeline.
     Details are given in \S~\ref{sec:method}.
-    %TODO: add latex section numbers!
-    %TODO: do FORCED aperture photomery on differenced images
-    %TODO: improve text generally
 	\label{fig:pipeline}
 	}
 \end{figure}
@@ -611,7 +609,7 @@ typical age of 100$\,$Myr.
 \begin{figure*}[!t]
     \begin{center}
         \leavevmode
-        \includegraphics[width=0.95\textwidth]{stages_of_image_processing_good.png}
+        \includegraphics[width=0.93\textwidth]{stages_of_image_processing_good.png}
     \end{center}
     \vspace{-0.6cm}
     \caption{
@@ -634,7 +632,7 @@ typical age of 100$\,$Myr.
 \begin{figure*}[!t]
     \begin{center}
         \leavevmode
-        \includegraphics[width=0.95\textwidth]{stages_of_image_processing_bad.png}
+        \includegraphics[width=0.93\textwidth]{stages_of_image_processing_bad.png}
     \end{center}
     \vspace{-0.6cm}
     \caption{
@@ -811,7 +809,7 @@ data, and no additional gaps in Sector 7.
 \label{subsec:metadatacollection}
 
 \begin{figure}[!t]
-	\gridline{\fig{astromresidual_hist.pdf}{0.5\textwidth}{}}
+	\gridline{\fig{astromresidual_hist.pdf}{0.45\textwidth}{}}
 	\vspace{-0.8cm}
 	\gridline{\fig{astromresidual_quiver.pdf}{0.5\textwidth}{}}
   %\vspace{-0.8cm}
@@ -1160,7 +1158,7 @@ we calculate the instrumental fluxes for each frame per
 Equation~\ref{eq:ism_flux_measurement}.  We did this with three
 different aperture sizes: for this work, circles of radii 1 pixel, 1.5
 pixels, and 2.25 pixels.  These sizes were chosen to roughly span the
-range of optimal aperture sizes for stars in our sample, as calcuated
+range of optimal aperture sizes for stars in our sample, as calculated
 from the pre-flight \citet{Sullivan_et_al_2015} noise model.  Finally,
 to convert from a list of flux measurements for each source on a frame
 to a list of flux values at any given time, we used the
@@ -1378,7 +1376,8 @@ analysis.  As is typically the case when the noise variance is
 different for each ``feature'' (each point in time), we found that
 $k$-folding cross-validation using PCA failed to recover a plausible
 number of components\footnote{See for example
-\url{https://scikit-learn.org/stable/auto_examples/decomposition/plot_pca_vs_fa_model_selection.html}}.
+\url{https://scikit-learn.org/stable/auto_examples/decomposition/plot_pca_vs_fa_model_selection.html}
+ (2019/08/06).}.
 However, the factor analysis typically maximized the cross-validation
 score with anywhere from $10$ to $15$ components, which agreed with a
 visual analysis of the number of PCA components past which overfitting
@@ -1543,7 +1542,7 @@ header of each light curve.
 		\leavevmode
 		\includegraphics[width=0.9\textwidth]{galacticcoords_cluster_field_star_positions.pdf}
 	\end{center}
-	\vspace{-0.5cm}
+	\vspace{-0.7cm}
 	\caption{
     Positions of light curves from TESS Sectors 6 and 7 in galactic
     coordinates.  Black: $G_{\rm Rp}<13$ field stars.  Blue: $G_{\rm
@@ -1587,9 +1586,9 @@ header of each light curve.
 
 \begin{figure}[!ht]
 	\gridline{\fig{hrd_scat_all_CDIPS_LCs.pdf}{0.45\textwidth}{}}
-	\vspace{-0.8cm}
+	\vspace{-1.1cm}
 	\gridline{\fig{hrd_scat_close_subset.pdf}{0.45\textwidth}{}}
-	\vspace{-0.8cm}
+	\vspace{-0.9cm}
 	\caption{
     {\it Top.} HR diagram of CDIPS stars on silicon in this data
     release.  {\it Bottom.} HR diagram of close CDIPS stars on
@@ -1602,9 +1601,9 @@ header of each light curve.
 
 \begin{figure}[!t]
 	\gridline{\fig{pm_scat_all_CDIPS_LCs.pdf}{0.45\textwidth}{}}
-	\vspace{-0.8cm}
+	\vspace{-0.9cm}
 	\gridline{\fig{pm_scat_close_subset.pdf}{0.45\textwidth}{}}
-	\vspace{-0.8cm}
+	\vspace{-0.9cm}
 	\caption{
 		{\it Top.} Proper motions of CDIPS stars on silicon in this
 		data release.  Many of the stars in the central ``blob'' are possible
@@ -1618,7 +1617,7 @@ header of each light curve.
 \begin{figure*}[!t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.97\textwidth]{IRM-PCA-TFA_rms_vs_mag.pdf}
+		\includegraphics[width=0.9\textwidth]{IRM-PCA-TFA_rms_vs_mag.pdf}
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
@@ -1641,9 +1640,9 @@ header of each light curve.
 \begin{figure*}[!t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.97\textwidth]{avg_acf.pdf}
+		\includegraphics[width=0.85\textwidth]{avg_acf.pdf}
 	\end{center}
-	\vspace{-0.5cm}
+	\vspace{-0.7cm}
   \caption{
     Average autocorrelations of $10^4$ randomly selected light curves
     from each sector.  The medians at time lags spaced by one hour are
@@ -1664,24 +1663,25 @@ header of each light curve.
 	\caption{
 		Phased light curves for a few objects of interest.
 		{\it Top row, left to right}:
-		TOI~496, in NGC 2548;
-		TOI~625;
-		an eccentric EB, masquerading as a planet.
+		TOI~496 in Messier 48;
+		TOI~625 orbiting a late A dwarf;
+		and an eccentric EB in Bochum~5.
 		{\it Middle row, left to right}:
 		A detached EB in a 80~Myr old cluster;
 		V684 Mon (a 10 Myr old detached EB);
-		a semi-detached EB in NGC 2548.
+		and a semi-detached EB in NGC 2548.
 		{\it Bottom row, left to right}:
 		Spotted rotator in NGC 2184;
-		Pulsator or perhaps EB, flagged by \citet{zari_3d_2018} as a pre-MS star;
-		Quasi-periodic pulsator, also with a pre-MS host.
-		Gaia source identifiers are given in a footnote.
+		a pulsator or perhaps EB flagged by \citet{zari_3d_2018} as a pre-MS 
+		star;
+		and a quasi-periodic pulsator, also with a pre-MS host.
+		Gaia source identifiers are given in the text.
 	\label{fig:quilt}
 	}
 \end{figure*}
 
 
-\subsection{Light Curve Statistics}
+\subsection{Light curve statistics}
 \label{subsec:lcstatistics}
 
 \subsubsection{Stellar properties}
@@ -1884,7 +1884,7 @@ I\ {\rm mag\ arcsec}^{-2} =
 \end{equation}
 where the galactic longitude $l$ is measured from $-180^\circ$ to
 $180^\circ$, and the empirical coefficients were found to be $a_0 =
-18.9733$, $a_1=8.833$, $a_2=4.007$, and $a_3=0.805$.  This fit was
+18.9733$, $a_1=8.833$, $a_2=4.007$, and $a_3=0.805$.  The fit was
 cautioned to be {\it very approximate}.  It is sensitive to the
 threshold used to select ``unresolved'' stars, and likely no more
 accurate than 0.5 mag on average.  In regions with exceptionally high
@@ -1916,16 +1916,14 @@ necessary to maximize the effectiveness of planet searches (or the discovery of
 any other signals via matched-filter techniques).
 
 
-\subsection{A Few Objects of Interest}
+\subsection{Exploring the variability}
 \label{subsec:identifying_variability}
 
-A detailed search for transiting planets will be the subject of future
-work.
-The light curves provide opportunities for studying many other types of
-variables, including
-pulsating stars, rotators, and eclipsing binaries.
+The light curves provide an opportunity to study many types of
+variables, including pulsating stars, rotators, eclipsing binaries,
+and transiting planets.
 A few hand-picked examples are shown in Figure~\ref{fig:quilt}.
-The soure identifiers are in a footnote\footnote{
+The sources\footnote{
 	Top-left to bottom-right:
 	3064530810048196352, 
 	3080104185367102592, 
@@ -1936,119 +1934,156 @@ The soure identifiers are in a footnote\footnote{
 	3024952755135530496,
 	2949587413510194688, 
 	5274902193830445312 
-}.
+} were identified by calculating Lomb-Scargle and transit-least
+squares periodograms for a subset of the light curves, and inspecting
+the peaks with the greatest power
+\citep{lomb_1976,scargle_studies_1982,kovacs_box-fitting_2002,vanderplas_periodograms_2015,hippke_TLS_2019}.
+We calculated the periodograms using
+\texttt{astrobase}.
+Our search was extremely cursory~--~a detailed search for transiting
+exoplanets will be the subject of future work.
+To make the figure, we used the ``PCA2'' light curve for each
+star, for simplicity's sake.
+To remove outliers, we omitted
+data points within 6 hours of the beginning or end of each orbit.
+No additional detrending was performed.
 
-\paragraph{Sinusoidal signals}
-For pulsating stars and strong stellar rotators, the Lomb-Scargle
-periodogram (CITE) is a tried-and-true discovery method.
+The top row of Figure~\ref{fig:quilt} shows two TESS objects of
+interest, and an eccentric eclipsing binary.  TOI~496 is a member of M~48 
+(NGC~2548,
+\citealt{gaia_collaboration_gaia_2018,cantat-gaudin_gaia_2018}), a
+$\sim$500 Myr old open cluster \citep{Kharchenko_et_al_2013}.  The
+phase variations suggest that it is an eclipsing binary.  TOI~625 is a
+potential hot Jupiter orbiting an upper main sequence star, and was
+included as a CDIPS target through the \citet{zari_3d_2018}
+catalog.  The eccentric EB was claimed by \citet{dias_proper_2014} to
+be a member of the $\sim$50 Myr Bochum~5 cluster.  This EB is also of
+note because its TFA light curve heavily whitens the out-of-eclipse
+signal, leaving an eclipse signal would could be mistaken for a planet 
+candidate.  The important
+check for potential users of the light curves is of course to consider
+light curves with different types of detrending, to prevent these types of
+misinterpretations.
+
+The middle row of Figure~\ref{fig:quilt} shows a few more interesting
+eclipsing binaries.  On the left is a detached EB exhibiting large
+out-of-eclipse modulations in a $\sim$80~Myr
+open cluster (``vdBergh 85'', \citealt{Kharchenko_et_al_2013}).
+In the middle we have V684 Mon, a well-known $\sim$10~Myr old
+detached EB in the very young star-forming region NGC 2264.
+Finally on the right, we have a semi-detached EB in Messier~48.
+
+The bottom row of Figure~\ref{fig:quilt} gives a few examples
+of rotators and pulsators.  On the left, a spotted rotator in the
+$\sim$400 Myr NGC~2184 \citep{cantat-gaudin_gaia_2018}.
+In the middle, we have a pulsator, or perhaps EB flagged by
+\citet{zari_3d_2018} as a pre-MS star.
+Finally on the right is a quasi-periodic pulsator, or perhaps rotator,
+also with a pre-MS host.
+
+The overall point is that a great number of systems with known ages
+should be identifiable from the data at their current level of
+preparation.
 
 
-We measured rotation periods for stars in X, Y clean cluster.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion \& Conclusion}
+\label{sec:conclusion}
 
-A figure is given here. 
+In this study, we first collected an all-sky sample of about one
+million stars brighter than $G_{\rm Rp}$ of 16.  82\%
+of this target star sample are candidate ``cluster'' members, 
+where we use the generic ``cluster'' to refer to 
+open clusters, stellar associations, and moving groups.
+The remaining stars had photometric or astrometric indications of
+their youth, and either reside on the pre-main-sequence or upper main
+sequence.
 
+We then reduced TESS full frame images taken over the course of about
+two months (Sectors 6 and 7; the first fields very close to the
+galactic plane).  We performed difference imaging in order to minimize
+the complications of the crowded background.  Using forced aperture
+photometry, we made light curves for all stars brighter than $G_{\rm
+Rp}$ of 13, and went three magnitudes deeper for our target star
+sample.  This yielded \numberlcs light curves of candidate young stars
+across \numberclusters distinct clusters.
 
-To identify an initial set of transiting planets, strong
-stellar rotators, and eclipsing binaries, we performed a few steps of
-post-processing on the light curves.  This processing was done
-independently of the data release, since it was quite specific to our
-own scientific interests.  The code used to do this additional
-processing is also available
-online\footnote{\url{github.com/lgbouma/cdips}, commit
-\texttt{348eea7}.}.
+The light curves seem to be limited in precision by photon noise at
+the bright end, and by unresolved background stars at the faint end
+(Figure~\ref{fig:rms_vs_mag}).
+Though the raw light curves show significant red noise, decorrelating
+against a set of template stars led to an ensemble of light curves
+with very nearly gaussian noise properties 
+(Figures~\ref{fig:lc_systematics_dtr} and~\ref{fig:avg_acf}).
 
-\section{Discussion}
-\label{sec: discussion}
+Brief exploration of the data revealed pulsating stars, eclipsing
+binaries, and planet candidates (Figure~\ref{fig:quilt}).  A detailed planet 
+search is the
+subject of ongoing work.
+
+A point worth re-emphasizing is that the stars in the
+sample must be understood to be {\it candidate} cluster stars, and the
+possibility of photometric blends is important to rule out in
+subsequent vetting efforts of any variable object.  Careful
+understanding of the cluster itself is also important, as some
+clusters are less certain to exist than others \citep[{\it
+e.g.}, the infra-red clusters identified by][]{froebrich_FSR_2007}.
 
 We remind the reader that our goal in creating our target catalog was
-completeness, rather than fidelity. The \citet{dias_proper_2014} stars
-in particular were included if they were listed with membership
-probability exceeding 50\%.  To create cleaner sub-samples, we advise
-use of the \texttt{CDEXTCAT} header keyword, which can be used to
-merge against the original source catalog to obtain the membership
-probabilities claimed by the original catalog.
+completeness, rather than fidelity.  To create clean sub-samples, we
+advise using the \texttt{CDEXTCAT} header keyword available in the
+FITS files, which can be used to merge against the original source
+catalog to obtain the membership probabilities claimed by the original
+catalog.  Alternatively, simply restricting the targets of interest to
+those with provenance from {\it e.g.}, the Gaia-DR2 data is another
+way to produce a cleaner sample of cluster targets.
 
 Despite our goal of completeness, some clusters may still be missing
 members~--~the census of nearby coeval stellar populations is still
-very much in flux ({\it e.g.}, \citealt{sim_open_2019};
-\citealt{kounkel_untangling_2019}).  One particular area for concern in
-the present work is sub-clusters of broader star-forming complexes,
-for instance the Orion Nebula (M42; NGC 1976).  While it was observed
-by TESS in Sector~6, searching our light curves for stars within 40
-arcminutes, and 100 parsecs of the Orion Nebula's center yielded only
-180 light curves, with 85 labelled members.  The Orion Nebula has
-thousands of known members \citep{jones_proper_1988}.  However, due to
-a combination of the spatially distributed nature of the broader
-complex, as well as differential extinction, the automated methods of
-the \citet{Kharchenko_et_al_2013} and \citet{dias_proper_2014}
-assigned the Orion Nebula only 44 and 326 members, respectively.
+very much in flux. For instance, in the preparation of this work,
+\citet{sim_open_2019} identified 209 new open cluster candidates
+within 1~kpc through visual inspection of Gaia-DR2 data.  Similarly,
+\citet{kounkel_untangling_2019} searched for groups near
+the galactic plane within 1~kpc, and along with the known clusters
+found hundreds of new ``strings'' of kinematically associated stars, which
+could be coeval.
+
+Another area in which we may be incomplete is in sub-clusters
+of broader star-forming complexes. One important example is
+the Orion Nebula (M42; NGC 1976).  While it was observed by TESS in
+Sector~6, searching our light curves for stars within 40 arcminutes
+and 100 parsecs of the Orion Nebula's center yielded only 180 light
+curves, with 85 labelled members.  The Orion Nebula has far more known
+members \citep{jones_proper_1988}.  However, due to a combination of
+the spatially distributed nature of the broader complex, as well as
+differential extinction, the automated methods of the
+\citet{Kharchenko_et_al_2013} and \citet{dias_proper_2014} assigned
+the Orion Nebula only 44 and 326 members, respectively.
 \citet{cantat-gaudin_gaia_2018} explicitly excluded young star-forming
 regions from their search, since the underlying assumption of their
 clustering method (uniformity in the field star distribution) breaks
 down in highly clustered star-forming regions.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Conclusion}
-\label{sec:conclusion}
-
-%FIXME: paraphrase / improve all the below
-In this study, we first collected an all-sky sample of about one million
-candidate young stars brighter than $G_{\rm Rp}$ of 16.
-82\% of the target star sample resides in a ``cluster'', a generic
-term we adopted for open clusters, stellar associations, and moving
-groups.
-The remaining stars have photometric or astrometric indications of
-their youth, and either reside on the pre-main-sequence or upper
-main sequence.
-
-We then reduced TESS full frame images taken over the course of about
-two months (Sectors 6 and 7; the first fields very close to the galactic
-plane).
-We performed difference imaging in order to minimize the complications
-of the crowded background.
-Using forced aperture photometry, we made light curves for all stars
-brighter than $G_{\rm Rp}$ of 13, and went three magnitudes deeper for
-our target star sample.
-This yielded \numberlcs light curves of candidate young stars across
-\numberclusters distinct clusters.
-
-The light curves seem to be limited in precision by photon noise at
-the bright end, and by unresolved background stars at the faint end.
-Though the raw light curves show significant red noise, decorrelating
-against a set of template stars led to an ensemble of light curves
-with very nearly gaussian noise properties.
-
-An initial search for objects that were photometrically variable
-returned pulsating stars, eclipsing binaries, and planet candidates.
-A detailed planet search is the subject of ongoing work.
-An of the stars in the sample must be understood to be {\it candidate}
-cluster stars, and the possibility of photometric blends 
-is important to rule out in subsequent vetting efforts of any variable
-object.
-
-As a brief exploration of the photometric variability in the dataset,
-we looked at the age-evolution of extremely high-SNR variability,
-which seems to show some evolution in the space of LS peak-period
-versus color (Figure~\ref{fig:ls_peak_vs_time}), but interpreting this
-result will require a more careful exploration.  In searching for
-transiting planets, we found many eclipsing binaries, as well as
-stellar rotation and pulsation signals.
-
-Those who wish to explore the
-time-evolution in these and any other systems are invited to explore
-the data at \stscilink.
-
-
+These concerns will likely drive us to expand beyond the current
+sample of target stars in future work.  For the time being though, 
+the light curves exist and are amenable for astrophysical studies.  We
+invite any who wish to explore the time evolution of stellar or
+exoplanetary systems to interact with the data at \stscilink.
 
 
 
 \acknowledgements
-L.G.B.\ gladly acknowledges helpful discussions with
-C Huang, M Soares-Furtado, ...
-..., and is
-grateful to the people who have turned TESS from an idea into reality.
+L.G.B.\ acknowledges helpful discussions with 
+T.~Cantat-Gaudin,
+C.~Huang,
+and M.~Soares-Furtado.  The authors are also
+grateful to the many people who have turned TESS from an idea into
+reality.
 %
-J.N.W.\ thanks ...
+Coauthors thank ... %FIXME
+%
+L.G.B. and J.H. acknowledge support by the TESS GI Program, program
+G011103.
 %
 This paper includes data collected by the TESS mission, which are
 publicly available from the Mikulski Archive for Space Telescopes
@@ -2119,6 +2154,34 @@ with the permission of these institutions.
   \texttt{VARTOOLS} \citep{Hartman_Bakos_2016}
   \texttt{wotan} \citep{hippke_wotan_2019},
 }
+
+
+\clearpage
+\newpage
+
+\begin{deluxetable}{lll}
+    \tablecaption{CDIPS target stars collected for the present work.  
+    \label{tbl:cdips_targets}}
+    \tablenum{1}
+    
+    \tablehead{
+        \colhead{\hspace{.9cm}Name}\hspace{.9cm}
+        & \colhead{\hspace{.9cm}$N_{\rm lc}$}\hspace{.9cm}
+        & \colhead{\hspace{.9cm}Description}\hspace{.2cm}
+    }
+    
+    \startdata
+    \input{table_s6_most_common_clusters.tex}
+    \enddata
+    
+    \tablecomments{
+        Table~\ref{tbl:cdips_targets} is published in its entirety in a 
+        machine-readable format.
+        A portion is shown here for guidance regarding its form and content.
+    }
+    
+    \vspace{-1cm}
+\end{deluxetable}
 
 \begin{deluxetable}{lll}
 	\tablecaption{Counts of light curves per cluster in Sector 6, sorted
