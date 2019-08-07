@@ -54,7 +54,8 @@ TO PROCESS VETTING CLASSIFICATIONS
        organized.
 
 2. `fit_models_to_gold`: MCMC fit Mandel-Agol transits to gold above -- these
-   parameters are used for paper and CTOIs.
+   parameters are used for CTOIs (and probably shouldn't be blindly believed in
+   publications).
 
 3. `merge_for_exofoptess`: merge csv results from `fit_models_to_gold`
 

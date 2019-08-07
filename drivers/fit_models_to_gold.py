@@ -4,8 +4,6 @@ from datetime import datetime
 
 import matplotlib as mpl
 mpl.use('Agg')
-from matplotlib import rc
-rc('text', usetex=False)
 
 import numpy as np, matplotlib.pyplot as plt, pandas as pd
 from numpy import array as nparr
@@ -39,16 +37,61 @@ from cdips.utils import today_YYYYMMDD
 
 import make_vetting_multipg_pdf as mvp
 
-"""
-MCMC fit Mandel-Agol transits to gold above -- these parameters are used for
-paper and CTOIs.
-
-(pulls from tessorbitaldecay/measure_transit_times_from_lightcurve.py repo)
-"""
+import imageutils as iu
 
 CLASSIFXNDIR = "/home/lbouma/proj/cdips/results/vetting_classifications"
 
 def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
+    """
+    ------------------------------------------
+    Description:
+
+    Fit Mandel-Agol transits to planet candidates. The fit parameters are then
+    used for CTOIs.
+
+    The main goal of these models is to provide a good ephemeris (so: reliable
+    epoch, period, and duration + uncertainties).
+
+    For publication-quality parameters, joint modelling of stellar rotation
+    signals along with planet signals may be preferred. The approach here is to
+    just whiten the light curve in order to get a good ephemeris (which may
+    distort the depth, for example).
+
+    ------------------------------------------
+    Explanation of design:
+
+        Directory structure is made like:
+
+            /results/fit_gold/sector-?/fitresults/hlsp_*/
+            /results/fit_gold/sector-?/samples/hlsp_*/
+
+        where each `fitresults` sub-directory contains images to diagnose fit
+        quality, pickle files with saved parameters from the fits, etc.
+        The `samples` sub-directories have the .h5 files used when sampling.
+
+        First, all these directories are made.
+
+        Then, pdf files under
+        /results/vetting_classifications/sector-?_UNANIMOUS_GOLD are parsed to
+        collect the light curves and any necessary metadata.
+
+        Then there's a for loop for over each planet candidate, in which the
+        fit is performed.
+
+    ------------------------------------------
+    Args:
+
+        overwrite: if False, and the pickle file with saved parameters exists
+        (i.e. you already fit the PC), no sampling is done.
+
+        sector: the sector number.
+
+        nworkers: for threading
+
+        cdipsvnum: version number of CDIPS LCs in their name
+
+        cdips_cat_vnum: target star catalog version identifier.
+    """
 
     lcbasedir, tfasrdir, resultsdir = _define_and_make_directories(sector)
 
@@ -59,16 +102,17 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
 
     for tfa_sr_path in tfa_sr_paths:
 
+        #
+        # given the TFASR LC path, get the main LC path
+        #
         sourceid = int(tfa_sr_path.split('gaiatwo')[1].split('-')[0].lstrip('0'))
         mdf = cdips_df[cdips_df['source_id']==sourceid]
         if len(mdf) != 1:
             errmsg = 'expected exactly 1 source match in CDIPS cat'
             raise AssertionError(errmsg)
 
-        hdul = fits.open(tfa_sr_path)
-        hdr = hdul[0].header
-        cam, ccd = hdr['CAMERA'], hdr['CCD']
-        hdul.close()
+        _hdr = iu.get_header_keyword_list(tfa_sr_path, ['CAMERA','CCD'], ext=0)
+        cam, ccd = _hdr['CAMERA'], _hdr['CCD']
 
         lcname = (
             'hlsp_cdips_tess_ffi_'
@@ -83,8 +127,9 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
             lcbasedir, 'cam{}_ccd{}'.format(cam, ccd), lcname
         )
 
-        # fitresults, samples: each object's sector light curve gets a separate
-        # fit. fitresults  contains csvs and jpgs to assess.
+        #
+        # make fitresults and samples directories
+        #
         outdirs = [
             os.path.join(resultsdir,'fitresults',lcname.replace('.fits','')),
             os.path.join(resultsdir,'samples',lcname.replace('.fits',''))
@@ -93,6 +138,9 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
             if not os.path.exists(outdir):
                 os.mkdir(outdir)
 
+        #
+        # collect metadata for this target star
+        #
         supprow = mvp._get_supprow(sourceid, supplementstatsdf)
         suppfulldf = supplementstatsdf
 
@@ -107,10 +155,15 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
 
         if not os.path.exists(outpath):
 
-            _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf,
-                                    sourceid, supprow, suppfulldf, pfdf, pfrow,
-                                    toidf, ctoidf, sector, nworkers,
-                                    cdipsvnum=cdipsvnum, overwrite=overwrite)
+            _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
+                                             sourceid, supprow, suppfulldf,
+                                             pfdf, pfrow, toidf, ctoidf,
+                                             sector, nworkers,
+                                             cdipsvnum=cdipsvnum,
+                                             overwrite=overwrite)
+
+# TODO: add a binary file for whether the fit worked satisfactorily. if not,
+# ... do something about it. like raise a warning.
 
 
 def _get_data(sector, cdips_cat_vnum=0.3):
@@ -142,7 +195,9 @@ def _get_data(sector, cdips_cat_vnum=0.3):
 
     return df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf
 
+
 def _define_and_make_directories(sector):
+
     resultsdir = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
         'fit_gold/'
@@ -186,11 +241,14 @@ def _get_lcpaths(df, tfasrdir):
 
     return lcpaths
 
-def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
-                            supprow, suppfulldf, pfdf, pfrow, toidf, ctoidf,
-                            sector, nworkers, cdipsvnum=1, overwrite=1):
+
+def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
+                                     sourceid, supprow, suppfulldf, pfdf,
+                                     pfrow, toidf, ctoidf, sector, nworkers,
+                                     cdipsvnum=1, overwrite=1):
     #
-    # read and re-detrend lc if needed
+    # read and re-detrend lc if needed. (recall: these planet candidates were
+    # found using a penalized spline detrending in some cases).
     #
     hdul_sr = fits.open(tfa_sr_path)
     hdul = fits.open(lcpath)
@@ -213,14 +271,15 @@ def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
     flux = vp._given_mag_get_flux(mag)
     err = np.ones_like(flux)*1e-4
 
-    time, flux, err = sigclip_magseries(time, flux, err, magsarefluxes=True,
-                                        sigclip=[50,5])
+    time, flux, err = sigclip_magseries(
+        time, flux, err,magsarefluxes=True, sigclip=[50,5]
+    )
 
     if is_pspline_dtr:
         flux, _ = dtr.detrend_flux(time, flux)
 
     #
-    # define all the paths
+    # define the paths. get the stellar parameters, and do the fit!
     #
     tlsfit_savfile = outpath.replace(
         '_fitparameters.csv',
@@ -229,15 +288,44 @@ def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
     fit_savdir = os.path.dirname(outpath)
     chain_savdir = os.path.dirname(outpath).replace('fitresults','samples')
 
+    teff, teff_err, rstar, rstar_err, logg, logg_err = (
+        get_teff_rstar_logg(hdr)
+    )
+
+    mafr, tlsr = given_light_curve_fit_transit(time, flux, err, teff, teff_err,
+                                               rstar, rstar_err, logg,
+                                               logg_err, outpath, fit_savdir,
+                                               chain_savdir, nworkers=nworkers,
+                                               n_transit_durations=5,
+                                               n_mcmc_steps=1000,
+                                               tlsfit_savfile=tlsfit_savfile,
+                                               overwrite=overwrite)
+
+    ticid = int(hdr['TICID'])
+
     #
-    # acquire estimates of teff, rstar, logg from TIC
+    # convert fit results to ctoi csv format
+    #
+    fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
+                            teff, teff_err, rstar, rstar_err, logg, logg_err,
+                            cdipsvnum=cdipsvnum)
+
+
+
+def get_teff_rstar_logg(hdr):
+    #
+    # Given CDIPS header, acquire estimates of Teff, Rstar, logg from TIC. If
+    # Teff fails, go with the Gaia DR2 Teff.  If Rstar fails, go with Gaia DR2
+    # Rstar.  If logg fails, but you have Gaia DR2 Rstar, then go from Rstar to
+    # Mstar using Mamajek relation, and combine to estimate a ratty logg.
     #
     ra, dec = hdr['RA_OBJ'], hdr['DEC_OBJ']
     targetcoord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
     radius = 10.0*u.arcsec
     try:
         stars = Catalogs.query_region(
-            "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
+            "{} {}".format(float(targetcoord.ra.value),
+                           float(targetcoord.dec.value)),
             catalog="TIC",
             radius=radius
         )
@@ -245,16 +333,19 @@ def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         print('ERR! TIC query failed. trying again...')
         time.sleep(30)
         stars = Catalogs.query_region(
-            "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
+            "{} {}".format(float(targetcoord.ra.value),
+                           float(targetcoord.dec.value)),
             catalog="TIC",
             radius=radius
         )
 
-    Tmag_pred = (hdr['phot_g_mean_mag']
-                - 0.00522555 * (hdr['phot_bp_mean_mag'] - hdr['phot_rp_mean_mag'])**3
-                + 0.0891337 * (hdr['phot_bp_mean_mag'] - hdr['phot_rp_mean_mag'])**2
-                - 0.633923 * (hdr['phot_bp_mean_mag'] - hdr['phot_rp_mean_mag'])
-                + 0.0324473)
+    Tmag_pred = (
+        hdr['phot_g_mean_mag']
+        - 0.00522555 * (hdr['phot_bp_mean_mag'] - hdr['phot_rp_mean_mag'])**3
+        + 0.0891337 * (hdr['phot_bp_mean_mag'] - hdr['phot_rp_mean_mag'])**2
+        - 0.633923 * (hdr['phot_bp_mean_mag'] - hdr['phot_rp_mean_mag'])
+        + 0.0324473
+    )
     Tmag_cutoff = 1
 
     selstars = stars[np.abs(stars['Tmag'] - Tmag_pred)<Tmag_cutoff]
@@ -264,8 +355,10 @@ def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         seltab = selstars[np.argmin(selstars['dstArcSec'])]
 
         if not int(seltab['GAIA']) == int(hdr['GAIA-ID']):
-            # TODO: should just instead query selstars by Gaia ID u want...
-            raise ValueError
+            raise ValueError(
+                'TIC result doesnt match hdr target gaia-id. '+
+                'Should just instead query selstars by Gaia ID you want.'
+            )
 
         teff = seltab['Teff']
         teff_err = seltab['e_Teff']
@@ -284,17 +377,25 @@ def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             rstar = hdr['radius_val']
             rstar_err = 0.3*rstar
             # get mass given rstar, so that you can get logg
-            mamadf = pd.read_csv('../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
-                                 delim_whitespace=True)
+            mamadf = pd.read_csv(
+                '../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
+                delim_whitespace=True
+            )
             if rstar != 'NaN':
-                mamarstar, mamamstar = nparr(mamadf['Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
+                mamarstar, mamamstar = (
+                    nparr(mamadf['Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
+                )
                 isbad = np.insert(np.diff(mamamstar) <= 0, False, 0)
-                fn_mass_to_rstar = interp1d(mamamstar[~isbad], mamarstar[~isbad],
-                                            kind='quadratic', bounds_error=False,
+                fn_mass_to_rstar = interp1d(mamamstar[~isbad],
+                                            mamarstar[~isbad],
+                                            kind='quadratic',
+                                            bounds_error=False,
                                             fill_value='extrapolate')
                 radiusval = rstar
                 fn = lambda mass: fn_mass_to_rstar(mass) - radiusval
-                mass_guess = mamamstar[np.argmin(np.abs(mamarstar - radiusval))]
+                mass_guess = (
+                    mamamstar[np.argmin(np.abs(mamarstar - radiusval))]
+                )
                 try:
                     mass_val = optimize.newton(fn, mass_guess)
                 except RuntimeError:
@@ -304,29 +405,15 @@ def _fit_given_cdips_lcpath(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                 raise NotImplementedError('need rstar somehow')
             _Mstar = mstar*u.Msun
             _Rstar = rstar*u.Rsun
-            logg = np.log10((const.G * _Mstar / _Rstar**2).cgs.value)
-            logg_err = 0.3*logg
 
-        ticid = int(hdr['TICID'])
+            if type(logg)==np.ma.core.MaskedConstant:
+                logg = np.log10((const.G * _Mstar / _Rstar**2).cgs.value)
+                logg_err = 0.3*logg
 
     else:
         raise ValueError('bad xmatch for {}'.format(tfa_sr_path))
 
-    mafr, tlsr = given_light_curve_fit_transit(time, flux, err, teff, teff_err,
-                                               rstar, rstar_err, logg,
-                                               logg_err, outpath, fit_savdir,
-                                               chain_savdir, nworkers=nworkers,
-                                               n_transit_durations=5,
-                                               n_mcmc_steps=1000,
-                                               tlsfit_savfile=tlsfit_savfile,
-                                               overwrite=overwrite)
-
-    # convert fit results to ctoi csv format
-    fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
-                            teff, teff_err, rstar, rstar_err, logg, logg_err,
-                            cdipsvnum=cdipsvnum)
-
-
+    return teff, teff_err, rstar, rstar_err, logg, logg_err
 
 
 def fit_phased_transit_mandelagol_and_line(
@@ -340,8 +427,7 @@ def fit_phased_transit_mandelagol_and_line(
     nworkers=40,
     n_mcmc_steps=1,
     overwriteexistingsamples=True,
-    mcmcprogressbar=True
-):
+    mcmcprogressbar=True):
     """
     tlsr: result dictionary from TLS.
     teff, rstr, logg: usual units, from wherever.
@@ -788,7 +874,7 @@ def given_light_curve_fit_transit(time, flux, err, teff, teff_err, rstar,
                                   tlsfit_savfile=None,
                                   overwrite=1):
     """
-    maybe to astrobase?
+    TODO: maybe to astrobase?
     """
 
     # run tls to get initial parameters.
