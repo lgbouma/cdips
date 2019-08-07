@@ -2153,35 +2153,22 @@ with the permission of these institutions.
 }
 
 
-\clearpage
-\newpage
-
-\begin{rotatetable*}
-\begin{deluxetable*}
-    \tablecaption{CDIPS target stars collected for the present work.  
-    \label{tbl:cdips_targets}}
+\begin{deluxetable*}{lllll}
+	
+	\tabletypesize{\footnotesize}
+	
+    \tablecaption{
+    	CDIPS target star catalog, \texttt{v0.3}.
+    	\label{tbl:cdips_targets}
+	}
     \tablenum{1}
     
     \tablehead{
       \colhead{ID} &
-      \colhead{Cluster} &
-      \colhead{Reference} &
-      \colhead{Ext catalog name} &
-      \colhead{RA} &
-      \colhead{Dec} &
-      \colhead{PMra} &
-      \colhead{PMdec} &
-      \colhead{Plx} &
-      \colhead{$G$} &
-      \colhead{$G_{\rm Bp}$} &
-      \colhead{$G_{\rm Rp}$} &
-      \colhead{K13 name match} &
-      \colhead{Unique cluster name} &
-      \colhead{How match} &
-      \colhead{Not in K13?} &
-      \colhead{Comment} &
-      \colhead{K13 logt} &
-      \colhead{K13 err logt}
+      \colhead{497093746702988672} &
+      \colhead{2006361919000756992} &
+      \colhead{2048442943413035776} & 
+      \colhead{5867618572762132864}
     }
 
     \startdata
@@ -2189,14 +2176,37 @@ with the permission of these institutions.
     \enddata
     
     \tablecomments{
-        Table~\ref{tbl:cdips_targets} is published in its entirety in a 
-        machine-readable format.
-        A portion is shown here for guidance regarding its form and content.
-    }
-    
-    \vspace{-1cm}
-\end{rotatetable*}
+    This table is published in its entirety in a 
+    machine-readable format.
+    A portion of the transposed version
+    is shown here for guidance regarding its form and content.
+    Each row in the machine-readable version (each column in this
+    version) represents a target star.
+    The unique identifier, ``ID'', is the Gaia-DR2 source identifier.
+    The external catalog(s) claiming cluster membership is given 
+    as a comma-separated string in
+    ``Reference'', and the name they assign is given as a comma-separated
+    string in ``Cluster''.
+    ``Ext catalog name'' is the name the external catalog assigns.
+    Positions, proper motions, and the parallax are from Gaia-DR2.
+    The magnitudes in Gaia $G$, $G_{\rm Bp}$, and $G_{\rm Rp}$ bands
+    is given.
+    The naming matching described in Appendix~\ref{appendix:uniquenames}
+    most often succeeds in finding the
+    \citet{Kharchenko_et_al_2013} (K13) cluster corresponding to
+    the external catalog claiming membership.
+    This, or else the external name is used to assign the unique
+    cluster name.
+    The method for name matching (Appendix~\ref{appendix:uniquenames}) is
+    also given as a string, as is a ``Comment'' summarizing
+    information from \citet{Kharchenko_et_al_2013} about the
+    cluster.
+    The age and error as quoted by \citet{Kharchenko_et_al_2013}
+    are also given.
+}
+ 
 \end{deluxetable*}
+
 
 \begin{deluxetable}{lll}
 	\tablecaption{Counts of light curves per cluster in Sector 6, sorted
