@@ -162,9 +162,6 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
                                              cdipsvnum=cdipsvnum,
                                              overwrite=overwrite)
 
-# TODO: add a binary file for whether the fit worked satisfactorily. if not,
-# ... do something about it. like raise a warning.
-
 
 def _get_data(sector, cdips_cat_vnum=0.3):
 
@@ -292,6 +289,10 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
         get_teff_rstar_logg(hdr)
     )
 
+
+    # TODO: add a binary file for whether the fit worked satisfactorily. if not,
+    # ... do something about it. like raise a warning.
+
     mafr, tlsr = given_light_curve_fit_transit(time, flux, err, teff, teff_err,
                                                rstar, rstar_err, logg,
                                                logg_err, outpath, fit_savdir,
@@ -310,6 +311,56 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
                             teff, teff_err, rstar, rstar_err, logg, logg_err,
                             cdipsvnum=cdipsvnum)
 
+
+def given_light_curve_fit_transit(time, flux, err, teff, teff_err, rstar,
+                                  rstar_err, logg, logg_err, outpath,
+                                  fit_savdir, chain_savdir, nworkers=40,
+                                  n_transit_durations=5, n_mcmc_steps=1,
+                                  tlsfit_savfile=None,
+                                  overwrite=1):
+    """
+    TODO: maybe to astrobase?
+    """
+
+    # run tls to get initial parameters.
+    tlsp = periodbase.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
+                                         tls_rstar_min=0.1, tls_rstar_max=10,
+                                         tls_mstar_min=0.1, tls_mstar_max=5.0,
+                                         tls_oversample=8, tls_mintransits=1,
+                                         tls_transit_template='default',
+                                         nbestpeaks=5, sigclip=None,
+                                         nworkers=nworkers)
+
+    tlsr = tlsp['tlsresult']
+    t0, per = tlsr.T0, tlsr.period
+
+    # make plot of TLS fit
+    if isinstance(tlsfit_savfile, str):
+
+        make_fit_plot(tlsr['folded_phase'], tlsr['folded_y'], None,
+                      tlsr['model_folded_model'], per, t0, t0, tlsfit_savfile,
+                      model_over_lc=False, magsarefluxes=True,
+                      fitphase=tlsr['model_folded_phase'])
+        print('made {}'.format(tlsfit_savfile))
+
+    # fit the phased transit, within N durations of the transit itself, to
+    # determine a/Rstar, inclination, quadratric LD terms, period, and epoch.
+    # returns mandel-agol fit results dict.
+    mafr = fit_phased_transit_mandelagol_and_line(
+        time, flux, err,
+        tlsr,
+        teff, teff_err, rstar, rstar_err, logg, logg_err,
+        outpath,
+        fit_savdir,
+        chain_savdir,
+        n_transit_durations=n_transit_durations,
+        nworkers=nworkers,
+        n_mcmc_steps=n_mcmc_steps,
+        overwriteexistingsamples=overwrite,
+        mcmcprogressbar=True
+    )
+
+    return mafr, tlsr
 
 
 def get_teff_rstar_logg(hdr):
@@ -865,57 +916,6 @@ def get_limb_darkening_initial_guesses(teff, logg):
 
     return float(u_linear), float(u_quad)
 
-
-
-def given_light_curve_fit_transit(time, flux, err, teff, teff_err, rstar,
-                                  rstar_err, logg, logg_err, outpath,
-                                  fit_savdir, chain_savdir, nworkers=40,
-                                  n_transit_durations=5, n_mcmc_steps=1,
-                                  tlsfit_savfile=None,
-                                  overwrite=1):
-    """
-    TODO: maybe to astrobase?
-    """
-
-    # run tls to get initial parameters.
-    tlsp = periodbase.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
-                                         tls_rstar_min=0.1, tls_rstar_max=10,
-                                         tls_mstar_min=0.1, tls_mstar_max=5.0,
-                                         tls_oversample=8, tls_mintransits=1,
-                                         tls_transit_template='default',
-                                         nbestpeaks=5, sigclip=None,
-                                         nworkers=nworkers)
-
-    tlsr = tlsp['tlsresult']
-    t0, per = tlsr.T0, tlsr.period
-
-    # make plot of TLS fit
-    if isinstance(tlsfit_savfile, str):
-
-        make_fit_plot(tlsr['folded_phase'], tlsr['folded_y'], None,
-                      tlsr['model_folded_model'], per, t0, t0, tlsfit_savfile,
-                      model_over_lc=False, magsarefluxes=True,
-                      fitphase=tlsr['model_folded_phase'])
-        print('made {}'.format(tlsfit_savfile))
-
-    # fit the phased transit, within N durations of the transit itself, to
-    # determine a/Rstar, inclination, quadratric LD terms, period, and epoch.
-    # returns mandel-agol fit results dict.
-    mafr = fit_phased_transit_mandelagol_and_line(
-        time, flux, err,
-        tlsr,
-        teff, teff_err, rstar, rstar_err, logg, logg_err,
-        outpath,
-        fit_savdir,
-        chain_savdir,
-        n_transit_durations=n_transit_durations,
-        nworkers=nworkers,
-        n_mcmc_steps=n_mcmc_steps,
-        overwriteexistingsamples=overwrite,
-        mcmcprogressbar=True
-    )
-
-    return mafr, tlsr
 
 
 def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
