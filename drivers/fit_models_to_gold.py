@@ -474,6 +474,7 @@ def fit_phased_transit_mandelagol_and_line(
     outpath,
     fit_savdir,
     chain_savdir,
+    exp_time_minutes=30,
     n_transit_durations=5,
     nworkers=40,
     n_mcmc_steps=1,
@@ -725,7 +726,7 @@ def fit_phased_transit_mandelagol_and_line(
         )
     ).to(u.day*u.rad).value
 
-    per_point_cadence = 2*u.min
+    per_point_cadence = exp_time_minutes*u.min
     npoints_in_transit = (
         int(np.floor(((t_dur_day*u.day)/per_point_cadence).cgs.value))
     )
