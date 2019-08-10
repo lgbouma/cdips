@@ -682,6 +682,22 @@ def fit_phased_transit_mandelagol_and_line(
 
     plt.close('all')
 
+    # TODO: add a binary file for whether the fit worked satisfactorily. if not,
+    # ... do something about it. like raise a warning.
+    if os.path.exists(maf_savpath):
+        maf_empc_errs = pickle.load(open(maf_savpath, 'rb'))
+        import IPython; IPython.embed() #FIXME check what is "normal" or "good" here...
+        maf_empc_errs['acceptancefraction']
+        maf_empc_errs['autocorrtime']
+
+
+        #FIXME: n_mcmc_steps below should maybe be the MAXIMUM number of MCMC steps to take.
+        # Then you iteratively compute the autcorrelation length, and keep
+        # running as need be.
+        # http://mattpitkin.github.io/samplers-demo/pages/samplers-samplers-everywhere/
+
+
+
     fitparamdir = fit_savdir
     if not os.path.exists(fitparamdir):
         os.mkdir(fitparamdir)

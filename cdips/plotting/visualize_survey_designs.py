@@ -367,14 +367,14 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
         ax.set_title(title, y=1.05, fontsize='small')
 
     if coordsys == 'ecliptic':
-        ax.set_xlabel('Ecliptic longitude', fontsize='x-small')
-        ax.set_ylabel('Ecliptic latitude', fontsize='x-small')
+        ax.set_xlabel('Ecliptic longitude', fontsize='small')
+        ax.set_ylabel('Ecliptic latitude', fontsize='small')
     elif coordsys == 'galactic':
-        ax.set_xlabel('Galactic longitude', fontsize='x-small')
-        ax.set_ylabel('Galactic latitude', fontsize='x-small')
+        ax.set_xlabel('Galactic longitude', fontsize='small')
+        ax.set_ylabel('Galactic latitude', fontsize='small')
     elif coordsys == 'icrs':
-        ax.set_xlabel('Right ascension', fontsize='x-small')
-        ax.set_ylabel('Declination', fontsize='x-small')
+        ax.set_xlabel('Right ascension', fontsize='small')
+        ax.set_ylabel('Declination', fontsize='small')
 
     #ax.set_axisbelow(True)
     ax.grid(color='lightgray', linestyle='--', linewidth=0.5, zorder=-3,

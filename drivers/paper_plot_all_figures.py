@@ -51,6 +51,29 @@ def main():
 
     sectors = [6,7]
 
+    # fig N: pmRA and pmDEC scatter for CDIPS LC stars.
+    plot_pm_scat(sectors, overwrite=1, close_subset=1)
+    plot_pm_scat(sectors, overwrite=1, close_subset=0)
+
+    # fig N: histogram of ages of LC stars
+    plot_hist_logt(sectors, overwrite=1)
+
+    # fig N: positions of field and cluster LC stars (currently all cams)
+    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=1,
+                                        galacticcoords=True)
+    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=0)
+    plot_cluster_and_field_star_scatter(sectors=[6], overwrite=0, cams=[1],
+                                        ccds=[1,2,3,4])
+
+    assert 0
+
+    # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
+    plot_rms_vs_mag(sectors, overwrite=1)
+
+    # fig N: 3x2 quilt of phased PC
+    pqp.plot_quilt_PCs(overwrite=1, paper_aspect_ratio=0)
+    pqp.plot_quilt_PCs(overwrite=1, paper_aspect_ratio=1)
+
     # fig N: quilt of interesting light curves, phase-folded
     pqps.plot_quilt_s6_s7(overwrite=1)
 
@@ -94,12 +117,6 @@ def main():
     # fig N: tls_sde_vs_period_scatter
     plot_tls_sde_vs_period_scatter(sectors, overwrite=1)
 
-    # fig N: 3x2 quilt of phased PC
-    pqp.plot_quilt_PCs(overwrite=1)
-
-    # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
-    plot_rms_vs_mag(sectors, overwrite=1)
-
     # fig N: LS period vs color evolution in time
     plot_LS_period_vs_color_and_age(sectors, overwrite=1, OC_MG_CAT_ver=0.3)
 
@@ -109,23 +126,9 @@ def main():
     # fig N: histogram (or CDF) of T magnitude for LC stars
     plot_cdf_T_mag(sectors, overwrite=1)
 
-    # fig N: histogram of ages of LC stars
-    plot_hist_logt(sectors, overwrite=1)
-
     # fig N: HRD for CDIPS LC stars.
     plot_hrd_scat(sectors, overwrite=1, close_subset=1)
     plot_hrd_scat(sectors, overwrite=1, close_subset=0)
-
-    # fig N: pmRA and pmDEC scatter for CDIPS LC stars.
-    plot_pm_scat(sectors, overwrite=1, close_subset=1)
-    plot_pm_scat(sectors, overwrite=1, close_subset=0)
-
-    # fig N: positions of field and cluster LC stars (currently all cams)
-    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=1,
-                                        galacticcoords=True)
-    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=0)
-    plot_cluster_and_field_star_scatter(sectors=[6], overwrite=0, cams=[1],
-                                        ccds=[1,2,3,4])
 
     # fig N: stages of image processing.
     plot_stages_of_image_processing(niceimage=1, overwrite=0)
@@ -1263,8 +1266,8 @@ def plot_hist_logt(sectors, overwrite=0):
         tick.label.set_fontsize('small')
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize('small')
-    ax.set_xlabel('log$_{10}$(age [years])')
-    ax.set_ylabel('Number per bin')
+    ax.set_xlabel('log$_{10}$(age [years])', fontsize='large')
+    ax.set_ylabel('Number per bin', fontsize='large')
     ax.set_yscale('log')
     ax.set_xlim([5.5, 10.5])
 
@@ -1418,8 +1421,8 @@ def plot_pm_scat(sectors, overwrite=0, close_subset=0):
         tick.label.set_fontsize('small')
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize('small')
-    ax.set_xlabel(r'$\mu_{{\alpha}} \cos\delta$ [mas/yr]')
-    ax.set_ylabel('$\mu_{{\delta}}$ [mas/yr]')
+    ax.set_xlabel(r'$\mu_{{\alpha}} \cos\delta$ [mas/yr]', fontsize='large')
+    ax.set_ylabel('$\mu_{{\delta}}$ [mas/yr]', fontsize='large')
 
     ax.set_xlim([-20,20])
     ax.set_ylim([-20,20])
@@ -1600,15 +1603,15 @@ def plot_cluster_and_field_star_positions(df, outpath, figsize, galacticcoords):
                    s=0.5, rasterized=True, linewidths=0, zorder=1)
         ax.scatter(df[iscdips]['ra'], df[iscdips]['dec'], c='C0', alpha=0.8,
                    s=0.5, rasterized=True, linewidths=0, zorder=2)
-        ax.set_xlabel(r'Right ascension, $\alpha$ [deg]')
-        ax.set_ylabel('Declination, $\delta$ [deg]')
+        ax.set_xlabel(r'Right ascension, $\alpha$ [deg]', fontsize='large')
+        ax.set_ylabel('Declination, $\delta$ [deg]', fontsize='large')
     else:
         ax.scatter(df[~iscdips]['glon'], df[~iscdips]['glat'], c='k', alpha=0.5,
                    s=0.5, rasterized=True, linewidths=0, zorder=1)
         ax.scatter(df[iscdips]['glon'], df[iscdips]['glat'], c='C0', alpha=0.8,
                    s=0.5, rasterized=True, linewidths=0, zorder=2)
-        ax.set_xlabel('Galactic longitude, $l$ [deg]')
-        ax.set_ylabel('Galactic latitude, $b$ [deg]')
+        ax.set_xlabel('Galactic longitude, $l$ [deg]', fontsize='large')
+        ax.set_ylabel('Galactic latitude, $b$ [deg]', fontsize='large')
 
     #ax.set_title('black: $G_{\mathrm{Rp}}<13$ field. blue: $G_{\mathrm{Rp}}<16$ cluster.')
 
@@ -1888,18 +1891,18 @@ def _plot_rms_vs_mag_stages(df, stages, outpath, overwrite=0, yaxisval='RMS'):
         a0.set_yscale('log')
         if len(stages) > 1:
             if ix == 1:
-                a1.set_xlabel('TESS magnitude', labelpad=0.8, fontsize='large')
+                a1.set_xlabel('TESS magnitude', labelpad=0.8, fontsize='xx-large')
         else:
-            a1.set_xlabel('TESS magnitude', labelpad=0.8, fontsize='large')
+            a1.set_xlabel('TESS magnitude', labelpad=0.8, fontsize='xx-large')
         if ix == 0:
-            a0.set_ylabel('RMS [30 minutes]', labelpad=0.8, fontsize='large')
-            a1.set_ylabel('RMS / Model', labelpad=1, fontsize='large')
+            a0.set_ylabel('RMS [30 minutes]', labelpad=0.8, fontsize='xx-large')
+            a1.set_ylabel('RMS / Model', labelpad=1, fontsize='xx-large')
 
         if len(stages)>1:
             txt = stage
             if txt == 'IRM':
-                txt = 'RAW'
-            a0.text(0.04, 0.96, txt, ha='left', va='top', fontsize='medium',
+                txt = 'Raw'
+            a0.text(0.04, 0.96, txt, ha='left', va='top', fontsize='x-large',
                     transform=a0.transAxes)
 
         a0.set_ylim([1e-5, 1e-1])

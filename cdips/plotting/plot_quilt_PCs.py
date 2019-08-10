@@ -19,9 +19,14 @@ OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
 LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
-def plot_quilt_PCs(overwrite=1):
+def plot_quilt_PCs(overwrite=1, paper_aspect_ratio=1):
+    """
+    paper_aspect_ratio: if true, uses figsize set for paper. if false, uses
+    figsize set for poster.
+    """
 
-    outpath = os.path.join(OUTDIR, 'quilt_PCs.png')
+    aspectstr = '' if paper_aspect_ratio else '_poster'
+    outpath = os.path.join(OUTDIR, 'quilt_PCs{}.png'.format(aspectstr))
     if os.path.exists(outpath) and not overwrite:
         print('found {} and not overwrite; skip'.format(outpath))
         return
@@ -50,11 +55,16 @@ def plot_quilt_PCs(overwrite=1):
         (0.983, 1.008),
         (0.972, 1.008)
     ]
+    yticks = [
+        [0.975, 1.000], [0.98, 1.00],
+        [0.996, 1.000], [0.99, 1.00],
+        [0.990, 1.000], [0.98, 1.00]
+    ]
     alphas = np.ones_like(spaths)
     #alphas = [
     #    0.45, 0.6, 0.5, 0.45, 0.5, 0.45
     #]
-    inds = ['a)','b)','c)','d)','e)','f)']
+    inds = ['']*6 # ['a)','b)','c)','d)','e)','f)']
 
     gaiaids = list(map(
         lambda x: int(
@@ -62,7 +72,10 @@ def plot_quilt_PCs(overwrite=1):
         ), spaths
     ))
 
-    f, axs = plt.subplots(nrows=3,ncols=2,figsize=(6,4.5))
+    if paper_aspect_ratio:
+        f, axs = plt.subplots(nrows=3,ncols=2,figsize=(6,4.5))
+    else:
+        f, axs = plt.subplots(nrows=3,ncols=2,figsize=(6,3))
     axs = axs.flatten()
 
     ix = 0
@@ -73,16 +86,20 @@ def plot_quilt_PCs(overwrite=1):
 
     for ix, ax in enumerate(axs):
         ax.set_ylim(ylims[ix])
+        if yticks[ix] is not None:
+            ax.set_yticks(yticks[ix])
         ax.yaxis.set_ticks_position('both')
         ax.xaxis.set_ticks_position('both')
         ax.get_yaxis().set_tick_params(which='both', direction='in')
         ax.get_xaxis().set_tick_params(which='both', direction='in')
 
     #f.text(0.5,0, 'Phase', ha='center')
-    f.text(0.5,0, 'Time from transit center [hours]', ha='center')
-    f.text(-0.01,0.5, 'Relative flux', va='center', rotation=90)
+    f.text(0.5,-0.02, 'Time from transit center [hours]', ha='center',
+           fontsize='x-large')
+    f.text(-0.01,0.5, 'Relative flux', va='center', rotation=90,
+           fontsize='x-large')
 
-    f.tight_layout(h_pad=0.35, w_pad=0.85, pad=0.95)
+    f.tight_layout(h_pad=0.35, w_pad=0.85, pad=0.8)
     savefig(f, outpath)
 
 
@@ -124,7 +141,7 @@ def plot_phase_PC(fpath, ax, ind, s=4, alpha=0.3, show_model=True):
     ax.scatter(phase*period*24, phz_flux, c='k', alpha=alpha, zorder=3, s=s,
                rasterized=True, linewidths=0)
 
-    ax.text(0.96,0.06,'P={:.2f}d'.format(period),
+    ax.text(0.96,0.06,'{:.2f}d'.format(period),
             transform=ax.transAxes, ha='right', va='bottom')
 
     ax.text(0.04,0.06,'{}'.format(ind),
