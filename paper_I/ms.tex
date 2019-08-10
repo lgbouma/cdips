@@ -253,7 +253,7 @@ processing will enable.
     footprint (gray).  Target stars are either candidate members of
     clusters, or else have other youth indicators (see
     \S~\ref{sec:starselection}).  Most will be observed for one or two
-    lunar months over the TESS Prime Mission.
+    lunar months during the TESS Prime Mission.
     \label{fig:cdips_targets_positions}
 	}
 \end{figure*}
@@ -276,7 +276,7 @@ processing will enable.
 		{\it Middle.} Histogram of target star ages, for the subset of
 		stars with ages matched against \citet{Kharchenko_et_al_2013}.
 		{\it Bottom.} Provenance of cluster membership.  Percentages are
-		relative to $N_{\rm total}=1061446$ target stars. Symbols
+		relative to $N_{\rm total}=1{,}061{,}446$ target stars. Symbols
 		are as follows.
 		D14 is \citet{dias_proper_2014}.
 		K13 is \citet{Kharchenko_et_al_2013}.
@@ -317,15 +317,15 @@ therefore to define a sample of stars that are thought to be young, or
 members of clusters, or both.
 
 A homogeneous membership calculation for every known cluster is a
-rather large undertaking, and currently falls outside our scope.  So
+large undertaking, and currently falls outside our scope.  So
 too is a homogeneous search for young stars across the galaxy.
-Instead, we have opted to collect and concatenate appropriate catalogs
-from across the literature.  We then use the resulting meta-catalog to
-identify our target stars within the TESS images.
+Instead, we have opted to collect and concatenate catalogs
+from the literature.  We then use the resulting meta-catalog to
+identify target stars within the TESS images.
 
-The probabilistic criteria for inclusion in our target star list is
-necessarily heterogeneous across different catalogs.  However, in our
-initial stellar selection we aim for completeness, not accuracy.  If
+The criteria for inclusion in our target star list are
+necessarily heterogeneous across different catalogs.  
+We aim for completeness, not accuracy.  If
 there has been a claim in the literature that a star should be
 considered a cluster member, or a young star, we would like to err on
 the side of reporting a light curve for the star.  For stars that are
@@ -333,19 +333,22 @@ photometrically interesting, we can then perform post-hoc quality
 checks using Gaia-DR2 astrometry and photometry to assess cluster
 membership and youth.
 
-\S~\ref{subsec:oc} describes the catalogs we used to identify
-candidate members of open clusters.  \S~\ref{subsec:mg} describes the
-catalogs we used to identify candidate members of moving groups,
-stellar associations, as well as young stars identified through
-combined Gaia photometry and astrometry.  \S~\ref{subsec:ocmgsummary}
-and Figure~\ref{fig:cdips_targets} describe summary statistics for the
+First, we describe the catalogs we used to identify
+members of open clusters (\S~\ref{subsec:oc}). 
+Then, we discuss the
+catalogs we used to identify members of moving groups,
+stellar associations, and more generally young stellar
+populations (\S~\ref{subsec:mg}).
+In
+ \S~\ref{subsec:ocmgsummary}
+and Figure~\ref{fig:cdips_targets} we give summary statistics for the
 entire sample of about one million target stars.
 
 \subsection{Big catalogs: open clusters}
 \label{subsec:oc}
 
 At the time of writing, two relatively large, homogeneous cluster
-memberships studies had been performed using {\it Gaia}-DR2: those by
+memberships studies had been performed using Gaia-DR2: those by
 \citet{cantat-gaudin_gaia_2018} and \citet{gaia_hr_2018}.
 There were also two large membership studies based on proper motion and 
 photometric catalogs that were of interest: the studies of
@@ -353,28 +356,26 @@ photometric catalogs that were of interest: the studies of
 
 \paragraph{{\it Gaia}-derived OC memberships}
 
-\citet{cantat-gaudin_gaia_2018} used the UPMASK unsupervised membership
+\citet{cantat-gaudin_gaia_2018} used an unsupervised membership
 assignment algorithm \citep{krone-martins_upmask_2014} to identify cluster
 members using Gaia-DR2 positions, proper motions, and parallaxes.
-They used {\it Gaia} photometry and radial velocities to then verify the
-claimed membership properties.  From their Table~2, we collect an initial
+They used Gaia photometry and radial velocities to verify the
+membership claims.  From their Table~2, we collect
 401{,}448 cluster members, in 1229 clusters, down to their limiting magnitude
 of $G=18$.
 
-\citet{gaia_hr_2018} reported memberships for stars in a smaller, more
+\citet{gaia_hr_2018} reported members of a smaller, more
 select group of well-studied open clusters. From their Table~A1, we
 collect 40{,}903 cluster members, in 41 open clusters, mostly within
 $500\,{\rm pc}$. While this work also included memberships for
-globular clusters, we omitted these from consideration.
+globular clusters, we omitted them from consideration.
 
-Given the unprecedented quality of Gaia-DR2 astrometry, these two
+Given the high quality of Gaia-DR2 astrometry, these two
 membership sources are our most reliable sources of membership
 information.  In our photometric reduction,  our default identifier
 for all sources is correspondingly the Gaia-DR2 \texttt{source\_id}.
-The TIC identifiers are found through a spatial cross-match after the
-light curves have been made, subject to the requirement that the
-Gaia-DR2 source identifiers match
-\citep{stassun_TIC_2018,stassun_TIC8_2019}.  
+The TESS Input Catalog (TIC) data for each target star are then collected
+using the Gaia-DR2 source identifier \citep{stassun_TIC_2018,stassun_TIC8_2019}.  
 
 % We take this approach
 % because Gaia-DR2 is the base-catalog used to project sources from
@@ -395,9 +396,9 @@ probable cluster members (``$1\sigma$ members'') using the combined
 photometric, kinematic, and spatial criteria described by
 \citet[][Section~3.3]{kharchenko_global_2012}.  Then, to obtain {\it
 Gaia}-DR2 source identifiers for the members, we performed a
-crossmatch for {\it Gaia}-DR2 sources within 5 arcseconds of the
+crossmatch for Gaia-DR2 sources within 5 arcseconds of the
 listed positions.  To improve the quality of the cross-match, we
-additionally used the 2MASS photometry to predict the $G$-band
+used the 2MASS photometry to predict the $G$-band
 magnitudes\footnote{See
 \url{https://gea.esac.esa.int/archive/documentation/GDR2/Data_processing/chap_cu5pho/sec_cu5pho_calibr/ssec_cu5pho_PhotTransf.html},
 online, \texttt{2019-03-29}, or \citet{carrasco_gaia_2016}}, and
@@ -408,14 +409,13 @@ neighbor as the match.  From 373{,}226 stars, this yielded a unique
 best neighbor for 352{,}332 stars (94.4\% of the sample), and a choice
 between two neighbors for 17{,}774 stars. 
 
-%FIXME is this it?
 The second (non-{\it Gaia} derived) open cluster membership catalog we
 used was the \citet{dias_proper_2014} catalog, which was based on
 UCAC4 proper motions acquired by the US Naval Observatory
 \citep{zacharias_fourth_2013}.
 From their 1805 reported open clusters, we selected sources with
 quoted membership probability above 50\%.
-To obtain {\it Gaia}-DR2 source identifiers for the members, we
+To obtain Gaia-DR2 source identifiers for the members, we
 performed a similar crossmatch as before, looking for sources within 5
 arcseconds of the listed positions, and within $\pm$2 $G$-band
 magnitudes of the prediction.
@@ -425,11 +425,11 @@ between two neighbors for 8.7\% of the remaining sample.
 
 The distributions of various cross-matching statistics are shown in
 Figure~\ref{fig:xmatch_info}.  The distances between matches is
-typically below 1 arcsecond.  The Dias catalog shows somewhat stronger
-crowding effects at the faint end compared to the Kharchenko catalog,
+typically below 1 arcsecond.  The \citeauthor{dias_proper_2014} catalog shows stronger
+crowding effects at the faint end compared to the \citeauthor{Kharchenko_et_al_2013} catalog,
 and likely has a larger number of false matches.
 At their faint ends, both catalogs show a tendency for true $G$-band
-magnitudes being somewhat larger than predicted $G$-band magnitudes,
+magnitudes to be larger than predicted $G$-band magnitudes,
 presumably due to dust reddening.
 
 
@@ -458,9 +458,9 @@ Gaia-DR1 parallaxes, to photometric searches for infrared excesses, to
 spectroscopic studies including RVs, H$\alpha$
 emission, and Li absorption.
 
-For the Gagn\'e et al{.} catalogs, a large
+For the Gagn\'e et al{.}~catalogs, a large
 number of the stars have high proper motions.
-However, a number of the stars do not have proper motions quoted.
+However, some of the stars do not have reported proper motions.
 To perform the cross-match,
 we searched the Gaia-DR2 archive for
 sources within 10 arcseconds of the listed positions (propagated to the
@@ -475,24 +475,24 @@ catalogs, this procedure yielded 2702 matches.
 The \citet{kraus_tucanahor_2014}, \citet{roser_deep_2011}, and
 \citet{bell_32ori_2017} studies reported members in Tucana-Horologium,
 the Hyades, and 32$\,$Ori respectively.  Applying the same procedure as
-for the Gagn\'e catalogs gave 187, 684, and 119 best-neighbors
+for the Gagn\'e catalogs gave 187, 684, and 119 matches
 respectively, compared to 205, 724, and 141 initially reported
 members.  Note that \citet{kraus_tucanahor_2014} found that only
 $\sim$70\% of their listed members have spectroscopic indicators
-consistent with their membership in Tucana-Horologium.
+consistent with membership in Tucana-Horologium.
 
-\citet{rizzuto_multidimensional_2011} focused on a single moving
+\citet{rizzuto_multidimensional_2011} focused on a single
 group: the Sco OB2 association. We used their reported Hipparcos
 identifiers, and matched against the {\it Gaia} archive's
 \texttt{hipparcos2\_best\_neighbour} table, which gave 319
 nearest-neighbor stars from 436 candidate members.
 
-Next, \citet{oh_comoving_2017} searched for comoving stars in the
-$\approx$2 million stars that overlapped between Tycho-2 and {\it
-Gaia}-DR1.  They found many wide binaries, and also identified a large
+\citet{oh_comoving_2017} searched for comoving stars in the
+$\approx$2 million stars that appear in both the Tycho-2 and {\it
+Gaia}-DR1 catalogs.  They found many wide binaries, and also identified a large
 number of comoving groups.  We chose the 2{,}134 stars that they
 reported were in groups with sizes of at least 3 stars.  Using their
-{\it Gaia}-DR1 source identifiers, we matched against the {\it Gaia}
+Gaia-DR1 source identifiers, we matched against the {\it Gaia}
 archive's \texttt{dr1\_neighbourhood} table, which gave 1{,}881
 nearest-neigbor stars in groups of at least three stars
 \citep{marrese_gaia_2019}.
@@ -516,21 +516,26 @@ forming regions justifies their inclusion in our search sample.
 
 
 After collecting the aforementioned lists, we merged them into a
-single table. We queried the \texttt{gaiadr2.gaia\_source} table to
-retrieve their photometric $G$, $G_{\rm Rp}$, and $G_{\rm Bp}$
+single table. We queried Gaia-DR2's \texttt{gaia\_source} table to
+retrieve their apparent $G$, $G_{\rm Rp}$, and $G_{\rm Bp}$
 magnitudes, as well as their astrometric measurements $(\alpha,
 \delta, \mu_\alpha, \mu_\delta, \pi)$.  Finally, we required that
-$G_{\rm Rp} < 16$, which is roughly where the 1-hour photometric
-precision of TESS is predicted to reach 1\%
+$G_{\rm Rp} < 16$, which is roughly the level for which
+the 1-hour photometric
+precision of TESS is predicted to be 1\%
 \citep{ricker_transiting_2015}.
 
-All told, this procedure yielded 1{,}061{,}447 unique stars, from 13
-distinct membership catalogs.
+The resulting CDIPS target star list, consisting of 1{,}061{,}447 unique stars from 13
+distinct catalogs, is given in
+Table~\ref{tbl:cdips_targets}.  The cumulative distribution of target
+star brightnesses, as well as a histogram of the ages, is shown in
+Figure~\ref{fig:cdips_targets}.  Relative to field stars, our target
+star sample is young, with a most probable age of 100$\,$Myr.
 
-The relative fractions of stars from each catalog are shown in
-Figure~\ref{fig:cdips_targets}.
+Figure~\ref{fig:cdips_targets} also shows
+the relative fraction of stars from each catalog.
 The largest number of stars come from \citealt{dias_proper_2014}
-(44.3\% of stars), \citealt{Kharchenko_et_al_2013} (17.3\%),
+(44.3\%), \citealt{Kharchenko_et_al_2013} (17.3\%),
 \citealt{cantat-gaudin_gaia_2018} (16.7\%), and \citealt{zari_3d_2018}
 (11.1\%, of which 7.8\% are OBA stars, and 3.3\% are pre-MS stars).
 107{,}647 of the stars, or about 10\%
@@ -538,19 +543,17 @@ of the collection, have cluster memberships reported by multiple
 authors.  Since the membership probability calculations often use
 independent data and methods, agreement between multiple investigators
 on a given star's cluster membership is a helpful indication of it
-being a bonafide member.
-Stars reported in multiple catalogs have all available reference information
-concatenated.  
+being a member.
 
-The fraction of target stars from each catalog which are bonafide
-cluster members should be understood to be heterogeneous.  For the
+Different catalogs have different standards for deciding
+which stars are members.  For the
 \citet{dias_proper_2014} catalog, their membership calculation
 included only spatial and kinematic information, and we used a
 relatively low probability threshold when including their stars (based
 on the criteria \citealt{dias_proper_2014} used for their star
 counts).  The \citet{Kharchenko_et_al_2013} catalog combined spatial,
 kinematic, and photometric information to derive their membership
-probabilities.  We also used a somewhat more restrictive membership
+probabilities.  We also used a more restrictive membership
 probability cut (again, following the criteria they used for their
 star counts), and so this sub-sample is likely less contaminated
 with field interlopers.
@@ -560,34 +563,25 @@ photometric information, the quality of the Gaia data suggest that the
 field contamination rate will be lowest for the
 \citet{cantat-gaudin_gaia_2018} sample.
 
-
-To assign unique cluster names, we adopted the name matched against
+To assign unique cluster names, we adopted the name given by
 \citet{Kharchenko_et_al_2013} whenever possible.
 Appendix~\ref{appendix:uniquenames} describes  how this was done in detail.
-For moving groups not identified in \citet{Kharchenko_et_al_2013}, we used
+For moving groups not identified by \citet{Kharchenko_et_al_2013}, we used
 the constellation-based naming convention from
 \citet{gagne_banyan_XI_2018}.  Otherwise, we used the name reported by
 the original catalog claiming membership.  This process reduced 16,425
-name permutations down to 3,216 unique cluster names.  Though we have
+name variants down to 3,216 unique cluster names.  Though we have
 made every effort to avoid duplicates, a small number may remain, so we
 advise inspection of the \texttt{cluster} column
 as well as the references given in the
 \texttt{reference} column rather than using the
 \texttt{unique\_cluster\_name} column to analyze individual objects
 of interest.  Nonetheless, 87.7\% of the $\sim$million unique target
-stars are matched to clusters within \citet{Kharchenko_et_al_2013},
+stars are matched to clusters named by \citet{Kharchenko_et_al_2013},
 and 88.8\% are assigned a cluster name.  The remainder are mostly the
 young stars from \citet{zari_3d_2018}.
-Ages and their uncertainties are then merged against the 
+Ages and their uncertainties were then assigned using the 
 parameters reported by \citet{Kharchenko_et_al_2013}.
-
-The resulting CDIPS target star list is given in
-Table~\ref{tbl:cdips_targets}.  The cumulative distribution of target
-star brightnesses, as well as a histogram of the ages, is shown in
-Figure~\ref{fig:cdips_targets}.  Relative to field stars, our target
-star sample is young, with a typical age of 100$\,$Myr.
-
-
 
 
 
