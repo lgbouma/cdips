@@ -1,3 +1,8 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO
+% * update keywords per new AAS format
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass[12pt,twocolumn,tighten]{aastex62}
 %\pdfoutput=1 %for arXiv submission
 \usepackage{amsmath,amstext,amssymb}
@@ -47,7 +52,8 @@
 \begin{document}
 
 \title{
-  CDIPS. I. Light Curves in Open Clusters from TESS Sectors 6 \& 7
+  Cluster Difference Imaging Photometric Survey. I.
+  Light Curves of Stars in Open Clusters from TESS Sectors 6 \& 7
 }
 
 \correspondingauthor{L. G. Bouma}
@@ -75,30 +81,29 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 
 \begin{abstract}
   % Context
-  The Transiting Exoplanet Survey Satellite (TESS) has begun to
-  photometrically monitor almost every star cluster in the solar
-  neighborhood.
+  The Transiting Exoplanet Survey Satellite (TESS) is providing
+  precise time-series photometry for hundreds of nearby star clusters.
   % Aims
   Using the TESS images, we have begun a Cluster Difference Imaging
   Photometric Survey (CDIPS), in which we are focusing on stars that
   are candidate cluster members, or else show other indications of
-  youth relative to field stars.
+  youth.
   %
-  Our aims are to discover giant transiting planets with known
-  ages, and also to provide a light curve sample fit for studies in
-  stellar astrophysics.
+  Our aims are to discover giant transiting planets with known ages,
+  and to provide light curves suitable for studies in stellar
+  astrophysics.
   %
   For this work, we made \numberlcs light curves of candidate young
   stars, across \numberclusters distinct clusters.  Each light curve
   represents between 20 and 25 days of observations of a star brighter
-  than $G_{Rp}=16$, sampled at 30 minute cadence.
+  than $G_{Rp}=16$, with 30-minute sampling.
   % Methods
   We describe the image subtraction and time-series analysis
   techniques we used to create the light curves, which have noise
   properties that agree with theoretical expectations.
   %
-  We also comment on the possible utility of the light curve sample for
-  studies of stellar rotation evolution, and binary eccentricity
+  We also comment on the possible utility of the light curve sample
+  for studies of stellar rotation evolution, and binary eccentricity
   damping.
   %
   The light curves, which cover about one sixth of the galactic plane,
@@ -120,16 +125,16 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 \section{Introduction}
 \label{sec:intro}
 
-Each of the $\sim$3000 known star clusters of the Milky Way is a gift
-to astrophysics, providing a sample of stars that vary widely in mass
-but all have approximately the same age and composition.  Time-series
-photometry of clusters has many applications. By measuring rotation
-periods over a range of ages, we can study the angular momentum
-evolution of stars and improve our ability to determine stellar ages
-through gyrochronology \citep[{\it
+Each of the several thousand star clusters of the Milky Way is a
+gift to astrophysics, providing a sample of stars that vary widely in
+mass but all have approximately the same age and composition.
+Time-series photometry of clusters has many applications. By measuring
+rotation periods over a range of ages, we can study the angular
+momentum evolution of stars and improve our ability to determine
+stellar ages through gyrochronology \citep[{\it
 e.g.},][]{skumanich_time_1972,barnes_color-period_2015,meibom_spin-down_2015,curtis_tess_2019}.
-By measuring eccenticities as a function age, we can study the tidal
-circularization of binaries
+By measuring the eccentricity distribution of binary stars as a
+function of age, we can study the tidal circularization process
 \citep{meibom_robust_2005,milliman_wiyn_2014,price-whelan_binary_2018}.
 The detection of eclipsing binaries (EBs) can also lead to the precise
 determination of the absolute dimensions of the stars and stringent
@@ -142,67 +147,67 @@ migration
 well as on the effects of metallicity
 \citep[][]{fischer_planet-metallicity_2005,petigura_metallicity_2018}.
 
-The TESS mission \citep{ricker_transiting_2015}, though designed for
-other purposes, holds the promise to deliver the most homogeneous and
-comprehensive cluster photometric survey in history.  More
-quantitatively, the \citet{Kharchenko_et_al_2013} cluster member
-database indicates that $\approx 2\times10^5$ open cluster members
-brighter than $T=16$ will be observed in the full-frame images over
-the first two years of TESS observations.  This count includes the
-``most probable'' members within each cluster's radius, which by the
+The Transiting Exoplanet Survey Satellite (TESS,
+\citealt{ricker_transiting_2015}) holds the promise to deliver the
+most homogeneous and comprehensive cluster photometric survey in
+history.  Based on the cluster membership data of
+\citet{Kharchenko_et_al_2013}, approximately $2\times10^5$ open
+cluster members brighter than $T=16$ will be observed in the
+full-frame images over the first two years of TESS observations.  This
+count includes the ``most probable'' members, which by the
 \citet{kharchenko_global_2012} definition requires the independent
 kinematic, photometric, and spatial membership probabilities to each
 exceed 61\%.  The actual number of stars in clusters is larger, as the
-membership catalogs are not yet complete, even at these
-relatively bright magnitudes \citep[{\it
-e.g.},][]{roser_nine_RSG_2016,cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019}.
+membership catalogs are not yet complete, even at these relatively
+bright magnitudes \citep[{\it
+e.g.},][]{roser_nine_RSG_2016,cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019,kounkel_untangling_2019,sim_open_2019}.
 
 A major barrier to deriving precise photometry from the TESS images is
-the relatively poor angular resolution ($\approx 21''$ per pixel).
-Almost all clusters are within 10 degrees of the Galactic plane. The
-problems with crowding and complex backgrounds become so severe
-that the TESS Candidate Target List deprioritizes
-2-minute targets at galactic latitudes less than $\approx
-15^\circ$~\citep{stassun_TIC_2018,stassun_TIC8_2019}. This includes
-almost all star clusters\footnote{TICv8 updated the cutoff to
-$10^\circ$. During the first year of TESS observations, the number
-used when selecting 2-minute target stars was $15^\circ$.}.  This decision
-was made because
-the large pixel size and the high stellar surface density make
-aperture photometry unreliable.  However, it means that most
-stars in clusters, though capable of yielding a cornucopia of science,
-will go unprocessed by the official {\it TESS} data reduction
-pipeline.
+the relatively poor angular resolution ($21''$ per pixel).  Almost all
+clusters are within 10 degrees of the Galactic plane. The problems
+with crowding and complex backgrounds are so severe that the TESS
+Candidate Target List deprioritizes 2-minute targets within $15^\circ$
+of the galactic plane\footnote{During the first year of TESS
+observations, objects within $15^\circ$ of the galactic plane were
+deprioritized. Starting in the second year of observations,
+the cutoff was changed to
+objects within $10^\circ$ of the galactic plane
+\citep{stassun_TIC8_2019}.}~\citep{stassun_TIC_2018,stassun_TIC8_2019}.
+This decision was made because the large pixel size and the high
+stellar surface density make aperture photometry unreliable.  However,
+it implies that most stars in clusters, though capable of yielding a
+cornucopia of science, will go unprocessed by the official {\it TESS}
+data reduction pipeline.
 
-One way to quantify the blending problem is to determine what fraction of
-the total flux in a photometric aperture is contributed by a
+One way to quantify the blending problem is to determine what fraction
+of the total flux in a photometric aperture is contributed by a
 particular target star. Aperture photometry is reliable when this
-fraction is close to unity.  
-Difference imaging \citep{Alard_Lupton_1998,miller_optimal_2008}, in
-our group's experience, can be viable down to crowding fractions
-of perhaps 1 part in 10.
-Based on the
-\citet{Kharchenko_et_al_2013} cluster membership data, and the density
-of background stars, we calculated that the median dilution fraction of
-cluster stars with $T< 16$ is 0.13, for an aperture radius of 2 pixels.
-For at least $\sim$$10^5$ cluster stars then, it seems that difference
-imaging may be worthwhile.
+fraction is close to unity.  Difference imaging
+\citep{Alard_Lupton_1998,miller_optimal_2008}, in our group's
+experience, can be viable down to crowding fractions of 10\%.  Based
+on the \citet{Kharchenko_et_al_2013} cluster membership data, and the
+density of background stars, we calculated that the median dilution
+fraction is 0.13, for cluster stars with $T< 16$ and an aperture
+radius of 2 pixels.  Thus, for at least $\sim$$10^5$ cluster stars,
+difference imaging may be advantageous.
 
 Difference imaging avoids the primary effects of blending through
 forced-aperture photometry.  In this method,
-the positions of stars are predicted from an astrometric
+the pixel coordinates
+of stars are calculated from an astrometric
 solution, and the reference fluxes are determined from a calibrated
-catalog magnitude-to-flux relation.  The deviation from the reference
+catalog magnitude-to-flux relation (see \S~\ref{subsubsec:photref}).
+The deviation from the reference
 flux is measured on the difference image.  Assuming that only a single
-source causes the variability, blended neighbor stars only act to
-increase Poisson noise, and do not ``dilute'' transit signals, down to
+source is variable, blended neighbor stars only act to
+increase Poisson noise, down to
 the angular resolution of the source catalog used to determine the
 reference flux.  This is a major benefit of performing image
 subtraction in crowded fields.
 
 We have therefore begun to apply difference imaging to the
 TESS images, with a focus on any star that could be a member
-of a coeval group.  We
+of a group.  We
 are also including some stars that we suspect are young due to
 combined photometric and astrometric indicators.
 A major motivation for
@@ -214,21 +219,22 @@ stellar astrophysics.
 
 For the remainder of this work, we adopt the term ``star cluster'', or
 simply cluster, to refer to a coeval group of stars.  This includes
-the open clusters of yore, as well as the moving groups and stellar
-associations that have been discovered since the late
-1990s \citep{zuckerman_young_2004}. 
+open clusters, as well as the moving groups and stellar associations
+that have been discovered since the late 1990s
+\citep{zuckerman_young_2004}. 
 
 The plan of action is as follows. In \S~\ref{sec:starselection}, we
-describe how target stars were selected. \S~\ref{sec:method} presents
-the photometric and image processing methods we used to produce light
-curves for these stars.  The statistical properties of the \numberlcs
-light curves from TESS Sectors 6 and 7 are then summarized
-(\S~\ref{subsec:lcstatistics}).  An example of how we might use the
-data to identify pulsating stars, eclipsing binaries, and transiting
-planets is then given (\S~\ref{subsec:identifying_variability}).
-\S~\ref{sec:conclusion} summarizes our findings, and discusses them
-with an eye towards the studies we hope this and subsequent rounds of
-data processing will enable.
+describe how target stars were selected. We then present the
+photometric and image processing methods we used to produce light
+curves for these stars (\S~\ref{sec:method}).  In TESS Sectors 6 and
+7, these methods yielded \numberlcs light curves, and in
+\S~\ref{subsec:lcstatistics} we summarize their statistical properties.
+An example of how we might use the data to identify pulsating stars,
+eclipsing binaries, and transiting planets is then given
+(\S~\ref{subsec:identifying_variability}).  We close in
+\S~\ref{sec:conclusion} by summarizing our findings, and discuss them
+with an eye towards the studies we hope this and further data
+processing will enable.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1040,6 +1046,7 @@ also use the flux-conserving interpolation scheme described by
 schemes do not conserve stellar flux. 
 
 \subsubsection{Photometric reference frame construction \& reference flux measurement}
+\label{subsubsec:photref}
 
 The second required reference frame is the photometric reference,
 which is used both to calculate the convolution kernel, and to obtain
