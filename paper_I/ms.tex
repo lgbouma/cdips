@@ -1690,19 +1690,19 @@ header of each light curve.
 
 \subsubsection{Stellar properties}
 
-The on-sky locations of the light curves from Sectors 6 and 7 are
-shown in Figure~\ref{fig:lcgalactic}.  Black stars are the field stars
-for which we performed photometry, and from which we selected template
-stars for TFA, as well as the construction of the PCA eigenvectors.
-Blue points are the \numberlcs stars with light curves available from
-\stscilink.  Most of the target stars are quite close to the galactic
-plane.  Gaps between CCD chips are also visible.  The highly clumped
-nature of the target stars is also apparent.
+Figure~\ref{fig:lcgalactic} shows the on-sky locations of the 
+light curves from Sectors 6 and 7.  Black points are the field stars
+for which we performed photometry in order to construct
+basis vector sets for TFA and PCA.
+Blue points are the \numberlcs target stars for which light curves are available at
+\stscilink.  Most of the target stars are close to the galactic
+plane, and are spatially clustered. 
+Gaps between CCD chips are also visible.
 
 Figure~\ref{fig:cdf_T_mag} shows the cumulative distribution of TESS
 $T$-band magnitudes for the target stars.  Though most of the targets
 are faint, $\approx3\times10^4$ are brighter than $T=13$. The brighter
-targets will be more amenable to detailed spectroscopic observtions,
+targets will be more amenable to detailed spectroscopic observations,
 should the need arise.
 
 An HR diagram for the entire sample of CDIPS stars on silicon is shown
@@ -1712,7 +1712,7 @@ also shown (bottom).  About one-third of the stars are in this latter
 sample.  Of the close stars, a relatively large fraction come from
 \citet{zari_3d_2018}, and are either on the PMS or upper
 main-sequence.  The latter set of OBA dwarf stars, while ``younger''
-than the typical field dwarf, are likely the least interesting subset
+than the typical field dwarf, are the least interesting subset
 of our target sample from the perspective of age analyses.  In the
 entire sample (Figure~\ref{fig:hrd} top), a much larger fraction of
 stars are sub-giants, red giants, and helium-burning red-clump stars.
@@ -1737,17 +1737,18 @@ main-sequence table and 7\% of sources from their PMS table;
 \citet{cantat-gaudin_gaia_2018} for 14\% of sources, and more than two
 catalogs for the remaining 10\% of sources.
 
-Table~\ref{tbl:s6_lcs} shows the clusters in Sector 6 with the largest
+Table~\ref{tbl:s6_lcs} lists the clusters in Sector 6 with the largest
 numbers of light curves. The top four clusters are all moving groups
 or stellar associations from \citet{dias_proper_2014}: Platais~5,
 Platais~6, Mamajek~3, and Collinder~70.  These membership claims
-should be regarded with serious skepticism.  For Platais~6,
+should be regarded with skepticism.  For Platais~6,
 \citet{Kharchenko_et_al_2013} claimed only about 400 probable members
 (1$\sigma$) to exist within the angular radius of the cluster.
 Mamajek~3 (= 32$\,$Ori) similarly has only about 50 confirmed members
 \citep{bell_32ori_2017}.
-Some rich open clusters in the Sector 6 field with many light curves,
-and more reliable membership lists include Trumpler~5,
+Some rich open clusters in the Sector 6 field with
+both many light curves and more reliable membership lists
+include Trumpler~5,
 Collinder~69 (the $\lambda$ Orionis cluster), and NGC~2287.
 
 
@@ -1784,9 +1785,9 @@ source of information for this particular region of the sky.
 \label{subsubsec:rmsvsmag}
 
 \paragraph{Observed RMS vs magnitude.}
-The standard deviation of the TFA-detrended light curves is plotted as
-a function of the catalog $T$-band magnitude for CDIPS light curves in
-Figure~\ref{fig:rms_vs_mag}.
+Figure~\ref{fig:rms_vs_mag} shows
+the standard deviation of the TFA-detrended light curves as
+a function of the catalog $T$-band magnitude for CDIPS target stars.
 For the $y$-axis of this plot, we have taken
 \begin{equation}
   {\rm RMS} = \left[
@@ -1797,15 +1798,15 @@ For the $y$-axis of this plot, we have taken
 where $f_i$ is the value of the flux at the $i^{\rm th}$ point in the
 time-series, $\bar{f}$ is the mean flux, $N$ is the
 number of points in the time-series, and $M$ is the number
-of template light curves used during TFA detrending.
-The correction in the denominator penalizes the natural degree of
-overfitting inherent to the TFA algorithm.
+of template light curves (principal components) used during TFA (PCA) detrending.
+The correction in the denominator is for the overfitting inherent
+in any ensemble detrending method.
 
-The observed RMS (black points) follows the usual shape, with photon
+The observed RMS (black points) follows the usual shape, with source photon
 noise dominating from $T=9$ to $T=12$, beyond which the onset of the
 ``sky'' background changes the overall slope of the curve to be more
 steep.  For the brightest stars ($T\lesssim 9$), a ``systematic
-floor'' was part of the mission's error budget
+floor'' of 60$\,$ppm$\,$hr$^{1/2}$ was part of the mission's error budget
 \citep{ricker_transiting_2015}, but has not been observed in early
 reports of the photometric performance of various aperture photometry
 pipelines ({\it e.g.,} the SPOC pipeline \citealt{jenkins_spoc_2010},
@@ -1820,18 +1821,18 @@ than $T\approx9$ \citep[see][Figure~14]{Sullivan_et_al_2015}.  Since
 the brightest stars are not the focus of the present work, we leave
 this issue unaddressed for the time being.
 
-Importantly, the faint stars do not noticeably exhibit
-the typical effects of crowding at the faint end 
-\citep[{\it e.g.},][Figure~5]{feinstein_eleanor_2019}.
-In aperture photometry pipelines, stars in very crowded regions typically 
-have their flux overestimated relative to the actual number of photons
-that fall on silicon.
-This leads to systematic underestimates of the uncertainty in the relative 
-fluxes, as well as ``flux contamination'' (the reduction in amplitude of say, 
-transit signals, due to diluting flux from neighbor stars).
-Our method to work around this problem -- using the catalog magnitudes to 
+An essential feature of our RMS diagram is that faint stars in
+crowded regions are not spuriously driven below theoretical limits.
+In aperture photometry pipelines, a star in a crowded region
+has its reference flux overestimated relative to the true number of 
+photons it contributes (due to contamination from neighbor stars).
+As a result, changes in relative flux in the faint star's light curve are 
+underestimated, and its RMS is driven low 
+\citep[{\it e.g.}, the faint end of][Figure~5]{feinstein_eleanor_2019}.
+Our method to work around this issue -- using the catalog magnitudes to 
 predict the reference flux values, and measuring deviations from these 
-reference fluxes on the subtracted images -- seems to be performing well.
+reference fluxes on the subtracted images -- seems to be performing 
+as intended.
 
 
 \paragraph{Expected RMS vs magnitude.}
@@ -1852,13 +1853,13 @@ system (zodiacal light) is dominant in the far infra-red
 faint stars can play a role, depending on the line of sight under
 consideration. The zodiacal light is brightest near the ecliptic
 plane, and the faint star background is brightest near the galactic
-plane (and towards the galactic center).  
+plane.  
 When performing pre-launch noise estimates,
 \citet{winn_background_2013}
 estimated the photon-counts from each component.
 His zodiacal light model was presented by \citet{Sullivan_et_al_2015},
 but the faint star component was not emphasized since the Sullivan
-simulations were performed away from the galactic plane.
+simulations were performed for fields away from the galactic plane.
 
 The diffuse sky model we have used for Figure~\ref{fig:rms_vs_mag} is
 adopted explicitly because most of our target stars are near the
@@ -1888,8 +1889,8 @@ I\ {\rm mag\ arcsec}^{-2} =
 \end{equation}
 where the galactic longitude $l$ is measured from $-180^\circ$ to
 $180^\circ$, and the empirical coefficients were found to be $a_0 =
-18.9733$, $a_1=8.833$, $a_2=4.007$, and $a_3=0.805$.  The fit was
-cautioned to be {\it very approximate}.  It is sensitive to the
+18.9733$, $a_1=8.833$, $a_2=4.007$, and $a_3=0.805$.  The model
+is {\it very approximate}.  It is sensitive to the
 threshold used to select ``unresolved'' stars, and likely no more
 accurate than 0.5 mag on average.  In regions with exceptionally high
 extinction ({\it e.g.}, star forming regions) it is expected to
@@ -1905,19 +1906,19 @@ versus stellar magnitude.
 Beyond the white noise properties of the light curves, the red noise
 properties are also important. 
 In Figure~\ref{fig:avg_acf} we show the average autocorrelation of the
-raw and TFA-filtered light curves.
-The raw light curves have substantial systematic red noise; 
-their average autocorrelation, evaluated at various time lags, is
+raw, PCA, and TFA light curves.
+The raw light curves have substantial red noise, and
+their average autocorrelation across many time lags is
 positive.
-The TFA-filtered light curves are much closer to gaussian~--~the
+The PCA and TFA light curves are much closer to gaussian~--~the
 average autocorrelation between any two points in these light curves
 is close to zero.
-However, the average TFA-filtered light curve is not {\it exactly}
+However, the average PCA and TFA light curves are not {\it exactly}
 gaussian.
 At time lags of a few hours or less, there is some excess power.
 This suggests that additional detrending may be
-necessary to maximize the effectiveness of planet searches (or the discovery of
-any other signals via matched-filter techniques).
+necessary to maximize the effectiveness of planet searches, or the discovery of
+any other signals via matched-filter techniques.
 
 
 \subsection{Exploring the variability}
@@ -1944,7 +1945,7 @@ the peaks with the greatest power
 \citep{lomb_1976,scargle_studies_1982,kovacs_box-fitting_2002,vanderplas_periodograms_2015,hippke_TLS_2019}.
 We calculated the periodograms using
 \texttt{astrobase}.
-Our search was extremely cursory~--~a detailed search for transiting
+Our search was cursory~--~a detailed search for transiting
 exoplanets will be the subject of future work.
 To make the figure, we used the ``PCA2'' light curve for each
 star, for simplicity's sake.
@@ -1961,13 +1962,13 @@ phase variations suggest that it is an eclipsing binary.  TOI~625 is a
 potential hot Jupiter orbiting an upper main sequence star, and was
 included as a CDIPS target through the \citet{zari_3d_2018}
 catalog.  The eccentric EB was claimed by \citet{dias_proper_2014} to
-be a member of the $\sim$50 Myr Bochum~5 cluster.  This EB is also of
-note because its TFA light curve heavily whitens the out-of-eclipse
-signal, leaving an eclipse signal would could be mistaken for a planet 
-candidate.  The important
-check for potential users of the light curves is of course to consider
-light curves with different types of detrending, to prevent these types of
-misinterpretations.
+be a member of the $\sim$50 Myr Bochum~5 cluster.  This EB is also
+notable because its TFA light curve heavily whitens the out-of-eclipse
+signal, leaving an eclipse signal that could be mistaken for a planet 
+candidate.  The relevant lesson
+for anyone using the light curves is to verify
+that detrending does not introduce or remove signals
+that alter the interpretation of the system.
 
 The middle row of Figure~\ref{fig:quilt} shows a few more interesting
 eclipsing binaries.  On the left is a detached EB exhibiting large
@@ -1994,7 +1995,7 @@ preparation.
 \section{Discussion \& Conclusion}
 \label{sec:conclusion}
 
-In this study, we first collected an all-sky sample of about one
+In this study, we collected an all-sky sample of about one
 million stars brighter than $G_{\rm Rp}$ of 16.  82\%
 of this target star sample are candidate ``cluster'' members, 
 where we use the generic ``cluster'' to refer to 
@@ -2004,15 +2005,16 @@ their youth, and either reside on the pre-main-sequence or upper main
 sequence.
 
 We then reduced TESS full frame images taken over the course of about
-two months (Sectors 6 and 7; the first fields very close to the
-galactic plane).  We performed difference imaging in order to minimize
-the complications of the crowded background.  Using forced aperture
+two months (Sectors 6 and 7; the first fields close to the
+galactic plane).  We performed difference imaging in order to 
+deal with the complex background.  Using forced aperture
 photometry, we made light curves for all stars brighter than $G_{\rm
 Rp}$ of 13, and went three magnitudes deeper for our target star
 sample.  This yielded \numberlcs light curves of candidate young stars
 across \numberclusters distinct clusters.
 
-The light curves seem to be limited in precision by photon noise at
+The light curves seem to be limited in precision by photon-counting noise 
+from the target star at
 the bright end, and by unresolved background stars at the faint end
 (Figure~\ref{fig:rms_vs_mag}).
 Though the raw light curves show significant red noise, decorrelating
@@ -2034,7 +2036,7 @@ clusters are less certain to exist than others \citep[{\it
 e.g.}, the infra-red clusters identified by][]{froebrich_FSR_2007}.
 
 We remind the reader that our goal in creating our target catalog was
-completeness, rather than fidelity.  To create clean sub-samples, we
+completeness, rather than reliability.  To create clean sub-samples, we
 advise using the \texttt{CDEXTCAT} header keyword available in the
 FITS files, which can be used to merge against the original source
 catalog to obtain the membership probabilities claimed by the original
