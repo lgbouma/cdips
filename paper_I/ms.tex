@@ -1802,42 +1802,40 @@ team's effort (D{.} Nardiello, submitted; {\it e.g.},
 \citealt{libralato_psf-based_2016}). 
 
 Most of these pipelines are geared towards tasks more general than our
-own, and use aperture photometry.  The SPOC pipeline
-produces the calibrated FFIs from raw images, processes 2 minute data,
-identifies exoplanets, and produces the TESS data
-products of record.  The MIT-QLP processes a subset of stars on the
-FFIs, identifies exoplanets, and the affiliated TESS Science Office
-alerts object of interest for ground and space-based followup.  The
-\texttt{eleanor} pipeline is a user-friendly tool for
-extracting light curves from the FFIs.  The team developing it is
-also performing transit searches across the full set of FFIs.  The
-TASOC pipeline is primarily aimed towards asteroseismology.  The
+own, and use aperture photometry.  The SPOC pipeline produces the
+calibrated FFIs from raw images, processes 2 minute data, identifies
+exoplanets, and produces the TESS data products of record.  The
+MIT-QLP processes a subset of stars on the FFIs, identifies
+exoplanets, and the affiliated TESS Science Office alerts object of
+interest for ground and space-based followup.  The \texttt{eleanor}
+pipeline is a user-friendly tool for extracting light curves from the
+FFIs.  The team developing it is also performing transit searches
+across the full set of FFIs.  The TASOC pipeline is primarily aimed at
+asteroseismology and variable star classification.  The
 \citeauthor{oelkers_precision_2018} pipeline was aimed at broad,
-all-sky variability searches, and used similar difference
-imaging methods as our own.  Finally, the Padova team's effort is
-developed with a similar focus towards clusters as our work, but uses
-PSF subtraction to mitigate crowding.  This ecosystem
-provides many opportunities for methodological improvements as light
-curve products continue to be made public.
+all-sky variability searches, and used difference imaging methods
+similar to our own.  Finally, the Padova team's effort is also
+directed towards star clusters, but uses PSF subtraction to mitigate
+crowding.  This ecosystem provides many opportunities for
+methodological improvements as light curve products continue to be
+made public.
 
-There are of course caveats and possible areas for improvement
-in our own work.
-One methodological point concerns the hyperparameter tuning
-required by our difference imaging method (\S~\ref{subsec:tuneconvkernel}).
-Within our fine-tuning experiments over different kernel box-sizes
-and polynomial weightings,
-we found that low-significance transit signals could be ``lost''
-relative to the noise for different choices of parameters that
-ideally would not affect the photometric pipeline's results.
-In the longer
-term, developing an image-subtraction method that marginalizes over
-uncertainties of how to chose ``optimal'' kernels would be desirable.
-Pixel-level image subtraction methods that omit these parameters
-entirely are also worth exploring \citep{wang_pixel-level_2017}.
+There are of course caveats and possible areas for improvement in our
+own work.  One methodological point concerns the hyperparameter tuning
+required by our difference imaging method
+(\S~\ref{subsec:tuneconvkernel}).  Within our fine-tuning experiments
+over different kernel box-sizes and polynomial weightings, we found
+that low-significance transits  could be ``lost'' to the noise for
+different choices of parameters that ideally should not affect the
+photometric pipeline's results.  In the longer term, developing an
+image-subtraction method that marginalizes over uncertainties of how
+to chose ``optimal'' kernels would be desirable.  Pixel-level image
+subtraction methods that omit these parameters entirely are also worth
+exploring \citep{wang_pixel-level_2017}.
 
 A separate point to re-emphasize is that stars in our sample must be
-understood to be {\it candidate} cluster stars, and ruling out the possibility of
-photometric blending is important in subsequent vetting
+understood to be {\it candidate} cluster stars, and ruling out the
+possibility of photometric blending is important in subsequent vetting
 efforts of any variable object.  Careful understanding of the cluster
 itself is also important, as some clusters are less certain to exist
 than others \citep[{\it e.g.}, the infrared clusters identified
