@@ -47,12 +47,14 @@ def plot_quilt_s6_s7(overwrite=1):
         3326715714242517248, # V684 Mon, 10 Myr old detached binary.
         3064487241899832832, # semidetached EB, NGC 2548
         3024952755135530496, # two-spotted pulsator, NGC 2184
-        2949587413510194688, # double-hump rotator / pulsator??
-        5274902193830445312  # sick PMS star. pulsating? spots??
+        3209428644243836928, # M42 Dias, rapid rotating m dwarf, V468 Ori
+        3214130293403123712 # zhuchang-class weirdo.
+        #2949587413510194688, # double-hump rotator / pulsator??
+        #5274902193830445312  # sick PMS star. pulsating? spots??
     ]
 
     lctypes = ['PCA2']*9
-    pgtypes = ['tls']*3 + ['gls'] + ['tls']*2 + ['gls','tls','gls']
+    pgtypes = ['tls']*3 + ['gls'] + ['tls']*2 + ['gls','gls','gls']
     peakindices = [0,0,0,
                    0,1,0,
                    0,0,0]
@@ -72,14 +74,14 @@ def plot_quilt_s6_s7(overwrite=1):
             raise AssertionError('error! got no lc matches')
 
     ylims = [
-             None,(0.989, 1.005), None,
+             None,(0.989,1.005), None,
              None,None,None,
-             None,None,None
+             None,(0.96, 1.04),None
     ]
     yticks = [
              [0.98, 1.00],[0.99, 1.00], None,
              [0.90,1.00],[0.93,1.00],[0.98, 1.01],
-             [0.98,1.01],[0.90,1.05],[0.98,1.03]
+             [0.98,1.01], [0.97, 1.03], [0.85, 1.15]
     ]
 
     alphas = np.ones_like(lcpaths).astype(int)*0.7

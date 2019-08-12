@@ -51,6 +51,11 @@ def main():
 
     sectors = [6,7]
 
+    # fig N: quilt of interesting light curves, phase-folded
+    pqps.plot_quilt_s6_s7(overwrite=1)
+
+    assert 0
+
     # fig N: pmRA and pmDEC scatter for CDIPS LC stars.
     plot_pm_scat(sectors, overwrite=1, close_subset=1)
     plot_pm_scat(sectors, overwrite=1, close_subset=0)
@@ -65,17 +70,12 @@ def main():
     plot_cluster_and_field_star_scatter(sectors=[6], overwrite=0, cams=[1],
                                         ccds=[1,2,3,4])
 
-    assert 0
-
     # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
     plot_rms_vs_mag(sectors, overwrite=1)
 
     # fig N: 3x2 quilt of phased PC
     pqp.plot_quilt_PCs(overwrite=1, paper_aspect_ratio=0)
     pqp.plot_quilt_PCs(overwrite=1, paper_aspect_ratio=1)
-
-    # fig N: quilt of interesting light curves, phase-folded
-    pqps.plot_quilt_s6_s7(overwrite=1)
 
     # fig N: catalog_to_gaia_match_statistics for CDIPS target stars
     plot_catalog_to_gaia_match_statistics(overwrite=1)
