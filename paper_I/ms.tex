@@ -350,8 +350,8 @@ entire sample of about one million target stars.
 At the time of writing, two relatively large, homogeneous cluster
 memberships studies had been performed using Gaia-DR2: those by
 \citet{cantat-gaudin_gaia_2018} and \citet{gaia_hr_2018}.
-There were also two large membership studies based on proper motion and 
-photometric catalogs that were of interest: the studies of
+There were also two large membership studies pre-dating Gaia-DR2 based on proper motion and 
+photometric catalogs: the studies of
 \citet{Kharchenko_et_al_2013} and \citet{dias_proper_2014}.
 
 \paragraph{{\it Gaia}-derived OC memberships}
@@ -654,8 +654,11 @@ pipelines developed by \citet{Pal_2009},
 Figure~\ref{fig:pipeline} shows a conceptual overview of
 our pipeline.  Most modules have been
 developed over the past decade to reduce
-images taken by the Hungarian Automated Telescope (HAT) network \citep{bakos_hat_review_2018}.  The specific high-level framework
-used for this reduction was adapted from a pipeline called
+images taken by the Hungarian Automated Telescope (HAT) network \citep{bakos_hat_review_2018}.
+The work of \citet{Pal_2009}, embodied in the \texttt{fitsh} software package,
+was an especially crucial component.
+The specific high-level framework
+we used for this reduction was adapted from a pipeline called
 \texttt{pipe-trex}, under development primarily for the HATPI project
 (\url{hatpi.org}).  The code is available
 online\footnote{\url{github.com/waqasbhatti/pipe-trex}, commit
@@ -674,7 +677,9 @@ we first convolve a subset of the frames to have identical stellar profiles,
 and then stack them. Finally, we subtract each target frame
 from the photometric reference frame (\S~\ref{subsec:imagesubtraction}).  We
 perform aperture photometry on the subtracted images using positions
-projected onto the frame from the Gaia-DR2 source catalog.  We detrend
+projected onto the frame from the Gaia-DR2 source catalog.  
+The resulting differential flux measurements are converted to total flux measurements using photometric information from Gaia-DR2 to estimate the total flux of each source on the reference image.
+We detrend
 the resulting light curves (\S~\ref{subsec:lcdetrending}).  The
 resulting white noise and red noise properties of the light curves,
 and a few interesting cases of variability, are discussed in
@@ -855,14 +860,14 @@ $\Delta x = x-x_0$, $\Delta y = y - y_0$, $B$ the background
 level, and $A$ an arbitrary
 flux-scaling constant.
 For a nearly circular shape profile, the sharpness $s$ is related to
-the FWHM as ${\rm FWHM} \approx 2.35\sqrt{s}$ \citep[{\it
+the FWHM as ${\rm FWHM} \approx 2.35s^{-1/2}$ \citep[{\it
 e.g.},][]{Pal_2009}.  These shape parameters are later used when
 selecting an astrometric reference frame
 (\S~\ref{subsec:imagesubtraction}).  
 In agreement with what is obvious upon visual inspection, this 
 fitting process shows that stars closer to the
 center of each camera's field are round, while
-stars near the field edges are more triangular.
+stars near the field edges are more elongated.
 
 For the astrometric solution, we use the World Coordinate System (WCS)
 and fourth-order Simple Imaging Polynomial (SIP) coefficients
@@ -911,7 +916,8 @@ light curve detrending.
 
 Figure~\ref{fig:astromresid} displays the residual between
 the measured and projected stellar centroid
-positions for one photometric reference image.
+positions for one photometric reference frame.
+The construction of this frame will be described shortly.
 The plot shows that the errors
 are typically largest in the corners of the image,
 where the non-linearity of the focal plane is most significant, and
@@ -962,7 +968,7 @@ the center of each aperture.
 \subsection{Image subtraction}
 \label{subsec:imagesubtraction}
 
-\subsubsection{History of image subtraction method}
+\subsubsection{Synopsis of image subtraction method}
 
 The core operation of ``classical'' image subtraction is to
 match a photometric reference image $R$ and a target image $I$ by computing
@@ -1018,7 +1024,7 @@ two ``reference frames'':
 (1) the astrometric reference frame; and (2) the photometric reference frame.
 
 To choose the astrometric reference frame, we search for frames with
-large, round stars (big $s$, small $d$ and $k$ values).  We also
+compact, round stars (big $s$, small $d$ and $k$ values).  We also
 require that the frame have a low background level, as measured in
 annuli around the bright stars selected in
 \S~\ref{subsec:preparation}.  Finally, the astrometric reference
@@ -1116,7 +1122,8 @@ polynomials up to a cut-off order.
 %NOTE : this is kind of incomprehensible
 %CHECK: does the polynomial weighting actually do what you want it to do?
 
-This kernel model has three free parameters: (1) the box-size; 
+This kernel model has three parameters that must be
+specified, but are not automatically optimized by the procedure: (1) the box-size; 
 (2) the maximum order of the polynomial weighting the delta
 function terms; (3) the maximum order of the polynomial weighting the
 flux scaling.  We performed a grid-search to tune these parameters, in
@@ -1165,7 +1172,7 @@ pixels, and 2.25 pixels.  These sizes were chosen to roughly span the
 range of optimal aperture sizes reported by
 \citet{Sullivan_et_al_2015}.  Finally,
 to convert from a list of flux measurements for each source on a frame
-to a list of flux values at any given time, we used the
+to light curves, we used the
 \texttt{fitsh} transposition tool \texttt{grcollect}.
 
 \subsection{Light curve detrending}
@@ -1197,7 +1204,7 @@ to a list of flux values at any given time, we used the
 \begin{figure}[!t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.44\textwidth]{external_parameters_vs_time_sec6cam1ccd1.pdf}
+		\includegraphics[width=0.45\textwidth]{external_parameters_vs_time_sec6cam1ccd1.pdf}
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
@@ -1205,9 +1212,9 @@ to a list of flux values at any given time, we used the
     in ``external'' parameters, shown here for a representative star
     over two orbits.  {\it Top}: Instrumental raw magnitude (with a
     particular aperture size), as a function of time.  Continuing in
-    order are $x$ and $y$ centroid positions as a functions of time,
+    order are $x$ and $y$ centroid positions as functions of time,
     the $(s,d,k)$ PSF shape parameters, the CCD temperature,  and the
-    measured background value.  Differential aberration affect the
+    measured background value.  Differential aberration affects the
     centroid position over the span of each orbit.  Momentum dumps are
     marked with vertical dashed lines, and affect the measured shapes
     of stars.
@@ -1221,13 +1228,13 @@ Figure~\ref{fig:lc_systematics_dtr} shows twenty stars of comparable
 brightness randomly selected from two CCDs.  Stars that are far apart
 on the same CCD often share similar changes in flux.  In other words,
 the instrumental systematics seem to dominate.  This problem is
-generic to most wide-field photometric datasets, including the WASP,
+generic in wide-field photometric datasets, including the WASP,
 Kepler, and HAT surveys
-\cite{Pollacco_2006,borucki_kepler_2010,bakos_hat_review_2018}.  To
+\citep{Pollacco_2006,borucki_kepler_2010,bakos_hat_review_2018}.  To
 remove the systematic variability, we adopted two different
 approaches: {\it (i)} the trend-filtering algorithm (TFA,
 \citealt{kovacs_trend_2005}), and {\it (ii)} a principal component
-analysis (PCA).
+analysis (PCA, see {\it e.g.}, \citealt{ivezic_statistics_2014} for a review).
 
 However, a number of other approaches to the problem were possible. To
 encourage future improvements, we describe the possibility of
@@ -1327,7 +1334,7 @@ for which the coefficients $c_j$ are found by minimizing
   \label{eq:tfa_to_minimize}
 \end{equation}
 When trying to find periodic signals, $A(i)$ represents our prior
-knowledge of the light curve's shape.  This prior is simply that stars
+knowledge of the light curve's shape.  Initially, this prior is simply that stars
 on average maintain a constant brightness:
 \begin{equation}
   A(i) = \langle Y \rangle = \frac{1}{N} \sum_{i=1}^{N} Y(i) = {\rm const.}
@@ -1342,7 +1349,9 @@ stages.  In the first stage, we fitted a parabola in the RMS-magnitude
 plane, and discarded stars more than $2\sigma$ away from the
 prediction of the fit.  We also required that these initial candidate
 stars have intermediate brightness ($8.5 > T > 13$), and have a
-relatively large number of time-series data points.  We then performed
+relatively large number of time-series data points.  
+We excluded templates within 20 pixels of any given target star.
+We then performed
 an initial iteration of TFA, on only the candidate template stars.  We
 inspected the resulting detrended light curves for residual structure
 by computing a Lomb-Scargle periodogram.  If the maximum-power peak
@@ -1365,30 +1374,45 @@ detrending approach.
 
 To remove the largest systematic trends with minimal overfitting of
 {\it e.g.}, stellar rotation signals, we adopted a simple variant of
-PCA (see {\it e.g.}, \citealt{ivezic_statistics_2014} for a review).
+PCA.
 A similar approach was taken by \citet{feinstein_eleanor_2019} in
 \texttt{eleanor}.  We derived the principal components for each CCD
 using the 200 template stars previously selected for TFA.  We then
 modelled each target light curve as a linear combination of a subset
-of these principal components, with weights determined by linear least
-squares.
+of these principal components, and determined the weights via linear least
+squares. Both steps were performed using \texttt{scikit-learn}
+\citep{sklearn_2011}.
 
-To determine the ``optimal'' number of principal components to use, we
-performed a cross-validation analysis on the template stars using the
-components derived both from PCA, as well as a separate factor
-analysis.  As is typically the case when the noise variance is
+To determine the number of principal components at which to truncate
+the model, we
+performed a cross-validation analysis.
+Again, this was achieved using \texttt{scikit-learn}.
+As is typically the case when the noise variance is
 different for each ``feature'' (each point in time), we found that
-$k$-folding cross-validation using PCA failed to recover a plausible
+$k$-folding cross-validation of the PCA components
+gave a cross-validation score that monotonically increased with
+an increasing 
 number of components\footnote{See for example
 \url{https://scikit-learn.org/stable/auto_examples/decomposition/plot_pca_vs_fa_model_selection.html}
  (2019/08/06).}.
-However, the factor analysis typically maximized the cross-validation
-score with anywhere from $10$ to $15$ components, which agreed with a
+We found that if we instead performed a factor analysis, the
+cross-validation
+score was typically maximized with anywhere from $10$ to $15$ components.
+This agreed with a
 visual analysis of the number of PCA components past which overfitting
 began.  We therefore used the maximum cross-validation score from
-thefactor analysis as the number of principal components to use in
+the factor analysis as the number of principal components to use in
 each light curve.  This number is documented in the \texttt{FITS}
 header of each light curve.
+
+While the PCA detrending should help remove the most egregious
+systematic artifacts, it remains possible that PCA can distort signals,
+and even inject correlated noise into a light curve ({\it e.g.}, Figure~\ref{fig:lc_systematics_dtr}).
+For any object of interest, it is worth inspecting the raw, PCA, and TFA
+light curves to ensure
+that the variability of interest is not adversely affected by the
+detrending procedures.
+If it is, alternative approaches may be necessary.
 
 % In \S~\ref{sec:flux_vs_external_parameters}, we describe the
 % ``external parameter'' dependence visible in our reduction of
@@ -1665,7 +1689,7 @@ header of each light curve.
 	\end{center}
 	\vspace{-0.8cm}
 	\caption{
-		Phased light curves for a few objects of interest.
+		Phased PCA light curves for a few objects of interest.
 		{\it Top row, left to right}:
 		TOI~496 in Messier 48;
 		TOI~625 orbiting a late A dwarf;
@@ -1733,8 +1757,8 @@ were made. The provenance of the target star for these
 sources is \citet{dias_proper_2014} for 40\% of the sources;
 \citet{zari_3d_2018} for 11\% of sources from their upper
 main-sequence table and 7\% of sources from their PMS table;
-\citet{Kharchenko_et_al_2013} for 18\% of sources,
-\citet{cantat-gaudin_gaia_2018} for 14\% of sources, and more than two
+\citet{Kharchenko_et_al_2013} for 18\% of sources;
+\citet{cantat-gaudin_gaia_2018} for 14\% of sources; and more than two
 catalogs for the remaining 10\% of sources.
 
 Table~\ref{tbl:s6_lcs} lists the clusters in Sector 6 with the largest
@@ -1910,11 +1934,11 @@ raw, PCA, and TFA light curves.
 The raw light curves have substantial red noise, and
 their average autocorrelation across many time lags is
 positive.
-The PCA and TFA light curves are much closer to gaussian~--~the
+The PCA and TFA light curves are much closer to white noise~--~the
 average autocorrelation between any two points in these light curves
 is close to zero.
-However, the average PCA and TFA light curves are not {\it exactly}
-gaussian.
+However, the average PCA and TFA light curves are not {\it completely}
+uncorrelated.
 At time lags of a few hours or less, there is some excess power.
 This suggests that additional detrending may be
 necessary to maximize the effectiveness of planet searches, or the discovery of
@@ -1986,9 +2010,14 @@ In the middle, we have a pulsator, or perhaps EB flagged by
 Finally on the right is a quasi-periodic pulsator, or perhaps rotator,
 also with a pre-MS host.
 
-The overall point is that a great number of systems with known ages
+Overall, our periodogram search showed that 7\% of the light curves
+have Lomb-Scargle peak false alarm probabilities below $10^{-30}$.
+Even more stars are variable at lower levels of signifiance.
+The implication is that thousands of variable stars with known ages
 should be identifiable from the data at their current level of
 preparation.
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2019,7 +2048,7 @@ the bright end, and by unresolved background stars at the faint end
 (Figure~\ref{fig:rms_vs_mag}).
 Though the raw light curves show significant red noise, decorrelating
 against a set of template stars led to an ensemble of light curves
-with very nearly gaussian noise properties 
+with very nearly white noise properties 
 (Figures~\ref{fig:lc_systematics_dtr} and~\ref{fig:avg_acf}).
 
 Brief exploration of the data revealed pulsating stars, eclipsing
@@ -2046,7 +2075,7 @@ way to produce a cleaner sample of cluster targets.
 
 Despite our goal of completeness, some clusters may still be missing
 members~--~the census of nearby coeval stellar populations is still
-very much in flux. For instance, in the preparation of this work,
+very much in flux. For instance, during the preparation of this work,
 \citet{sim_open_2019} identified 209 new open cluster candidates
 within 1~kpc through visual inspection of Gaia-DR2 data.  Similarly,
 \citet{kounkel_untangling_2019} searched for groups near
@@ -2089,7 +2118,7 @@ reality.
 Coauthors thank ... %FIXME
 %
 L.G.B. and J.H. acknowledge support by the TESS GI Program, program
-G011103.
+G011103, through NASA grant 80NSSC19K0386.
 %
 This paper includes data collected by the TESS mission, which are
 publicly available from the Mikulski Archive for Space Telescopes
@@ -2199,8 +2228,8 @@ with the permission of these institutions.
     ``Ext catalog name'' is the name the external catalog assigns.
     Positions, proper motions, and the parallax are from Gaia-DR2.
     The magnitudes in Gaia $G$, $G_{\rm Bp}$, and $G_{\rm Rp}$ bands
-    is given.
-    The naming matching described in Appendix~\ref{appendix:uniquenames}
+    are given.
+    The name matching described in Appendix~\ref{appendix:uniquenames}
     most often succeeds in finding the
     \citet{Kharchenko_et_al_2013} (K13) cluster corresponding to
     the external catalog claiming membership.
@@ -2263,7 +2292,7 @@ with the permission of these institutions.
 
 \begin{deluxetable}{lll}
 	\tablecaption{Counts of light curves per cluster in Sector 7, sorted
-		in descending order.  \label{tbl:s7_lcs}}
+		in descending order.  See Table~\ref{tbl:s6_lcs} for notes. \label{tbl:s7_lcs}}
 	\tablenum{3}
 	
 	\tablehead{
@@ -2305,8 +2334,8 @@ The angular distance from a TESS camera's center of field to the corners
 is $\approx$17 degrees, so naively one might incur at worst an error of
 $\approx$90 seconds on the time-stamps due to using a barycentric
 correction in a direction that is slightly wrong.
-Perhaps due to the lead author's obsession with getting time-stamps correct 
-\citep{bouma_wasp-4b_2019},
+Nonetheless, following
+\citet{bouma_wasp-4b_2019},
 we perform our own barycentric correction using the appropriate
 sky coordinates for each light curve.
 We advise use of our \texttt{TMID\_BJD} column, which gives the
@@ -2340,7 +2369,7 @@ To find the matching name, in order of precedence we
     and repeated Steps 1-4 with any matches.
 \end{enumerate}
 
-A few edge-cases, including for instance sub-clusters  larger
+A few edge-cases, including sub-clusters of larger
 star-forming complexes like in Sco-Cen or Collinder~33, were 
 manually resolved to the extent feasible (\citealt{rizzuto_multidimensional_2011}
 and \citealt{saurin_isolating_2015} give
