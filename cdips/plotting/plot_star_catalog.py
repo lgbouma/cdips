@@ -98,9 +98,9 @@ def star_catalog_mag_histogram(df, magstr, savpath=None):
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize('small')
     if magstr == 'phot_rp_mean_mag':
-        ax.set_xlabel('$G_\mathrm{{Rp}}$')
+        ax.set_xlabel('Apparent mag [$G_\mathrm{{Rp}}$]')
     if magstr == 'phot_bp_mean_mag':
-        ax.set_xlabel('$G_\mathrm{{Bp}}$')
+        ax.set_xlabel('Apparent mag [$G_\mathrm{{Bp}}$]')
     ax.set_ylabel('Cumulative number')
     ax.set_yscale('log')
 

@@ -38,6 +38,8 @@ import matplotlib.colors as colors
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib.patches as patches
+import matplotlib.patheffects as path_effects
 
 from skim_cream import plot_initial_period_finding_results
 
@@ -50,6 +52,16 @@ LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 def main():
 
     sectors = [6,7]
+
+    # fig N: stages of image processing.
+    plot_stages_of_image_processing(niceimage=1, overwrite=1)
+    plot_stages_of_image_processing(niceimage=0, overwrite=1)
+
+    # fig N: T magnitude CDF for all CDIPS target stars.
+    plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1)
+
+    # fig N: catalog_to_gaia_match_statistics for CDIPS target stars
+    plot_catalog_to_gaia_match_statistics(overwrite=1)
 
     # fig N: quilt of interesting light curves, phase-folded
     pqps.plot_quilt_s6_s7(overwrite=1)
@@ -67,9 +79,6 @@ def main():
 
     # fig N: histogram of ages of LC stars
     plot_hist_logt(sectors, overwrite=1)
-
-    # fig N: catalog_to_gaia_match_statistics for CDIPS target stars
-    plot_catalog_to_gaia_match_statistics(overwrite=1)
 
     # fig N: average autocorrelation fn of LCs
     plot_avg_acf(sectors, size=10000, overwrite=1, cleanprevacf=False)
@@ -111,19 +120,12 @@ def main():
     # fig N: LS period vs color evolution in time
     plot_LS_period_vs_color_and_age(sectors, overwrite=1, OC_MG_CAT_ver=0.3)
 
-    # fig N: T magnitude CDF for all CDIPS target stars.
-    plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1)
-
     # fig N: histogram (or CDF) of T magnitude for LC stars
     plot_cdf_T_mag(sectors, overwrite=1)
 
     # fig N: HRD for CDIPS LC stars.
     plot_hrd_scat(sectors, overwrite=1, close_subset=1)
     plot_hrd_scat(sectors, overwrite=1, close_subset=0)
-
-    # fig N: stages of image processing.
-    plot_stages_of_image_processing(niceimage=1, overwrite=0)
-    plot_stages_of_image_processing(niceimage=0, overwrite=0)
 
     # fig N: histogram (or CDF) of TICCONT. unfortunately this is only
     # calculated for CTL stars, so by definition it has limited use
@@ -557,6 +559,12 @@ def plot_stages_of_image_processing(niceimage=1, overwrite=0):
 
     cset1 = axs[0,1].imshow(cal_img, cmap='binary_r', vmin=vmin, vmax=vmax,
                             norm=lognorm)
+    #txt = axs[0,1].text(0.02, 0.96, 'image', ha='left', va='top',
+    #                    fontsize='small', transform=axs[0,1].transAxes,
+    #                    color='black')
+    #txt.set_path_effects([path_effects.Stroke(linewidth=1, foreground='white'),
+    #                      path_effects.Normal()])
+
 
     diff_vmin, diff_vmax = -1000, 1000
 
@@ -566,14 +574,30 @@ def plot_stages_of_image_processing(niceimage=1, overwrite=0):
     # top left: background map
     axs[0,0].imshow(bkgd_img - np.median(cal_img), cmap='RdBu_r',
                     vmin=diff_vmin, vmax=diff_vmax, norm=diffnorm)
+    #txt = axs[0,0].text(0.02, 0.96, 'background', ha='left', va='top',
+    #                    fontsize='small', transform=axs[0,0].transAxes,
+    #                    color='black')
+    #txt.set_path_effects([path_effects.Stroke(linewidth=1, foreground='white'),
+    #                      path_effects.Normal()])
 
     # middle left: calibrated - background
     cset2 = axs[1,0].imshow(cal_img - bkgd_img, cmap='RdBu_r', vmin=diff_vmin,
                             vmax=diff_vmax, norm=diffnorm)
+    #txt = axs[1,0].text(0.02, 0.96, 'image - background', ha='left', va='top',
+    #                    fontsize='small', transform=axs[1,0].transAxes,
+    #                    color='black')
+    #txt.set_path_effects([path_effects.Stroke(linewidth=1, foreground='white'),
+    #                      path_effects.Normal()])
 
     # middle right: calibrated - median
     axs[1,1].imshow(cal_img - np.median(cal_img), cmap='RdBu_r',
                     vmin=diff_vmin, vmax=diff_vmax, norm=diffnorm)
+    #txt = axs[1,1].text(0.02, 0.96, 'image - median(image)', ha='left', va='top',
+    #                    fontsize='small', transform=axs[1,1].transAxes,
+    #                    color='black')
+    #txt.set_path_effects([path_effects.Stroke(linewidth=1, foreground='white'),
+    #                      path_effects.Normal()])
+
 
     # lower left:  difference image (full)
     toplen = 57
@@ -586,11 +610,28 @@ def plot_stages_of_image_processing(niceimage=1, overwrite=0):
 
     cset3 = axs[2,0].imshow(diff_img, cmap='RdBu_r', vmin=diff_vmin,
                             vmax=diff_vmax, norm=diffnorm)
+    #txt = axs[2,0].text(0.02, 0.96, 'difference', ha='left', va='top',
+    #                    fontsize='small', transform=axs[2,0].transAxes,
+    #                    color='black')
+    #txt.set_path_effects([path_effects.Stroke(linewidth=1, foreground='white'),
+    #                      path_effects.Normal()])
+
+    rect = patches.Rectangle((300, 300), 512, 512, linewidth=0.6,
+                             edgecolor='black', facecolor='none',
+                             linestyle='--')
+    axs[2,0].add_patch(rect)
+
+
 
     # lower right: difference image (zoom)
-    sel = [slice(300,800), slice(300,800)]
+    sel = [slice(300,812), slice(300,812)]
     axs[2,1].imshow(diff_img[sel], cmap='RdBu_r',
                     vmin=diff_vmin, vmax=diff_vmax, norm=diffnorm)
+    #txt = axs[2,1].text(0.02, 0.96, 'difference (zoom)', ha='left', va='top',
+    #                    fontsize='small', transform=axs[2,1].transAxes,
+    #                    color='black')
+    #txt.set_path_effects([path_effects.Stroke(linewidth=1, foreground='white'),
+    #                      path_effects.Normal()])
 
     for ax in axs.flatten():
         ax.set_xticklabels('')

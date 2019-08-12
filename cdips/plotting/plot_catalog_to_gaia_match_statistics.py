@@ -74,8 +74,8 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
                     bins=np.arange(-2,2+0.5,0.5),
                     fill=False, linewidth=0.5)
 
-    axs[1].set_xlabel('$\mathrm{G}_{\mathrm{true}}$ - '
-                      '$\mathrm{G}_{\mathrm{pred}}$', fontsize='x-large')
+    axs[1].set_xlabel('$G_{\mathrm{true}}$ - '
+                      '$G_{\mathrm{pred}}$', fontsize='x-large')
     axs[1].set_ylabel('Number per bin', fontsize='x-large')
     axs[1].set_xlim([-2.1,2.1])
     axs[1].set_yscale('log')
@@ -89,9 +89,9 @@ def plot_catalog_to_gaia_match_statistics(bigdf, outpath, isD14=False):
                        s=5, alpha=0.1, rasterized=True, linewidths=0,
                        color='black')
 
-    axs[2].set_xlabel('$\mathrm{G}_{\mathrm{true}}$', fontsize='x-large')
-    axs[2].set_ylabel('$\mathrm{G}_{\mathrm{true}}$ - '
-                      '$\mathrm{G}_{\mathrm{pred}}$', fontsize='x-large')
+    axs[2].set_xlabel('$G_{\mathrm{true}}$', fontsize='x-large')
+    axs[2].set_ylabel('$G_{\mathrm{true}}$ - '
+                      '$G_{\mathrm{pred}}$', fontsize='x-large')
     axs[2].set_xlim([4,18])
     axs[2].set_ylim([-2.1,2.1])
 
