@@ -30,7 +30,7 @@
 % BEGIN CUSTOM SHORT-CUT COMMANDS
 
 % BEGIN NUMBERS
-\newcommand{\numberpcs}{39\ }  % 2019/06/28 unanimous gold
+\newcommand{\numberpcs}{24\ }  % 2019/08/12 gold post-vet
 \newcommand{\numberzaripcs}{10\ }  % 2019/06/28 unanimous gold
 \newcommand{\numberclusterpcs}{29\ }  % 2019/06/28 unanimous gold
 \newcommand{\sVInumberlcs}{67{,}612\ }  % 2019/07/27 not allnan
@@ -154,13 +154,13 @@ most homogeneous and comprehensive cluster photometric survey in
 history.  Based on the cluster membership data of
 \citet{Kharchenko_et_al_2013}, approximately $2\times10^5$ open
 cluster members brighter than $T=16$ will be observed in the
-full-frame images over the first two years of TESS observations.  This
-count includes the ``most probable'' members, which by the
-\citet{kharchenko_global_2012} definition requires the independent
-kinematic, photometric, and spatial membership probabilities to each
-exceed 61\%.  The actual number of stars in clusters is larger, as the
-membership catalogs are not yet complete, even at these relatively
-bright magnitudes \citep[{\it
+full-frame images (FFIs) over the first two years of TESS
+observations.  This count includes the ``most probable'' members,
+which by the \citet{kharchenko_global_2012} definition requires the
+independent kinematic, photometric, and spatial membership
+probabilities to each exceed 61\%.  The actual number of stars in
+clusters is larger, as the membership catalogs are not yet complete,
+even at these relatively bright magnitudes \citep[{\it
 e.g.},][]{roser_nine_RSG_2016,cantat-gaudin_gaia_2018,cantat-gaudin_newOCs_2019,kounkel_untangling_2019,sim_open_2019}.
 
 A major barrier to deriving precise photometry from the TESS images is
@@ -184,7 +184,7 @@ particular target star. Aperture photometry is reliable when this
 fraction is close to unity.  Difference imaging
 \citep{Alard_Lupton_1998,miller_optimal_2008}, in our group's
 experience, can be viable down to crowding fractions of 10\%.  Based
-on the \citet{Kharchenko_et_al_2013} cluster membership data, and the
+on the \citet{Kharchenko_et_al_2013} cluster membership data and the
 density of background stars, we calculated that the median dilution
 fraction is 0.13, for cluster stars with $T< 16$ and an aperture
 radius of 2 pixels.  Thus, for at least $\sim$$10^5$ cluster stars,
@@ -202,7 +202,7 @@ catalog used to determine the reference flux.  This is a major benefit
 of performing image subtraction in crowded fields.
 
 We have therefore begun to apply difference imaging to the TESS
-images, with a focus on any star that could be a member of a group.
+FFIs, with a focus on any star that could be a member of a group.
 We are also including some stars that we suspect are young due to
 combined photometric and astrometric indicators.  A major motivation
 for this effort is to discover giant transiting planets with known
@@ -1040,6 +1040,7 @@ mask are included in the convolution.  The norm $|| K ||_1$ is defined
 by \citet{Pal_2009}~Equation~81.
 
 \subsection{Choice of convolution kernel}
+\label{subsec:tuneconvkernel}
 
 To solve for the coefficients $c_i$ of the convolution kernel, a few
 further assumptions are necessary.  The procedure implemented in
@@ -1089,16 +1090,8 @@ For computational expediency, we therefore chose a single $(7\times
 7)$ kernel with second-order spatial polynomial weights in the basis
 functions for the remainder of our reduction.
 
-However, we caution that within these fine-tuning experiments, we
-found that transit signals near the noise floor could fall under the
-noise floor for different cases of tuned parameters.  In the longer
-term, developing an image-subtraction method that marginalizes over
-uncertainties of how to chose ``optimal'' kernels would be desirable.
-Pixel-level image subtraction methods that omit these parameters
-entirely are similarly worth exploring \citep{wang_pixel-level_2017}.
-
 With a kernel selected, and the convolution and subtraction performed,
-we calculate the instrumental fluxes for each frame per
+we calculated the instrumental fluxes for each frame per
 Equation~\ref{eq:ism_flux_measurement}.  We did this with three
 different aperture sizes: for this work, circles of radii 1 pixel, 1.5
 pixels, and 2.25 pixels.  These sizes were chosen to roughly span the
@@ -1798,12 +1791,56 @@ Brief exploration of the data revealed pulsating stars, eclipsing
 binaries, and planet candidates (Figure~\ref{fig:quilt}).  A detailed
 planet search is the subject of ongoing work.
 
-A point worth re-emphasizing is that the stars in the sample must be
-understood to be {\it candidate} cluster stars, and the possibility of
-photometric blends is important to rule out in subsequent vetting
+There are a number of other TESS data
+processing efforts that we expect will complement our results.
+These include the NASA Ames SPOC pipeline \citep{jenkins_spoc_2010}, the MIT
+Quick-Look-Pipeline \citep{huang_tess_2018}, \texttt{eleanor}
+\citep{feinstein_eleanor_2019}, the \citet{oelkers_precision_2018}
+difference imaging pipeline, the TESS Asteroseismic Consortium (TASOC)
+pipeline \citep{lund_k2p_2015,handberg_tess_2019}, and the Padova
+team's effort (D{.} Nardiello, submitted; {\it e.g.},
+\citealt{libralato_psf-based_2016}). 
+
+Most of these pipelines are geared towards tasks more general than our
+own, and use aperture photometry.  The SPOC pipeline
+produces the calibrated FFIs from raw images, processes 2 minute data,
+identifies exoplanets, and produces the TESS data
+products of record.  The MIT-QLP processes a subset of stars on the
+FFIs, identifies exoplanets, and the affiliated TESS Science Office
+alerts object of interest for ground and space-based followup.  The
+\texttt{eleanor} pipeline is a user-friendly tool for
+extracting light curves from the FFIs.  The team developing it is
+also performing transit searches across the full set of FFIs.  The
+TASOC pipeline is primarily aimed towards asteroseismology.  The
+\citeauthor{oelkers_precision_2018} pipeline was aimed at broad,
+all-sky variability searches, and used similar difference
+imaging methods as our own.  Finally, the Padova team's effort is
+developed with a similar focus towards clusters as our work, but uses
+PSF subtraction to mitigate crowding.  This ecosystem
+provides many opportunities for methodological improvements as light
+curve products continue to be made public.
+
+There are of course caveats and possible areas for improvement
+in our own work.
+One methodological point concerns the hyperparameter tuning
+required by our difference imaging method (\S~\ref{subsec:tuneconvkernel}).
+Within our fine-tuning experiments over different kernel box-sizes
+and polynomial weightings,
+we found that low-significance transit signals could be ``lost''
+relative to the noise for different choices of parameters that
+ideally would not affect the photometric pipeline's results.
+In the longer
+term, developing an image-subtraction method that marginalizes over
+uncertainties of how to chose ``optimal'' kernels would be desirable.
+Pixel-level image subtraction methods that omit these parameters
+entirely are also worth exploring \citep{wang_pixel-level_2017}.
+
+A separate point to re-emphasize is that stars in our sample must be
+understood to be {\it candidate} cluster stars, and ruling out the possibility of
+photometric blending is important in subsequent vetting
 efforts of any variable object.  Careful understanding of the cluster
 itself is also important, as some clusters are less certain to exist
-than others \citep[{\it e.g.}, the infra-red clusters identified
+than others \citep[{\it e.g.}, the infrared clusters identified
 by][]{froebrich_FSR_2007}.
 
 We remind the reader that our goal in creating our target catalog was
@@ -1813,20 +1850,20 @@ FITS files, which can be used to merge against the original source
 catalog to obtain the membership probabilities claimed by the original
 catalog.  Alternatively, simply restricting the targets of interest to
 those with provenance from {\it e.g.}, the Gaia-DR2 data is another
-way to produce a cleaner sample of cluster targets.
+way to produce a clean sample of cluster targets.
 
-Despite our goal of completeness, some clusters may still be missing
-members~--~the census of nearby coeval stellar populations is still
+Despite our goal of completeness, some clusters still may be missing
+members~--~the census of nearby coeval stellar populations is
 very much in flux. For instance, during the preparation of this work,
 \citet{sim_open_2019} identified 209 new open cluster candidates
 within 1~kpc through visual inspection of Gaia-DR2 data.  Similarly,
 \citet{kounkel_untangling_2019} searched for groups near the galactic
-plane within 1~kpc, and along with the known clusters found hundreds
+plane within 1~kpc, and along with known clusters found hundreds
 of new ``strings'' of kinematically associated stars, which could be
 coeval.
 
 Another area in which we may be incomplete is in sub-clusters of
-broader star-forming complexes. One important example is the Orion
+large star-forming complexes. One important example is the Orion
 Nebula (M42; NGC 1976).  While it was observed by TESS in Sector~6,
 searching our light curves for stars within 40 arcminutes and 100
 parsecs of the Orion Nebula's center yielded only 180 light curves,
@@ -1842,7 +1879,7 @@ clustering method (uniformity in the field star distribution) breaks
 down in highly clustered star-forming regions.
 
 These concerns will likely drive us to expand beyond the current
-sample of target stars in future work.  For the time being though, the
+sample of target stars in future work.  For the time being, the
 light curves exist and are amenable for astrophysical studies.  We
 invite any who wish to explore the time evolution of stellar or
 exoplanetary systems to interact with the data at \stscilink.
@@ -1853,11 +1890,11 @@ exoplanetary systems to interact with the data at \stscilink.
 L.G.B.\ acknowledges helpful discussions with 
 T.~Cantat-Gaudin,
 C.~Huang,
-and M.~Soares-Furtado.  The authors are also
+M.~Soares-Furtado,
+J.~Wallace, and
+S.~Yee.  The authors are also
 grateful to the many people who have turned TESS from an idea into
 reality.
-%
-Coauthors thank ... %FIXME
 %
 L.G.B. and J.H. acknowledge support by the TESS GI Program, program
 G011103, through NASA grant 80NSSC19K0386.
