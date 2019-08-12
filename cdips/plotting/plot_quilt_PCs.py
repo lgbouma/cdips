@@ -95,9 +95,9 @@ def plot_quilt_PCs(overwrite=1, paper_aspect_ratio=1):
 
     #f.text(0.5,0, 'Phase', ha='center')
     f.text(0.5,-0.02, 'Time from transit center [hours]', ha='center',
-           fontsize='x-large')
+           fontsize='medium')
     f.text(-0.01,0.5, 'Relative flux', va='center', rotation=90,
-           fontsize='x-large')
+           fontsize='medium')
 
     f.tight_layout(h_pad=0.35, w_pad=0.85, pad=0.8)
     savefig(f, outpath)

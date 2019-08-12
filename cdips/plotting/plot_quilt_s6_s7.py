@@ -127,9 +127,9 @@ def plot_quilt_s6_s7(overwrite=1):
         for tick in ax.xaxis.get_major_ticks():
             tick.label.set_fontsize('small')
 
-    f.text(0.5,-0.035, 'Phase', ha='center', fontsize='xx-large')
+    f.text(0.5,-0.035, 'Phase', ha='center', fontsize='medium')
     f.text(-0.03,0.5, 'Relative flux', va='center', rotation=90,
-           fontsize='xx-large')
+           fontsize='medium')
 
     f.tight_layout(h_pad=0.15, w_pad=0.5, pad=0.1)
 
