@@ -238,7 +238,6 @@ processing will enable.
 	\begin{center}
 		\leavevmode
 		\includegraphics[width=0.9\textwidth]{target_star_positions.png}
-		%\gridline{\fig{target_star_cumulative_counts.pdf}{0.41\textwidth}{}}
 	\end{center}
 	\vspace{-0.5cm}
 	\caption{
@@ -256,7 +255,6 @@ processing will enable.
 \begin{figure}[!t]
 	\begin{center}
 		\leavevmode
-		%\includegraphics[width=0.45\textwidth]{target_star_cumulative_counts.png}
 		\gridline{\fig{target_star_cumulative_counts.pdf}{0.43\textwidth}{}}
 		\vspace{-0.8cm}
 		\gridline{\fig{target_star_hist_logt.pdf}{0.43\textwidth}{}}
@@ -266,7 +264,7 @@ processing will enable.
 	\vspace{-0.8cm}
 	\caption{
 		Target star statistics.
-		{\it Top.} Cumulative counts as a function of Gaia $Rp$-band
+		{\it Top.} Cumulative counts as a function of apparent Gaia $Rp$-band
 		magnitude.  
 		{\it Middle.} Histogram of target star ages, for the subset of
 		stars with ages matched against \citet{Kharchenko_et_al_2013}.
@@ -384,7 +382,7 @@ crossmatch for Gaia-DR2 sources within 5 arcseconds of the listed
 positions.  To improve the quality of the cross-match, we used the
 2MASS photometry to predict the $G$-band magnitudes\footnote{See
 \url{https://gea.esac.esa.int/archive/documentation/GDR2/Data_processing/chap_cu5pho/sec_cu5pho_calibr/ssec_cu5pho_PhotTransf.html},
-online, \texttt{2019-03-29}, or \citet{carrasco_gaia_2016}}, and
+(accessed \texttt{2019-03-29}), or \citet{carrasco_gaia_2016}}, and
 required that the measured $G$-magnitude fall within 2 magnitudes of
 the predicted $G$-magnitude.  If multiple neighbors matched the
 position and magnitude constraints, we took the nearest spatial
@@ -567,7 +565,7 @@ reported by \citet{Kharchenko_et_al_2013}.
 \begin{figure}[!t]
 	\begin{center}
 		\leavevmode
-		\includegraphics[width=0.25\textwidth]{pipelineoverview.pdf}
+		\includegraphics[width=0.35\textwidth]{pipelineoverview.pdf}
 	\end{center}
 	\vspace{-0.2cm}
 	\caption{
@@ -582,19 +580,20 @@ reported by \citet{Kharchenko_et_al_2013}.
         \leavevmode
         \includegraphics[width=0.93\textwidth]{stages_of_image_processing_good.png}
     \end{center}
-    \vspace{-0.6cm}
+    \vspace{-0.9cm}
     \caption{
         Stages of image processing for an image obtained during the middle
-        of an orbit.
+        of an orbit. Counts are in ADU.
         {\it Top right}. Calibrated image.
         {\it Top left}. Smooth background estimate.
         {\it Middle right}. Calibrated image minus its median pixel value.
         {\it Middle left}. Calibrated image minus smooth background.
-        {\it Bottom left}. Registered difference image.
-        {\it Bottom right}. Zoom of difference image.
+        {\it Bottom left}. Difference image.
+        {\it Bottom right}. Zoom of difference image, corresponding to
+        the square with dashed lines.
         Each image is $(2048\times2048)$ pixels, except for the
-        bottom-right image, which is $(500\times500)$.  All images
-        except the top-right have the same color map.  The sector,
+        bottom-right image, which is $(512\times512)$.  All images
+        except the top-right have identical color maps.  The sector,
         camera, and CCD are (6, 1, 2).
         \label{fig:stages_good}
     }
@@ -605,7 +604,7 @@ reported by \citet{Kharchenko_et_al_2013}.
         \leavevmode
         \includegraphics[width=0.93\textwidth]{stages_of_image_processing_bad.png}
     \end{center}
-    \vspace{-0.6cm}
+    \vspace{-0.7cm}
     \caption{
         Same sector, camera and CCD as Figure~\ref{fig:stages_good},
         but for an image obtained during perigee passage, when
@@ -760,17 +759,11 @@ average a few frames per sector, out of about one thousand. Through
 visual inspection, we see that the stars on these frames are extremely
 smeared, and are unlikely to produce useful science data.  In
 addition, we use the sector-specific data release notes\footnote{\url{
-  archive.stsci.edu/tess/tess_drn.html}} to identify further times
+  archive.stsci.edu/tess/tess_drn.html}, accessed \texttt{2019-08-12}} to identify further times
 with anomalous spacecraft performance, which we omit from
 consideration.  This included three days at the beginning of Sector 6
 dedicated to acquiring pixel response function data. There were no
 additional gaps in Sector 7.
-%For Sectors 1 through 5, these
-%include coarse pointing windows from orbits 10, 13, 14, and an
-%instrumetal anomaly window in orbit 15.
-% For Sectors 6 through 8, these include three days at the beginning of
-% Sector 6 dedicated to acquiring pixel response function data, and also
-% about three days during Sector 8 lost to an instrument anomaly.
 
 \subsection{Metadata collection \& WCS verification}
 \label{subsec:metadatacollection}
@@ -857,7 +850,7 @@ sky-coordinate positions to pixel coordinates is performed using an
 analog of the \texttt{wcs-rd2xy} program that performs the standard
 matrix algebra \citep{lang_2010}.  The source catalog look-up is
 performed using
-\texttt{gaia2read}\footnote{\url{github.com/samuelyeewl/gaia2read}}
+\texttt{gaia2read}\footnote{\url{github.com/samuelyeewl/gaia2read}, commit \texttt{4b472d}}
 \citep{kim_2018_gaia2read}.
 
 For the source catalog itself, we initially planned to photometer all
@@ -1101,7 +1094,7 @@ measurements for each source on a frame to light curves, we used the
     \fig{detrended_light_curves_sec6cam1ccd4.pdf}{0.5\textwidth}{}
     \fig{detrended_light_curves_sec7cam3ccd2.pdf}{0.5\textwidth}{}
   }
-	\vspace{-0.5cm}
+	\vspace{-0.85cm}
 	\caption{
     Twenty randomly selected light curves drawn from the same sector,
     camera, and CCD, for CDIPS target stars with $T$-band magnitudes
@@ -1307,8 +1300,7 @@ the noise variance is different for each ``feature'' (each point in
 time), we found that $k$-folding cross-validation of the PCA
 components gave a cross-validation score that monotonically increased
 with an increasing number of components\footnote{See for example
-\url{https://scikit-learn.org/stable/auto_examples/decomposition/plot_pca_vs_fa_model_selection.html}
-(2019/08/06).}.  We found that if we instead performed a factor
+\url{https://scikit-learn.org/stable/auto_examples/decomposition/plot_pca_vs_fa_model_selection.html}, accessed \texttt{2019-08-06}.}.  We found that if we instead performed a factor
 analysis, the cross-validation score was typically maximized with
 anywhere from $10$ to $15$ components.  This agreed with a visual
 analysis of the number of PCA components past which overfitting began.
@@ -1397,7 +1389,7 @@ necessary.
 		\leavevmode
 		\includegraphics[width=0.9\textwidth]{IRM-PCA-TFA_rms_vs_mag.pdf}
 	\end{center}
-	\vspace{-0.5cm}
+	\vspace{-0.7cm}
 	\caption{
     Standard deviation of CDIPS light curves as a function of catalog
     TESS-band magnitude.  Left-to-right are raw, PCA-detrended, and
@@ -1929,8 +1921,6 @@ The Digitized Sky Surveys were produced at the Space Telescope Science
 Institute under U.S. Government grant NAG W-2166. The images of these
 surveys are based on photographic data obtained using the Oschin
 Schmidt Telescope on Palomar Mountain and the UK Schmidt Telescope.
-The plates were processed into the present compressed digital form
-with the permission of these institutions.
 %
 \newline
 %
@@ -2143,7 +2133,7 @@ To find the matching name, in order of precedence we
     In cases with multiple cluster matches, we ignored candidate
     matches to avoid assigning incorrect names;
   \item Checked the WEBDA double name
-    list\footnote{\url{https://webda.physics.muni.cz/double_names.html}},
+    list\footnote{\url{https://webda.physics.muni.cz/double_names.html}, accessed \texttt{2019-08-12}},
     and repeated Steps 1-4 with any matches.
 \end{enumerate}
 
