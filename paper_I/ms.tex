@@ -368,15 +368,8 @@ correspondingly the Gaia-DR2 \texttt{source\_id}.  The TESS Input
 Catalog (TIC) data for each target star are then collected using the
 Gaia-DR2 source identifier \citep{stassun_TIC_2018,stassun_TIC8_2019}.  
 
-% We take this approach because Gaia-DR2 is the base-catalog used to
-% project sources from celestial coordinates to the imaging plane
-% (\S~\ref{sec:method}).  It also has the advantage that for any
-% Gaia-derived cluster memberships, we can cross-match directly
-% against source identifiers.
-
-
-
 \paragraph{Pre-{\it Gaia} OC memberships}
+
 \citet{Kharchenko_et_al_2013} used proper motions calculated in PPMXL
 \citep[][a combination of USNO-B1{.}0 and 2MASS
 astrometry]{roeser_ppmxl_2010} and near-infrared photometry from 2MASS
@@ -1448,19 +1441,17 @@ necessary.
 	\caption{
 		Phased PCA light curves for a few objects of interest.
 		{\it Top row, left to right}:
-		TOI~496 in Messier 48;
-		TOI~625 orbiting a late A dwarf;
-		and an eccentric EB in Bochum~5.
+    TOI~496 in Messier~48; TOI~625 orbiting a late A dwarf; and an
+    eccentric EB in Bochum~5.
 		{\it Middle row, left to right}:
-		A detached EB in a 80~Myr old cluster;
-		V684 Mon (a 10 Myr old detached EB);
-		and a semi-detached EB in NGC 2548.
+    A detached EB in a 80 Myr old cluster; V684~Mon (a 10 Myr old
+    detached EB); and a semi-detached EB in NGC~2548.
 		{\it Bottom row, left to right}:
-		Spotted rotator in NGC 2184;
-		a pulsator or perhaps EB flagged by \citet{zari_3d_2018} as a pre-MS 
-		star;
-		and a quasi-periodic pulsator, also with a pre-MS host.
-		Gaia source identifiers are given in the text.
+    Spotted rotator in NGC~2184; V468~Ori, a flaring M dwarf in
+    Messier~42 with a strong rotation signal; Rapidly rotating 30 Myr
+    old M dwarf, similar to those described by
+    \citet{zhan_complex_2019}.  Gaia source identifiers are given in
+    the text.
 	\label{fig:quilt}
 	}
 \end{figure*}
@@ -1508,6 +1499,7 @@ observed in Sectors 6 and 7.
 \subsubsection{Cluster membership provenance}
 
 \paragraph{Sector 6}
+
 In Sector 6, \sVInumberlcs light curves of candidate cluster stars
 were made. The provenance of the target star for these sources is
 \citet{dias_proper_2014} for 40\% of the sources; \citet{zari_3d_2018}
@@ -1531,6 +1523,7 @@ NGC~2287.
 
 
 \paragraph{Sector 7}
+
 In Sector 7, \sVIInumberlcs light curves of candidate cluster stars
 were made.  The provenance of the claimed cluster origin of these
 sources is \citet{dias_proper_2014} for 28\% of the sources;
@@ -1542,7 +1535,7 @@ catalogs for the remaining 15\% of sources.
 
 Table~\ref{tbl:s7_lcs} shows the clusters from Sector 7 with the
 largest number of light curves.  Many rich open clusters, including
-NGC 2437, 2477, 2546, and 2451 are in the field.  The cluster listed
+NGC~2437, 2477, 2546, and 2451 are in the field.  The cluster listed
 with the most light curves is the Collinder 173 association, chiefly
 due to the \citet{dias_proper_2014} memberships.
 \citet{Kharchenko_et_al_2013} note Collinder 173 as being coincident
@@ -1563,6 +1556,7 @@ source of information for this particular region of the sky.
 \label{subsubsec:rmsvsmag}
 
 \paragraph{Observed RMS vs magnitude.}
+
 Figure~\ref{fig:rms_vs_mag} shows the standard deviation of the
 TFA-detrended light curves as a function of the catalog $T$-band
 magnitude for CDIPS target stars.  For the $y$-axis of this plot, we
@@ -1705,8 +1699,8 @@ The sources\footnote{
 	3326715714242517248,
 	3064487241899832832,
 	3024952755135530496,
-	2949587413510194688, 
-	5274902193830445312 
+  3209428644243836928,
+  3214130293403123712 
 } were identified by calculating Lomb-Scargle and transit-least
 squares periodograms for a subset of the light curves, and inspecting
 the peaks with the greatest power
@@ -1739,15 +1733,20 @@ eclipsing binaries.  On the left is a detached EB exhibiting large
 out-of-eclipse modulations in a $\sim$80~Myr open cluster (``vdBergh
 85'', \citealt{Kharchenko_et_al_2013}).  In the middle we have V684
 Mon, a well-known $\sim$10~Myr old detached EB in the very young
-star-forming region NGC 2264.  Finally on the right, we have a
+star-forming region NGC~2264.  Finally on the right, we have a
 semi-detached EB in Messier~48.
 
 The bottom row of Figure~\ref{fig:quilt} gives a few examples of
-rotators and pulsators.  On the left, a spotted rotator in the
+rotational variables.  On the left, a spotted rotator in the
 $\sim$400 Myr NGC~2184 \citep{cantat-gaudin_gaia_2018}.  In the
-middle, we have a pulsator, or perhaps EB flagged by
-\citet{zari_3d_2018} as a pre-MS star.  Finally on the right is a
-quasi-periodic pulsator, or perhaps rotator, also with a pre-MS host.
+middle we have V468~Ori, a flaring M dwarf in Messier~42 with a strong
+rotation signal.
+Finally on the right is an M dwarf in ASCC~19, a $\sim$30 Myr M dwarf
+with complex rotational modulation.
+The star was also flagged by \citet{zari_3d_2018} as a pre-MS star.
+Similar modulations were described by \citet{zhan_complex_2019} for
+rapidly rotating M dwarfs in other moving groups, and were suggested
+to be caused by star spot occulations behind a protostellar disk.
 
 Overall, our periodogram search showed that 7\% of the light curves
 have Lomb-Scargle peak false alarm probabilities below $10^{-30}$.
@@ -1862,7 +1861,7 @@ coeval.
 
 Another area in which we may be incomplete is in sub-clusters of
 large star-forming complexes. One important example is the Orion
-Nebula (M42; NGC 1976).  While it was observed by TESS in Sector~6,
+Nebula (M~42; NGC~1976).  While it was observed by TESS in Sector~6,
 searching our light curves for stars within 40 arcminutes and 100
 parsecs of the Orion Nebula's center yielded only 180 light curves,
 with 85 labelled members.  The Orion Nebula has far more known members

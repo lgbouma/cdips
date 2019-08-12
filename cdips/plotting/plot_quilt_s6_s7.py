@@ -48,7 +48,7 @@ def plot_quilt_s6_s7(overwrite=1):
         3064487241899832832, # semidetached EB, NGC 2548
         3024952755135530496, # two-spotted pulsator, NGC 2184
         3209428644243836928, # M42 Dias, rapid rotating m dwarf, V468 Ori
-        3214130293403123712 # zhuchang-class weirdo.
+        3214130293403123712  # zhuchang-class weirdo.
         #2949587413510194688, # double-hump rotator / pulsator??
         #5274902193830445312  # sick PMS star. pulsating? spots??
     ]
