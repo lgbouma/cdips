@@ -1,33 +1,29 @@
-import os, pickle, h5py, json, shutil, requests
+#
+# usage:
+# python -u fit_models_to_gold.py &> 20190815_fit_s6.log &
+#
+# docstring:
+# see main below.
+#
+import os, pickle, h5py, json, shutil, requests, configparser
 from glob import glob
-from datetime import datetime
 
 import matplotlib as mpl
 mpl.use('Agg')
 
 import numpy as np, matplotlib.pyplot as plt, pandas as pd
+
 from numpy import array as nparr
-from astropy.io import fits
-from astropy import units as u, constants as const
-
-from astrobase import periodbase, lcfit
-from astrobase.services.tic import tic_single_object_crossmatch
-from astrobase.varbase.transits import get_snr_of_dip
-from astrobase.varbase.transits import estimate_achievable_tmid_precision
-from astrobase.plotbase import plot_phased_magseries
-from astrobase.lcmath import sigclip_magseries
-from astrobase.varbase.transits import get_transit_times
-from astrobase.lcfit.utils import make_fit_plot
-
-from astroquery.mast import Catalogs
-from astroquery.vizier import Vizier
-
-from numpy.polynomial.legendre import Legendre
 from scipy import optimize
 from scipy.interpolate import interp1d
 
-from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astropy import units as u, constants as const
+from astroquery.mast import Catalogs
+
+from astrobase.lcmath import sigclip_magseries
+from astrobase.lcfit.transits import fivetransitparam_fit_magseries
 
 from cdips.lcproc import detrend as dtr
 from cdips.lcproc import mask_orbit_edges as moe
@@ -36,8 +32,23 @@ from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils import today_YYYYMMDD
 
 import make_vetting_multipg_pdf as mvp
-
 import imageutils as iu
+
+LONG_RUN_IDENTIFIERS = [
+    3217331693306617344, # s6 begin
+    3107333698210242176,
+    3340674976430098688,
+    4827527233363019776,
+    3050033749239975552, # s7 begin
+    3064530810048196352,
+    3114869682184835584
+]
+
+KNOWN_CUSTOM = [
+    5290761583912487424, # s7, TLS gets wrong ephemeris
+    5290781443841554432, # s7, systematic trends in TFASR LC, 2 transit
+    5290968085934209152, # s7, systematic trends in TFASR LC, 2 transit
+]
 
 CLASSIFXNDIR = "/home/lbouma/proj/cdips/results/vetting_classifications"
 
@@ -49,7 +60,7 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
     Fit Mandel-Agol transits to planet candidates. The fit parameters are then
     used for CTOIs.
 
-    The main goal of these models is to provide a good ephemeris (so: reliable
+    The goal of these models is to provide a good ephemeris (so: reliable
     epoch, period, and duration + uncertainties).
 
     For publication-quality parameters, joint modelling of stellar rotation
@@ -103,7 +114,7 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
     for tfa_sr_path in tfa_sr_paths:
 
         #
-        # given the TFASR LC path, get the main LC path
+        # given the TFASR LC path, get the complete LC path
         #
         sourceid = int(tfa_sr_path.split('gaiatwo')[1].split('-')[0].lstrip('0'))
         mdf = cdips_df[cdips_df['source_id']==sourceid]
@@ -278,10 +289,6 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
     #
     # define the paths. get the stellar parameters, and do the fit!
     #
-    tlsfit_savfile = outpath.replace(
-        '_fitparameters.csv',
-        '_tlsfit.png'
-    )
     fit_savdir = os.path.dirname(outpath)
     chain_savdir = os.path.dirname(outpath).replace('fitresults','samples')
 
@@ -289,79 +296,145 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
         get_teff_rstar_logg(hdr)
     )
 
-
-    # TODO: add a binary file for whether the fit worked satisfactorily. if not,
-    # ... do something about it. like raise a warning.
-
-    mafr, tlsr = given_light_curve_fit_transit(time, flux, err, teff, teff_err,
-                                               rstar, rstar_err, logg,
-                                               logg_err, outpath, fit_savdir,
-                                               chain_savdir, nworkers=nworkers,
-                                               n_transit_durations=5,
-                                               n_mcmc_steps=1000,
-                                               tlsfit_savfile=tlsfit_savfile,
-                                               overwrite=overwrite)
-
-    ticid = int(hdr['TICID'])
+    #
+    # initialize status file
+    #
+    status_file = os.path.join(fit_savdir, 'run_status.stat')
+    fittype = 'fivetransitparam_fit'
+    if not os.path.exists(status_file):
+        save_status(
+            status_file, fittype,
+            {'is_converged':False, 'n_steps_run':0}
+        )
+    status = load_status(status_file)[fittype]
 
     #
-    # convert fit results to ctoi csv format
+    # if not converged and no steps previously run:
+    #   run 4k steps. write status file.
+    # 
+    # reload status file.
+    # if not converged and 4k steps previously run and in long ID list:
+    #   run 25k steps, write status file.
     #
-    fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
-                            teff, teff_err, rstar, rstar_err, logg, logg_err,
-                            cdipsvnum=cdipsvnum)
+    # reload status file.
+    # if not converged:
+    #   print a warning.
+    #
+    identifier = sourceid
+
+    try_mcmc = True
+    if identifier in KNOWN_CUSTOM:
+        print('WRN! identifier {} requires manual fixing.'.
+              format(identifier))
+        try_mcmc = False
+
+    if (
+        not str2bool(status['is_converged'])
+        and int(status['n_steps_run']) == 0
+        and try_mcmc
+    ):
+
+        n_mcmc_steps = 4000
+
+        mafr, tlsr, is_converged = fivetransitparam_fit_magseries(
+            time, flux, err, teff, rstar, logg, identifier, fit_savdir,
+            chain_savdir, n_mcmc_steps=n_mcmc_steps,
+            overwriteexistingsamples=False, n_transit_durations=5,
+            make_tlsfit_plot=True, exp_time_minutes=30, bandpass='tess',
+            magsarefluxes=True, nworkers=nworkers
+        )
+
+        status = {'is_converged':is_converged, 'n_steps_run':n_mcmc_steps}
+        save_status(status_file, fittype, status)
+
+    status = load_status(status_file)[fittype]
+    if (
+        not str2bool(status['is_converged'])
+        and int(status['n_steps_run']) != 25000
+        and identifier in LONG_RUN_IDENTIFIERS
+        and try_mcmc
+    ):
+
+        n_mcmc_steps = 25000
+
+        # NOTE: hard-code nworkers, since we dont get multithreading
+        # improvement anyway (this is some kind of bug)
+        mafr, tlsr, is_converged = fivetransitparam_fit_magseries(
+            time, flux, err, teff, rstar, logg, identifier, fit_savdir,
+            chain_savdir, n_mcmc_steps=n_mcmc_steps,
+            overwriteexistingsamples=True, n_transit_durations=5,
+            make_tlsfit_plot=True, exp_time_minutes=30, bandpass='tess',
+            magsarefluxes=True, nworkers=4
+        )
+
+        status = {'is_converged':is_converged, 'n_steps_run':n_mcmc_steps}
+        save_status(status_file, fittype, status)
+
+    #
+    # if converged, convert fit results to ctoi csv format
+    #
+    status = load_status(status_file)[fittype]
+
+    if str2bool(status['is_converged']):
+        ticid = int(hdr['TICID'])
+        ra, dec = hdr['RA_OBJ'], hdr['DEC_OBJ']
+        print('{} converged. writing ctoi csv.'.format(identifier))
+        fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf,
+                                ctoidf, teff, teff_err, rstar, rstar_err, logg,
+                                logg_err, cdipsvnum=cdipsvnum)
+    else:
+        print('WRN! {} did not converge, after {} steps. MUST MANUALLY FIX.'.
+              format(identifier, status['n_steps_run']))
 
 
-def given_light_curve_fit_transit(time, flux, err, teff, teff_err, rstar,
-                                  rstar_err, logg, logg_err, outpath,
-                                  fit_savdir, chain_savdir, nworkers=40,
-                                  n_transit_durations=5, n_mcmc_steps=1,
-                                  tlsfit_savfile=None,
-                                  overwrite=1):
+def save_status(status_file, section, state_vars):
     """
-    TODO: maybe to astrobase?
+    Save pipeline status
+
+    Args:
+
+        status_file (string): name of output file
+
+        section (string): name of section to write
+
+        state_vars (dict): dictionary of all options to populate the specified
+        section
     """
 
-    # run tls to get initial parameters.
-    tlsp = periodbase.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
-                                         tls_rstar_min=0.1, tls_rstar_max=10,
-                                         tls_mstar_min=0.1, tls_mstar_max=5.0,
-                                         tls_oversample=8, tls_mintransits=1,
-                                         tls_transit_template='default',
-                                         nbestpeaks=5, sigclip=None,
-                                         nworkers=nworkers)
+    config = configparser.RawConfigParser()
 
-    tlsr = tlsp['tlsresult']
-    t0, per = tlsr.T0, tlsr.period
+    if os.path.isfile(status_file):
+        config.read(status_file)
 
-    # make plot of TLS fit
-    if isinstance(tlsfit_savfile, str):
+    if not config.has_section(section):
+        config.add_section(section)
 
-        make_fit_plot(tlsr['folded_phase'], tlsr['folded_y'], None,
-                      tlsr['model_folded_model'], per, t0, t0, tlsfit_savfile,
-                      model_over_lc=False, magsarefluxes=True,
-                      fitphase=tlsr['model_folded_phase'])
-        print('made {}'.format(tlsfit_savfile))
+    for key, val in state_vars.items():
+        config.set(section, key, val)
 
-    # fit the phased transit, within N durations of the transit itself, to
-    # determine a/Rstar, inclination, quadratric LD terms, period, and epoch.
-    # returns mandel-agol fit results dict.
-    mafr = fit_phased_transit_mandelagol_and_line(
-        time, flux, err,
-        tlsr,
-        teff, teff_err, rstar, rstar_err, logg, logg_err,
-        outpath,
-        fit_savdir,
-        chain_savdir,
-        n_transit_durations=n_transit_durations,
-        nworkers=nworkers,
-        n_mcmc_steps=n_mcmc_steps,
-        overwriteexistingsamples=overwrite,
-        mcmcprogressbar=True
-    )
+    with open(status_file, 'w') as f:
+        config.write(f)
 
-    return mafr, tlsr
 
+def load_status(status_file):
+    """
+    Load pipeline status
+
+    Args:
+        status_file (string): name of configparser file
+
+    Returns:
+        configparser.RawConfigParser
+    """
+
+    config = configparser.RawConfigParser()
+    gl = config.read(status_file)
+
+    return config
+
+
+def str2bool(v):
+    return v.lower() in ("yes", "true", "t", "1")
 
 def get_teff_rstar_logg(hdr):
     #
@@ -465,474 +538,6 @@ def get_teff_rstar_logg(hdr):
         raise ValueError('bad xmatch for {}'.format(tfa_sr_path))
 
     return teff, teff_err, rstar, rstar_err, logg, logg_err
-
-
-def fit_phased_transit_mandelagol_and_line(
-    time, flux, err,
-    tlsr,
-    teff, teff_err, rstar, rstar_err, logg, logg_err,
-    outpath,
-    fit_savdir,
-    chain_savdir,
-    exp_time_minutes=30,
-    n_transit_durations=5,
-    nworkers=40,
-    n_mcmc_steps=1,
-    overwriteexistingsamples=True,
-    mcmcprogressbar=True):
-    """
-    tlsr: result dictionary from TLS.
-    teff, rstr, logg: usual units, from wherever.
-    outpath: .csv file with fit parameters to save.
-    fit_savdir: directory where other plots are saved.
-    chain_savdir: MCMC chains go here.
-    overwriteexistingsamples: if false, and finds pickle file with saved
-    parameters, no sampling is done.
-    """
-
-    # initial guesses mostly from TLS results.
-    incl = 85
-    b = 0.2
-    period = tlsr['period']
-    T_dur = tlsr['duration']
-    rp_by_rstar = tlsr['rp_rs']
-    a_by_rstar = (
-        (period*u.day)/(np.pi*T_dur*u.day) * (1-b**2)**(1/2)
-    ).cgs.value
-    t0 = tlsr['T0']
-    u_linear, u_quad = get_limb_darkening_initial_guesses(teff, logg)
-
-    # isolate each transit to within +/- n_transit_durations
-    tmids_obsd = tlsr['transit_times']
-
-    t_Is = tmids_obsd - T_dur/2
-    t_IVs = tmids_obsd + T_dur/2
-
-    # focus on the times around transit
-    t_starts = t_Is - n_transit_durations*T_dur
-    t_ends = t_IVs + n_transit_durations*T_dur
-
-    # fit only +/- n_transit_durations near the transit data. don't try to fit
-    # OOT or occultation data.
-    sel_inds = np.zeros_like(time).astype(bool)
-    for t_start,t_end in zip(t_starts, t_ends):
-        these_inds = (time > t_start) & (time < t_end)
-        if np.any(these_inds):
-            sel_inds |= these_inds
-
-    # to construct the phase-folded light curve, fit a line to the OOT flux
-    # data, and use the parameters of the best-fitting line to "rectify" each
-    # lightcurve. Note that an order 1 legendre polynomial == a line, so we'll
-    # use that implementation.
-    out_fluxs, in_fluxs, fit_fluxs, time_list, intra_inds_list, err_list = (
-        [], [], [], [], [], []
-    )
-    for t_start,t_end in zip(t_starts, t_ends):
-        this_window_inds = (time > t_start) & (time < t_end)
-        tmid = t_start + (t_end-t_start)/2
-        # flag out slightly more than expected "in transit" points
-        prefactor = 1.05
-        transit_start = tmid - prefactor*T_dur/2
-        transit_end = tmid + prefactor*T_dur/2
-
-        this_window_intra = (
-            (time[this_window_inds] > transit_start) &
-            (time[this_window_inds] < transit_end)
-        )
-        this_window_oot = ~this_window_intra
-
-        this_oot_time = time[this_window_inds][this_window_oot]
-        this_oot_flux = flux[this_window_inds][this_window_oot]
-
-        if len(this_oot_flux) == len(this_oot_time) == 0:
-            continue
-        try:
-            p = Legendre.fit(this_oot_time, this_oot_flux, 1)
-            coeffs = p.coef
-            this_window_fit_flux = p(time[this_window_inds])
-
-            time_list.append( time[this_window_inds] )
-            out_fluxs.append( flux[this_window_inds] / this_window_fit_flux )
-            fit_fluxs.append( this_window_fit_flux )
-            in_fluxs.append( flux[this_window_inds] )
-            intra_inds_list.append( (time[this_window_inds]>transit_start) &
-                                    (time[this_window_inds]<transit_end) )
-            err_list.append( err[this_window_inds] )
-        except np.linalg.LinAlgError:
-            print('WRN! Legendre.fit failed, b/c bad data for this transit. '
-                  'Continue.')
-            continue
-
-    # make plots to verify that this procedure is working.
-    ix = 0
-    for _time, _flux, _fit_flux, _out_flux, _intra in zip(
-        time_list, in_fluxs, fit_fluxs, out_fluxs, intra_inds_list):
-
-        outdir = fit_savdir
-        savpath = (
-            os.path.splitext(outpath)[0]+'_t{:s}.png'.format(str(ix).zfill(3))
-        )
-
-        if os.path.exists(savpath):
-            print('found & skipped making {}'.format(savpath))
-            ix += 1
-            continue
-
-        plt.close('all')
-        fig, (a0,a1) = plt.subplots(nrows=2, sharex=True, figsize=(6,6))
-
-        a0.scatter(_time, _flux, c='k', alpha=0.9, label='data', zorder=1,
-                   s=10, rasterized=True, linewidths=0)
-        a0.scatter(_time[_intra], _flux[_intra], c='r', alpha=1,
-                   label='in-transit (for fit)', zorder=2, s=10, rasterized=True,
-                   linewidths=0)
-
-        a0.plot(_time, _fit_flux, c='b', zorder=0, rasterized=True, lw=2,
-                alpha=0.4, label='linear fit to OOT')
-
-        a1.scatter(_time, _out_flux, c='k', alpha=0.9, rasterized=True,
-                   s=10, linewidths=0)
-        a1.plot(_time, _fit_flux/_fit_flux, c='b', zorder=0, rasterized=True,
-                lw=2, alpha=0.4, label='linear fit to OOT')
-
-        xlim = a1.get_xlim()
-
-        for a in [a0,a1]:
-            a.hlines(1, np.min(_time)-10, np.max(_time)+10, color='gray',
-                     zorder=-2, rasterized=True, alpha=0.2, lw=1,
-                     label='flux=1')
-
-        a1.set_xlabel('time-t0 [days]')
-        a0.set_ylabel('relative flux')
-        a1.set_ylabel('residual')
-        a0.legend(loc='best', fontsize='x-small')
-        for a in [a0, a1]:
-            a.get_yaxis().set_tick_params(which='both', direction='in')
-            a.get_xaxis().set_tick_params(which='both', direction='in')
-            a.set_xlim(xlim)
-
-        fig.tight_layout(h_pad=0, w_pad=0)
-        fig.savefig(savpath, dpi=300, bbox_inches='tight')
-        print('saved {:s}'.format(savpath))
-        ix += 1
-
-    sel_time = np.concatenate(time_list)
-    sel_flux = np.concatenate(out_fluxs)
-    fit_flux = np.concatenate(fit_fluxs)
-    sel_err = np.concatenate(err_list)
-    assert len(sel_flux) == len(sel_time) == len(sel_err)
-
-    # model = transit only (no line). "transit" as defined by BATMAN has flux=1
-    # out of transit.
-    fittype = 'mandelagol'
-    initfitparams = {'t0':t0,
-                     'period':period,
-                     'sma':a_by_rstar,
-                     'rp':rp_by_rstar,
-                     'incl':incl
-                    }
-    fixedparams = {'ecc':0.,
-                   'omega':90.,
-                   'limb_dark':'quadratic',
-                   'u':[u_linear,u_quad]}
-    priorbounds = {'t0':(t0 - period/10, t0 + period/10),
-                   'period':(period-1e-1, period+1e-1),
-                   'sma':(a_by_rstar/5, 5*a_by_rstar),
-                   'rp':(rp_by_rstar/3, 3*rp_by_rstar),
-                   'incl':(65, 90)
-                   #'u_linear':(u_linear-0.1, u_linear+0.1), # narrow to remain "physical"
-                   #'u_quad':(u_quad-0.1, u_quad+0.1)
-                   }
-    cornerparams = {'t0':t0,
-                    'period':period,
-                    'sma':a_by_rstar,
-                    'rp':rp_by_rstar,
-                    'incl':incl}#,
-                    #'u_linear':u_linear,
-                    #'u_quad':u_quad }
-
-    ndims = len(initfitparams)
-
-    ##########################################################
-    # FIRST: run the fit using the errors given in the data. #
-    ##########################################################
-    mandelagolfit_plotname = (
-        os.path.splitext(os.path.basename(outpath))[0]+
-        '_phased_{:s}_fit_{:d}d_dataerrs.png'.format(fittype, ndims)
-    )
-    corner_plotname = (
-        os.path.splitext(os.path.basename(outpath))[0]+
-        '_phased_corner_{:s}_fit_{:d}d_dataerrs.png'.format(fittype, ndims)
-    )
-    sample_plotname = (
-        os.path.splitext(os.path.basename(outpath))[0]+
-        '_phased_{:s}_fit_samples_{:d}d_dataerrs.h5'.format(fittype, ndims)
-    )
-
-    mandelagolfit_savfile = os.path.join(fit_savdir, mandelagolfit_plotname)
-    corner_savfile = os.path.join(fit_savdir, corner_plotname)
-    if not os.path.exists(chain_savdir):
-        try:
-            os.mkdir(chain_savdir)
-        except:
-            raise AssertionError('you need to save chains')
-    samplesavpath = os.path.join(chain_savdir, sample_plotname)
-
-    print('beginning {:s}'.format(samplesavpath))
-
-    plt.close('all')
-
-    # TODO: add a binary file for whether the fit worked satisfactorily. if not,
-    # ... do something about it. like raise a warning.
-    if os.path.exists(maf_savpath):
-        maf_empc_errs = pickle.load(open(maf_savpath, 'rb'))
-        import IPython; IPython.embed() #FIXME check what is "normal" or "good" here...
-        maf_empc_errs['acceptancefraction']
-        maf_empc_errs['autocorrtime']
-
-
-        #FIXME: n_mcmc_steps below should maybe be the MAXIMUM number of MCMC steps to take.
-        # Then you iteratively compute the autcorrelation length, and keep
-        # running as need be.
-        # http://mattpitkin.github.io/samplers-demo/pages/samplers-samplers-everywhere/
-
-
-
-    fitparamdir = fit_savdir
-    if not os.path.exists(fitparamdir):
-        os.mkdir(fitparamdir)
-    maf_savpath = ( os.path.join(
-        fitparamdir,
-        (os.path.splitext(os.path.basename(outpath))[0]
-        +"_phased_{:s}_fit_dataerrs.pickle".format(fittype))
-    ) )
-
-    if os.path.exists(maf_savpath) and not overwriteexistingsamples:
-        maf_data_errs = pickle.load(open(maf_savpath, 'rb'))
-
-    else:
-        maf_data_errs = lcfit.transits.mandelagol_fit_magseries(
-                        sel_time, sel_flux, sel_err,
-                        initfitparams, priorbounds, fixedparams,
-                        trueparams=cornerparams, magsarefluxes=True,
-                        sigclip=None, plotfit=mandelagolfit_savfile,
-                        plotcorner=corner_savfile,
-                        samplesavpath=samplesavpath, nworkers=nworkers,
-                        n_mcmc_steps=n_mcmc_steps, exp_time_minutes=30,
-                        eps=1e-6, n_walkers=500, skipsampling=False,
-                        overwriteexistingsamples=overwriteexistingsamples,
-                        mcmcprogressbar=mcmcprogressbar)
-        with open(maf_savpath, 'wb') as f:
-            pickle.dump(maf_data_errs, f, pickle.HIGHEST_PROTOCOL)
-            print('saved {:s}'.format(maf_savpath))
-
-    fitfluxs = maf_data_errs['fitinfo']['fitmags']
-    fitepoch = maf_data_errs['fitinfo']['fitepoch']
-    fiterrors = maf_data_errs['fitinfo']['finalparamerrs']
-    fitepoch_perr = fiterrors['std_perrs']['t0']
-    fitepoch_merr = fiterrors['std_merrs']['t0']
-
-    # Winn (2010) eq 14 gives the transit duration
-    k = maf_data_errs['fitinfo']['finalparams']['rp']
-    t_dur_day = (
-        (period*u.day)/np.pi * np.arcsin(
-            1/a_by_rstar * np.sqrt(
-                (1 + k)**2 - b**2
-            ) / np.sin((incl*u.deg))
-        )
-    ).to(u.day*u.rad).value
-
-    per_point_cadence = exp_time_minutes*u.min
-    npoints_in_transit = (
-        int(np.floor(((t_dur_day*u.day)/per_point_cadence).cgs.value))
-    )
-
-    # use the whole LC's RMS as the "noise"
-    snr, _, empirical_errs = get_snr_of_dip(
-        sel_time, sel_flux, sel_time, fitfluxs,
-        magsarefluxes=True, atol_normalization=1e-2,
-        transitdepth=k**2, npoints_in_transit=npoints_in_transit)
-
-    sigma_tc_theory = estimate_achievable_tmid_precision(
-        snr, t_ingress_min=0.05*t_dur_day*24*60,
-        t_duration_hr=t_dur_day*24)
-
-    print('mean fitepoch err: {:.2e}'.format(
-          np.mean([fitepoch_merr, fitepoch_perr])))
-    print('mean fitepoch err / theory err = {:.2e}'.format(
-          np.mean([fitepoch_merr, fitepoch_perr]) / sigma_tc_theory))
-    print('mean error from data lightcurve ='+
-          '{:.2e}'.format(np.mean(sel_err))+
-          '\nmeasured empirical RMS = {:.2e}'.format(empirical_errs))
-
-    empirical_err = np.ones_like(sel_err)*empirical_errs
-
-    # THEN: rerun the fit using the empirically determined errors
-    # (measured from RMS of the transit-model subtracted lightcurve).
-    mandelagolfit_plotname = (
-        os.path.splitext(os.path.basename(outpath))[0]+
-        '_phased_{:s}_fit_{:d}d_empiricalerrs.png'.format(fittype, ndims)
-    )
-    corner_plotname = (
-        os.path.splitext(os.path.basename(outpath))[0]+
-        '_phased_corner_{:s}_fit_{:d}d_empiricalerrs.png'.format(fittype, ndims)
-    )
-    sample_plotname = (
-        os.path.splitext(os.path.basename(outpath))[0]+
-        '_phased_{:s}_fit_samples_{:d}d_empiricalerrs.h5'.format(fittype, ndims)
-    )
-
-    mandelagolfit_savfile = os.path.join(fit_savdir, mandelagolfit_plotname)
-    corner_savfile = os.path.join(fit_savdir, corner_plotname)
-    samplesavpath = os.path.join(chain_savdir, sample_plotname)
-
-    plt.close('all')
-
-    print('beginning {:s}'.format(samplesavpath))
-
-    maf_savpath = ( os.path.join(
-        fitparamdir,
-        (os.path.splitext(os.path.basename(outpath))[0]
-         +"_phased_{:s}_fit_empiricalerrs.pickle".format(fittype))
-    ) )
-
-    if os.path.exists(maf_savpath) and not overwriteexistingsamples:
-        maf_empc_errs = pickle.load(open(maf_savpath, 'rb'))
-
-    else:
-        maf_empc_errs = lcfit.transits.mandelagol_fit_magseries(
-                        sel_time, sel_flux, empirical_err,
-                        initfitparams, priorbounds, fixedparams,
-                        trueparams=cornerparams, magsarefluxes=True,
-                        sigclip=None, plotfit=mandelagolfit_savfile,
-                        plotcorner=corner_savfile,
-                        samplesavpath=samplesavpath, nworkers=nworkers,
-                        n_mcmc_steps=n_mcmc_steps, exp_time_minutes=30,
-                        eps=1e-6, n_walkers=500, skipsampling=False,
-                        overwriteexistingsamples=overwriteexistingsamples,
-                        mcmcprogressbar=mcmcprogressbar)
-
-        with open(maf_savpath, 'wb') as f:
-            pickle.dump(maf_empc_errs, f, pickle.HIGHEST_PROTOCOL)
-            print('saved {:s}'.format(maf_savpath))
-
-    # fitfluxs, fittimes = _get_interp_fitfluxs(maf_empc_errs, sel_time)
-    # now plot the phased lightcurve
-    fitfluxs = maf_empc_errs['fitinfo']['fitmags']
-    fittimes = maf_empc_errs['magseries']['times']
-    fitperiod = maf_empc_errs['fitinfo']['finalparams']['period']
-    fitepoch = maf_empc_errs['fitinfo']['finalparams']['t0']
-
-    outfile = ( os.path.join(
-        fit_savdir,
-        (os.path.splitext(os.path.basename(outpath))[0]
-         +"_phased_{:s}_fit_empiricalerrs.png".format(fittype))
-    ) )
-
-    plot_phased_magseries(sel_time, sel_flux, fitperiod, magsarefluxes=True,
-                          errs=None, normto=False, epoch=fitepoch,
-                          outfile=outfile, sigclip=False, phasebin=0.01,
-                          phasewrap=True, phasesort=True,
-                          plotphaselim=[-.4,.4], plotdpi=400,
-                          modelmags=fitfluxs, modeltimes=fittimes,
-                          xaxlabel='Time from mid-transit [days]',
-                          yaxlabel='Relative flux', xtimenotphase=True)
-    print('made {}'.format(outfile))
-
-    # fit parameters are accessed like
-    # maf_empc_errs['fitinfo']['finalparams']['sma'],
-    return maf_empc_errs
-
-
-def _get_interp_fitfluxs(mafr, sel_time):
-
-    medianparams = mafr['fitinfo']['finalparams']
-    fixedparams = mafr['fitinfo']['fixedparams']
-
-    from astrobase.lcfit.transits import _get_value, _transit_model
-
-    per = _get_value('period', medianparams, fixedparams)
-    t0 = _get_value('t0', medianparams, fixedparams)
-    rp = _get_value('rp', medianparams, fixedparams)
-    sma = _get_value('sma', medianparams, fixedparams)
-    incl = _get_value('incl', medianparams, fixedparams)
-    ecc = _get_value('ecc', medianparams, fixedparams)
-    omega = _get_value('omega', medianparams, fixedparams)
-    limb_dark = _get_value('limb_dark', medianparams, fixedparams)
-    try:
-        u = fixedparams['u']
-    except Exception:
-        u = [medianparams['u_linear'], medianparams['u_quad']]
-
-    # sample model over 10k points
-    times = np.linspace(np.nanmin(sel_time),
-                        np.nanmax(sel_time),
-                        num=int(1e4))
-
-    fit_params, fit_m = _transit_model(times, t0, per, rp, sma, incl, ecc,
-                                       omega, u, limb_dark,
-                                       exp_time_minutes=30,
-                                       supersample_factor=20)
-    fitmags = fit_m.light_curve(fit_params)
-
-    return fitmags, times
-
-
-def get_limb_darkening_initial_guesses(teff, logg):
-    '''
-    CITE: Claret 2017, whose coefficients we're parsing
-    '''
-
-    metallicity = 0 # solar
-
-    # get the Claret quadratic priors for TESS bandpass
-    # the selected table below is good from Teff = 1500 - 12000K, logg = 2.5 to
-    # 6. We choose values computed with the "r method", see
-    # http://vizier.u-strasbg.fr/viz-bin/VizieR-n?-source=METAnot&catid=36000030&notid=1&-out=text
-    if not 2300 < teff < 12000:
-        if teff < 15000:
-            print('WRN! using 12000K atmosphere LD coeffs even tho teff={}'.
-                  format(teff))
-        else:
-            print('got teff error')
-            import IPython; IPython.embed()
-    if not 2.5 < logg < 6:
-        if teff < 15000:
-            # is B star; assume star is like B6V, mamajek table
-            _Mstar = 4*u.Msun
-            _Rstar = 2.9*u.Rsun
-            logg = np.log10((const.G * _Mstar / _Rstar**2).cgs.value)
-        else:
-            print('got logg error')
-            import IPython; IPython.embed()
-
-    Vizier.ROW_LIMIT = -1
-    catalog_list = Vizier.find_catalogs('J/A+A/600/A30')
-    catalogs = Vizier.get_catalogs(catalog_list.keys())
-    t = catalogs[1]
-    sel = (t['Type'] == 'r')
-    df = t[sel].to_pandas()
-
-    # since we're using these as starting guesses, not even worth
-    # interpolating. just use the closest match!
-    # each Teff gets 8 logg values. first, find the best teff match.
-    foo = df.iloc[(df['Teff']-teff).abs().argsort()[:8]]
-    # then, among those best 8, get the best logg match.
-    bar = foo.iloc[(foo['logg']-logg).abs().argsort()].iloc[0]
-
-    # TODO: should probably determine these coefficients by INTERPOLATING.
-    # (especially in cases when you're FIXING them, rather than letting them
-    # float).
-    print('WRN! skipping interpolation for Claret coefficients.')
-    print('WRN! data logg={:.3f}, teff={:.1f}'.format(logg, teff))
-    print('WRN! Claret logg={:.3f}, teff={:.1f}'.
-          format(bar['logg'],bar['Teff']))
-
-    u_linear = bar['aLSM']
-    u_quad = bar['bLSM']
-
-    return float(u_linear), float(u_quad)
-
 
 
 def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
