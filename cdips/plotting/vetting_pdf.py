@@ -29,13 +29,27 @@ from astroquery.gaia import Gaia
 from astroquery.simbad import Simbad
 from astroquery.mast import Catalogs
 
-def _given_mag_get_flux(mag):
+def _given_mag_get_flux(mag, err_mag=None):
 
     mag_0, f_0 = 12, 1e4
     flux = f_0 * 10**( -0.4 * (mag - mag_0) )
-    flux /= np.nanmedian(flux)
+    fluxmedian = np.nanmedian(flux)
+    flux /= fluxmedian
 
-    return flux
+    if err_mag is None:
+        return flux
+
+    else:
+
+        #
+        # sigma_flux = dg/d(mag) * sigma_mag, for g=f0 * 10**(-0.4*(mag-mag0)).
+        #
+        err_flux = np.abs(
+            -0.4 * np.log(10) * f_0 * 10**(-0.4*(mag-mag_0)) * err_mag
+        )
+        err_flux /= fluxmedian
+
+        return flux, err_flux
 
 
 def _insert_newlines(string, every=64):
