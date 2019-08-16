@@ -81,13 +81,12 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 \begin{abstract}
   % Context
   The Transiting Exoplanet Survey Satellite (TESS) is providing
-  precise time-series photometry for almost every star cluster in the
+  precise time-series photometry for most star clusters in the
   solar neighborhood.
   % Aims
   Using the TESS images, we have begun a Cluster Difference Imaging
-  Photometric Survey (CDIPS), in which we are focusing on stars that
-  are candidate cluster members, or else show other indications of
-  youth.
+  Photometric Survey (CDIPS), in which we are focusing 
+  both on stars that are candidate cluster members, and on stars that show indications of youth.
   %
   Our aims are to discover giant transiting planets with known ages,
   and to provide light curves suitable for studies in stellar
@@ -179,7 +178,7 @@ cutoff changed to objects within $10^\circ$ of the galactic plane
 \citep{stassun_TIC8_2019}.}~\citep{stassun_TIC_2018,stassun_TIC8_2019}.
 This decision was made because the large pixel size and the high
 stellar surface density make aperture photometry unreliable.  However,
-it implies that most stars in clusters, which are almost always near
+it implies that most stars in clusters, which are usually near
 the galactic plane, will go unprocessed by the official {\it TESS}
 data reduction pipeline.
 
@@ -207,7 +206,7 @@ catalog used to determine the reference flux.  This is a major benefit
 of performing image subtraction in crowded fields.
 
 We have therefore begun to apply difference imaging to the TESS
-FFIs, with a focus on any star that could be a member of a group.
+FFIs, with a focus on any star that could be a cluster member.
 We are also including some stars that we suspect are young due to
 combined photometric and astrometric indicators.  A major motivation
 for this effort is to discover giant transiting planets with known
@@ -227,10 +226,10 @@ photometric and image processing methods we used to produce light
 curves for these stars (\S~\ref{sec:method}).  In TESS Sectors 6 and
 7, these methods yielded \numberlcs light curves, and in
 \S~\ref{subsec:lcstatistics} we summarize their statistical
-properties.  An example of how we might use the data to identify
-pulsating stars, eclipsing binaries, and transiting planets is then
-given (\S~\ref{subsec:identifying_variability}).  We close in
-\S~\ref{sec:conclusion} by summarizing our findings, and discuss them
+properties.  We then give an example of how to use the data to identify
+pulsating stars, eclipsing binaries, and transiting planets
+(\S~\ref{subsec:identifying_variability}).  We close in
+\S~\ref{sec:conclusion} with a summary of our findings, and discuss them
 with an eye towards the studies we hope this and further data
 processing will enable.
 
@@ -334,14 +333,14 @@ First, we describe the catalogs we used to identify members of open
 clusters (\S~\ref{subsec:oc}).  Then, we discuss the catalogs we used
 to identify members of moving groups, stellar associations, and more
 generally young stellar populations (\S~\ref{subsec:mg}).  In
-\S~\ref{subsec:ocmgsummary} and Figure~\ref{fig:cdips_targets} we give
+\S~\ref{subsec:ocmgsummary} we give
 summary statistics for the entire sample of about one million target
-stars.
+stars, and we list the targets in Table~\ref{tbl:cdips_targets}.
 
 \subsection{Big catalogs: open clusters}
 \label{subsec:oc}
 
-At the time of writing, two relatively large, homogeneous cluster
+At the time of our analysis, two relatively large, homogeneous cluster
 memberships studies had been performed using Gaia-DR2: those by
 \citet{cantat-gaudin_gaia_2018} and \citet{gaia_hr_2018}.  There were
 also two large membership studies pre-dating Gaia-DR2 based on proper
@@ -354,12 +353,12 @@ motion and photometric catalogs: the studies of
 assignment algorithm \citep{krone-martins_upmask_2014} to identify
 cluster members using Gaia-DR2 positions, proper motions, and
 parallaxes.  They used Gaia photometry and radial velocities to verify
-the membership claims.  From their Table~2, we collect 401{,}448
+the membership claims.  From their Table~2, we collected 401{,}448
 cluster members, in 1229 clusters, down to their limiting magnitude of
 $G=18$.
 
 \citet{gaia_hr_2018} reported members of a smaller, more select group
-of well-studied open clusters. From their Table~A1, we collect
+of well-studied open clusters. From their Table~A1, we collected
 40{,}903 cluster members, in 41 open clusters, mostly within
 $500\,{\rm pc}$. While this work also included memberships for
 globular clusters, we omitted them from consideration.
@@ -377,11 +376,11 @@ Gaia-DR2 source identifier \citep{stassun_TIC_2018,stassun_TIC8_2019}.
 \citep[][a combination of USNO-B1{.}0 and 2MASS
 astrometry]{roeser_ppmxl_2010} and near-infrared photometry from 2MASS
 \citep{skrutskie_tmass_2006} to report the existence of 2859 open
-clusters and stellar associations (globular clusters were omitted by
-excluding any entry of type \texttt{'g'}).  We selected the most
+clusters and stellar associations. We omitted globular clusters by
+excluding any entry of type `\texttt{g}'.  We selected the most
 probable cluster members (``$1\sigma$ members'') using the combined
 photometric, kinematic, and spatial criteria described by
-\citet[][Section~3.3]{kharchenko_global_2012}.  Then, to obtain {\it
+\citet{kharchenko_global_2012}.  Then, to obtain {\it
 Gaia}-DR2 source identifiers for the members, we performed a
 crossmatch for Gaia-DR2 sources within 5 arcseconds of the listed
 positions.  To improve the quality of the cross-match, we used the
@@ -401,7 +400,7 @@ UCAC4 proper motions acquired by the US Naval Observatory
 \citep{zacharias_fourth_2013}.  From their 1805 reported open
 clusters, we selected sources with quoted membership probability above
 50\%.  To obtain Gaia-DR2 source identifiers for the members, we
-performed a similar crossmatch as before, looking for sources within 5
+performed a similar crossmatch, looking for sources within 5
 arcseconds of the listed positions, and within $\pm$2 $G$-band
 magnitudes of the prediction.  From 2{,}034{,}269 stars, this yielded
 a unique best neighbor for 1{,}828{,}630 stars (89.9\% of the sample),
@@ -410,7 +409,7 @@ and a choice between two neighbors for 8.7\% of the remaining sample.
 The distributions of various cross-matching statistics are shown in
 Figure~\ref{fig:xmatch_info}.  The distances between matches is
 typically below 1 arcsecond.  The \citeauthor{dias_proper_2014}
-catalog shows stronger crowding effects at the faint end compared to
+catalog shows stronger crowding effects at the faint end than
 the \citeauthor{Kharchenko_et_al_2013} catalog, and likely has a
 larger number of false matches.  At their faint ends, both catalogs
 show a tendency for true $G$-band magnitudes to be larger than
@@ -420,16 +419,16 @@ predicted $G$-band magnitudes, presumably due to dust reddening.
 \subsection{Smaller catalogs: moving groups and stellar associations}
 \label{subsec:mg}
 
-Stars, moving groups and stellar associations are of interest for
-similar reasons as stars in open clusters.  Though fewer stars
-are known to exist in moving groups, they are of particular interest
-because moving groups are less crowded than open clusters, and are
-often closer to the Sun.
+Stars in moving groups and stellar associations are interesting for
+similar reasons as stars in open clusters.  
+Relative to open cluster members though, stars in moving groups are 
+usually closer, brighter, and
+exist in less crowded environments.
 
-We obtained Gaia-DR2 identifiers from the results of the following
-studies:
-\citet{gagne_banyan_XI_2018},
+To identify stars in these types of groups, we matched the following studies
+against Gaia-DR2:
 \citet{gagne_banyan_XII_2018},
+\citet{gagne_banyan_XI_2018},
 \citet{gagne_banyan_XIII_2018},
 \citet{kraus_tucanahor_2014},
 \citet{roser_deep_2011}, % OC, not MG...
@@ -469,7 +468,7 @@ matched against the {\it Gaia} archive's
 nearest-neighbor stars from 436 candidate members.
 
 \citet{oh_comoving_2017} searched for comoving stars in the $\approx$2
-million stars that appear in both the Tycho-2 and {\it Gaia}-DR1
+million stars that appear in both the Tycho-2 and Gaia-DR1
 catalogs.  They found many wide binaries, and also identified a large
 number of comoving groups.  We chose the 2{,}134 stars that they
 reported were in groups with sizes of at least 3 stars.  Using their
@@ -480,8 +479,8 @@ nearest-neigbor stars in groups of at least three stars
 
 Finally, \citet{zari_3d_2018} constructed a sample of young stars
 within $500\,{\rm pc}$ using data from Gaia-DR2. Two subsamples were
-made: (a) an upper main sequence (MS) sample, with 86{,}102 stars, and
-(b) a pre-MS sample, with 43{,}719 stars.  Each was created from a
+made: an upper main sequence (MS) sample, with 86{,}102 stars, and
+a pre-MS sample, with 43{,}719 stars.  Each was created from a
 careful combination of distinct astrometric and photometric cuts.
 These stars are the youngest, closest stars, spread across
 star-forming complexes in Sco-Cen, Orion, Vela, Taurus, and other
@@ -498,7 +497,7 @@ search sample.
 
 After collecting the aforementioned lists, we merged them into a
 single table. We queried Gaia-DR2's \texttt{gaia\_source} table to
-retrieve their apparent $G$, $G_{\rm Rp}$, and $G_{\rm Bp}$
+retrieve each star's apparent $G$, $G_{\rm Rp}$, and $G_{\rm Bp}$
 magnitudes, as well as their astrometric measurements $(\alpha,
 \delta, \mu_\alpha, \mu_\delta, \pi)$.  Finally, we required that
 $G_{\rm Rp} < 16$, which is roughly the level for which the 1-hour
@@ -533,7 +532,7 @@ including their stars (based on the criteria
 \citet{Kharchenko_et_al_2013} catalog combined spatial, kinematic, and
 photometric information to derive their membership probabilities.  We
 also used a more restrictive membership probability cut (again,
-following the criteria they used for their star counts), and so this
+following the criteria they used for their star counts), so this
 sub-sample is likely less contaminated with field interlopers.
 \citet{cantat-gaudin_gaia_2018} used spatial, kinematic, and
 astrometric information from Gaia-DR2. Despite the lack of photometric
@@ -556,7 +555,7 @@ column rather than using the \texttt{unique\_cluster\_name} column to
 analyze individual objects of interest.  Nonetheless, 87.7\% of the
 $\sim$million unique target stars are matched to clusters named by
 \citet{Kharchenko_et_al_2013}, and 88.8\% are assigned a cluster name.
-The remainder are mostly the young stars from \citet{zari_3d_2018}.
+The remainder are mostly young stars from \citet{zari_3d_2018}.
 Ages and their uncertainties were then assigned using the parameters
 reported by \citet{Kharchenko_et_al_2013}.
 
@@ -637,7 +636,7 @@ taken by the Hungarian Automated Telescope (HAT) network
 in the \texttt{fitsh} software package, was an especially crucial
 component.  The specific high-level framework we used for this
 reduction was adapted from a pipeline called \texttt{pipe-trex}, under
-development primarily for the HATPI project (\url{hatpi.org}).  The
+development for the HATPI project (\url{hatpi.org}).  The
 code is available
 online\footnote{\url{github.com/waqasbhatti/pipe-trex}, commit
 \texttt{9d7020e}.}.
@@ -657,11 +656,11 @@ frame (\S~\ref{subsec:imagesubtraction}).  We perform aperture
 photometry on the subtracted images using positions projected onto the
 frame from the Gaia-DR2 source catalog.  The resulting differential
 flux measurements are converted to total flux measurements using
-photometric information from Gaia-DR2 to estimate the total flux of
+photometric information from Gaia-DR2 to determine the total flux of
 each source on the reference image.  We detrend the resulting light
 curves (\S~\ref{subsec:lcdetrending}).  The resulting white noise and
 red noise properties of the light curves, and a few interesting cases
-of variability, are discussed in \S~\ref{sec:results}.
+of variability, are explored in \S~\ref{sec:results}.
 
 
 \subsection{Observations}
@@ -699,9 +698,9 @@ plane.  Consequently, fewer than 2\% of the CDIPS target stars were
 observed in the first five TESS sectors.  Although a few interesting
 clusters are present in these observations ({\it e.g.}, Blanco~1,
 NGC~2516, NGC~1901), for the present work we opted to focus on Sectors
-6 \& 7, for which there were more stars of interest.  These begin in
-Sector 6 (2018-12-12, spacecraft orbit \#19), and conclude at the end
-of Sector 7 (2019-02-01, spacecraft orbit \#22).  Sectors 6 and 7
+6 and 7, for which there were more stars of interest.  Sector 6
+began on December 12, 2018 (space orbit \#19). Sector 7 concluded
+on February 1, 2019. Combined, the two sectors
 cover galactic longitudes from roughly 200$^\circ$ to 280$^\circ$,
 with coverage within $\pm 20^\circ$ of the galactic plane
 (Figure~\ref{fig:cdips_targets_positions}).
@@ -798,12 +797,12 @@ additional gaps in Sector 7.
 	\label{fig:astromresid}
 \end{figure}
 
-Having prepared the images, we perform some initial analysis steps to
+After preparing the images, we perform some initial analysis steps to
 produce metadata needed during image subtraction.  
 
 First, we perform source extraction on the thousand or so brightest,
 non-saturated stars in each image.  This is done using a
-\texttt{fitsh} tool, \texttt{fistar}.  We derive centroid positions
+\texttt{fitsh} module, \texttt{fistar}.  We derive centroid positions
 for the stars, and simultaneously fit elliptical gaussians to their
 profiles, yielding the shape parameters $(s,d,k)$, where the flux $f$
 as a function of position $(x,y)$ in the CCD image plane is assumed to
@@ -923,7 +922,7 @@ where the coefficients $c_i$ are found by minimizing
     \chi^2 = \sum_{xy} \left( \frac{I_{xy} - M_{xy}}{\sigma_{xy}} \right)^2,
     \label{eq:chisq_conv}
 \end{equation}
-where $\sigma_{xy}$ is the uncertainty in the target image pixel
+for $\sigma_{xy}$ the uncertainty in the target image pixel
 values.  Photometry is then performed on the difference image
 $D_{xy}$, where $D_{xy} = I_{xy} - M_{xy}$.  For the present
 reduction, the uncertainty in each target image pixel was taken to be
@@ -956,13 +955,13 @@ require that the frame have a low background level, as measured in
 annuli around the bright stars selected in
 \S~\ref{subsec:preparation}.  Finally, the astrometric reference frame
 needs to have a large number of detected sources (though the variance
-between TESS images was rather small).  We sort the image using these
+between TESS images was rather small).  We sort the images using these
 metrics, and then select the astrometric reference frame from
 successive intersections of each sorted list.
 
-We then compute and apply a spatial transformation of each calibrated
-frame to match the astrometric reference frame.  This
-transformation~--~a combination of rotation, dilation, and
+We then compute and apply a spatial transformation 
+to each calibrated frame in order to match the astrometric reference.
+This transformation~--~a combination of rotation, dilation, and
 translation~--~typically moves stars by less than a pixel, since the
 TESS spacecraft pointing is quite stable.  We calculate the
 transformation using the measured source positions found in
@@ -1002,10 +1001,12 @@ signals for faint stars would correspondingly be biased to lower
 values.
 
 To avoid this problem, after performing simple aperture photometry on
-the reference frame, we fitted a line between the Gaia-DR2 magnitude
-of each star, and its measured flux.  The TESS $T$-band magnitude was
-calculated according to Equation~1 of \citet{stassun_TIC8_2019}.  We
-then use the known catalog magnitude to predict the expected reference
+the reference frame, we fitted a line between the TESS T-band magnitude
+of the bright stars, and their measured fluxes.  The TESS $T$-band magnitudes were
+calculated using the Gaia-DR2 magnitudes of each star, and
+Equation~1 of \citet{stassun_TIC8_2019}.  We
+then used the known catalog magnitudes for all the stars on
+each image to predict the expected reference
 flux for each star.  This accounts for crowding down to Gaia's
 resolution limit of $\approx$1$''$, rather than the TESS limit of
 $\approx$20$''$.
@@ -1054,7 +1055,7 @@ scaling.  We performed a grid-search to tune these parameters, in
 which our ``loss functions'' were the light curve standard deviation
 (RMS) as a function of magnitude, and the recovered SNR of transits
 from the catalog of known TOIs (TESS Objects of Interest; N.~Guerrero,
-in prep).
+in preparation).
 
 In the first dimension, we varied the kernel size between a box of
 $3\times3$ pixels and $11\times11$ pixels.  Increasing the kernel
@@ -1399,8 +1400,8 @@ necessary.
     Standard deviation of CDIPS light curves as a function of catalog
     TESS-band magnitude.  Left-to-right are raw, PCA-detrended, and
     TFA-detrended light curves. Black points correspond to the minimum
-    RMS across the available three aperture sizes.  The model (orange
-    and gray lines) assumes aperture sizes reported by
+    RMS across the three available aperture sizes.  The model (orange
+    and gray lines) assumes aperture sizes calculated by
     \citet{Sullivan_et_al_2015}, and the effective area from
     \citet{vanderspek_2018}.  The noise from unresolved background
     stars (dotted gray line) is a function of galactic latitude, and
@@ -1587,7 +1588,7 @@ techniques could be introducing some small degree of noise to the
 light curves of the brightest stars.  It is also true however that our
 largest aperture contains only about 16 pixels, which is sub-optimal
 for stars brighter than $T\approx9$
-\citep[see][Figure~14]{Sullivan_et_al_2015}.  Since the brightest
+\citep[][Figure~14]{Sullivan_et_al_2015}.  Since the brightest
 stars are not the focus of the present work, we leave this issue
 unaddressed for the time being.
 
@@ -1705,13 +1706,13 @@ the peaks with the greatest power
 We calculated the periodograms using \texttt{astrobase}.  Our search
 was cursory~--~a detailed search for transiting exoplanets will be the
 subject of future work.  To make the figure, we used the ``PCA2''
-light curve for each star, for simplicity's sake.  To remove outliers,
+light curve for each star.  To remove outliers,
 we omitted data points within 6 hours of the beginning or end of each
 orbit.  No additional detrending was performed.
 
 The top row of Figure~\ref{fig:quilt} shows two TESS objects of
 interest, and an eccentric eclipsing binary.  TOI~496 is a member of
-M~48 (NGC~2548,
+Messier~48 (NGC~2548,
 \citealt{gaia_collaboration_gaia_2018,cantat-gaudin_gaia_2018}), a
 $\sim$500 Myr old open cluster \citep{Kharchenko_et_al_2013}.  The
 phase variations suggest that it is an eclipsing binary.  TOI~625 is a
@@ -1738,7 +1739,7 @@ rotational variables.  On the left, a spotted rotator in the
 $\sim$400 Myr NGC~2184 \citep{cantat-gaudin_gaia_2018}.  In the
 middle we have V468~Ori, a flaring M dwarf in Messier~42 with a strong
 rotation signal.
-Finally on the right is an M dwarf in ASCC~19, a $\sim$30 Myr M dwarf
+Finally on the right is a $\sim$30 Myr old M dwarf in ASCC~19
 with complex rotational modulation.
 The star was also flagged by \citet{zari_3d_2018} as a pre-MS star.
 Similar modulations were described by \citet{zhan_complex_2019} for
@@ -1747,8 +1748,8 @@ to be caused by star spot occulations behind a protostellar disk.
 
 Overall, our periodogram search showed that 7\% of the light curves
 have Lomb-Scargle peak false alarm probabilities below $10^{-30}$.
-Even more stars are variable at lower levels of signifiance.  The
-implication is that thousands of variable stars with known ages should
+Even more stars are variable at lower levels of signifiance.  This implies
+that thousands of variable stars with known ages should
 be identifiable from the data at their current level of preparation.
 
 
@@ -1759,10 +1760,11 @@ be identifiable from the data at their current level of preparation.
 \label{sec:conclusion}
 
 In this study, we collected an all-sky sample of about one million
-stars brighter than $G_{\rm Rp}$ of 16.  82\% of this target star
-sample are candidate ``cluster'' members, where we use the generic
+stars brighter than $16^{\rm th}$ magnitude in $G_{\rm Rp}$.
+82\% of these target stars
+are candidate ``cluster'' members, where we use the generic
 ``cluster'' to refer to open clusters, stellar associations, and
-moving groups.  The remaining stars had photometric or astrometric
+moving groups.  The remaining stars have photometric or astrometric
 indications of their youth, and either reside on the pre-main-sequence
 or upper main sequence.
 
@@ -1770,9 +1772,9 @@ We then reduced TESS full frame images taken over the course of about
 two months (Sectors 6 and 7; the first fields close to the galactic
 plane).  We performed difference imaging in order to deal with the
 complex background.  Using forced aperture photometry, we made light
-curves for all stars brighter than $G_{\rm Rp}$ of 13, and went three
+curves for all Gaia-DR2 sources brighter than $G_{\rm Rp}$ of 13, and went three
 magnitudes deeper for our target star sample.  This yielded \numberlcs
-light curves of candidate young stars across \numberclusters distinct
+target star light curves across \numberclusters distinct
 clusters.
 
 The light curves seem to be limited in precision by photon-counting
@@ -1787,8 +1789,8 @@ Brief exploration of the data revealed pulsating stars, eclipsing
 binaries, and planet candidates (Figure~\ref{fig:quilt}).  A detailed
 planet search is the subject of ongoing work.
 
-There are a number of other TESS data
-processing efforts that we expect will complement our results.
+We expect that our results will complement a number of other
+TESS data processing efforts.
 These include the NASA Ames SPOC pipeline \citep{jenkins_spoc_2010}, the MIT
 Quick-Look-Pipeline \citep{huang_tess_2018}, \texttt{eleanor}
 \citep{feinstein_eleanor_2019}, the \citet{oelkers_precision_2018}
@@ -1798,30 +1800,28 @@ team's effort (D{.} Nardiello, submitted; {\it e.g.},
 \citealt{libralato_psf-based_2016}). 
 
 Most of these pipelines are geared towards tasks more general than our
-own, and use aperture photometry.  The SPOC pipeline produces the
+own, and most use aperture photometry.  The SPOC pipeline produces the
 calibrated FFIs from raw images, processes 2 minute data, identifies
 exoplanets, and produces the TESS data products of record.  The
 MIT-QLP processes a subset of stars on the FFIs, identifies
 exoplanets, and the affiliated TESS Science Office alerts object of
 interest for ground and space-based followup.  The \texttt{eleanor}
 pipeline is a user-friendly tool for extracting light curves from the
-FFIs.  The team developing it is also performing transit searches
-across the full set of FFIs.  The TASOC pipeline is primarily aimed at
-asteroseismology and variable star classification.  The
+FFIs.  The team developing \texttt{eleanor} is also reporting planet candidates
+to ExoFOP-TESS\footnote{\url{exofop.ipac.caltech.edu/tess/index.php}}.  The TASOC pipeline is primarily aimed at
+asteroseismology and also includes classification modules for many types of variable stars. The
 \citeauthor{oelkers_precision_2018} pipeline was aimed at broad,
 all-sky variability searches, and used difference imaging methods
 similar to our own.  Finally, the Padova team's effort is also
 directed towards star clusters, but uses PSF subtraction to mitigate
-crowding.  This ecosystem provides many opportunities for
-methodological improvements as light curve products continue to be
-made public.
+crowding.  As light curves from these groups continue to be released, this ecosystem should provide many opportunities to compare and improve data analysis techniques. 
 
-There are of course caveats and possible areas for improvement in our
+There are of course caveats and areas for improvement in our
 own work.  One methodological point concerns the hyperparameter tuning
 required by our difference imaging method
 (\S~\ref{subsec:tuneconvkernel}).  Within our fine-tuning experiments
 over different kernel box-sizes and polynomial weightings, we found
-that low-significance transits  could be ``lost'' to the noise for
+that low-significance transits  can be ``lost'' for
 different choices of parameters that ideally should not affect the
 photometric pipeline's results.  In the longer term, developing an
 image-subtraction method that marginalizes over uncertainties of how
@@ -1834,15 +1834,15 @@ understood to be {\it candidate} cluster stars, and ruling out the
 possibility of photometric blending is important in subsequent vetting
 efforts of any variable object.  Careful understanding of the cluster
 itself is also important, as some clusters are less certain to exist
-than others \citep[{\it e.g.}, the infrared clusters identified
+than others \citep[{\it e.g.}, the infrared clusters described
 by][]{froebrich_FSR_2007}.
 
 We remind the reader that our goal in creating our target catalog was
 completeness, rather than reliability.  To create clean sub-samples,
 we advise using the \texttt{CDEXTCAT} header keyword available in the
-FITS files, which can be used to merge against the original source
-catalog to obtain the membership probabilities claimed by the original
-catalog.  Alternatively, simply restricting the targets of interest to
+FITS files, which can be merged against the original source
+catalog to obtain the membership probabilities reported by the
+original authors.  Alternatively, simply restricting the targets of interest to
 those with provenance from {\it e.g.}, the Gaia-DR2 data is another
 way to produce a clean sample of cluster targets.
 
@@ -1858,7 +1858,7 @@ coeval.
 
 Another area in which we may be incomplete is in sub-clusters of
 large star-forming complexes. One important example is the Orion
-Nebula (M~42; NGC~1976).  While it was observed by TESS in Sector~6,
+Nebula (Messier~42; NGC~1976).  While it was observed by TESS in Sector~6,
 searching our light curves for stars within 40 arcminutes and 100
 parsecs of the Orion Nebula's center yielded only 180 light curves,
 with 85 labelled members.  The Orion Nebula has far more known members
@@ -1872,9 +1872,9 @@ regions from their search, since the underlying assumption of their
 clustering method (uniformity in the field star distribution) breaks
 down in highly clustered star-forming regions.
 
-These concerns will likely drive us to expand beyond the current
-sample of target stars in future work.  For the time being, the
-light curves exist and are amenable for astrophysical studies.  We
+In future work, these concerns will likely drive us to expand beyond the current
+sample of target stars.  For the time being, the
+light curves are of sufficient quality to begin astrophysical studies.  We
 invite any who wish to explore the time evolution of stellar or
 exoplanetary systems to interact with the data at \stscilink.
 
@@ -1926,6 +1926,11 @@ The Digitized Sky Surveys were produced at the Space Telescope Science
 Institute under U.S. Government grant NAG W-2166. The images of these
 surveys are based on photographic data obtained using the Oschin
 Schmidt Telescope on Palomar Mountain and the UK Schmidt Telescope.
+%
+This research has made use of the Exoplanet Follow-up Observation
+Program website, which is operated by the California Institute of
+Technology, under contract with the National Aeronautics and Space
+Administration under the Exoplanet Exploration Program.
 %
 \newline
 %
