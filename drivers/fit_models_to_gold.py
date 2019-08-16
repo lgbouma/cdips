@@ -34,12 +34,20 @@ from cdips.utils import today_YYYYMMDD
 import make_vetting_multipg_pdf as mvp
 import imageutils as iu
 
+# TODO: 3217331693306617344 fails to get rstar
+
 LONG_RUN_IDENTIFIERS = [
     3217331693306617344, # s6 begin
+    3126526081688850304,
     3107333698210242176,
     3340674976430098688,
     4827527233363019776,
+    5584409013334503936,
     3050033749239975552, # s7 begin
+    2919143383943171200,
+    5541111035713815552,
+    5599752663752776192,
+    5516140233292943872,
     3064530810048196352,
     3114869682184835584
 ]
@@ -164,6 +172,10 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
                                lcname.replace('.fits',''),
                                lcname.replace('.fits','_fitparameters.csv'))
 
+        #
+        # if you haven't already made the output parameter file (which requires
+        # convergence) then start fitting.
+        #
         if not os.path.exists(outpath):
 
             _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
@@ -172,6 +184,24 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
                                              sector, nworkers,
                                              cdipsvnum=cdipsvnum,
                                              overwrite=overwrite)
+
+        else:
+
+            status_file = os.path.join(
+                os.path.dirname(outpath), 'run_status.stat'
+            )
+            status = load_status(status_file)
+
+            fittype = 'fivetransitparam_fit'
+            if str2bool(status[fittype]['is_converged']):
+                print('{} converged and already wrote wrote ctoi csv.'.
+                      format(sourceid))
+
+            else:
+                raise ValueError(
+                    'got parameter file existing, but not converged.'
+                    'should never happen. for DR2 {}'.format(sourceid)
+                )
 
 
 def _get_data(sector, cdips_cat_vnum=0.3):
