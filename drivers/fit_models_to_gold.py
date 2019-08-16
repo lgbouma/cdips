@@ -1,6 +1,6 @@
 #
 # usage:
-# python -u fit_models_to_gold.py &> 20190815_fit_s6.log &
+# python -u fit_models_to_gold.py &> logs/20190815_fit_s6.log &
 #
 # docstring:
 # see main below.
@@ -254,6 +254,8 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
                                      sourceid, supprow, suppfulldf, pfdf,
                                      pfrow, toidf, ctoidf, sector, nworkers,
                                      cdipsvnum=1, overwrite=1):
+    try_mcmc = True
+    identifier = sourceid
     #
     # read and re-detrend lc if needed. (recall: these planet candidates were
     # found using a penalized spline detrending in some cases).
@@ -292,9 +294,14 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
     fit_savdir = os.path.dirname(outpath)
     chain_savdir = os.path.dirname(outpath).replace('fitresults','samples')
 
-    teff, teff_err, rstar, rstar_err, logg, logg_err = (
-        get_teff_rstar_logg(hdr)
-    )
+    try:
+        teff, teff_err, rstar, rstar_err, logg, logg_err = (
+            get_teff_rstar_logg(hdr)
+        )
+    except NotImplementedError as e:
+        print(e)
+        print('did not get rstar for {}. MUST MANUALLY FIX.')
+        try_mcmc = False
 
     #
     # initialize status file
@@ -320,9 +327,6 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
     # if not converged:
     #   print a warning.
     #
-    identifier = sourceid
-
-    try_mcmc = True
     if identifier in KNOWN_CUSTOM:
         print('WRN! identifier {} requires manual fixing.'.
               format(identifier))
@@ -351,7 +355,7 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
     if (
         not str2bool(status['is_converged'])
         and int(status['n_steps_run']) != 25000
-        and identifier in LONG_RUN_IDENTIFIERS
+        and int(identifier) in LONG_RUN_IDENTIFIERS
         and try_mcmc
     ):
 
@@ -443,6 +447,7 @@ def get_teff_rstar_logg(hdr):
     # Rstar.  If logg fails, but you have Gaia DR2 Rstar, then go from Rstar to
     # Mstar using Mamajek relation, and combine to estimate a ratty logg.
     #
+    identifier = hdr['TICID']
     ra, dec = hdr['RA_OBJ'], hdr['DEC_OBJ']
     targetcoord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
     radius = 10.0*u.arcsec
@@ -499,13 +504,16 @@ def get_teff_rstar_logg(hdr):
         if type(rstar)==np.ma.core.MaskedConstant:
             print('WRN! TIC rstar nan. why? trying gaia value')
             rstar = hdr['radius_val']
-            rstar_err = 0.3*rstar
             # get mass given rstar, so that you can get logg
             mamadf = pd.read_csv(
                 '../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
                 delim_whitespace=True
             )
+
             if rstar != 'NaN':
+
+                rstar_err = 0.3*rstar
+
                 mamarstar, mamamstar = (
                     nparr(mamadf['Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
                 )
@@ -525,8 +533,13 @@ def get_teff_rstar_logg(hdr):
                 except RuntimeError:
                     mass_val = mass_guess
                 mstar = mass_val
+
             else:
-                raise NotImplementedError('need rstar somehow')
+
+                raise NotImplementedError(
+                    'need rstar somehow. didnt get for {}'.format(identifier)
+                )
+
             _Mstar = mstar*u.Msun
             _Rstar = rstar*u.Rsun
 
