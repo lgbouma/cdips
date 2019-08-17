@@ -635,11 +635,11 @@ taken by the Hungarian Automated Telescope (HAT) network
 \citep{bakos_hat_review_2018}.  The work of \citet{Pal_2009}, embodied
 in the \texttt{fitsh} software package, was an especially crucial
 component.  The specific high-level framework we used for this
-reduction was adapted from a pipeline called \texttt{pipe-trex}, under
-development for the HATPI project (\url{hatpi.org}).  The
-code is available
-online\footnote{\url{github.com/waqasbhatti/pipe-trex}, commit
-\texttt{9d7020e}.}.
+reduction was adapted from a pipeline under development for the HATPI
+project (\url{hatpi.org}).  The code is available
+online\footnote{\url{github.com/waqasbhatti/cdips-pipeline}, commit
+\texttt{7175c48}.}, and the pipeline reference is
+\citet{bhatti_cdips-pipeline_2019}.
 
 We begin our processing with the calibrated full frame images produced
 by the Science Processing Operations Center at NASA Ames
@@ -1703,12 +1703,13 @@ The sources\footnote{
 squares periodograms for a subset of the light curves, and inspecting
 the peaks with the greatest power
 \citep{lomb_1976,scargle_studies_1982,kovacs_box-fitting_2002,vanderplas_periodograms_2015,hippke_TLS_2019}.
-We calculated the periodograms using \texttt{astrobase}.  Our search
-was cursory~--~a detailed search for transiting exoplanets will be the
-subject of future work.  To make the figure, we used the ``PCA2''
-light curve for each star.  To remove outliers,
-we omitted data points within 6 hours of the beginning or end of each
-orbit.  No additional detrending was performed.
+We calculated the periodograms using \texttt{astrobase}
+\citep{bhatti_astrobase_2018}.  Our search was cursory~--~a detailed
+search for transiting exoplanets will be the subject of future work.
+To make the figure, we used the ``PCA2'' light curve for each star.
+To remove outliers, we omitted data points within 6 hours of the
+beginning or end of each orbit.  No additional detrending was
+performed.
 
 The top row of Figure~\ref{fig:quilt} shows two TESS objects of
 interest, and an eccentric eclipsing binary.  TOI~496 is a member of
@@ -1951,6 +1952,7 @@ Administration under the Exoplanet Exploration Program.
   %\texttt{astroquery.mast} CITE,
   %\texttt{astroquery.nasaexopanetarchive} CITE,
   \texttt{BATMAN} \citep{kreidberg_batman_2015},
+  \texttt{cdips-pipeline} \citep{bhatti_cdips-pipeline_2019}
   \texttt{corner} \citep{corner_2016},
   \texttt{emcee} \citep{foreman-mackey_emcee_2013},
   \texttt{fitsh} \citep{Pal_2012},
