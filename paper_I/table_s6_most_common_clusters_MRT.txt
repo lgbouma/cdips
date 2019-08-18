@@ -1,0 +1,332 @@
+Title: Counts of light curves per cluster in Sector 6, sorted in
+descending order.
+Authors: Luke Bouma et al.
+Table: 2
+================================================================================
+Byte-by-byte Description of file: datafile.txt
+--------------------------------------------------------------------------------
+   Bytes Format Units Label    Explanations
+--------------------------------------------------------------------------------
+   1- 16 A16    ---     Name     Cluster identifier
+  18- 21 I4     ---     numLC    Number of light curves in cluster
+  23- 34 A12    ---     Comment  Description in the format "a,b,c,d" (see notes).
+--------------------------------------------------------------------------------
+Note (1):   
+Names are matched against Kharchenko et al., (2013) as described in Appendix B.
+The Comment column matches Kharchenko et al. as well, and is in the format
+``\texttt{a},\texttt{b},\texttt{c},\texttt{d}''.  Meanings of symbols are as
+follows.
+\texttt{a}:
+	"=" = cluster parameters are determined (by Kharchenko et al 2013).
+	":" = possibly this is a cluster, but parameters are not determined 
+	"-" = this is not a cluster 
+	"&" = duplicated/coincides with other cluster
+\texttt{b}:
+  <intentional blank> = open cluster
+	a =	association
+	g =	globular cluster
+	m =	moving group
+	n =	nebulosity/presence of nebulosity
+	r =	remnant cluster
+	s =	asterism
+\texttt{c}:
+	o = object,
+  c = candidate cluster;
+\texttt{d}:
+	ass =	stellar association
+	ast =	Dias: possible asterism/dust hole/star cloud
+	dub =	Dias: dubious, objects considered doubtful by the DSS images inspection
+	emb =	embedded open cluster/cluster associated with nebulosity
+	glo =	globular cluster/possible globular cluster
+	irc =	infrared cluster
+	irg =	infrared stellar group
+	mog =	Dias: possible moving group
+	non =	Dias: "non-existent NGC"/ objects not found in DSS images inspection
+	rem =	Possible cluster remnant
+	var =	clusters with variable extinction
+--------------------------------------------------------------------------------
+Platais_5        7074 =,m,o,       
+Platais_6        7016 =,m,o,       
+Mamajek_3        3498 =,m,o,       
+Collinder_70     1576 =,a,o,       
+Trumpler_5       1492 =,,,var      
+Collinder_69     1192 =,,,         
+Collinder_110    1110 =,,,         
+ASCC_21          1094 =,a,c,       
+Collinder_121     986 =,a,o,       
+ASCC_19           925 =,,,         
+NGC_2287          869 =,,,         
+NGC_2232          760 =,,,         
+ASCC_20           756 =,,,         
+NGC_2141          730 =,,,         
+NGC_2112          673 =,,,         
+ASCC_16           661 =,,,ass      
+NGC_2194          656 =,,,         
+NGC_2301          586 =,,,         
+Collinder_65      575 =,,,         
+ASCC_28           533 =,,,         
+Collinder_106     524 =,,,         
+ASCC_33           521 =,n,o,       
+ASCC_18           464 =,,,         
+Basel_8           456 =,,,         
+Collinder_107     443 =,,,         
+NGC_2236          439 =,,,         
+NGC_2244          415 =,n,o,       
+Collinder_115     345 =,,,         
+FSR_0951          343 =,,,         
+ASCC_32           333 =,,,         
+ASCC_29           329 =,,,         
+NGC_2215          324 =,,,         
+Berkeley_32       324 =,,,         
+NGC_2286          316 =,,,         
+NGC_2309          292 =,,,         
+NGC_2251          270 =,,,         
+Gulliver_6        266 no K13 match 
+NGC_2264          264 =,n,o,       
+Ruprecht_1        261 =,,,         
+Berkeley_24       258 =,,,         
+NGC_2262          254 =,,,         
+Czernik_25        246 =,,,         
+Alessi_3          243 =,,,         
+ASCC_30           232 =,,,         
+FSR_0974          229 =,,,irc      
+Collinder_95      228 =,n,o,       
+Dolidze_23        226 =,,,dub      
+NGC_2254          214 =,,,         
+FSR_0942          212 =,,,irc      
+Teutsch_13        208 =,,,         
+ASCC_22           203 =,,,         
+Collinder_97      200 =,,,         
+NGC_2243          199 =,,,         
+NGC_2270          197 =,,,         
+B_35              195 =,,,irc      
+Dolidze_25        188 =,,,         
+ASCC_24           185 =,m,o,       
+FSR_0941          183 =,,,irc      
+ASCC_27           181 =,,,         
+NGC_2269          177 =,,,         
+FSR_0953          176 =,,,irc      
+NGC_2306          171 =,s,c,       
+NGC_2259          170 =,,,         
+NGC_2302          170 =,,,         
+Berkeley_31       167 =,,,         
+Dolidze_24        162 =,r,c,       
+Teutsch_11        162 =,,,         
+NGC_1901          157 =,,,         
+Collinder_74      153 =,,,         
+Ruprecht_4        152 =,,,         
+Tombaugh_1        149 =,,,         
+ASCC_26           144 =,,,         
+FSR_0948          144 =,,,irc      
+vdBergh_83        142 =,,,         
+FSR_1063          140 =,,,irc      
+SAI_72            131 =,,,         
+Teutsch_12        131 -,s,o,       
+NGC_2184          125 =,,,         
+Berkeley_33       125 =,,,         
+Dias_2            124 =,,,         
+FSR_1051          122 =,,,irc      
+FSR_0937          122 =,,,irc      
+Czernik_26        121 =,,,         
+Collinder_91      116 =,,,         
+vdBergh_1         116 =,,,         
+FSR_1082          114 =,,,         
+Berkeley_28       109 =,,,         
+FSR_0975          103 =,r,o,irc    
+NGC_2265          101 =,,,non      
+NGC_2234           99 =,,,         
+FSR_0921           99 =,,,         
+Berkeley_30        96 =,,,         
+FSR_1085           95 =,,,irc      
+vdBergh_85         92 =,n,o,       
+FSR_0932           92 =,,,irc      
+FSR_0882           92 =,,,         
+FSR_0988           91 =,,,         
+NGC_2225           91 =,,,         
+NGC_2039           90 =,,,ast      
+FSR_1031           89 =,,,irc      
+L_1641S            89 =,n,o,emb    
+FSR_1077           86 =,,,irc      
+NGC_1976           85 =,n,o,       
+FSR_1053           84 =,,,irc      
+Berkeley_27        82 =,,,         
+FSR_1080           81 =,,,irc      
+FSR_1092           81 =,,,         
+FSR_1056           81 =,,,         
+FSR_1065           81 =,,,irc      
+Alessi_53          81 =,,,         
+Patchick_90        80 =,,,         
+Dolidze_22         78 =,,,dub      
+FSR_1106           77 =,,,         
+FSR_0979           77 =,,,irc      
+FSR_1125           76 =,,,         
+Majaess 70         74 no K13 match 
+Collinder_104      73 =,,,         
+FSR_1029           72 =,,,irc      
+FSR_1210           72 =,,,         
+NGC_2318           72 =,,,non      
+Alessi_59          71 =,,,         
+Collinder_111      71 =,,,non      
+FSR_0962           70 =,,,         
+FSR_0925           69 =,,,         
+FSR_1099           67 =,,,         
+FSR_1172           67 =,,,         
+vdBergh_80         66 =,n,o,       
+Dolidze_49         65 =,,,         
+FSR_1057           65 =,,,         
+NGC_2202           65 =,r,c,       
+FSR_0940           65 =,r,o,irc    
+FSR_0936           65 =,,,         
+Berkeley_25        65 =,,,         
+FSR_1126           65 =,,,         
+FSR_1066           65 =,,,         
+FSR_0957           64 =,,,irc      
+FSR_1285           63 =,,,         
+FSR_1072           61 =,,,         
+NGC_2250           60 =,,,dub      
+FSR_0999           60 =,,,         
+FSR_1440           60 =,,,         
+NGC_2312           55 =,,,non      
+Basel_7            55 =,,,         
+FSR_0977           55 =,,,irc      
+Ruprecht_149       55 =,,,dub      
+NGC_2260           54 -,s,o,non    
+NGC_2224           54 -,,,non      
+FSR_0933           54 =,,,         
+FSR_1187           54 =,r,c,       
+Collinder_96       52 =,,,         
+FSR_1025           52 =,,,irc      
+Gulliver_32        52 no K13 match 
+NGC_2169           52 =,,,         
+FSR_1167           52 =,,,         
+FSR_1151           52 =,,,         
+FSR_0884           51 =,,,         
+BDSB_91            50 =,,,irc      
+NGC_2219           49 =,,,non      
+Dolidze_19         48 =,,,         
+BDSB_82            47 =,,,irc      
+Skiff_J0614+12.9   47 =,,,         
+Dolidze_21         46 =,r,c,dub    
+FSR_0930           45 =,,,         
+FSR_1279           44 =,,,         
+FSR_1191           44 =,,,         
+ESO_426-26         44 =,,,rem      
+NGC_1641           44 =,r,o,rem    
+Berkeley_73        43 =,,,         
+Majaess 69         42 no K13 match 
+FSR_1078           41 =,,,         
+FSR_1107           41 =,,,         
+FSR_1131           40 =,,,         
+NGC_2132           39 =,r,c,non    
+Alessi_15          38 =,,,         
+ESO_489-01         38 =,r,c,rem    
+FSR_1205           38 =,,,         
+FSR_1117           38 =,r,c,       
+NGC_2348           38 =,r,o,rem    
+FSR_1027           37 =,,,         
+FSR_1033           37 =,,,         
+Juchert_18         37 =,,,         
+Berkeley_75        37 =,,,         
+NGC_2311           36 =,,,         
+Collinder_92       36 =,,,non      
+FSR_0913           36 =,,,         
+Ruprecht_3         36 =,r,o,rem    
+Mon_OB1-D          35 =,n,o,irc    
+Berkeley_22        35 =,,,         
+NGC_1981           34 =,n,o,       
+NGC_2143           33 =,,,         
+Dol-Dzim_2         33 =,,,         
+FSR_1235           33 =,r,o,       
+FSR_1470           33 =,,,         
+FSR_0967           32 =,,,         
+FSR_0928           32 =,r,c,       
+FSR_1197           32 =,,,         
+Berkeley_26        31 =,,,         
+Morgan_8           30 =,,,irc      
+FSR_0952           30 =,,,irc      
+FSR_0960           29 =,,,         
+Ruprecht_6         29 =,r,o,dub    
+FSR_1514           29 =,r,o,       
+NGC_1977           28 =,n,o,       
+Bochum_2           28 =,,,         
+NGC_2220           28 =,r,o,non    
+FSR_0886           27 =,,,         
+FSR_1136           27 =,,,         
+NGC_1557           27 =,r,o,rem    
+BDSB_81            26 =,,,irc      
+FSR_0955           26 =,,,         
+BDSB_88            25 =,,,irc      
+Gulliver_45        25 no K13 match 
+FSR_0991           24 =,r,o,       
+Alessi_16          24 =,,,         
+FSR_0998           24 =,,,         
+FSR_0923           24 =,,,irc      
+SAI_69             24 =,,,         
+NGC_1963           24 =,,,ast      
+FSR_1123           23 =,r,o,       
+FSR_1303           23 =,,,         
+NGC_2189           22 =,,,non      
+Alessi_14          22 =,,,ast      
+ESO_425-15         22 =,r,o,rem    
+Ruprecht_2         22 =,,,non      
+Gulliver_13        21 no K13 match 
+FSR_1116           20 =,r,o,       
+NGC_1980           19 =,n,o,       
+Berkeley_20        19 =,,,         
+IC_446             19 =,n,o,irc    
+B_30               19 =,n,o,irc    
+BDSB_93            19 =,,,         
+NGC_2061           19 -,s,o,non    
+NGC_2183           18 =,n,o,emb    
+FSR_0907           17 =,r,c,       
+DC_4               17 =,,,         
+FSR_1132           17 =,,,         
+THOR               16 no K13 match 
+FSR_1032           16 =,,,         
+IRAS_06046-0603    15 =,,,irc      
+FSR_1317           15 =,r,c,       
+FSR_1050           13 =,r,o,       
+Collinder_135      13 =,,,         
+ESO_425-06         12 =,,,         
+ESO_252-14         12 =,r,o,dub    
+OCT                11 no K13 match 
+NGC_2071           10 =,n,o,emb    
+FSR_1195           10 =,,,         
+RMC-4b              9 =,,,irc      
+FSR_0924            9 =,,,irc      
+ESO_486-54          8 =,r,o,       
+NGC_1785            8 :,,,non      
+Hyades              6 no K13 match 
+FSR_1017            6 =,r,o,       
+NGC_2068            6 =,n,o,emb    
+COL                 6 no K13 match 
+FSR_1159            6 =,,,         
+KMS_35              6 =,n,o,irc    
+NGC_2180            5 =,,,         
+Berkeley_29         5 =,,,         
+Dolidze_17          5 =,,,ast      
+FSR_0939            5 =,,,irc      
+ABDMG               5 no K13 match 
+Sigma_Ori           4 =,m,o,       
+FSR_0931            4 =,,,         
+FSR_1115            4 =,,,         
+Ivanov_2            3 &,,,         
+IRAS_05553+1631     3 =,,,irc      
+NGC_2204            3 =,,,         
+DC_1                3 :,,,         
+FSR_1120            3 =,,,         
+THA                 3 no K13 match 
+Oh_315              2 no K13 match 
+NGC_2017            2 -,s,o,rem    
+FSR_1110            2 =,,,         
+CAR                 2 no K13 match 
+Oh_56               2 no K13 match 
+NGC_2516            2 =,,,         
+Oh_252              2 no K13 match 
+Oh_58               2 no K13 match 
+BPMG                1 no K13 match 
+Oh_192              1 no K13 match 
+Oh_71               1 no K13 match 
+Oh_31               1 no K13 match 
+Oh_143              1 no K13 match 
+Oh_174              1 no K13 match 
