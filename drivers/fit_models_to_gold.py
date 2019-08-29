@@ -5,7 +5,7 @@
 # docstring:
 # see main below.
 #
-import os, pickle, h5py, json, shutil, requests, configparser
+import os, pickle, h5py, json, shutil, requests, configparser, socket
 from glob import glob
 
 import matplotlib as mpl
@@ -32,7 +32,7 @@ from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils import today_YYYYMMDD
 
 import make_vetting_multipg_pdf as mvp
-import imageutils as iu
+from astrobase import imageutils as iu
 
 # TODO: 3217331693306617344 fails to get rstar
 
@@ -53,12 +53,20 @@ LONG_RUN_IDENTIFIERS = [
 ]
 
 KNOWN_CUSTOM = [
-    5290761583912487424, # s7, TLS gets wrong ephemeris
+    5290761583912487424, # s7, TLS gets 2x period, and extra detrending needed.
     5290781443841554432, # s7, systematic trends in TFASR LC, 2 transit
     5290968085934209152, # s7, systematic trends in TFASR LC, 2 transit
 ]
 
-CLASSIFXNDIR = "/home/lbouma/proj/cdips/results/vetting_classifications"
+host = socket.gethostname()
+if 'phtess' in host:
+    CLASSIFXNDIR = "/home/lbouma/proj/cdips/results/vetting_classifications"
+    resultsbase = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
+    database = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/data/'
+elif 'brik' in host:
+    CLASSIFXNDIR = "/home/luke/Dropbox/proj/cdips/results/vetting_classifications"
+    resultsbase = '/home/luke/Dropbox/proj/cdips/results/'
+    database = '/home/luke/Dropbox/proj/cdips/data/'
 
 def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
     """
@@ -118,6 +126,9 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
         sector, cdips_cat_vnum=cdips_cat_vnum)
 
     tfa_sr_paths = _get_lcpaths(df, tfasrdir)
+
+    import IPython; IPython.embed() #FIXME
+    assert 0
 
     for tfa_sr_path in tfa_sr_paths:
 
@@ -212,23 +223,21 @@ def _get_data(sector, cdips_cat_vnum=0.3):
 
     cdips_df = ccl.get_cdips_catalog(ver=cdips_cat_vnum)
 
-    pfpath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-              'cdips/results/cdips_lc_periodfinding/'
+    pfpath = os.path.join(resultsbase,
+              'cdips_lc_periodfinding/'
               'sector-{}/'.format(sector)+
               'initial_period_finding_results_supplemented.csv')
     pfdf = pd.read_csv(pfpath)
 
-    supppath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
+    supppath = os.path.join(resultsbase,
                 'cdips_lc_stats/sector-{}/'.format(sector)+
                 'supplemented_cdips_lc_statistics.txt')
     supplementstatsdf = pd.read_csv(supppath, sep=';')
 
-    toipath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-              'cdips/data/toi-plus-2019-06-25.csv')
+    toipath = os.path.join(database, 'toi-plus-2019-08-29.csv')
     toidf = pd.read_csv(toipath, sep=',')
 
-    ctoipath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-                'cdips/data/ctoi-exofop-2019-06-25.txt')
+    ctoipath = os.path.join(database, 'ctoi-exofop-2019-08-29.txt')
     ctoidf = pd.read_csv(ctoipath, sep='|')
 
     return df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf
@@ -236,10 +245,15 @@ def _get_data(sector, cdips_cat_vnum=0.3):
 
 def _define_and_make_directories(sector):
 
-    resultsdir = (
-        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
-        'fit_gold/'
-        'sector-{}'.format(sector)
+    host = socket.gethostname()
+
+    if 'phtess' in host:
+        lcbase = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
+    elif 'brik' in host:
+        lcbase = '/home/luke/Dropbox/proj/cdips/data/'
+
+    resultsdir = os.path.join(
+        resultsbase, 'fit_gold/sector-{}'.format(sector)
     )
     dirs = [resultsdir,
             os.path.join(resultsdir,'fitresults'),
@@ -249,10 +263,10 @@ def _define_and_make_directories(sector):
         if not os.path.exists(_d):
             os.mkdir(_d)
 
-    tfasrdir = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-                'CDIPS_LCS/sector-{}_TFA_SR'.format(sector))
-    lcbasedir =  ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-                  'CDIPS_LCS/sector-{}/'.format(sector))
+    tfasrdir = os.path.join(lcbase,
+                            'CDIPS_LCS/sector-{}_TFA_SR'.format(sector))
+    lcbasedir = os.path.join(lcbase,
+                             'CDIPS_LCS/sector-{}/'.format(sector))
 
     return lcbasedir, tfasrdir, resultsdir
 

@@ -9,7 +9,7 @@ from glob import glob
 
 from numpy import array as nparr, all as npall, isfinite as npisfinite
 
-import imageutils as iu
+from astrobase import imageutils as iu
 
 from sklearn.decomposition import PCA, FactorAnalysis
 from sklearn.linear_model import LinearRegression, BayesianRidge
