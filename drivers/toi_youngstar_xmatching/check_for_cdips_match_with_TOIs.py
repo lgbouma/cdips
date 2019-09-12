@@ -17,6 +17,7 @@ from astropy.coordinates import SkyCoord
 from astroquery.vizier import Vizier
 
 def main():
+
     df = ccl.get_cdips_pub_catalog(ver=0.3)
 
     ra = nparr(df['ra'])
@@ -25,9 +26,8 @@ def main():
     cdips_coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree),
                            frame='icrs')
 
-    toipath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-              'cdips/data/toi-plus-2019-06-25.csv')
-    toidf = pd.read_csv(toipath, sep=',')
+    toidate = '2019-08-29'
+    toidf = ccl.get_toi_catalog(ver=toidate)
 
     toi_ra, toi_dec = nparr(toidf['RA']), nparr(toidf['Dec'])
     toi_coord = SkyCoord(ra=toi_ra, dec=toi_dec, unit=(u.degree, u.degree),
@@ -40,9 +40,9 @@ def main():
     #
     scols = ['source_id', 'cluster', 'reference', 'sep_arcsec']
 
-    for this_coord, n in zip(toi_coord, names):
+    match_list = []
 
-        #this_coord = SkyCoord(c, unit=(u.hourangle, u.deg))
+    for this_coord, n in zip(toi_coord, names):
 
         seps = this_coord.separation(cdips_coord).to(u.arcsec)
 
@@ -51,7 +51,7 @@ def main():
         sdf = df[scols].sort_values(by='sep_arcsec')
 
         if (
-            sdf.iloc[0]['sep_arcsec']<10
+            sdf.iloc[0]['sep_arcsec']<1
             and
             sdf.iloc[0]['reference'] != 'Zari_2018_UMS'
         ):
@@ -61,6 +61,15 @@ def main():
             print(sdf.head(n=3).to_string(index=False))
             print('\n')
 
+            match_list.append(sdf.iloc[0])
+
+    match_df = pd.DataFrame(np.array(match_list), columns=scols)
+    outpath = (
+        '../../results/toi_youngstar_xmatching/'
+        '{}_CDIPS_TOI_match.csv'.format(toidate)
+    )
+    match_df.to_csv(outpath, index=False)
+    print('made {}'.format(outpath))
 
 
 if __name__ == "__main__":
