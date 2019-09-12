@@ -179,6 +179,25 @@ def get_cdips_pub_catalog(ver=0.3):
     return df
 
 
+def get_toi_catalog(ver='2019-08-29'):
+
+    dir_d = {
+        'brik':'/home/luke/Dropbox/proj/cdips/data/',
+        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
+    }
+
+    toi_stars_dir = dir_d[socket.gethostname()]
+
+    toi_stars_path = os.path.join(
+        toi_stars_dir, 'toi-plus-{}.csv'.format(ver)
+    )
+
+    df = pd.read_csv(toi_stars_path, sep=',')
+
+    return df
+
 
 def get_cdips_sourceids(ver=0.3):
 
@@ -195,6 +214,7 @@ def get_cdips_sourceids(ver=0.3):
     assert np.max(list(map(lambda x: len(x), cdips_sourceids))) == 19
 
     return cdips_sourceids
+
 
 def plot_cdips_lcs(
     cdipssymlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS',
@@ -214,6 +234,7 @@ def plot_cdips_lcs(
                 for lcpath in lcpaths:
                     savdir = os.path.dirname(lcpath)
                     plot_raw_tfa_bkgd_fits(lcpath, savdir)
+
 
 def main(
     make_symlinks=1,
