@@ -1,0 +1,11 @@
+class,description,references,timescale [Myr]
+high-e migration + tidal damping,planet-planet scattering,Ford & Rasio 1996; Chatterjee+ 2008; Nagasawa & Ida 2011,10-100
+high-e migration + tidal damping,kozai-lidov mechanism,"Fabrycky & Tremaine 2007; Naoz+2011,12,13; Anderson+ 2016; Vick+ 2018.",100-1000
+high-e migration + tidal damping,mutually inclined mean motion resonances,Barnes+2015,100-1000
+high-e migration + tidal damping,secular planet-planet interactions,Petrovich & Tremaine 2016,10-100
+dynamics,misaligned protoplanetary disk due to time-variable accretion,Bate+2010; Fielding+2015,<10
+dynamics,Éor binary companion,Batygin 2012; Spalding+2014,<10
+dynamics,Éor protostellar magnetic torques,Lai+2011; Foucart & Lai 2011,<10
+dynamics,ingestion of young HJs,Matsakos & Konigl 2015,<10
+dynamics,angular momentum transport in stellar interior,Rogers+ 2012; Rogers & Lin 2013,10-100
+dynamics,excitation by outer companion,Anderson & Lai 2018,100-1000
