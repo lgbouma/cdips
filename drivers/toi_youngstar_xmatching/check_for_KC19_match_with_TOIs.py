@@ -51,6 +51,7 @@ def main():
     scols = ['source_id', 'group_id', 'name', 'age', 'sep_arcsec']
 
     match_list = []
+    name_list = []
     for this_coord, n in zip(toi_coord, names):
 
         seps = this_coord.separation(catalog_coord).to(u.arcsec)
@@ -69,8 +70,10 @@ def main():
             print('\n')
 
             match_list.append(sdf.iloc[0])
+            name_list.append(n)
 
     match_df = pd.DataFrame(np.array(match_list), columns=scols)
+    match_df['toi'] = name_list
     outpath = (
         '../../results/toi_youngstar_xmatching/'
         '{}_KC19_TOI_match.csv'.format(toidate)
