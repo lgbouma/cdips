@@ -9,7 +9,7 @@ The `/drivers/` are not used. Instead, the process is:
 2. Use `/cdips/catalogbuild/construct_unique_cluster_name_column.py` to do what
    is advertized.
 
-TO PRODUCE CANDIDATES
+TO PRODUCE CANDIDATES FROM CDIPS LCS
 ----------
 
 1. make lightcurves using pipe-trex.
@@ -40,6 +40,12 @@ TO PRODUCE CANDIDATES
 
     * Check `logs/vetting_pdf.log` for name-matching errors. (First pass, they
       will always show up! Grep for "ERR!")
+
+
+TO CHECK STAR CATALOGS AGAINST TOIS
+----------
+Run the scripts in `/toi_youngstar_matching/*.py`.
+
 
 TO PROCESS VETTING CLASSIFICATIONS
 ----------
