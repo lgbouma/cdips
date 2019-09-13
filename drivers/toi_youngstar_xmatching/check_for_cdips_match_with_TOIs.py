@@ -70,7 +70,7 @@ def main():
         '../../results/toi_youngstar_xmatching/'
         '{}_CDIPS_TOI_match.csv'.format(toidate)
     )
-    match_df.to_csv(outpath, index=False)
+    match_df.to_csv(outpath, index=False, sep=';')
     print('made {}'.format(outpath))
 
 
