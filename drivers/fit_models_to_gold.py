@@ -29,7 +29,7 @@ from cdips.lcproc import detrend as dtr
 from cdips.lcproc import mask_orbit_edges as moe
 from cdips.plotting import vetting_pdf as vp
 from cdips.utils import collect_cdips_lightcurves as ccl
-from cdips.utils import today_YYYYMMDD
+from cdips.utils import today_YYYYMMDD, str2bool
 from cdips.utils.pipelineutils import save_status, load_status
 
 import make_vetting_multipg_pdf as mvp
@@ -435,9 +435,6 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
         print('WRN! {} did not converge, after {} steps. MUST MANUALLY FIX.'.
               format(identifier, status['n_steps_run']))
 
-
-def str2bool(v):
-    return v.lower() in ("yes", "true", "t", "1")
 
 def get_teff_rstar_logg(hdr):
     #
