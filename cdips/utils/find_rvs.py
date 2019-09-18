@@ -4,7 +4,7 @@ import numpy as np, pandas as pd
 from numpy import array as nparr
 from cdips.utils import today_YYYYMMDD
 
-import imageutils as iu
+from astrobase import imageutils as iu
 
 from astroquery.vizier import Vizier
 from astroquery.eso import Eso
