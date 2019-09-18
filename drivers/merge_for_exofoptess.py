@@ -149,17 +149,17 @@ def main(is_20190818_exofop_upload=1, cdipssource_vnum=0.3):
         _df = _df.sort_values(by="source_id")
 
         to_exofop_df['notes'] = comments
-        to_exofop_df = to_exofop_df.drop(['source_id'], axis=1)
 
         outpath = os.path.join(
-            exofopdir, "{}_s6_and_s7_TO-UPLOAD.csv".
+            exofopdir, "{}_s6_and_s7_w_sourceid.csv".
             format(today_YYYYMMDD())
         )
         to_exofop_df.to_csv(outpath, index=False, sep='|')
         print('made {}'.format(outpath))
 
+        to_exofop_df = to_exofop_df.drop(['source_id'], axis=1)
         outpath = os.path.join(
-            exofopdir, "params_planets_{}_001.txt".
+            exofopdir, "params_planet_{}_001.txt".
             format(today_YYYYMMDD())
         )
         to_exofop_df.to_csv(outpath, index=False, sep='|', header=False)
