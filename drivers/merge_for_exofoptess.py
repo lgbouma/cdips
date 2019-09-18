@@ -48,6 +48,14 @@ def main(is_20190818_exofop_upload=1, cdipssource_vnum=0.3):
         special "TO_EXOFOP" csv file.
     """
 
+    #FIXME FIXME
+    # 1) need to update your "tag" scheme, s.t. each CTOI in the same upload
+    # gets the same tag. (I guess this makes sense)
+    # 2) need to fix your float truncation length. round to reasonable
+    # numbers!!
+    #FIXME FIXME
+    raise AssertionError('fix above items')
+
     #
     # read in the results from the fits
     #
