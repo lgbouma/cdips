@@ -2,7 +2,8 @@
 % TODO
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\documentclass[12pt,twocolumn,tighten]{aastex62}
+%\documentclass[12pt,twocolumn,tighten]{aastex62}
+\documentclass[12pt,twocolumn,tighten,trackchanges]{aastex62}
 %\pdfoutput=1 %for arXiv submission
 \usepackage{amsmath,amstext,amssymb}
 \usepackage[T1]{fontenc}
@@ -38,7 +39,7 @@
 \newcommand{\numberclusters}{596\ } % 2019/07/01 paper_plot_all_figures.py
 \newcommand{\pctoflcswithage}{77} %  2019/07/02 from hist_logt.png
 
-\newcommand{\stscilink}{\url{archive.stsci.edu/prepds/cdips}}
+\newcommand{\stscilink}{\textsc{\url{archive.stsci.edu/hlsp/cdips}}}
 \newcommand{\stscivetlink}{\url{archive.stsci.edu/prepds/cdips/vetting}}
 
 % END CUSTOM SHORT-CUT COMMANDS
@@ -47,6 +48,7 @@
 %%%%%
 
 %\NewPageAfterKeywords
+\listofchanges
 
 \begin{document}
 
@@ -81,12 +83,13 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 \begin{abstract}
   % Context
   The Transiting Exoplanet Survey Satellite (TESS) is providing
-  precise time-series photometry for most star clusters in the
-  solar neighborhood.
+  precise time-series photometry for most star clusters in the solar
+  neighborhood.
   % Aims
   Using the TESS images, we have begun a Cluster Difference Imaging
-  Photometric Survey (CDIPS), in which we are focusing 
-  both on stars that are candidate cluster members, and on stars that show indications of youth.
+  Photometric Survey (CDIPS), in which we are focusing both on stars
+  that are candidate cluster members, and on stars that show
+  indications of youth.
   %
   Our aims are to discover giant transiting planets with known ages,
   and to provide light curves suitable for studies in stellar
@@ -747,10 +750,14 @@ patterns of scattered light are removed.
 After subtracting the background, we mask out saturated pixels using a
 fixed saturation level of $8\times10^4$ analog-to-digital units (ADU).
 This value was chosen based on the onset of bleeding charge trails in
-the images, and is slightly greater than the saturation level of
+the images, and is \deleted{slightly}\added{a factor of two} greater than the 
+saturation level of
 $2\times10^5$ electrons, or about $4\times10^4\,{\rm ADU}$, reported
 by \citet{vanderspek_2018}.  As a consequence, we do not analyze stars
-brighter than $T\approx 6.5$.  As described by \citet{Pal_2009}, the
+brighter than $T\approx 6.5$\deleted{.}\added{, even though the TESS CCID-80 
+CCDs conserve charge across bloom trails up to at least
+$T\approx 4$ \citet{vanderspek_2018}.}
+As described by \citet{Pal_2009}, the
 pixel masks are metadata attached to the image file, and are only
 applied to the pixel values during the specific image processing steps
 in which they are necessary ({\it e.g.}, convolution). We also extend
@@ -1180,10 +1187,10 @@ data these parameters might include zenith angle, or changing PSF
 shape.  For TESS data, they might include CCD temperature, or the
 angles of the Moon and Earth relative to each camera's boresight.
 They might also include the standard deviation of the spacecraft
-quartnerion time-series \citep{vanderburg_hr858_2019}.  Some example
-``external'' parameters that we include with our light curves are
-shown as functions of time in
-Figure~\ref{fig:external_parameter_timeseries}.
+\deleted{quartnerion}\added{quaternion} time-series
+\citep{vanderburg_hr858_2019}.  Some example ``external'' parameters
+that we include with our light curves are shown as functions of time
+in Figure~\ref{fig:external_parameter_timeseries}.
 
 We explored the possibility of fitting linear models of flux as
 functions of {\it e.g.,} temperature, shape parameters, and centroid
@@ -2185,5 +2192,6 @@ recently discovered clusters, such as the ``RSG'' clusters found by
 \citet{cantat-gaudin_gaia_2018}.  In these cases, we used the names
 given by the original authors.
 
+\listofchanges
 \end{document}
 
