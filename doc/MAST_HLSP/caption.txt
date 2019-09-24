@@ -1,0 +1,4 @@
+CDIPS target star positions (blue) and nominal TESS observing footprint (gray).
+Target stars are either candidate members of clusters, or else have other youth
+indicators.  Most will be observed for one or two lunar months during the TESS
+Prime Mission.
