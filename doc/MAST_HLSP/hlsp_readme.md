@@ -10,6 +10,11 @@ represents between 20 and 25 days of observations of a star brighter than Gaia
 Rp magnitude of 16.  The precision of the detrended light curves is generally
 in line with theoretical expectations.
 
+The project reference is Bouma et al. (2019) (CITE).
+The pipeline is called `cdips-pipeline`; it is
+[available for inspection](https://github.com/waqasbhatti/cdips-pipeline) and
+citation as an independent software reference (Bhatti et al., 2019).
+
 # DR1 CONTENTS
 The first CDIPS data release contains 159,343 light curves of target stars that
 fell on silicon during TESS Sectors 6 and 7.  They cover about one sixth of the
