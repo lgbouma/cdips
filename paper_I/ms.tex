@@ -41,6 +41,7 @@
 
 \newcommand{\stscilink}{\textsc{\url{archive.stsci.edu/hlsp/cdips}}}
 \newcommand{\stscivetlink}{\url{archive.stsci.edu/prepds/cdips/vetting}}
+\newcommand{\datasetlink}{\textsc{\dataset[doi.org/10.17909/t9-ayd0-k727]{https://doi.org/10.17909/t9-ayd0-k727}}}
 
 % END CUSTOM SHORT-CUT COMMANDS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -98,7 +99,7 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   For this work, we made \numberlcs light curves of candidate young
   stars, across \numberclusters distinct clusters.  Each light curve
   represents between 20 and 25 days of observations of a star brighter
-  than $G_{Rp}=16$, with 30-minute sampling.
+  than $G_{\rm Rp}=16$, with 30-minute sampling.
   % Methods
   We describe the image subtraction and time-series analysis
   techniques we used to create the light curves, which have noise
@@ -108,8 +109,9 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
   for studies of stellar rotation evolution, and binary eccentricity
   damping.
   %
-  The light curves, which cover about one sixth of the galactic plane,
-  are available at \stscilink.
+  The light curves\footnote{\stscilink}, which cover about one
+  sixth of the galactic plane, are available as a High Level Science
+  Product at MAST: \datasetlink.
 \end{abstract}
 
 \keywords{
@@ -267,7 +269,7 @@ processing will enable.
 		\vspace{-0.8cm}
 		\gridline{\fig{target_star_hist_logt.pdf}{0.42\textwidth}{}}
 		\vspace{-0.8cm}
-		\gridline{\fig{target_star_reference_pie_chart.pdf}{0.42\textwidth}{}}
+		\gridline{\fig{target_star_reference_pie_chart.png}{0.42\textwidth}{}}
 	\end{center}
 	\vspace{-0.8cm}
 	\caption{
@@ -1473,7 +1475,7 @@ Figure~\ref{fig:lcgalactic} shows the on-sky locations of the light
 curves from Sectors 6 and 7.  Black points are the field stars for
 which we performed photometry in order to construct basis vector sets
 for TFA and PCA.  Blue points are the \numberlcs target stars for
-which light curves are available at \stscilink.  Most of the target
+which light curves are available at \datasetlink.  Most of the target
 stars are close to the galactic plane, and are spatially clustered.
 Gaps between CCD chips are also visible.
 
@@ -1892,8 +1894,8 @@ In future work, these concerns will likely drive us to expand beyond
 the current sample of target stars.  For the time being, the light
 curves are of sufficient quality and quantity to begin astrophysical
 studies.  We invite any who wish to explore the time evolution of
-stellar or exoplanetary systems to interact with the data at
-\stscilink.
+stellar or exoplanetary systems to interact with the
+data\footnote{\stscilink} at \datasetlink.
 
 
 
