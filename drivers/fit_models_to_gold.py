@@ -50,13 +50,15 @@ LONG_RUN_IDENTIFIERS = [
     5599752663752776192,
     5516140233292943872,
     3064530810048196352,
-    3114869682184835584
+    3114869682184835584,
+    5715454237977779968
 ]
 
 KNOWN_CUSTOM = [
     5290761583912487424, # s7, TLS gets 2x period, and extra detrending needed.
     5290781443841554432, # s7, systematic trends in TFASR LC, 2 transit
     5290968085934209152, # s7, systematic trends in TFASR LC, 2 transit
+    5618515825371166464, # s7, wonky cluster ASCC 39 (skip)
 ]
 
 host = socket.gethostname()
@@ -127,9 +129,6 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
         sector, cdips_cat_vnum=cdips_cat_vnum)
 
     tfa_sr_paths = _get_lcpaths(df, tfasrdir)
-
-    import IPython; IPython.embed() #FIXME
-    assert 0
 
     for tfa_sr_path in tfa_sr_paths:
 
@@ -238,7 +237,7 @@ def _get_data(sector, cdips_cat_vnum=0.3):
     toipath = os.path.join(database, 'toi-plus-2019-08-29.csv')
     toidf = pd.read_csv(toipath, sep=',')
 
-    ctoipath = os.path.join(database, 'ctoi-exofop-2019-08-29.txt')
+    ctoipath = os.path.join(database, 'ctoi-exofop-2019-08-29.csv')
     ctoidf = pd.read_csv(ctoipath, sep='|')
 
     return df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf

@@ -1,3 +1,4 @@
+import os
 import configparser
 
 def save_status(status_file, section, state_vars):
