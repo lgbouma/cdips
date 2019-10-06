@@ -17,15 +17,16 @@ from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils.pipelineutils import save_status, load_status
 
 hostname = socket.gethostname()
-if 'phtess1' in hostname:
+if 'phtess1' in hostname or 'phtess2' in hostname:
     fitdir = "/home/lbouma/proj/cdips/results/fit_gold"
+    exofopdir = "/home/lbouma/proj/cdips/data/exoFOP_uploads"
 elif 'brik' in hostname:
     fitdir = "/home/luke/Dropbox/proj/cdips/results/fit_gold"
     exofopdir = "/home/luke/Dropbox/proj/cdips/data/exoFOP_uploads"
 else:
     raise ValueError('where is fit_gold directory on {}?'.format(hostname))
 
-def main(is_20190818_exofop_upload=1, cdipssource_vnum=0.3):
+def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.3):
     """
     Put together a few useful CSV candidate summaries:
 
@@ -43,7 +44,7 @@ def main(is_20190818_exofop_upload=1, cdipssource_vnum=0.3):
     ----------
     Args:
 
-        is_20190818_exofop_upload: if True, reads in the manually-written (from
+        is_dayspecific_exofop_upload: if True, reads in the manually-written (from
         google spreadsheet) comments and source_ids, and writes those to a
         special "TO_EXOFOP" csv file.
     """
@@ -54,7 +55,7 @@ def main(is_20190818_exofop_upload=1, cdipssource_vnum=0.3):
     # 2) need to fix your float truncation length. round to reasonable
     # numbers!!
     #FIXME FIXME
-    raise AssertionError('fix above items')
+    # raise AssertionError('fix above items')
 
     #
     # read in the results from the fits
@@ -92,15 +93,15 @@ def main(is_20190818_exofop_upload=1, cdipssource_vnum=0.3):
 
     status_df['source_id'] = status_gaiaids
 
-    if is_20190818_exofop_upload:
+    if is_dayspecific_exofop_upload:
 
         #
         # These manually commented candidates are the only ones we're
         # uploading.
         #
         manual_comment_df = pd.read_csv(
-            '../data/exoFOP_uploads/20190918_cdips_candidate_upload.csv',
-            sep="|"
+            '../data/exoFOP_uploads/{}_cdips_candidate_upload.csv'.
+            format(today_YYYYMMDD()), sep="|"
         )
         common = status_df.merge(manual_comment_df,
                                  on='source_id',
@@ -109,7 +110,7 @@ def main(is_20190818_exofop_upload=1, cdipssource_vnum=0.3):
 
         #
         # WARN: the MCMC fits should have converged before uploading.
-        # (20190918 has two exceptions, 5618515825371166464, and
+        # (20190918 had two exceptions, 5618515825371166464, and
         # 5715454237977779968, where the fits look OK.)
         #
         if len(sel_status_df[sel_status_df['is_converged']=='False'])>0:

@@ -35,8 +35,6 @@ from cdips.utils.pipelineutils import save_status, load_status
 import make_vetting_multipg_pdf as mvp
 from astrobase import imageutils as iu
 
-# TODO: 3217331693306617344 fails to get rstar
-
 LONG_RUN_IDENTIFIERS = [
     3217331693306617344, # s6 begin
     3126526081688850304,
@@ -51,15 +49,20 @@ LONG_RUN_IDENTIFIERS = [
     5516140233292943872,
     3064530810048196352,
     3114869682184835584,
-    5715454237977779968
+    5715454237977779968,
+    5290781443841554432
 ]
 
-KNOWN_CUSTOM = [
+KNOWN_MCMC_FAILS = [
     5290761583912487424, # s7, TLS gets 2x period, and extra detrending needed.
-    5290781443841554432, # s7, systematic trends in TFASR LC, 2 transit
     5290968085934209152, # s7, systematic trends in TFASR LC, 2 transit
     5618515825371166464, # s7, wonky cluster ASCC 39 (skip)
 ]
+
+KNOWN_EXTRA_DETREND = [
+    5290781443841554432 # s7, systematic trends in TFASR LC, 2 transit
+]
+
 
 host = socket.gethostname()
 if 'phtess' in host:
@@ -329,8 +332,29 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
         time, flux, err,magsarefluxes=True, sigclip=[50,5]
     )
 
-    if is_pspline_dtr:
+    if is_pspline_dtr or identifier in KNOWN_EXTRA_DETREND:
         flux, _ = dtr.detrend_flux(time, flux)
+
+    if identifier in KNOWN_EXTRA_DETREND:
+        fit_savdir = os.path.dirname(outpath)
+        dtrpath = os.path.join(fit_savdir, 'extra_detrend_lc.png')
+
+        if not os.path.exists(dtrpath):
+            plt.close('all')
+            f,ax = plt.subplots(figsize=(6,3))
+            ax.scatter(time, flux, c='black', alpha=0.9, zorder=2, s=8,
+                       rasterized=True, linewidths=0)
+            ax.set_xlabel('bjdtdb')
+            ax.set_ylabel('detrended flux')
+            f.savefig(dtrpath, bbox_inches='tight')
+            raise AssertionError(
+                'U NEED TO MANUALLY LOOK AT {} AND VERIFY ITS OK'.
+                format(dtrpath)
+            )
+        else:
+            print('WRN! found {}. continuing to fit.'.
+                  format(dtrpath)
+            )
 
     #
     # define the paths. get the stellar parameters, and do the fit!
@@ -371,7 +395,7 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
     # if not converged:
     #   print a warning.
     #
-    if identifier in KNOWN_CUSTOM:
+    if identifier in KNOWN_MCMC_FAILS:
         print('WRN! identifier {} requires manual fixing.'.
               format(identifier))
         try_mcmc = False
