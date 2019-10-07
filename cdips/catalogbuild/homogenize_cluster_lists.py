@@ -69,10 +69,11 @@ def main():
     do_Bell_17 = 0
     do_Oh17 = 0
     do_Rizzuto11 = 0
+    do_VillaVelez18 = 0
     # Star forming regions
     do_Zari18 = 0
 
-    do_merge_MG_catalogs = 0
+    do_merge_MG_catalogs = 0 #NOTE: YA, U NEED TO DO THIS.
     do_merge_OC_catalogs = 0
     do_merge_OC_MG_catalogs = 0
     do_final_merge = 0
@@ -106,6 +107,11 @@ def main():
         make_Rizzuto11_GaiaDR2_crossmatch()
     if do_Zari18:
         Zari18_stars_to_csv()
+    if do_VillaVelez18:
+        assert os.path.exists(os.path.join(
+            clusterdatadir, 'moving_groups',
+            'VillaVelez_2018_DR2_PreMainSequence_MATCH.csv')
+        )
 
     if do_merge_MG_catalogs:
         merge_MG_catalogs()
@@ -119,6 +125,7 @@ def main():
 
 def fname_to_reference(fname):
 
+    #FIXME: need to add the new ones here!!!
     d = {
         'MATCHED_Gagne_2018_BANYAN_XI_GaiaDR2_crossmatched.csv':'Gagne_2018_BANYAN_XI',
         'MATCHED_Gagne_2018_BANYAN_XII_GaiaDR2_crossmatched.csv':'Gagne_2018_BANYAN_XII',
@@ -134,7 +141,8 @@ def fname_to_reference(fname):
         'MWSC_Gaia_matched_concatenated.csv':'Kharchenko2013',
         'Dias14_seplt5arcsec_Gdifflt2.csv':'Dias2014',
         'Zari_2018_ums_tab_cut_only_source_cluster_MATCH.csv':'Zari_2018_UMS',
-        'Zari_2018_pms_tab_cut_only_source_cluster_MATCH.csv':'Zari_2018_PMS'
+        'Zari_2018_pms_tab_cut_only_source_cluster_MATCH.csv':'Zari_2018_PMS',
+        'VillaVelez_2018_DR2_PreMainSequence_MATCH.csv':'VillaVelez_2018'
     }
 
     return d[fname]
@@ -243,17 +251,26 @@ def merge_MG_catalogs():
 
         sdf = pd.DataFrame()
 
-        if not 'Zari_2018' in mgfile:
-            sdf['source_id'] = df['source_id']
-        else:
+        #
+        # assign source_id
+        #
+        if 'Zari_2018' in mgfile:
             sdf['source_id'] = df['source']
+        else:
+            sdf['source_id'] = df['source_id']
 
+        #
+        # assign assoc
+        #
         if ('assoc' not in df.columns and
             not 'Rizzuto_11' in mgfile and
-            not 'Zari_2018' in mgfile
+            not 'Zari_2018' in mgfile and
+            not 'VillaVelez_2018' in mgfile
            ):
             raise AssertionError
-        elif 'assoc' not in df.columns and 'Rizzuto_11' in mgfile:
+        elif 'assoc' not in df.columns and (
+            'Rizzuto_11' in mgfile or 'VillaVelez_2018' in mgfile
+        ):
             sdf['assoc'] = 'ScoOB2'
         elif 'assoc' not in df.columns and 'Zari_2018' in mgfile:
             sdf['assoc'] = 'N/A'
@@ -262,17 +279,28 @@ def merge_MG_catalogs():
         else:
             sdf['assoc'] = df['assoc'].astype(str)
 
+        #
+        # assign reference
+        #
         sdf['reference'] = fname_to_reference(os.path.basename(mgfile))
 
-        if not 'Zari_2018' in mgfile:
-            sdf['ext_catalog_name'] = df['name']
-        else:
+        #
+        # assign external catalog name
+        #
+        if 'Zari_2018' in mgfile:
             sdf['ext_catalog_name'] = df['source']
-
-        if not 'Zari_2018' in mgfile:
-            sdf['dist'] = df['dist']
+        elif 'VillaVelez_2018' in mgfile:
+            sdf['ext_catalog_name'] = df['source_id']
         else:
+            sdf['ext_catalog_name'] = df['name']
+
+        #
+        # assign distance if xmatched
+        #
+        if 'Zari_2018' in mgfile or 'VillaVelez_2018' in mgfile:
             sdf['dist'] = 0
+        else:
+            sdf['dist'] = df['dist']
 
         dfl.append(sdf)
 

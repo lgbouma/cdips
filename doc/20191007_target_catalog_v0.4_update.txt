@@ -1,23 +1,43 @@
-----------
-Added Kounkel & Covey 2019 (KC19) catalog members (their tables 1 & 2).
+NEW CATALOGS
+-----
 
+Added Kounkel & Covey 2019 (KC19) catalog members (their tables 1 & 2).
+----------
 "cluster" was whatever Kounkel & Covey gave as their crossmatched names, else
 groupids (if their crossmatched name was NaN).
 
-----------
 Added Kounkel et al (2018) orion catalog (their Table 2).
-
+----------
 Originally, 16754 stars in the direction of Orion.  Required that the star
 actually be _listed_ in one of the groups (i.e., the group column had to not be
 null, or labelled "field").  This yielded 5208 stars in some group of the Orion
 complex.
 
+Added Villa-Velez_Brown_2018_PMS_ScoCen list.
 ----------
-Considered including Sim+2019.
+They didn't put out a table. To get these objects, you do the following.
 
+Clone https://github.com/Jurgenvilla/Gaia_DR2_ScoCen/tree/v1.0.0
+Run the entire Gaia_AstroQuery.ipynb notebook
+Run the Data_Selection.ipynb notebook. Hack it to give source-ids in the
+output.
+Manually copy the output file of csvs to to the moving group subdir:
+`scp DR2_PreMainSequence_SOURCE_IDS.csv lbouma@phtess2:~/proj/cdips/data/cluster_data/moving_groups/VillaVelez_2018_DR2_PreMainSequence_MATCH.csv`
+
+Notice that the reason why Coordinates_DR2_PreMainSequence.csv contains 2x the
+number of members as reported in the paper is that there's a random line of
+code at the end of this jupyter notebook that duplicates the lists. No reason,
+just does it.
+
+
+Considered including Sim+2019.
+----------
 They did not publish membership lists, so skipped.
 
 
+
+OTHER IMPROVEMENTS
+-----
 
 * Changed age column to "," separated age report, either from KC19 or
   Kharchenko+2013.
