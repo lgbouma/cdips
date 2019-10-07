@@ -49,8 +49,10 @@ from cdips.catalogbuild.star_forming_rgn_xmatch_utils import (
 
 if socket.gethostname() == 'phtess2':
     clusterdatadir = '/home/lbouma/proj/cdips/data/cluster_data/'
+    localdir = '/home/lbouma/local/cdips/catalogs/'
 elif socket.gethostname() == 'brik':
     clusterdatadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
+    localdir = '/home/luke/local/cdips/catalogs/'
 else:
     raise NotImplementedError
 
@@ -370,7 +372,9 @@ def merge_OC_catalogs():
 
         if 'Dias14' in ocfile:
             # need to get names b/c i messed up earlier
-            getfile = '/home/luke/local/cdips/catalogs/Dias_2014_prob_gt_50_pct_vizier.vot'
+            getfile = os.path.join(
+                localdir, 'Dias_2014_prob_gt_50_pct_vizier.vot'
+            )
             vot = parse(getfile)
             tab = vot.get_first_table().to_table()
             ddf = tab.to_pandas()
@@ -486,23 +490,27 @@ def merge_OC_catalogs():
 
 def merge_OC_MG_catalogs():
 
-    datadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
+    datadir = clusterdatadir
 
-    ocs = pd.read_csv(datadir+'OPEN_CLUSTERS_MERGED.csv',
-                      sep=';')
-    mgs = pd.read_csv(datadir+'moving_groups/MOVING_GROUPS_MERGED.csv',
-                      sep=';')
+    ocs = pd.read_csv(
+        os.path.join(clusterdatadir,'OPEN_CLUSTERS_MERGED.csv'),
+        sep=';'
+    )
+    mgs = pd.read_csv(
+        os.path.join(clusterdatadir,'moving_groups','MOVING_GROUPS_MERGED.csv'),
+        sep=';'
+    )
     mgs = mgs.rename(index=str, columns={"assoc":"cluster"})
 
     outdf = pd.concat((ocs, mgs))
 
-    outpath = '/home/luke/local/cdips/catalogs/OC_MG_MERGED.csv'
+    outpath = os.path.join(localdir, 'OC_MG_MERGED.csv')
     outdf.to_csv(outpath, sep=';', index=False)
     print('made {}'.format(outpath))
 
     # upload this csv file to gaia archive, then use it to run a crossmatch
     # that gets things like G_Rp band photometry.
-    outpath = '/home/luke/local/cdips/catalogs/oc_mg_sources.csv'
+    outpath = os.path.join(localdir, 'oc_mg_sources.csv')
     outdf['source_id'].to_csv(outpath, sep=',', index=False)
     print('made {}'.format(outpath))
 
@@ -514,8 +522,7 @@ def final_merge(vnum='0.3'):
     in this step. scary, and unclear why...!
     """
 
-    datadir = '/home/luke/local/cdips/catalogs/'
-    #datadir = '/home/lbouma/local/cdips/catalogs/'
+    datadir = localdir
 
     ocmg_df = pd.read_csv(datadir+'OC_MG_MERGED.csv', sep=';')
 
