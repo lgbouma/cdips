@@ -1,4 +1,7 @@
-NEW CATALOGS
+Updates in the v0.3 -> v0.4 CDIPS target star catalog.
+==========================================
+
+MERGED NEW CATALOGS
 -----
 
 Added Kounkel & Covey 2019 (KC19) catalog members (their tables 1 & 2).
@@ -43,9 +46,45 @@ Considered including Sim+2019.
 They did not publish membership lists, so skipped.
 
 
-
-OTHER IMPROVEMENTS
+OTHER CHANGES
 -----
 
-* Changed age column to "," separated age report, either from KC19 or
-  Kharchenko+2013.
+* "k13_logt" is now "logt"
+* added logt_provenance. It is either Kharchenko 2013, or Kounkel & Covey 2019
+  (for their members, specifically).
+* added unique name processing for CG19 (Vela OB2), Kounkel18 (Orion), and
+  VillaVelez (ScoOB2)
+
+
+UPDATED STATS
+-----
+
+Erm. I think I made an error for the Kounkel & Covey name matching. The things
+they listed as having known names should have known ages. I don't think this
+update includes that.
+
+made /nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_v0.4_with_K13_name_match.csv
+made /nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_v0.4_uniq.csv
+beginning big merge...
+##########################################
+# unique cluster names: 4687
+fraction with k13 name match: 0.69565
+fraction with any unique name: 0.81656
+removing duplicates from K13 index...
+      MWSC       Name flag Type n_Type   Src SType      N      STypeComment
+2999  3000   FSR_0101    =              DIAS   irc  47302  infrared cluster
+3000  3001   FSR_0101    &              DIAS   irc      0  infrared cluster
+3283  3284   FSR_0178    &              DIAS   irc      0  infrared cluster
+3284  3285   FSR_0178    =              DIAS   irc  18348  infrared cluster
+3229  3230   FSR_0198    &              DIAS   irc      0  infrared cluster
+3231  3232   FSR_0198    =              DIAS   irc  27433  infrared cluster
+776   0777   FSR_0923    =              DIAS   irc  11069  infrared cluster
+777   0778   FSR_0923    &              DIAS   irc      0  infrared cluster
+896   0897   FSR_0974    &              DIAS   irc      0  infrared cluster
+897   0898   FSR_0974    =              DIAS   irc   9390  infrared cluster
+1660  1661   FSR_1471    =              DIAS   irc  14228  infrared cluster
+1661  1662   FSR_1471    &              DIAS   irc      0  infrared cluster
+627   0628  LDN_1641S    &    n      o  BIEM   irc      0  infrared cluster
+647   0648  LDN_1641S    &    n      o  BIEM   irc      0  infrared cluster
+953   0954   NGC_2264    =    n      o  COCD        19318               NaN
+957   0958   NGC_2264    &              BIEM   irc      0  infrared cluster

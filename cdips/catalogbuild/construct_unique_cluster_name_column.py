@@ -51,12 +51,6 @@ def main(cdips_cat_vnum=0.4):
         unique_cluster_name;k13_name_match;unique_cluster_name;how_match;not_in_k13;comment;logt;e_logt;logt_provenance
     """
 
-    # TODO:
-    # * change "k13_logt" to "logt"
-    # * change "k13_e_logt" to "e_logt"
-    # * add logt_provenance
-    # * add special processing for KC19... errrr maybe CG19, Kounkel18, and VillaVelez too
-
     cdips_df = ccl.get_cdips_catalog(ver=cdips_cat_vnum)
     k13 = get_k13_df()
 
@@ -241,23 +235,59 @@ def main(cdips_cat_vnum=0.4):
     del _df
 
     #
-    # merge against K13 ages. report "k13_logt" and "k13_e_logt"
+    # assign ages. first, merge against kharchenko2013. then, get the kounkel &
+    # covey 2019 age matches. update the provenance as appropriate.
     #
-    import IPython; IPython.embed()
-    #FIXME
-
-    _df = fdf.merge(k13_df, left_on='k13_name_match', right_on='Name',
+    _df = fdf.merge(k13_df,
+                    left_on='k13_name_match',
+                    right_on='Name',
                     how='left')
     assert len(_df) == len(fdf)
-    fdf['k13_logt'] = _df['logt']
-    fdf['k13_e_logt'] = _df['e_logt']
+
+    logt = nparr(_df['logt'])
+    e_logt = nparr(_df['e_logt'])
+
+    logt_prov = np.repeat('',len(fdf)).astype('U20')
+    logt_prov[~pd.isnull(logt)] = 'Kharchenko2013'
+
+    kc19_df1 = pd.read_csv(os.path.join(clusterdatadir,'KC19_string_table1.csv'))
+    kc19_df2 = pd.read_csv(os.path.join(clusterdatadir,'KC19_string_table2.csv'))
+    kc19_sdf2 = kc19_df2[['group_id','name','age']]
+    kc19_mdf = kc19_df1.merge(kc19_sdf2, on='group_id', how='left')
+
+    # kounkel & covey 2019 age matches are only for the groups that were not
+    # already known.  (otherwise, use the kharchenko age, which is assumed to
+    # exist). do it by searching the cluster name. extract the groupid from the
+    # name.
+
+    sel = _df['cluster'].astype(str).str.contains('kc19group_')
+    kc19_groups = _df[sel].cluster
+    kc19_group_ids = kc19_groups.str.extract(r'(kc19group_)(\d*)')[1]
+
+    groupid_df = pd.DataFrame({'group_id':kc19_group_ids.astype(int)})
+
+    groupid_mdf = groupid_df.merge(kc19_df2, on='group_id', how='left')
+    assert len(groupid_mdf) == len(groupid_df)
+
+    kc19_age = nparr(groupid_mdf['age'])
+    kc19_err_age = np.ones(len(kc19_age))*0.15
+
+    logt[sel] = kc19_age
+    e_logt[sel] = kc19_err_age
+    logt_prov[sel] = 'KounkelCovey2019'
+
+
+    fdf['logt'] = logt
+    fdf['e_logt'] = e_logt
+    fdf['logt_provenance'] = logt_prov
+
 
     # reformat for table to publish
     scols = ['source_id', 'cluster', 'reference', 'ext_catalog_name', 'ra',
              'dec', 'pmra', 'pmdec', 'parallax', 'phot_g_mean_mag',
              'phot_bp_mean_mag', 'phot_rp_mean_mag', 'k13_name_match',
              'unique_cluster_name', 'how_match', 'not_in_k13', 'comment',
-             'k13_logt', 'k13_e_logt']
+             'logt', 'e_logt', 'logt_provenance']
     _df = fdf[scols]
 
     pubpath = (
@@ -514,6 +544,11 @@ def get_k13_name_match(task):
         how_match = 'manual_override'
     if "PL8" in cluster:
         cluster = cluster.replace("PL8","Platais_8")
+        how_match = 'manual_override'
+    if cluster == "NGC2451":
+        # Gaia Collaboration 2018 table 1a forgot the "A" (nb. from their
+        # paper, it's definitely the one they considered).
+        cluster = "NGC_2451A"
         how_match = 'manual_override'
 
     # types like: 'Aveni_Hunter_42,nan,Aveni_Hunter_42,nan' need to be recast
