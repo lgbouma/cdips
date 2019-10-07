@@ -1,10 +1,20 @@
 """
+Given OC_MG_FINAL_GaiaRp_lt_16_v{versionnum}.csv, made from
+catalogbuild/homogenize_cluster_lists.py, match what you can against
+Kharchenko2013 to get cluster names and ages.
+
+(Except for KC19, which gets its original ages)
+
 we need some idea of the cluster names.
 """
 
+###########
+# imports #
+###########
+
 from glob import glob
-import os, textwrap, re, requests, time
-import numpy as np, pandas as pd, matplotlib.pyplot as plt
+import os, re, requests, time, socket
+import numpy as np, pandas as pd
 from numpy import array as nparr
 
 from astroquery.gaia import Gaia
@@ -19,15 +29,35 @@ from itertools import repeat
 from cdips.utils import collect_cdips_lightcurves as ccl
 from astropy.io.votable import from_table, writeto, parse
 
-clusterdir = "/home/lbouma/proj/cdips/data/cluster_data"
+if socket.gethostname() == 'phtess2':
+    clusterdatadir = '/home/lbouma/proj/cdips/data/cluster_data/'
+elif socket.gethostname() == 'brik':
+    clusterdatadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
+else:
+    raise NotImplementedError
 
-def main(cdips_cat_vnum=0.3):
 
-    # cluster;dec;dist;ext_catalog_name;parallax;phot_bp_mean_mag;
-    # phot_g_mean_mag;phot_rp_mean_mag;pmdec;pmra;ra;reference;source_id
+########
+# code #
+########
+
+def main(cdips_cat_vnum=0.4):
+    """
+    We already have a catalog with the following columns:
+        source_id;cluster;reference;ext_catalog_name;ra;dec;pmra;pmdec;parallax;
+        phot_g_mean_mag;phot_bp_mean_mag;phot_rp_mean_mag;
+
+    We want to supplement it with:
+        unique_cluster_name;k13_name_match;unique_cluster_name;how_match;not_in_k13;comment;logt;e_logt;logt_provenance
+    """
+
+    # TODO:
+    # * change "k13_logt" to "logt"
+    # * change "k13_e_logt" to "e_logt"
+    # * add logt_provenance
+    # * add special processing for KC19... errrr maybe CG19, Kounkel18, and VillaVelez too
+
     cdips_df = ccl.get_cdips_catalog(ver=cdips_cat_vnum)
-
-    # Name,Type,MWSC,ra,dec, etc.
     k13 = get_k13_df()
 
     sourceid = nparr(cdips_df['source_id'])
@@ -36,7 +66,9 @@ def main(cdips_cat_vnum=0.3):
     decs = nparr(cdips_df['dec'])
     referencearr = nparr(cdips_df['reference'])
 
+    #
     # first, generate names for all unique non-nan cluster names.
+    #
     inds = ~pd.isnull(clusterarr)
     sourceid = sourceid[inds]
     clusterarr = clusterarr[inds]
@@ -211,6 +243,9 @@ def main(cdips_cat_vnum=0.3):
     #
     # merge against K13 ages. report "k13_logt" and "k13_e_logt"
     #
+    import IPython; IPython.embed()
+    #FIXME
+
     _df = fdf.merge(k13_df, left_on='k13_name_match', right_on='Name',
                     how='left')
     assert len(_df) == len(fdf)
@@ -266,6 +301,17 @@ def get_unique_cluster_name(task):
     if '32Ori' in cluster:
         return 'THOR'
 
+    # for these groups, keep original naming scheme, and assign it override
+    # priority.
+    special_group_keys = [
+        'cg19velaOB2_pop', 'k18orion_', 'kc19group_'
+    ]
+    for k in special_group_keys:
+        if k in cluster:
+            bar = pd.Series(cluster.split(','))
+            uname = bar[bar.str.contains(k)].iloc[0]
+            return uname
+
     if (
         pd.isnull(mdfr['k13_name_match']) and
         mdfr['why_not_in_k13'] in
@@ -289,7 +335,7 @@ def get_k13_df():
 
     # nb. this is the 3006 row table with determined parameters. full
     # kharchenko catalog is like 3700, which is the index.
-    getfile = os.path.join(clusterdir,'Kharchenko_2013_MWSC.vot')
+    getfile = os.path.join(clusterdatadir,'Kharchenko_2013_MWSC.vot')
     vot = parse(getfile)
     tab = vot.get_first_table().to_table()
     k13 = tab.to_pandas()
@@ -351,6 +397,30 @@ def get_k13_name_match(task):
 
         return (np.nan, how_match, have_name_match, have_mwsc_id_match,
                 is_known_asterism, not_in_k13, why_not_in_k13)
+
+    special_references = ['Velez_2018_scoOB2', 'Kounkel_2018_Ori',
+                          'CantatGaudin_2019_velaOB2']
+    for r in special_references:
+        if r in reference:
+            # None of these works have meaningful matches in Kharchenko+2013.
+            not_in_k13 = True
+            why_not_in_k13 = 'gaia_supersedes'
+            return (np.nan, how_match, have_name_match, have_mwsc_id_match,
+                    is_known_asterism, not_in_k13, why_not_in_k13)
+
+    #
+    # lowest name match priority: whatever KC2019 said!
+    #
+    if reference in ['Kounkel_2019']:
+
+        # Half of these do have meaningful Kharchenko+2013 matches. However I'm
+        # not super interested in Kharchenko's derived properties when KC19's
+        # membership led to the inclusion.
+        not_in_k13 = True
+        why_not_in_k13 = 'kc19_gaia_supersedes'
+        return (np.nan, how_match, have_name_match, have_mwsc_id_match,
+                is_known_asterism, not_in_k13, why_not_in_k13)
+
 
     is_gaia_member = False
     if 'Gulliver' in cluster and 'CantatGaudin_2018' in reference:
@@ -683,7 +753,7 @@ def get_k13_name_match(task):
     #
     if not have_name_match and not have_mwsc_id_match:
         ddf = pd.read_csv(
-            os.path.join(clusterdir, 'double_names_WEBDA_20190606.csv'),
+            os.path.join(clusterdatadir, 'double_names_WEBDA_20190606.csv'),
             sep=';')
         for c in clustersplt:
             if len(ddf[ddf['cluster_name'] == c.replace('_',' ')]) == 1:
@@ -779,6 +849,17 @@ def get_k13_name_match(task):
     ):
         not_in_k13 = True
         name_match = np.nan
+
+    #
+    # lowest name match priority: whatever KC2019 said (even if there are
+    # others)!
+    #
+    if 'Kounkel_2019' in reference:
+
+        not_in_k13 = True
+        why_not_in_k13 = 'kc19_gaia_supersedes'
+        return (np.nan, how_match, have_name_match, have_mwsc_id_match,
+                is_known_asterism, not_in_k13, why_not_in_k13)
 
     #
     # finally, if we failed to get matches above, (e.g., for some of the IR
