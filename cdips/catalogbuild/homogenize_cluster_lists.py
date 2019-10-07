@@ -76,10 +76,11 @@ def main():
     do_Zari18 = 0
     do_CG19_vela = 0
 
-    do_merge_MG_catalogs = 1
-    do_merge_OC_catalogs = 0
+    do_merge_MG_catalogs = 0
+    do_merge_OC_catalogs = 1
     do_merge_OC_MG_catalogs = 0
     do_final_merge = 0
+    catalog_vnum = '0.4'
 
     if GaiaCollab18:
         GaiaCollaboration2018_clusters_to_csv()
@@ -122,7 +123,7 @@ def main():
     if do_merge_OC_MG_catalogs:
         merge_OC_MG_catalogs()
     if do_final_merge:
-        final_merge()
+        final_merge(vnum=catalog_vnum)
 
 
 def fname_to_reference(fname):
@@ -351,6 +352,8 @@ def merge_OC_catalogs():
             available, in degrees.
     """
     fnames = [
+        'Kounkel_2018_orion_table2_cut_only_source_cluster.csv',
+        'KounkelCovey2019_cut_cluster_source.csv',
         'CantatGaudin_2018_table2_cut_only_source_cluster.csv',
         'GaiaCollaboration2018_616_A10_tablea1a_within_250pc_cut_only_source_cluster.csv',
         'GaiaCollaboration2018_616_A10_tablea1b_beyond_250pc_cut_only_source_cluster.csv',
@@ -379,13 +382,21 @@ def merge_OC_catalogs():
 
         sdf = pd.DataFrame()
 
+        #
+        # assign source_id
+        #
         if 'CantatGaudin' in ocfile or 'GaiaCollab' in ocfile:
             sdf['source_id'] = df['source']
         elif 'MWSC' in ocfile:
             sdf['source_id'] = df['gaia_dr2_match_id']
-        elif 'Dias14' in ocfile:
+        elif 'source_id' in df.columns:
             sdf['source_id'] = df['source_id']
+        else:
+            raise NotImplementedError
 
+        #
+        # assign cluster name
+        #
         if 'CantatGaudin' in ocfile or 'GaiaCollab' in ocfile:
             # saved binary strings that are then read as strings...
             sdf['cluster'] = df['cluster'].apply(
@@ -396,17 +407,34 @@ def merge_OC_catalogs():
             sdf['cluster'] = df['cname']
         elif 'Dias14' in ocfile:
             sdf['cluster'] = df['Cluster']
+        elif 'KounkelCovey2019' in ocfile or 'Kounkel_2018_orion' in ocfile:
+            sdf['cluster'] = df['cluster']
 
+        #
+        # assign reference column
+        #
         sdf['reference'] = fname_to_reference(os.path.basename(ocfile))
 
+        #
+        # assign external catalog name column
+        #
         if 'CantatGaudin' in ocfile or 'GaiaCollab' in ocfile:
             sdf['ext_catalog_name'] = df['source']
         elif 'MWSC' in ocfile:
             sdf['ext_catalog_name'] = df['k13_tmass_oids']
         elif 'Dias14' in ocfile:
             sdf['ext_catalog_name'] = df['ucac_id']
+        elif 'source_id' in df.columns:
+            sdf['ext_catalog_name'] = df['source_id']
 
-        if 'CantatGaudin' in ocfile or 'GaiaCollab' in ocfile:
+        #
+        # assign distance of x-match
+        #
+        if ('CantatGaudin' in ocfile or
+            'GaiaCollab' in ocfile or
+            'KounkelCovey2019' in ocfile or
+            'Kounkel_2018_orion' in ocfile
+        ):
             sdf['dist'] = 0
         elif 'MWSC' in ocfile:
             sdf['dist'] = df['dist_deg']
