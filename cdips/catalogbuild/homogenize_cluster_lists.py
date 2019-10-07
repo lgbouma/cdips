@@ -80,8 +80,8 @@ def main():
 
     do_merge_MG_catalogs = 0
     do_merge_OC_catalogs = 0
-    do_merge_OC_MG_catalogs = 1
-    do_final_merge = 0
+    do_merge_OC_MG_catalogs = 0
+    do_final_merge = 1
     catalog_vnum = '0.4'
 
     if GaiaCollab18:
@@ -515,7 +515,7 @@ def merge_OC_MG_catalogs():
     print('made {}'.format(outpath))
 
 
-def final_merge(vnum='0.3'):
+def final_merge(vnum=None):
     """
     merge Gaia-DR2 info and source/reference info into one file.
     NOTE: for some reason ~half of the sources in OC_MG_MERGED.csv are lost
