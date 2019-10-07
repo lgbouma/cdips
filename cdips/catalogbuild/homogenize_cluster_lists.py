@@ -79,8 +79,8 @@ def main():
     do_CG19_vela = 0
 
     do_merge_MG_catalogs = 0
-    do_merge_OC_catalogs = 1
-    do_merge_OC_MG_catalogs = 0
+    do_merge_OC_catalogs = 0
+    do_merge_OC_MG_catalogs = 1
     do_final_merge = 0
     catalog_vnum = '0.4'
 
@@ -467,7 +467,7 @@ def merge_OC_catalogs():
 
     df_sings = bdf.ix[ind_sings]
 
-    sing_path = os.path.join(datadir,'OPEN_CLUSTERS_SINGLES.csv')
+    sing_path = os.path.join(clusterdatadir,'OPEN_CLUSTERS_SINGLES.csv')
     df_sings.to_csv(sing_path, index=False, sep=';')
     print('made {}'.format(sing_path))
 
@@ -475,7 +475,7 @@ def merge_OC_catalogs():
     del bdf, df_sings, dfl
     print('beginning aggregation...')
     df_mults_agg = df_mults.groupby('source_id').apply(combine_it_OC)
-    mult_path = os.path.join(datadir,'OPEN_CLUSTERS_MULTS.csv')
+    mult_path = os.path.join(clusterdatadir,'OPEN_CLUSTERS_MULTS.csv')
     df_mults_agg.to_csv(mult_path, index=False, sep=';')
 
     # for each unique gaia source id, make the row.
@@ -483,7 +483,7 @@ def merge_OC_catalogs():
     outdf = pd.concat((df_sings,df_mults_agg))
     outdf = outdf.sort_values('source_id')
 
-    outpath = os.path.join(datadir,'OPEN_CLUSTERS_MERGED.csv')
+    outpath = os.path.join(clusterdatadir,'OPEN_CLUSTERS_MERGED.csv')
     outdf.to_csv(outpath, index=False, sep=';')
     print('made {}'.format(outpath))
 
@@ -524,9 +524,9 @@ def final_merge(vnum='0.3'):
 
     datadir = localdir
 
-    ocmg_df = pd.read_csv(datadir+'OC_MG_MERGED.csv', sep=';')
+    ocmg_df = pd.read_csv(os.path.join(datadir,'OC_MG_MERGED.csv'), sep=';')
 
-    vot = parse(datadir+'cdips_v{}-result.vot.gz'.format(vnum))
+    vot = parse(os.path.join(datadir,'cdips_v{}-result.vot.gz'.format(vnum)))
     tab = vot.get_first_table().to_table()
     df = tab.to_pandas()
 
@@ -563,11 +563,13 @@ def final_merge(vnum='0.3'):
     outdf = pd.concat((df_sings,df_mults_agg))
     outdf = outdf.sort_values('source_id')
 
-    outpath = datadir+'OC_MG_FINAL.csv'
+    outpath = os.path.join(datadir,'OC_MG_FINAL.csv')
     outdf.to_csv(outpath, sep=';', index=False)
     print('made {}'.format(outpath))
 
-    outpath = datadir+'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(vnum)
+    outpath = os.path.join(
+        datadir,'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(vnum)
+    )
     outdf[outdf['phot_rp_mean_mag']<16].to_csv(outpath, sep=';', index=False)
     print('made {}'.format(outpath))
 
