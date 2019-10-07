@@ -29,6 +29,14 @@ number of members as reported in the paper is that there's a random line of
 code at the end of this jupyter notebook that duplicates the lists. No reason,
 just does it.
 
+Added Cantat-Gaudin et al (2019) vela OB2 catalog (vizier result)
+----------
+Opted to not assign individual names to the 7 populations therein (even though
+there is some overlap with Kharchenko's names). The reason being: Tristan
+argues that it doesn't really make sense to use old names that were assigned to
+old blobs when the new data shows that the old blobs were insufficiently
+precise.
+
 
 Considered including Sim+2019.
 ----------
