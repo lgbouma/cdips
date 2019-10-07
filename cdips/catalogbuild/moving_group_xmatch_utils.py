@@ -1,10 +1,27 @@
 # -*- coding: utf-8 -*-
-'''
-functions to download and wrangle catalogs of members that I want to crossmatch
-against TESS objects of interest (alerts)
+"""
+functions to crossmatch moving group catalogs with Gaia-DR2.
 
-mostly called from `get_tess_alert_search_list.py`
-'''
+heritage: `get_tess_alert_search_list.py` TOI crossmatches.
+
+includes:
+    make_vizier_GaiaDR2_crossmatch
+        make_Kraus14_GaiaDR2_crossmatch
+        make_Roser11_GaiaDR2_crossmatch
+        make_Luhman12_GaiaDR2_crossmatch
+    make_votable_given_cols
+    make_votable_given_full_cols
+    make_Gagne18_BANYAN_any_DR2_crossmatch
+        make_Gagne18_BANYAN_XIII_GaiaDR2_crossmatch
+        make_Gagne18_BANYAN_XII_GaiaDR2_crossmatch
+        make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch
+    make_Rizzuto11_GaiaDR2_crossmatch
+    make_Oh17_GaiaDR2_crossmatch
+    make_Rizzuto15_GaiaDR2_crossmatch
+    make_Preibisch01_GaiaDR2_crossmatch
+    make_Casagrande_11_GaiaDR2_crossmatch
+    make_Bell17_GaiaDR2_crossmatch
+"""
 from __future__ import division, print_function
 
 import numpy as np, pandas as pd
@@ -25,40 +42,139 @@ from numpy import array as arr
 
 datadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/moving_groups/'
 
-def make_Gagne18_BANYAN_XIII_GaiaDR2_crossmatch():
+def make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
+                                   pmra_str, pmdec_str, name_str, assoc_name,
+                                   table_num=0, outname='', maxsep=10,
+                                   outdir=datadir,
+                                   homedir='/home/luke/' ):
+    '''
+    general routine to xmatch catalog of <~100,000 members w/ coords and PMs
+    against gaia dr2.
 
-    # Downloaded direct from
-    # http://iopscience.iop.org/0004-637X/862/2/138/suppdata/apjaaca2et2_mrt.txt
-    # God I wish vizier were a thing.
-    tablepath = os.path.join(datadir,
-                             'Gagne_2018_BANYAN_XIII_apjaaca2et2_mrt.txt')
+    assumes that the catalog is on vizier.
 
-    make_Gagne18_BANYAN_any_DR2_crossmatch(
-        tablepath, namestr='Gagne_2018_BANYAN_XIII_GaiaDR2_crossmatched',
-        maxsep=10)
+    make_Kraus14_GaiaDR2_crossmatch is an example of a call.
+    '''
 
+    Vizier.ROW_LIMIT = -1
+    catalog_list = Vizier.find_catalogs(vizier_search_str)
+    catalogs = Vizier.get_catalogs(catalog_list.keys())
 
-def make_Gagne18_BANYAN_XII_GaiaDR2_crossmatch():
+    tab = catalogs[table_num]
+    print(42*'-')
+    print('{}'.format(outname))
+    print('initial number of members: {}'.format(len(tab)))
 
-    # Downloaded direct from
-    # http://iopscience.iop.org/0004-637X/860/1/43/suppdata/apjaac2b8t4_mrt.txt
-    tablepath = os.path.join(datadir,
-                             'Gagne_2018_BANYAN_XII_apjaac2b8t4_mrt.txt')
+    # gaia xmatch need these two column names
+    RA = tab[ra_str]
+    dec = tab[dec_str]
+    pm_RA = tab[pmra_str]
+    pm_dec = tab[pmdec_str]
+    name = tab[name_str]
 
-    make_Gagne18_BANYAN_any_DR2_crossmatch(
-        tablepath, namestr='Gagne_2018_BANYAN_XII_GaiaDR2_crossmatched',
-        maxsep=10)
+    assoc = np.repeat(assoc_name, len(RA))
 
+    assert tab[ra_str].unit == u.deg
+    assert tab[pmra_str].unit == u.mas/u.year
 
-def make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch():
+    xmatchoutpath = outname.replace('.csv','_MATCHES_GaiaDR2.csv')
+    outfile = outname.replace('.csv','_GOTMATCHES_GaiaDR2.xml')
+    xmltouploadpath = outname.replace('.csv','_TOUPLOAD_GaiaDR2.xml')
 
-    # Downloaded direct from
-    # http://iopscience.iop.org/0004-637X/856/1/23/suppdata/apjaaae09t5_mrt.txt
-    tablepath = os.path.join(datadir, 'Gagne_2018_apjaaae09t5_mrt.txt')
+    # do the spatial crossmatch...
+    if os.path.exists(outfile):
+        os.remove(outfile)
+    if not os.path.exists(outfile):
+        _ = make_votable_given_cols(name, assoc, RA, dec, pm_RA, pm_dec,
+                                    outpath=xmltouploadpath)
 
-    make_Gagne18_BANYAN_any_DR2_crossmatch(
-        tablepath, namestr='Gagne_2018_BANYAN_XI_GaiaDR2_crossmatched',
-        maxsep=10)
+        Gaia.login(credentials_file=os.path.join(homedir, '.gaia_credentials'))
+
+        # separated less than 10 arcsec.
+        jobstr = (
+        '''
+        SELECT TOP {ncut:d} u.name, u.assoc, u.ra, u.dec, u.pm_ra, u.pm_dec,
+        g.source_id, DISTANCE(
+          POINT('ICRS', u.ra, u.dec),
+          POINT('ICRS', g.ra,g.dec)) AS dist,
+          g.phot_g_mean_mag as gaia_gmag,
+          g.pmra AS gaia_pmra,
+          g.pmdec AS gaia_pmdec
+        FROM tap_upload.foobar as u, gaiadr2.gaia_source AS g
+        WHERE 1=CONTAINS(
+          POINT('ICRS', u.ra, u.dec),
+          CIRCLE('ICRS', g.ra, g.dec, {sep:.8f})
+        )
+        '''
+        )
+        maxncut = int(5*len(name)) # to avoid query timeout
+        maxsep = (maxsep*u.arcsec).to(u.deg).value
+        query = jobstr.format(sep=maxsep, ncut=maxncut)
+
+        if not os.path.exists(outfile):
+            # might do async if this times out. but it doesn't.
+            j = Gaia.launch_job(query=query,
+                                upload_resource=xmltouploadpath,
+                                upload_table_name="foobar", verbose=True,
+                                dump_to_file=True, output_file=outfile)
+
+        Gaia.logout()
+
+    vot = parse(outfile)
+    tab = vot.get_first_table().to_table()
+
+    if maxncut - len(tab) < 10:
+        errmsg = 'ERROR! too many matches'
+        raise AssertionError(errmsg)
+
+    print('number of members after gaia 10 arcsec search: {}'.format(len(tab)))
+
+    # if nonzero and finite proper motion, require Gaia pm match to sign
+    # of stated PMs.
+    df = tab.to_pandas()
+
+    print('\n'+42*'-')
+
+    sel = (df['gaia_gmag'] < 18)
+    print('{} stars in sep < 10 arcsec, G<18, xmatch'.format(len(df[sel])))
+
+    sel &= (
+        (   (df['pm_ra'] != 0 ) & (df['pm_dec'] != 0 ) &
+            ( np.sign(df['pm_ra']) == np.sign(df['gaia_pmra']) ) &
+            ( np.sign(df['pm_dec']) == np.sign(df['gaia_pmdec']) )
+        )
+        |
+        (
+            (df['pm_ra'] == 0 ) & (df['pm_dec'] == 0 )
+        )
+    )
+    df = df[sel]
+    print('{} stars in sep < 10 as xmatch, G<18, after pm cut (xor zero pm)'.
+          format(len(df)))
+
+    # make multiplicity column. then sort by name, then by distance. then drop
+    # name duplicates, keeping the first (you have nearest neighbor saved!)
+    _, inv, cnts = np.unique(df['name'], return_inverse=True,
+                             return_counts=True)
+
+    df['n_in_nbhd'] = cnts[inv]
+
+    df['name'] = df['name'].str.decode('utf-8')
+    df['assoc'] = df['assoc'].str.decode('utf-8')
+
+    df = df.sort_values(['name','dist'])
+
+    df = df.drop_duplicates(subset='name', keep='first')
+
+    df['source_id'] = df['source_id'].astype('int64')
+
+    print('{} stars after above cuts + chosing nearest nbhr by spatial sep'.
+          format(len(df)))
+
+    df.to_csv(xmatchoutpath, index=False)
+    print('made {}'.format(xmatchoutpath))
+    print(79*'=')
+
 
 def make_votable_given_cols(name, assoc, RA, dec, pm_RA, pm_dec, outpath=None):
 
@@ -96,6 +212,42 @@ def make_votable_given_full_cols(name, assoc, RA, dec, pm_RA, pm_dec, u_pm_RA,
     print('made {}'.format(outpath))
 
     return outpath
+
+
+def make_Gagne18_BANYAN_XIII_GaiaDR2_crossmatch():
+
+    # Downloaded direct from
+    # http://iopscience.iop.org/0004-637X/862/2/138/suppdata/apjaaca2et2_mrt.txt
+    # God I wish vizier were a thing.
+    tablepath = os.path.join(datadir,
+                             'Gagne_2018_BANYAN_XIII_apjaaca2et2_mrt.txt')
+
+    make_Gagne18_BANYAN_any_DR2_crossmatch(
+        tablepath, namestr='Gagne_2018_BANYAN_XIII_GaiaDR2_crossmatched',
+        maxsep=10)
+
+
+def make_Gagne18_BANYAN_XII_GaiaDR2_crossmatch():
+
+    # Downloaded direct from
+    # http://iopscience.iop.org/0004-637X/860/1/43/suppdata/apjaac2b8t4_mrt.txt
+    tablepath = os.path.join(datadir,
+                             'Gagne_2018_BANYAN_XII_apjaac2b8t4_mrt.txt')
+
+    make_Gagne18_BANYAN_any_DR2_crossmatch(
+        tablepath, namestr='Gagne_2018_BANYAN_XII_GaiaDR2_crossmatched',
+        maxsep=10)
+
+
+def make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch():
+
+    # Downloaded direct from
+    # http://iopscience.iop.org/0004-637X/856/1/23/suppdata/apjaaae09t5_mrt.txt
+    tablepath = os.path.join(datadir, 'Gagne_2018_apjaaae09t5_mrt.txt')
+
+    make_Gagne18_BANYAN_any_DR2_crossmatch(
+        tablepath, namestr='Gagne_2018_BANYAN_XI_GaiaDR2_crossmatched',
+        maxsep=10)
 
 def make_Gagne18_BANYAN_any_DR2_crossmatch(
         tablepath,
@@ -641,140 +793,6 @@ def make_Luhman12_GaiaDR2_crossmatch():
     make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
                                    table_num=table_num, outname=outname)
 
-
-
-def make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
-                                   pmra_str, pmdec_str, name_str, assoc_name,
-                                   table_num=0, outname='', maxsep=10,
-                                   outdir=datadir,
-                                   homedir='/home/luke/' ):
-    '''
-    general routine to xmatch catalog of <~100,000 members w/ coords and PMs
-    against gaia dr2.
-
-    assumes that the catalog is on vizier.
-
-    make_Kraus14_GaiaDR2_crossmatch is an example of a call.
-    '''
-
-    Vizier.ROW_LIMIT = -1
-    catalog_list = Vizier.find_catalogs(vizier_search_str)
-    catalogs = Vizier.get_catalogs(catalog_list.keys())
-
-    tab = catalogs[table_num]
-    print(42*'-')
-    print('{}'.format(outname))
-    print('initial number of members: {}'.format(len(tab)))
-
-    # gaia xmatch need these two column names
-    RA = tab[ra_str]
-    dec = tab[dec_str]
-    pm_RA = tab[pmra_str]
-    pm_dec = tab[pmdec_str]
-    name = tab[name_str]
-
-    assoc = np.repeat(assoc_name, len(RA))
-
-    assert tab[ra_str].unit == u.deg
-    assert tab[pmra_str].unit == u.mas/u.year
-
-    xmatchoutpath = outname.replace('.csv','_MATCHES_GaiaDR2.csv')
-    outfile = outname.replace('.csv','_GOTMATCHES_GaiaDR2.xml')
-    xmltouploadpath = outname.replace('.csv','_TOUPLOAD_GaiaDR2.xml')
-
-    # do the spatial crossmatch...
-    if os.path.exists(outfile):
-        os.remove(outfile)
-    if not os.path.exists(outfile):
-        _ = make_votable_given_cols(name, assoc, RA, dec, pm_RA, pm_dec,
-                                    outpath=xmltouploadpath)
-
-        Gaia.login(credentials_file=os.path.join(homedir, '.gaia_credentials'))
-
-        # separated less than 10 arcsec.
-        jobstr = (
-        '''
-        SELECT TOP {ncut:d} u.name, u.assoc, u.ra, u.dec, u.pm_ra, u.pm_dec,
-        g.source_id, DISTANCE(
-          POINT('ICRS', u.ra, u.dec),
-          POINT('ICRS', g.ra,g.dec)) AS dist,
-          g.phot_g_mean_mag as gaia_gmag,
-          g.pmra AS gaia_pmra,
-          g.pmdec AS gaia_pmdec
-        FROM tap_upload.foobar as u, gaiadr2.gaia_source AS g
-        WHERE 1=CONTAINS(
-          POINT('ICRS', u.ra, u.dec),
-          CIRCLE('ICRS', g.ra, g.dec, {sep:.8f})
-        )
-        '''
-        )
-        maxncut = int(5*len(name)) # to avoid query timeout
-        maxsep = (maxsep*u.arcsec).to(u.deg).value
-        query = jobstr.format(sep=maxsep, ncut=maxncut)
-
-        if not os.path.exists(outfile):
-            # might do async if this times out. but it doesn't.
-            j = Gaia.launch_job(query=query,
-                                upload_resource=xmltouploadpath,
-                                upload_table_name="foobar", verbose=True,
-                                dump_to_file=True, output_file=outfile)
-
-        Gaia.logout()
-
-    vot = parse(outfile)
-    tab = vot.get_first_table().to_table()
-
-    if maxncut - len(tab) < 10:
-        errmsg = 'ERROR! too many matches'
-        raise AssertionError(errmsg)
-
-    print('number of members after gaia 10 arcsec search: {}'.format(len(tab)))
-
-    # if nonzero and finite proper motion, require Gaia pm match to sign
-    # of stated PMs.
-    df = tab.to_pandas()
-
-    print('\n'+42*'-')
-
-    sel = (df['gaia_gmag'] < 18)
-    print('{} stars in sep < 10 arcsec, G<18, xmatch'.format(len(df[sel])))
-
-    sel &= (
-        (   (df['pm_ra'] != 0 ) & (df['pm_dec'] != 0 ) &
-            ( np.sign(df['pm_ra']) == np.sign(df['gaia_pmra']) ) &
-            ( np.sign(df['pm_dec']) == np.sign(df['gaia_pmdec']) )
-        )
-        |
-        (
-            (df['pm_ra'] == 0 ) & (df['pm_dec'] == 0 )
-        )
-    )
-    df = df[sel]
-    print('{} stars in sep < 10 as xmatch, G<18, after pm cut (xor zero pm)'.
-          format(len(df)))
-
-    # make multiplicity column. then sort by name, then by distance. then drop
-    # name duplicates, keeping the first (you have nearest neighbor saved!)
-    _, inv, cnts = np.unique(df['name'], return_inverse=True,
-                             return_counts=True)
-
-    df['n_in_nbhd'] = cnts[inv]
-
-    df['name'] = df['name'].str.decode('utf-8')
-    df['assoc'] = df['assoc'].str.decode('utf-8')
-
-    df = df.sort_values(['name','dist'])
-
-    df = df.drop_duplicates(subset='name', keep='first')
-
-    df['source_id'] = df['source_id'].astype('int64')
-
-    print('{} stars after above cuts + chosing nearest nbhr by spatial sep'.
-          format(len(df)))
-
-    df.to_csv(xmatchoutpath, index=False)
-    print('made {}'.format(xmatchoutpath))
-    print(79*'=')
 
 
 def make_Bell17_GaiaDR2_crossmatch(maxsep=10,
