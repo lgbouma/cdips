@@ -1,11 +1,21 @@
-* Added Kounkel & Covey 2019 (KC19) catalog members.
+----------
+Added Kounkel & Covey 2019 (KC19) catalog members (their tables 1 & 2).
 
-  "cluster" was whatever Kounkel & Covey gave as their crossmatched names, else
-  groupids (if their crossmatched name was NaN).
+"cluster" was whatever Kounkel & Covey gave as their crossmatched names, else
+groupids (if their crossmatched name was NaN).
 
+----------
+Added Kounkel et al (2018) orion catalog (their Table 2).
 
-* Considered including Sim+2019. They did not publish membership lists, so
-  skipped.
+Originally, 16754 stars in the direction of Orion.  Required that the star
+actually be _listed_ in one of the groups (i.e., the group column had to not be
+null, or labelled "field").  This yielded 5208 stars in some group of the Orion
+complex.
+
+----------
+Considered including Sim+2019.
+
+They did not publish membership lists, so skipped.
 
 
 

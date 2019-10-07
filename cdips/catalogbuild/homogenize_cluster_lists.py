@@ -27,7 +27,8 @@ from cdips.catalogbuild.open_cluster_xmatch_utils import (
     GaiaCollaboration2018_clusters_to_csv,
     Kharchenko2013_position_mag_match_Gaia,
     Dias2014_nbhr_gaia_to_nearestnbhr,
-    KounkelCovey2019_clusters_to_csv
+    KounkelCovey2019_clusters_to_csv,
+    Kounkel2018_orion_to_csv
 )
 from cdips.catalogbuild.moving_group_xmatch_utils import (
     make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch,
@@ -58,6 +59,7 @@ def main():
     K13 = 0
     D14 = 0
     KC19 = 0
+    K18 = 0
     # MGs
     do_BANYAN_XI = 0
     do_BANYAN_XII = 0
@@ -83,6 +85,8 @@ def main():
         Dias2014_nbhr_gaia_to_nearestnbhr()
     if KC19:
         KounkelCovey2019_clusters_to_csv()
+    if K18:
+        Kounkel2018_orion_to_csv()
 
     if do_BANYAN_XI:
         make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch()

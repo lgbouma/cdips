@@ -4,6 +4,23 @@ functions to download and wrangle catalogs of cluster members that I want to
 crossmatch against Gaia-DR2.
 
 called from `homogenize_cluster_lists.py`
+
+contents:
+Utilities:
+    given_votable_get_df
+Gaia groups:
+    Kounkel2018_orion_to_csv
+    KounkelCovey2019_clusters_to_csv
+    GaiaCollaboration2018_clusters_to_csv
+Kharchenko+2013:
+    Kharchenko2013_position_mag_match_Gaia
+    estimate_Gaia_G_given_2mass_J_Ks
+    failed_Kharchenko2013_match_Gaia
+Dias+2014:
+    Dias2014_position_mag_match_Gaia
+    make_Dias2014_cut_csv
+    make_Dias2014_cut_vot
+    Dias2014_nbhr_gaia_to_nearestnbhr
 '''
 import os, pickle, subprocess, itertools, socket
 from glob import glob
@@ -22,6 +39,60 @@ from astroquery.gaia import Gaia
 from astrobase.timeutils import precess_coordinates
 from datetime import datetime
 
+if socket.gethostname() == 'phtess2':
+    clusterdatadir = '/home/lbouma/proj/cdips/data/cluster_data/'
+elif socket.gethostname() == 'brik':
+    clusterdatadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
+else:
+    raise NotImplementedError
+
+def given_votable_get_df(votablepath, assert_equal='source_id'):
+    """
+    Given a single votable, convert to pandas DataFrame.
+
+    If the votable has Gaia source-ids, then auto-verify the 19-character
+    gaia-id doesn't suffer a too-few-bit integer truncation error.
+    """
+    vot = parse(votablepath)
+    tab = vot.get_first_table().to_table()
+    df = tab.to_pandas()
+
+    if isinstance(assert_equal, str):
+        np.testing.assert_array_equal(tab[assert_equal], df[assert_equal])
+
+    return df
+
+def Kounkel2018_orion_to_csv():
+
+    inpath = os.path.join(clusterdatadir, 'Kounkel_2018_orion_table2.vot')
+    df = given_votable_get_df(inpath, assert_equal='Gaia')
+
+    df['Group'] = df['Group'].str.decode('utf-8')
+
+    sel = ~(
+        (pd.isnull(df['Group']))
+        |
+        (df['Group'] == 'field')
+        |
+        (df['Group'] == '')
+    )
+
+    sdf = df[sel]
+
+    outdf = sdf[['Gaia','Group']]
+
+    outdf = outdf.rename(columns={"Gaia": "source_id", "Group": "cluster"})
+
+    outdf['cluster'] = np.core.defchararray.add(
+        np.repeat('k18orion_', len(outdf)), nparr(outdf['cluster'])
+    )
+
+    outpath = inpath.replace('.vot','_cut_only_source_cluster.csv')
+    outdf.to_csv(outpath, index=False)
+    print('made {}'.format(outpath))
+
+
+
 def KounkelCovey2019_clusters_to_csv():
     #
     # make "cluster,source" header dataframe with "cluster" being whatever
@@ -31,12 +102,8 @@ def KounkelCovey2019_clusters_to_csv():
     # column is assigned.
     #
 
-    if socket.gethostname() != 'phtess2':
-        raise AssertionError('paths assume phtess2')
-    datadir = '/home/lbouma/proj/cdips/data/cluster_data'
-
-    df1 = pd.read_csv(os.path.join(datadir,'KC19_string_table1.csv'))
-    df2 = pd.read_csv(os.path.join(datadir,'KC19_string_table2.csv'))
+    df1 = pd.read_csv(os.path.join(clusterdatadir,'KC19_string_table1.csv'))
+    df2 = pd.read_csv(os.path.join(clusterdatadir,'KC19_string_table2.csv'))
 
     sdf2 = df2[['group_id','name']]
 
@@ -67,8 +134,8 @@ def KounkelCovey2019_clusters_to_csv():
 def GaiaCollaboration2018_clusters_to_csv():
 
     inpaths = [
-        '../data/cluster_data/GaiaCollaboration2018_616_A10_tablea1b_beyond_250pc.vot',
-        '../data/cluster_data/GaiaCollaboration2018_616_A10_tablea1a_within_250pc.vot'
+        os.path.join(clusterdatadir,'GaiaCollaboration2018_616_A10_tablea1b_beyond_250pc.vot'),
+        os.path.join(clusterdatadir,'GaiaCollaboration2018_616_A10_tablea1a_within_250pc.vot')
     ]
 
     for inpath in inpaths:
