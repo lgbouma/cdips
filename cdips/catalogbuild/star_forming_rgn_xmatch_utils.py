@@ -104,7 +104,8 @@ def CantatGaudin2019_velaOB2_to_csv():
         nparr(outdf['cluster']).astype(str)
     )
 
-    outpath = os.path.join(clusterdatadir, 'CantatGaudin2019_velaOB2_MATCH.csv')
+    outpath = os.path.join(clusterdatadir, 'moving_groups',
+                           'CantatGaudin2019_velaOB2_MATCH.csv')
     outdf.to_csv(outpath, index=False)
     print('made {}'.format(outpath))
 

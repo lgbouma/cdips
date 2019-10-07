@@ -76,7 +76,7 @@ def main():
     do_Zari18 = 0
     do_CG19_vela = 0
 
-    do_merge_MG_catalogs = 0 #NOTE: YA, U NEED TO DO THIS.
+    do_merge_MG_catalogs = 1
     do_merge_OC_catalogs = 0
     do_merge_OC_MG_catalogs = 0
     do_final_merge = 0
@@ -127,7 +127,6 @@ def main():
 
 def fname_to_reference(fname):
 
-    #FIXME: need to add the new ones here!!!
     d = {
         'MATCHED_Gagne_2018_BANYAN_XI_GaiaDR2_crossmatched.csv':'Gagne_2018_BANYAN_XI',
         'MATCHED_Gagne_2018_BANYAN_XII_GaiaDR2_crossmatched.csv':'Gagne_2018_BANYAN_XII',
@@ -144,7 +143,10 @@ def fname_to_reference(fname):
         'Dias14_seplt5arcsec_Gdifflt2.csv':'Dias2014',
         'Zari_2018_ums_tab_cut_only_source_cluster_MATCH.csv':'Zari_2018_UMS',
         'Zari_2018_pms_tab_cut_only_source_cluster_MATCH.csv':'Zari_2018_PMS',
-        'VillaVelez_2018_DR2_PreMainSequence_MATCH.csv':'VillaVelez_2018'
+        'CantatGaudin2019_velaOB2_MATCH.csv':'CantatGaudin_2019_velaOB2',
+        'VillaVelez_2018_DR2_PreMainSequence_MATCH.csv':'Velez_2018_scoOB2',
+        'KounkelCovey2019_cut_cluster_source.csv':'Kounkel_2019',
+        'Kounkel_2018_orion_table2_cut_only_source_cluster.csv':'Kounkel_2018_Ori'
     }
 
     return d[fname]
@@ -229,6 +231,7 @@ def combine_it_final(rows):
 
     return outrow
 
+
 def merge_MG_catalogs():
     """
     merged MG member catalog will have:
@@ -267,7 +270,8 @@ def merge_MG_catalogs():
         if ('assoc' not in df.columns and
             not 'Rizzuto_11' in mgfile and
             not 'Zari_2018' in mgfile and
-            not 'VillaVelez_2018' in mgfile
+            not 'VillaVelez_2018' in mgfile and
+            not 'CantatGaudin2019' in mgfile
            ):
             raise AssertionError
         elif 'assoc' not in df.columns and (
@@ -276,6 +280,8 @@ def merge_MG_catalogs():
             sdf['assoc'] = 'ScoOB2'
         elif 'assoc' not in df.columns and 'Zari_2018' in mgfile:
             sdf['assoc'] = 'N/A'
+        elif 'assoc' not in df.columns and 'CantatGaudin2019' in mgfile:
+            sdf['assoc'] = df['cluster']
         elif 'Oh_2017' in mgfile:
             sdf['assoc'] = np.array(['Oh_'+str(a) for a in df['assoc']])
         else:
@@ -291,7 +297,7 @@ def merge_MG_catalogs():
         #
         if 'Zari_2018' in mgfile:
             sdf['ext_catalog_name'] = df['source']
-        elif 'VillaVelez_2018' in mgfile:
+        elif 'source_id' in df.columns:
             sdf['ext_catalog_name'] = df['source_id']
         else:
             sdf['ext_catalog_name'] = df['name']
@@ -299,7 +305,11 @@ def merge_MG_catalogs():
         #
         # assign distance if xmatched
         #
-        if 'Zari_2018' in mgfile or 'VillaVelez_2018' in mgfile:
+        if (
+            'Zari_2018' in mgfile or
+            'VillaVelez_2018' in mgfile or
+            'CantatGaudin2019' in mgfile
+        ):
             sdf['dist'] = 0
         else:
             sdf['dist'] = df['dist']
