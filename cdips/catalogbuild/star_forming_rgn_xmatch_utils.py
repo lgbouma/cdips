@@ -5,7 +5,7 @@ crossmatch against Gaia-DR2.
 
 called from `homogenize_cluster_lists.py`
 '''
-import os, pickle, subprocess, itertools
+import os, pickle, subprocess, itertools, socket
 from glob import glob
 
 import numpy as np, pandas as pd
@@ -18,9 +18,17 @@ from astropy import units as u, constants as c
 from astropy.io.votable import from_table, writeto, parse
 
 from astroquery.gaia import Gaia
+from astroquery.vizier import Vizier
 
 from astrobase.timeutils import precess_coordinates
 from datetime import datetime
+
+if socket.gethostname() == 'phtess2':
+    clusterdatadir = '/home/lbouma/proj/cdips/data/cluster_data/'
+elif socket.gethostname() == 'brik':
+    clusterdatadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
+else:
+    raise NotImplementedError
 
 def Zari18_stars_to_csv():
     """
@@ -55,3 +63,55 @@ def Zari18_stars_to_csv():
         )
         df.to_csv(outpath, index=False)
         print('made {}'.format(outpath))
+
+
+def CantatGaudin2019_velaOB2_to_csv():
+    # https://ui.adsabs.harvard.edu/abs/2019A%26A...626A..17C/abstract
+
+    Vizier.ROW_LIMIT = -1
+    catalog_list = Vizier.find_catalogs('J/A+A/626/A17')
+    catalogs = Vizier.get_catalogs(catalog_list.keys())
+
+    tab = catalogs[0]
+
+    df = tab.to_pandas()
+
+    outdf = df[['Source','Pop']]
+
+    outdf = outdf.rename(columns={"Source": "source_id", "Pop": "cluster"})
+
+    # Quoting Tristan, discussing Fig3 from the paper:
+    #  """
+    #  the clumps that are labeled are known "open clusters". The diffuse
+    #  stellar distribution in the middle and around was called the Vela OB2
+    #  association, supposed to be in front of the clusters or maybe in
+    #  between, and everyone thought they were unrelated objects, different
+    #  age, different history. In the figure, the colour code indicates stars
+    #  that have the same age and velocity.
+    #  My conclusion is that there is no object that can be called "Vela OB2"
+    #  association. There are clusters, and a diffuse distribution of stars around
+    #  each cluster. And the sum of all those fluffy distributions is "the
+    #  association". Aggregates of young stars are so sub-structured that it
+    #  doesn't even make sense to label all the clumps, and it can even be
+    #  difficult to guess which clump observers referred to when they looked at
+    #  those regions in the 19th century. There are ongoing debates over whether
+    #  NGC 1746 exists, for instance. Which are the stars that were originally
+    #  classified as NGC 1746, and does it even matter?
+    #  """
+
+    outdf['cluster'] = np.core.defchararray.add(
+        np.repeat('cg19velaOB2_pop', len(outdf)),
+        nparr(outdf['cluster']).astype(str)
+    )
+
+    outpath = os.path.join(clusterdatadir, 'CantatGaudin2019_velaOB2_MATCH.csv')
+    outdf.to_csv(outpath, index=False)
+    print('made {}'.format(outpath))
+
+
+def VillaVelez18_check():
+    assert os.path.exists(os.path.join(
+        clusterdatadir, 'moving_groups',
+        'VillaVelez_2018_DR2_PreMainSequence_MATCH.csv')
+    )
+

@@ -42,7 +42,9 @@ from cdips.catalogbuild.moving_group_xmatch_utils import (
     make_Oh17_GaiaDR2_crossmatch
 )
 from cdips.catalogbuild.star_forming_rgn_xmatch_utils import (
-    Zari18_stars_to_csv
+    Zari18_stars_to_csv,
+    VillaVelez18_check,
+    CantatGaudin2019_velaOB2_to_csv
 )
 
 if socket.gethostname() == 'phtess2':
@@ -72,6 +74,7 @@ def main():
     do_VillaVelez18 = 0
     # Star forming regions
     do_Zari18 = 0
+    do_CG19_vela = 0
 
     do_merge_MG_catalogs = 0 #NOTE: YA, U NEED TO DO THIS.
     do_merge_OC_catalogs = 0
@@ -108,10 +111,9 @@ def main():
     if do_Zari18:
         Zari18_stars_to_csv()
     if do_VillaVelez18:
-        assert os.path.exists(os.path.join(
-            clusterdatadir, 'moving_groups',
-            'VillaVelez_2018_DR2_PreMainSequence_MATCH.csv')
-        )
+        VillaVelez18_check()
+    if do_CG19_vela:
+        CantatGaudin2019_velaOB2_to_csv()
 
     if do_merge_MG_catalogs:
         merge_MG_catalogs()
