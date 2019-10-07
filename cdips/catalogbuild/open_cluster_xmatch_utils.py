@@ -5,9 +5,10 @@ crossmatch against Gaia-DR2.
 
 called from `homogenize_cluster_lists.py`
 '''
-import os, pickle, subprocess, itertools
+import os, pickle, subprocess, itertools, socket
 from glob import glob
 
+import numpy as np, pandas as pd
 from numpy import array as nparr
 
 from astropy.table import Table
@@ -20,6 +21,48 @@ from astroquery.gaia import Gaia
 
 from astrobase.timeutils import precess_coordinates
 from datetime import datetime
+
+def KounkelCovey2019_clusters_to_csv():
+    #
+    # make "cluster,source" header dataframe with "cluster" being whatever
+    # Kounkel & Covey gave as their crossmatched names, else groupids (if their
+    # crossmatched name was NaN). we are not including the ages now, because we
+    # are getting them in construct_unique_cluster_name_column when the age
+    # column is assigned.
+    #
+
+    if socket.gethostname() != 'phtess2':
+        raise AssertionError('paths assume phtess2')
+    datadir = '/home/lbouma/proj/cdips/data/cluster_data'
+
+    df1 = pd.read_csv(os.path.join(datadir,'KC19_string_table1.csv'))
+    df2 = pd.read_csv(os.path.join(datadir,'KC19_string_table2.csv'))
+
+    sdf2 = df2[['group_id','name']]
+
+    mdf = df1.merge(sdf2, on='group_id', how='left')
+
+    names = nparr(mdf['name'])
+    groupids = nparr(mdf['group_id'])
+
+    nullgroupids = groupids[pd.isnull(names)].astype(str)
+    baz = np.core.defchararray.add(
+        np.repeat('kc19group_', len(nullgroupids)), nullgroupids
+    )
+
+    names[pd.isnull(names)] = baz
+
+    mdf['cluster'] = names
+
+    scols = ['source_id','cluster']
+    out_df = mdf[scols]
+
+    outpath = os.path.join(
+        datadir, 'KounkelCovey2019_cut_cluster_source.csv'
+    )
+    out_df.to_csv(outpath, index=False)
+    print('made {}'.format(outpath))
+
 
 def GaiaCollaboration2018_clusters_to_csv():
 

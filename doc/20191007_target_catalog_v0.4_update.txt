@@ -1,0 +1,13 @@
+* Added Kounkel & Covey 2019 (KC19) catalog members.
+
+  "cluster" was whatever Kounkel & Covey gave as their crossmatched names, else
+  groupids (if their crossmatched name was NaN).
+
+
+* Considered including Sim+2019. They did not publish membership lists, so
+  skipped.
+
+
+
+* Changed age column to "," separated age report, either from KC19 or
+  Kharchenko+2013.

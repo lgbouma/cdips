@@ -7,15 +7,15 @@ see ../doc/list_of_cluster_member_lists.ods for an organized spreadsheet of the
 different member lists
 """
 
-import os, pickle, subprocess, itertools
+import os, pickle, subprocess, itertools, socket
 from glob import glob
 
 from numpy import array as nparr
 
 from astropy.table import Table
-from astropy.io import ascii
 from astropy.coordinates import SkyCoord
 from astropy import units as u, constants as c
+from astropy.io import ascii
 from astropy.io.votable import from_table, writeto, parse
 
 from astroquery.gaia import Gaia
@@ -26,7 +26,8 @@ from datetime import datetime
 from cdips.catalogbuild.open_cluster_xmatch_utils import (
     GaiaCollaboration2018_clusters_to_csv,
     Kharchenko2013_position_mag_match_Gaia,
-    Dias2014_nbhr_gaia_to_nearestnbhr
+    Dias2014_nbhr_gaia_to_nearestnbhr,
+    KounkelCovey2019_clusters_to_csv
 )
 from cdips.catalogbuild.moving_group_xmatch_utils import (
     make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch,
@@ -43,12 +44,20 @@ from cdips.catalogbuild.star_forming_rgn_xmatch_utils import (
     Zari18_stars_to_csv
 )
 
+if socket.gethostname() == 'phtess2':
+    clusterdatadir = '/home/lbouma/proj/cdips/data/cluster_data/'
+elif socket.gethostname() == 'brik':
+    clusterdatadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
+else:
+    raise NotImplementedError
+
 def main():
 
     # OCs
     GaiaCollab18 = 0
     K13 = 0
     D14 = 0
+    KC19 = 0
     # MGs
     do_BANYAN_XI = 0
     do_BANYAN_XII = 0
@@ -64,7 +73,7 @@ def main():
     do_merge_MG_catalogs = 0
     do_merge_OC_catalogs = 0
     do_merge_OC_MG_catalogs = 0
-    do_final_merge = 1
+    do_final_merge = 0
 
     if GaiaCollab18:
         GaiaCollaboration2018_clusters_to_csv()
@@ -72,6 +81,9 @@ def main():
         Kharchenko2013_position_mag_match_Gaia()
     if D14:
         Dias2014_nbhr_gaia_to_nearestnbhr()
+    if KC19:
+        KounkelCovey2019_clusters_to_csv()
+
     if do_BANYAN_XI:
         make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch()
     if do_BANYAN_XII:
@@ -216,7 +228,7 @@ def merge_MG_catalogs():
         dist: comma-separated string giving spatial distance of the match, if
             available, in degrees.
     """
-    datadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/moving_groups/'
+    datadir = os.path.join(clusterdatadir, 'moving_groups')
     mgfiles = glob(os.path.join(datadir,'*MATCH*.csv'))
     outpath = os.path.join(datadir,'MOVING_GROUPS_MERGED.csv')
 
@@ -294,14 +306,15 @@ def merge_OC_catalogs():
         dist: comma-separated string giving spatial distance of the match, if
             available, in degrees.
     """
-    datadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
-    ocfiles = [
-        '../data/cluster_data/CantatGaudin_2018_table2_cut_only_source_cluster.csv',
-        '../data/cluster_data/GaiaCollaboration2018_616_A10_tablea1a_within_250pc_cut_only_source_cluster.csv',
-        '../data/cluster_data/GaiaCollaboration2018_616_A10_tablea1b_beyond_250pc_cut_only_source_cluster.csv',
-        '../data/cluster_data/MWSC_Gaia_matched_concatenated.csv',
-        '../data/cluster_data/Dias14_seplt5arcsec_Gdifflt2.csv',
+    fnames = [
+        'CantatGaudin_2018_table2_cut_only_source_cluster.csv',
+        'GaiaCollaboration2018_616_A10_tablea1a_within_250pc_cut_only_source_cluster.csv',
+        'GaiaCollaboration2018_616_A10_tablea1b_beyond_250pc_cut_only_source_cluster.csv',
+        'MWSC_Gaia_matched_concatenated.csv',
+        'Dias14_seplt5arcsec_Gdifflt2.csv'
     ]
+
+    ocfiles = [os.path.join(clusterdatadir, f) for f in fnames]
 
     dfl = []
     for ocfile in ocfiles:
