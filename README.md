@@ -7,6 +7,12 @@ Description
 This repository contains documentation, code, and small chunks of data
 supporting the CDIPS project. 
 
+To download all the Sector 6 and 7 light curves from
+[CDIPS-I](https://arxiv.org/abs/1910.01133), see the repo HERE.
+
+#FIXME
+
+
 One useful tool is
 [`/doc/download_sector6_and_sector7.py`](https://github.com/lgbouma/cdips/blob/master/doc/download_sector6_and_sector7.py),
 which is a script that downloads all the Sector 6 and 7 light curves from
