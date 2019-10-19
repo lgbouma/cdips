@@ -237,7 +237,7 @@ def _get_data(sector, cdips_cat_vnum=0.3):
                 'supplemented_cdips_lc_statistics.txt')
     supplementstatsdf = pd.read_csv(supppath, sep=';')
 
-    toipath = os.path.join(database, 'toi-plus-2019-08-29.csv')
+    toipath = os.path.join(database, 'toi-plus-2019-10-19.csv')
     toidf = pd.read_csv(toipath, sep=',')
 
     ctoipath = os.path.join(database, 'ctoi-exofop-2019-08-29.csv')
