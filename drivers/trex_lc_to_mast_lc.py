@@ -27,11 +27,10 @@ import imageutils as iu
 def main():
 
     trex_lc_to_mast_lc(
-        sectors=[6,7],
+        sectors=[9],
         cams=[1,2,3,4],
         ccds=[1,2,3,4],
         make_symlinks=0,
-        make_plots=0,
         reformat_lcs=1,
         OC_MG_CAT_ver=0.4,
         cdipsvnum=1

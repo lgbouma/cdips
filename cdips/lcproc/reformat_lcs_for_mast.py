@@ -136,7 +136,7 @@ def _map_timeseries_key_to_unit(k):
     return kcd[k]
 
 
-def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
+def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
                      eigveclist=None, n_comp_df=None):
     # eigveclist: length 3, each with a np.ndarray of eigenvectors given by
     # dtr.prepare_pca
@@ -582,9 +582,11 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
 
     outname = (
         'hlsp_cdips_tess_ffi_'
-        'gaiatwo{zsourceid}-{zsector}_'
+        'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
         'tess_v{zcdipsvnum}_llc.fits'
     ).format(
+        cam=cam,
+        ccd=ccd,
         zsourceid=str(lcgaiaid).zfill(22),
         zsector=str(sectornum).zfill(4),
         zcdipsvnum=str(cdipsvnum).zfill(2)
@@ -610,9 +612,11 @@ def reformat_worker(task):
 
     outname = (
         'hlsp_cdips_tess_ffi_'
-        'gaiatwo{zsourceid}-{zsector}_'
+        'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
         'tess_v{zcdipsvnum}_llc.fits'
     ).format(
+        cam=cam,
+        ccd=ccd,
         zsourceid=str(lcgaiaid).zfill(22),
         zsector=str(sectornum).zfill(4),
         zcdipsvnum=str(cdipsvnum).zfill(2)
@@ -633,6 +637,7 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
 
     cdips_df = ccl.get_cdips_catalog(ver=0.3)
 
+    raise AssertionError('deprecation: need to correct cam/ccd and pass it')
     tasks = [(x, cdips_df, outdir, sectornum, cdipsvnum) for x in lcpaths[:300]]
 
     print('%sZ: %s files to reformat' %
@@ -652,7 +657,6 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
     return {result for result in results}
 
 
-
 def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, eigveclist=None,
                      n_comp_df=None):
 
@@ -662,9 +666,8 @@ def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, eigveclist=None,
 
         lcgaiaid = os.path.basename(lcpath).split('_')[0]
 
-        cam = os.path.dirname(lcpath).split('/')[-1].split('_')[-1].split('-')[0]
-        ccd = os.path.dirname(lcpath).split('/')[-1].split('_')[-1].split('-')[1]
-        projid = os.path.dirname(lcpath).split('/')[-1].split('_')[-1].split('-')[2]
+        cam = os.path.dirname(lcpath).split('/')[-1].split('_')[0][-1]
+        ccd = os.path.dirname(lcpath).split('/')[-1].split('_')[1][-1]
 
         outname = (
             'hlsp_cdips_tess_ffi_'
@@ -681,7 +684,8 @@ def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, eigveclist=None,
         outfile = os.path.join(outdir, outname)
 
         if not os.path.exists(outfile):
-            _reformat_header(lcpath, cdips_df, outdir, sectornum, cdipsvnum,
-                             eigveclist=eigveclist, n_comp_df=n_comp_df)
+            _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd,
+                             cdipsvnum, eigveclist=eigveclist,
+                             n_comp_df=n_comp_df)
         else:
             print('found {}'.format(outfile))
