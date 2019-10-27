@@ -1601,9 +1601,11 @@ def get_cluster_and_field_star_positions(lcpaths, cdipslcdir, outpath,
 
         cdipsname = (
             'hlsp_cdips_tess_ffi_'
-            'gaiatwo{zsourceid}-{zsector}_'
+            'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
             'tess_v{zcdipsvnum}_llc.fits'
         ).format(
+            cam=cam,
+            ccd=ccd,
             zsourceid=str(lcgaiaid).zfill(22),
             zsector=str(sector).zfill(4),
             zcdipsvnum=str(cdipsvnum).zfill(2)
@@ -1743,12 +1745,16 @@ def get_lc_stats(lcpaths, cdipslcdir, outpath, sector, cdipsvnum=1,
             hd[skey].append(d[skey])
 
         lcgaiaid = hdul[0].header['Gaia-ID']
+        cam = hdul[0].header['CAMERA']
+        ccd = hdul[0].header['CCD']
 
         cdipsname = (
             'hlsp_cdips_tess_ffi_'
-            'gaiatwo{zsourceid}-{zsector}_'
+            'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
             'tess_v{zcdipsvnum}_llc.fits'
         ).format(
+            cam=cam,
+            ccd=ccd,
             zsourceid=str(lcgaiaid).zfill(22),
             zsector=str(sector).zfill(4),
             zcdipsvnum=str(cdipsvnum).zfill(2)

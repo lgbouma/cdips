@@ -149,9 +149,11 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None):
 
         lcname = (
             'hlsp_cdips_tess_ffi_'
-            'gaiatwo{zsourceid}-{zsector}_'
+            'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
             'tess_v{zcdipsvnum}_llc.fits'
         ).format(
+            cam=cam,
+            ccd=ccd,
             zsourceid=str(sourceid).zfill(22),
             zsector=str(sector).zfill(4),
             zcdipsvnum=str(cdipsvnum).zfill(2)
@@ -277,7 +279,7 @@ def _define_and_make_directories(sector):
 def _get_lcpaths(df, tfasrdir):
     # recall all LCs (both TFA SR'd and not) are in the tfasrdir
 
-    # vet_hlsp_cdips_tess_ffi_gaiatwo0003125263468681400320-0006_tess_v01_llc.pdf
+    # vet_hlsp_cdips_tess_ffi_gaiatwo0003125263468681400320-0006-cam1-ccd1_tess_v01_llc.pdf
     lcnames = list(map(
         lambda x: x.replace('vet_','').replace('.pdf','.fits'),
         nparr(df['Name'])

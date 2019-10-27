@@ -662,11 +662,17 @@ def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, eigveclist=None,
 
         lcgaiaid = os.path.basename(lcpath).split('_')[0]
 
+        cam = os.path.dirname(lcpath).split('/')[-1].split('_')[-1].split('-')[0]
+        ccd = os.path.dirname(lcpath).split('/')[-1].split('_')[-1].split('-')[1]
+        projid = os.path.dirname(lcpath).split('/')[-1].split('_')[-1].split('-')[2]
+
         outname = (
             'hlsp_cdips_tess_ffi_'
-            'gaiatwo{zsourceid}-{zsector}_'
+            'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
             'tess_v{zcdipsvnum}_llc.fits'
         ).format(
+            cam=cam,
+            ccd=ccd,
             zsourceid=str(lcgaiaid).zfill(22),
             zsector=str(sectornum).zfill(4),
             zcdipsvnum=str(cdipsvnum).zfill(2)

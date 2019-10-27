@@ -243,9 +243,11 @@ def move_allnan_lcs(sector=None, cdipsvnum=None):
 
     lcnames = [(
         'hlsp_cdips_tess_ffi_'
-        'gaiatwo{zsourceid}-{zsector}_'
+        'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
         'tess_v{zcdipsvnum}_llc.fits'
         ).format(
+            cam='?',
+            ccd='?',
             zsourceid=str(lcgaiaid).zfill(22),
             zsector=str(sector).zfill(4),
             zcdipsvnum=str(cdipsvnum).zfill(2)
