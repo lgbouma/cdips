@@ -262,11 +262,11 @@ def construct_unique_cluster_name_column(cdips_cat_vnum=0.4):
                     how='left')
     assert len(_df) == len(fdf)
 
-    logt = nparr(_df['logt']).astype(str)
-    e_logt = nparr(_df['e_logt']).astype(str)
+    k13_logt = np.round(nparr(_df['logt']),2).astype(str)
+    k13_e_logt = np.round(nparr(_df['e_logt']),2).astype(str)
 
-    logt_prov = np.repeat('',len(fdf)).astype('>U20')
-    logt_prov[~pd.isnull(logt)] = 'Kharchenko2013'
+    k13_logt_prov = np.repeat('',len(fdf)).astype('>U20')
+    k13_logt_prov[k13_logt != 'nan'] = 'Kharchenko2013'
 
     # kounkel & covey 2019 age matches are only for the groups that were not
     # already known.  (otherwise, use the kharchenko age, which is assumed to
@@ -278,41 +278,35 @@ def construct_unique_cluster_name_column(cdips_cat_vnum=0.4):
     kc19_sdf2 = kc19_df2[['group_id','name','age']]
     kc19_mdf = kc19_df1.merge(kc19_sdf2, on='group_id', how='left')
 
-    # TODO: if the source_id is in the Kounkel & Covey table, and
-    # 'Kounkel_2019' is in the "reference" column, then report the KC19 age.
-    import IPython; IPython.embed()
+    # if the source_id is in the Kounkel & Covey table, then also report the
+    # KC19 age.
+    kc19_merge_cdips_df = fdf.merge(kc19_mdf, how='left', on='source_id')
+    assert len(kc19_merge_cdips_df) == len(fdf)
 
-    sel = (
-        _df['reference'].astype(str).str.contains('Kounkel_2019')
-    )
-    kc19_groups = _df[sel].cluster
+    kc19_logt = np.round(nparr(kc19_merge_cdips_df['age']),2).astype(str)
 
-    # a subset have group_ids. a subset have normal names. you need to use
-    # both!!
+    kc19_e_logt = np.repeat('',len(fdf)).astype('>U10')
+    kc19_e_logt[kc19_logt != 'nan'] = '0.15' # Kounkel&Covey 2019 abstract precision
 
-    kc19_group_ids = kc19_groups.str.extract(r'(kc19group_)(\d*)')[1]
+    kc19_logt_prov = np.repeat('',len(fdf)).astype('>U20')
+    kc19_logt_prov[kc19_logt != 'nan'] = 'Kounkel_2019'
 
-    groupid_df = pd.DataFrame({'group_id':kc19_group_ids.astype(int)})
-
-    groupid_mdf = groupid_df.merge(kc19_df2, on='group_id', how='left')
-    assert len(groupid_mdf) == len(groupid_df)
-
-    kc19_age = nparr(groupid_mdf['age'])
-    kc19_err_age = np.ones(len(kc19_age))*0.15
-
-    # FIXME: NEED TO NOW ","-CONCATENATE THE AGES, ERRORS, AND PROVENANCES.
     #
+    # Concatenate and separate by ",". Then remove all "nans". NOTE: if you add
+    # extra age provenances (i.e., more than K13 and KC19), this nan-stripping
+    # will require adjustments.
     #
+    logt = list(map(','.join, zip(k13_logt, kc19_logt)))
+    e_logt = list(map(','.join, zip(k13_e_logt, kc19_e_logt)))
+    logt_prov = list(map(','.join, zip(k13_logt_prov, kc19_logt_prov)))
 
-    logt[sel] = kc19_age
-    e_logt[sel] = kc19_err_age
-    logt_prov[sel] = 'KounkelCovey2019'
-
+    logt = [_.lstrip('nan,').rstrip(',nan') for _ in logt]
+    e_logt = [_.lstrip('nan,').rstrip(',nan') for _ in e_logt]
+    logt_prov = [_.lstrip(',').rstrip(',') for _ in logt_prov]
 
     fdf['logt'] = logt
     fdf['e_logt'] = e_logt
     fdf['logt_provenance'] = logt_prov
-
 
     # reformat for table to publish
     scols = ['source_id', 'cluster', 'reference', 'ext_catalog_name', 'ra',
