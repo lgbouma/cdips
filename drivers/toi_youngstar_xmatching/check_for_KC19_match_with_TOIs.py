@@ -35,7 +35,7 @@ def main():
     catalog_coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree),
                              frame='icrs')
 
-    toidate = '2019-08-29'
+    toidate = '2019-10-19'
     toidf = ccl.get_toi_catalog(ver=toidate)
 
     toi_ra, toi_dec = nparr(toidf['RA']), nparr(toidf['Dec'])

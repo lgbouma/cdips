@@ -46,6 +46,7 @@ def scp_lightcurves(lcbasenames,
 
     return 1
 
+
 def make_local_lc_directories(
     sectors=None,
     cams=None,
@@ -92,6 +93,7 @@ def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
                 projid += 1
 
     return d[_sector][_cam][_ccd]
+
 
 def symlink_cdips_lcs(
     cdips_ids,
@@ -179,7 +181,7 @@ def get_cdips_pub_catalog(ver=0.3):
     return df
 
 
-def get_toi_catalog(ver='2019-08-29'):
+def get_toi_catalog(ver='2019-10-19'):
 
     dir_d = {
         'brik':'/home/luke/Dropbox/proj/cdips/data/',
