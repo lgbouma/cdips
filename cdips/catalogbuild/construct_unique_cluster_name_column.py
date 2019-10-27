@@ -4,8 +4,6 @@ catalogbuild/homogenize_cluster_lists.py, match what you can against
 Kharchenko2013 to get cluster names and ages.
 
 (Except for KC19, which gets its original ages)
-
-we need some idea of the cluster names.
 """
 
 ###########
@@ -41,14 +39,31 @@ else:
 # code #
 ########
 
-def main(cdips_cat_vnum=0.4):
+def construct_unique_cluster_name_column(cdips_cat_vnum=0.4):
     """
     We already have a catalog with the following columns:
+
         source_id;cluster;reference;ext_catalog_name;ra;dec;pmra;pmdec;parallax;
         phot_g_mean_mag;phot_bp_mean_mag;phot_rp_mean_mag;
 
     We want to supplement it with:
-        unique_cluster_name;k13_name_match;unique_cluster_name;how_match;not_in_k13;comment;logt;e_logt;logt_provenance
+
+        unique_cluster_name;k13_name_match;how_match;not_in_k13;
+        comment;logt;e_logt;logt_provenance
+
+    ----------
+    The need for a "unique_cluster_name" is mainly in order to (a) connect with
+    other literature, and (b) know roughly how many "unique clusters" exist and
+    have been searched. The concept of "unique cluster" in substuctured regions
+    like Orion or Sco-OB2 is not defined, so whatever we arrive at for the
+    unique name should not be taken as gospel.
+
+    For "comment", we want any relevant information about the cluster (e.g., if
+    its existence is dubious, if it overlaps with other clusters, etc.)
+
+    For "logt", "e_logt", and "logt_provenance", we want both the K13 age if
+    it's available, and the KC19 age, if that's available.
+    ----------
     """
 
     cdips_df = ccl.get_cdips_catalog(ver=cdips_cat_vnum)
@@ -61,7 +76,8 @@ def main(cdips_cat_vnum=0.4):
     referencearr = nparr(cdips_df['reference'])
 
     #
-    # first, generate names for all unique non-nan cluster names.
+    # Attempt to get Kharchenko+2013 matches from a mix of cluster names and
+    # star positions (i.e., Appendix B of CDIPS-I).
     #
     inds = ~pd.isnull(clusterarr)
     sourceid = sourceid[inds]
@@ -82,17 +98,15 @@ def main(cdips_cat_vnum=0.4):
     )
 
     if not os.path.exists(namematchpath):
-        res = list( map(get_k13_name_match,
-                        zip(clusterarr, ras, decs, referencearr, repeat(k13)))
-                  )
+        res = list(map(get_k13_name_match,
+                   zip(clusterarr, ras, decs, referencearr, repeat(k13))))
 
-        resdf = pd.DataFrame(res, columns=['k13_name_match', 'how_match',
-                                           'have_name_match',
-                                           'have_mwsc_id_match',
-                                           'is_known_asterism', 'not_in_k13',
-                                           'why_not_in_k13'])
+        resdf = pd.DataFrame(res,
+            columns=['k13_name_match', 'how_match', 'have_name_match',
+                     'have_mwsc_id_match', 'is_known_asterism', 'not_in_k13',
+                     'why_not_in_k13']
+        )
         resdf['source_id'] = sourceid
-
         mdf = resdf.merge(cdips_df, how='left', on='source_id')
         mdf.to_csv(namematchpath, index=False, sep=';')
         print('made {}'.format(namematchpath))
@@ -123,10 +137,13 @@ def main(cdips_cat_vnum=0.4):
     else:
         mdf = pd.read_csv(uniqpath, sep=';')
 
-    # finally, merge against the whole cdips dataframe. using mdf as a
-    # lookup table. this is slightly off, b/c spatial matches will be slightly
-    # different. however they are a small subset, and it's better than running
-    # the above for 1e6 cases, vs 16,000
+    #
+    # Merge the unique cluster names against the whole cdips dataframe, using
+    # mdf as a lookup table. This is slightly wrong, b/c some spatial matches
+    # would give different results than using this string match. However they
+    # are a small subset, this is computationally cheaper, and assigning a
+    # unique name has inherent limitations.
+    #
     subdf = mdf[['unique_cluster_name', 'k13_name_match', 'how_match',
                  'have_name_match', 'have_mwsc_id_match', 'is_known_asterism',
                  'not_in_k13', 'why_not_in_k13', 'cluster']]
@@ -148,9 +165,9 @@ def main(cdips_cat_vnum=0.4):
     ))
 
     #
-    # merge fdf k13_name_match against K13 index, and get updated comments.
-    # join "why_not_in_k13" with "Source object type" "SType" from K13 index.
-    # this gives the "comments" column to be published.
+    # Merge fdf k13_name_match against K13 index, and get updated comments.
+    # Join "why_not_in_k13" with "Source object type" "SType" from K13 index.
+    # This gives the "comments" column.
     #
     Vizier.ROW_LIMIT = -1
     catalog_list = Vizier.find_catalogs('J/A+A/558/A53')
@@ -235,8 +252,9 @@ def main(cdips_cat_vnum=0.4):
     del _df
 
     #
-    # assign ages. first, merge against kharchenko2013. then, get the kounkel &
-    # covey 2019 age matches. update the provenance as appropriate.
+    # Assign ages. If a Kharchenko+2013 name match was found, report that age.
+    # In addition, if the star is in the Kounkel & Covey 2019 table, report
+    # their age as well.
     #
     _df = fdf.merge(k13_df,
                     left_on='k13_name_match',
@@ -244,24 +262,34 @@ def main(cdips_cat_vnum=0.4):
                     how='left')
     assert len(_df) == len(fdf)
 
-    logt = nparr(_df['logt'])
-    e_logt = nparr(_df['e_logt'])
+    logt = nparr(_df['logt']).astype(str)
+    e_logt = nparr(_df['e_logt']).astype(str)
 
-    logt_prov = np.repeat('',len(fdf)).astype('U20')
+    logt_prov = np.repeat('',len(fdf)).astype('>U20')
     logt_prov[~pd.isnull(logt)] = 'Kharchenko2013'
-
-    kc19_df1 = pd.read_csv(os.path.join(clusterdatadir,'KC19_string_table1.csv'))
-    kc19_df2 = pd.read_csv(os.path.join(clusterdatadir,'KC19_string_table2.csv'))
-    kc19_sdf2 = kc19_df2[['group_id','name','age']]
-    kc19_mdf = kc19_df1.merge(kc19_sdf2, on='group_id', how='left')
 
     # kounkel & covey 2019 age matches are only for the groups that were not
     # already known.  (otherwise, use the kharchenko age, which is assumed to
     # exist). do it by searching the cluster name. extract the groupid from the
     # name.
 
-    sel = _df['cluster'].astype(str).str.contains('kc19group_')
+    kc19_df1 = pd.read_csv(os.path.join(clusterdatadir,'KC19_string_table1.csv'))
+    kc19_df2 = pd.read_csv(os.path.join(clusterdatadir,'KC19_string_table2.csv'))
+    kc19_sdf2 = kc19_df2[['group_id','name','age']]
+    kc19_mdf = kc19_df1.merge(kc19_sdf2, on='group_id', how='left')
+
+    # TODO: if the source_id is in the Kounkel & Covey table, and
+    # 'Kounkel_2019' is in the "reference" column, then report the KC19 age.
+    import IPython; IPython.embed()
+
+    sel = (
+        _df['reference'].astype(str).str.contains('Kounkel_2019')
+    )
     kc19_groups = _df[sel].cluster
+
+    # a subset have group_ids. a subset have normal names. you need to use
+    # both!!
+
     kc19_group_ids = kc19_groups.str.extract(r'(kc19group_)(\d*)')[1]
 
     groupid_df = pd.DataFrame({'group_id':kc19_group_ids.astype(int)})
@@ -271,6 +299,10 @@ def main(cdips_cat_vnum=0.4):
 
     kc19_age = nparr(groupid_mdf['age'])
     kc19_err_age = np.ones(len(kc19_age))*0.15
+
+    # FIXME: NEED TO NOW ","-CONCATENATE THE AGES, ERRORS, AND PROVENANCES.
+    #
+    #
 
     logt[sel] = kc19_age
     e_logt[sel] = kc19_err_age
@@ -298,7 +330,6 @@ def main(cdips_cat_vnum=0.4):
     print('made {}'.format(pubpath))
 
     import IPython; IPython.embed()
-
 
 
 def get_unique_cluster_name(task):
@@ -358,7 +389,6 @@ def get_unique_cluster_name(task):
         for c in cluster.split(','):
             if not pd.isnull(c) and not c=='N/A':
                 return c
-
 
 
 def get_k13_df():
@@ -918,5 +948,6 @@ def get_k13_name_match(task):
             repr(cluster), repr(reference)))
         import IPython; IPython.embed()
 
+
 if __name__ == "__main__":
-    main()
+    construct_unique_cluster_name_column()

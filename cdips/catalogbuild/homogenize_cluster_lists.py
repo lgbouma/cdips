@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt, pandas as pd, numpy as np
 """
-goal: get Gaia DR2 IDs of stars in "clusters". these lists are then used to
-define the CDIPS stellar sample.
+Goal: get Gaia DR2 IDs of stars in "clusters". These lists define the sample of
+target stars for which we make light-curves.
 
-see ../doc/list_of_cluster_member_lists.ods for an organized spreadsheet of the
-different member lists
+See ../doc/list_of_cluster_member_lists.ods for an organized spreadsheet of the
+different member lists.
 """
 
 import os, pickle, subprocess, itertools, socket
