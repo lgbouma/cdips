@@ -49,6 +49,8 @@ OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
 LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
+OC_MG_CAT_ver=0.4
+
 def main():
 
     sectors = [6,7]
@@ -58,7 +60,7 @@ def main():
     plot_stages_of_image_processing(niceimage=0, overwrite=1)
 
     # fig N: T magnitude CDF for all CDIPS target stars.
-    plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1)
+    plot_target_star_cumulative_counts(OC_MG_CAT_ver=OC_MG_CAT_ver, overwrite=1)
 
     # fig N: catalog_to_gaia_match_statistics for CDIPS target stars
     plot_catalog_to_gaia_match_statistics(overwrite=1)
@@ -106,19 +108,20 @@ def main():
         sector=7, cam=2, ccd=4, overwrite=1, seed=42)
 
     # fig N: histogram of CDIPS target star age.
-    plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1)
+    plot_target_star_hist_logt(OC_MG_CAT_ver=OC_MG_CAT_ver, overwrite=1)
 
     # fig N: wcs quality verification for one photometric reference
     plot_wcs_verification(overwrite=1)
 
     # fig N: target star provenance
-    plot_target_star_reference_pie_chart(OC_MG_CAT_ver=0.3, overwrite=1)
+    plot_target_star_reference_pie_chart(OC_MG_CAT_ver=OC_MG_CAT_ver, overwrite=1)
 
     # fig N: tls_sde_vs_period_scatter
     plot_tls_sde_vs_period_scatter(sectors, overwrite=1)
 
     # fig N: LS period vs color evolution in time
-    plot_LS_period_vs_color_and_age(sectors, overwrite=1, OC_MG_CAT_ver=0.3)
+    plot_LS_period_vs_color_and_age(sectors, overwrite=1,
+                                    OC_MG_CAT_ver=OC_MG_CAT_ver)
 
     # fig N: histogram (or CDF) of T magnitude for LC stars
     plot_cdf_T_mag(sectors, overwrite=1)
@@ -815,7 +818,7 @@ def plot_avg_acf(sectors, size=10000, overwrite=0, percentiles=[25,50,75],
 
 
 
-def plot_LS_period_vs_color_and_age(sectors, overwrite=0, OC_MG_CAT_ver=0.3):
+def plot_LS_period_vs_color_and_age(sectors, overwrite=0, OC_MG_CAT_ver=None):
     """
     * plot lomb-scargle periodogram peak period vs Gaia-G magnitude.
       (or vs Bp-Rp).
@@ -1065,7 +1068,7 @@ def plot_catalog_to_gaia_match_statistics(overwrite=1):
         xms.plot_catalog_to_gaia_match_statistics(df, outpath, isD14=True)
 
 
-def plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1):
+def plot_target_star_cumulative_counts(OC_MG_CAT_ver=None, overwrite=1):
 
     cdips_df = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
 
@@ -1077,7 +1080,7 @@ def plot_target_star_cumulative_counts(OC_MG_CAT_ver=0.3, overwrite=1):
     psc.star_catalog_mag_histogram(cdips_df, 'phot_rp_mean_mag', savpath=outpath)
 
 
-def plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1):
+def plot_target_star_hist_logt(OC_MG_CAT_ver=None, overwrite=1):
 
     mdf = ccl.get_cdips_pub_catalog(ver=OC_MG_CAT_ver)
 
@@ -1131,7 +1134,7 @@ def plot_target_star_hist_logt(OC_MG_CAT_ver=0.3, overwrite=1):
     savefig(f, outpath)
 
 
-def plot_target_star_reference_pie_chart(OC_MG_CAT_ver=0.3, overwrite=1):
+def plot_target_star_reference_pie_chart(OC_MG_CAT_ver=None, overwrite=1):
 
     cdips_df = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
 

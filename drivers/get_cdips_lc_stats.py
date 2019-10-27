@@ -20,7 +20,7 @@ from cdips.utils import collect_cdips_lightcurves as ccl
 
 def get_cdips_lc_stats(
     sector=6,
-    cdipssource_vnum=0.3,
+    cdipssource_vnum=None,
     nworkers=32,
     overwrite=0
 ):
@@ -43,7 +43,7 @@ def get_cdips_lc_stats(
     )
     lcglob = 'cam?_ccd?/*_llc.fits'
 
-    # a cut on OC_MG_FINAL_GaiaRp_lt_16_v0.3.csv to be genfromtxt readable
+    # a cut on OC_MG_FINAL_GaiaRp_lt_16_v0.4.csv to be genfromtxt readable
     catalogfile = (
         '/nfs/phtess1/ar1/TESS/PROJ/lbouma/sourceid_and_photrpmeanmag_v{}.csv'.
         format(cdipssource_vnum)
@@ -80,7 +80,7 @@ def get_cdips_lc_stats(
 
 
 def supplement_stats_file(
-    cdipssource_vnum=0.3,
+    cdipssource_vnum=None,
     sector=6):
     """
       add crossmatching info per line:
@@ -164,7 +164,7 @@ def supplement_stats_file(
     cdips_df = ccl.get_cdips_pub_catalog(ver=cdipssource_vnum)
 
     dcols = (
-        'cluster;ext_catalog_name;reference;source_id;unique_cluster_name;k13_logt'
+        'cluster;ext_catalog_name;reference;source_id;unique_cluster_name;logt'
     )
     dcols = dcols.split(';')
     ccdf = cdips_df[dcols]
@@ -288,7 +288,7 @@ def move_allnan_lcs(sector=None, cdipsvnum=None):
 if __name__ == "__main__":
 
     sector=6
-    cdipssource_vnum=0.3
+    cdipssource_vnum=0.4
     cdipsvnum=1
 
     overwrite=1

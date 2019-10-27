@@ -22,7 +22,7 @@ from numpy import array as nparr
 from astropy import units as u
 from datetime import datetime
 
-def how_many_cdips_stars_on_silicon(sector=7, ver=0.3):
+def how_many_cdips_stars_on_silicon(sector=None, ver=None):
 
     fitsdir = (
         '/home/luke/local/cdips/fullframeimages/cal_imgs/sector-{}/'.
@@ -106,4 +106,7 @@ def how_many_cdips_stars_on_silicon(sector=7, ver=0.3):
 
 if __name__ == "__main__":
 
-    how_many_cdips_stars_on_silicon()
+    sector = 7
+    ver = 0.4
+
+    how_many_cdips_stars_on_silicon(sector=sector, ver=ver)

@@ -74,7 +74,7 @@ elif 'brik' in host:
     resultsbase = '/home/luke/Dropbox/proj/cdips/results/'
     database = '/home/luke/Dropbox/proj/cdips/data/'
 
-def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
+def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None):
     """
     ------------------------------------------
     Description:
@@ -218,7 +218,7 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.3):
                 )
 
 
-def _get_data(sector, cdips_cat_vnum=0.3):
+def _get_data(sector, cdips_cat_vnum=None):
 
     classifxn_csv = os.path.join(CLASSIFXNDIR,
                                  "sector-{}_UNANIMOUS_GOLD.csv".format(sector))
@@ -950,4 +950,5 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
 
 if __name__=="__main__":
-    main()
+    cdips_cat_vnum=0.4
+    main(cdips_cat_vnum=cdips_cat_vnum)
