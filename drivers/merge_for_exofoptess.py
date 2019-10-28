@@ -26,7 +26,7 @@ elif 'brik' in hostname:
 else:
     raise ValueError('where is fit_gold directory on {}?'.format(hostname))
 
-def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.3):
+def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
     """
     Put together a few useful CSV candidate summaries:
 

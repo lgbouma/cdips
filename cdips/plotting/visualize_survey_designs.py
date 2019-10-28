@@ -207,7 +207,7 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
     if overplot_cdips:
 
         from cdips.utils import collect_cdips_lightcurves as ccl
-        df = ccl.get_cdips_catalog(ver=0.3)
+        df = ccl.get_cdips_catalog(ver=0.4)
 
         c = SkyCoord(np.array(df['ra'])*u.deg, np.array(df['dec'])*u.deg,
                      frame='icrs')

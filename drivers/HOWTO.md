@@ -12,7 +12,7 @@ The `/drivers/` are not used. Instead, the process is:
 TO PRODUCE CANDIDATES FROM CDIPS LCS
 ----------
 
-1. make lightcurves using pipe-trex.
+1. make lightcurves using cdips-pipeline.
 
 2. run `trex_lc_to_mast_lc` (symlinks CDIPS matches into a good directory
    structure; then hard copies the LCs and reformats them into the MAST

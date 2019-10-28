@@ -635,9 +635,10 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
                               nworkers=56, maxworkertasks=1000):
     # NOTE: no speed increase, b/c it's an i/o limited process.
 
-    cdips_df = ccl.get_cdips_catalog(ver=0.3)
-
     raise AssertionError('deprecation: need to correct cam/ccd and pass it')
+
+    cdips_df = ccl.get_cdips_catalog(ver=0.4)
+
     tasks = [(x, cdips_df, outdir, sectornum, cdipsvnum) for x in lcpaths[:300]]
 
     print('%sZ: %s files to reformat' %
@@ -657,10 +658,10 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
     return {result for result in results}
 
 
-def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, eigveclist=None,
-                     n_comp_df=None):
+def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, OC_MG_CAT_ver,
+                     eigveclist=None, n_comp_df=None):
 
-    cdips_df = ccl.get_cdips_catalog(ver=0.3)
+    cdips_df = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
 
     for lcpath in lcpaths:
 

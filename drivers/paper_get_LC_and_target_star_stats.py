@@ -44,7 +44,7 @@ def paper_get_CDIPS_LC_stats(sector=None, ndet_cut=500, ncluster_cut=200):
 
 def paper_get_CDIPS_star_stats():
 
-    df = ccl.get_cdips_pub_catalog(ver=0.3)
+    df = ccl.get_cdips_pub_catalog(ver=0.4)
 
     get_CDIPS_stats(df)
 

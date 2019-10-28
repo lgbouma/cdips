@@ -141,7 +141,7 @@ def symlink_cdips_lcs(
                         print('\t found {}'.format(dst))
 
 
-def get_cdips_catalog(ver=0.3):
+def get_cdips_catalog(ver=0.4):
 
     dir_d = {
         'brik':'/home/luke/local/cdips/catalogs/',
@@ -161,7 +161,7 @@ def get_cdips_catalog(ver=0.3):
     return df
 
 
-def get_cdips_pub_catalog(ver=0.3):
+def get_cdips_pub_catalog(ver=0.4):
 
     dir_d = {
         'brik':'/home/luke/local/cdips/catalogs/',
@@ -201,7 +201,7 @@ def get_toi_catalog(ver='2019-10-19'):
     return df
 
 
-def get_cdips_sourceids(ver=0.3):
+def get_cdips_sourceids(ver=0.4):
 
     cdips_stars_path = (
         '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(ver)
@@ -244,7 +244,7 @@ def main(
     sectors=None,
     cams=None,
     ccds=None,
-    OC_MG_CAT_ver=0.3
+    OC_MG_CAT_ver=0.4
 ):
 
     if make_symlinks:
@@ -265,5 +265,5 @@ if __name__ == "__main__":
         ccds=[1,2,3,4],
         make_symlinks=1,
         make_plots=0,
-        OC_MG_CAT_ver=0.3
+        OC_MG_CAT_ver=0.4
     )

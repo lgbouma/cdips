@@ -84,7 +84,8 @@ def trex_lc_to_mast_lc(
                             cam, ccd, sector, projid)
 
                         rlm.reformat_headers(lcpaths, camccddir, sector,
-                                             cdipsvnum, eigveclist=eigveclist,
+                                             cdipsvnum, OC_MG_CAT_ver,
+                                             eigveclist=eigveclist,
                                              n_comp_df=n_comp_df)
 
 

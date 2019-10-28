@@ -22,7 +22,7 @@ def main():
 
     ##########################################
 
-    df = ccl.get_cdips_catalog(ver=0.3)
+    df = ccl.get_cdips_catalog(ver=0.4)
     if overplot_s6_results:
         pfdf = pd.read_csv(pfrespath)
     else:
