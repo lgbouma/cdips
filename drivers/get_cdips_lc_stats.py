@@ -286,18 +286,8 @@ def move_allnan_lcs(sector=None, cdipsvnum=None):
                 raise FileNotFoundError
 
 
-
-if __name__ == "__main__":
-
-    sector=6
-    cdipssource_vnum=0.4
-    cdipsvnum=1
-
-    overwrite=1
-    get_stats=1
-    make_supp_stats=1
-    print_metadata=1
-    move_allnan=1
+def main(sector, cdipssource_vnum, cdipsvnum, overwrite, get_stats=1,
+         make_supp_stats=1, print_metadata=1, move_allnan=1):
 
     if get_stats:
         get_cdips_lc_stats(
@@ -319,3 +309,19 @@ if __name__ == "__main__":
         move_allnan_lcs(
             sector=sector, cdipsvnum=cdipsvnum
         )
+
+
+if __name__ == "__main__":
+
+    sector=6
+    cdipssource_vnum=0.4
+    cdipsvnum=1
+    overwrite=1
+    get_stats=1
+    make_supp_stats=1
+    print_metadata=1
+    move_allnan=1
+
+    main(sector, cdipssource_vnum, cdipsvnum, overwrite, get_stats=get_stats,
+         make_supp_stats=make_supp_stats, print_metadata=print_metadata,
+         move_allnan=move_allnan)

@@ -14,28 +14,33 @@ TO PRODUCE CANDIDATES FROM CDIPS LCS
 
 1. make lightcurves using cdips-pipeline.
 
-2. run `trex_lc_to_mast_lc` (symlinks CDIPS matches into a good directory
-   structure; then hard copies the LCs and reformats them into the MAST
-   format).
+2. to make HLSP lightcurves and period-find: `lc_thru_periodfinding`, which
+   wraps the following steps.
 
-3. for an initial look at the rms vs mag for the LCs, run
-   `get_cdips_lc_stats`. this can also tell you how many NaNs were in the
-   run.  also writes `supplemented_cdips_lc_statistics.txt`, which is used for
-   the vetting pdfs.
+  * run `trex_lc_to_mast_lc` (symlinks CDIPS matches into a good directory
+    structure; then hard copies the LCs and reformats them into the MAST
+    format).
 
-4. to learn how many stars were expected on silicon, run
-   `how_many_cdips_stars_on_silicon`
+  * for an initial look at the rms vs mag for the LCs, run
+    `get_cdips_lc_stats`. this can also tell you how many NaNs were in the
+    run.  also writes `supplemented_cdips_lc_statistics.txt`, which is used for
+    the vetting pdfs.
 
-5. `do_initial_period_finding`: runs initial TLS and LS, to apply use for cuts
-   and pass to reconstructive TFA.
-   also writes `which_references_and_clusters_matter.txt` (to know how badly
-   your results depend on the Dias 2014 catalog)
-   also makes plots that show the distribution of results.
+  * to learn how many stars were expected on silicon, run
+    `how_many_cdips_stars_on_silicon`
 
-7. `reconstructive_tfa/RunTFASR.sh` does signal reconstruction for TFA
+  * `do_initial_period_finding`: runs initial TLS and LS, to apply use for cuts
+     and pass to reconstructive TFA.
+     also writes `which_references_and_clusters_matter.txt` (to know how badly
+     your results depend on the Dias 2014 catalog). also makes plots that show
+     the distribution of results.
+
+3. manually fine-tune your criteria for "signal detection".
+
+4. `reconstructive_tfa/RunTFASR.sh` does signal reconstruction for TFA
    lightcurves
 
-8. `make_vetting_multipg_pdf`: make a multipage PDF with the information needed
+5. `make_vetting_multipg_pdf`: make a multipage PDF with the information needed
    to make classifications for vetting.
 
     * Check `logs/vetting_pdf.log` for name-matching errors. (First pass, they

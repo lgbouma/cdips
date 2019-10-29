@@ -68,10 +68,10 @@ def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
         0.5 day periodic signal.
 
 
-        In injection-recovery tests (/tests/detrend_checks.py),  the main
-        results was that the additional trending was only helpful in detecting
-        planets whenever substantial non-gaussian variability existed in the
-        TFA light curve.
+        In injection-recovery tests (/tests/detrend_checks.py),  the result was
+        that the additional trending was only helpful in detecting planets
+        whenever substantial non-gaussian variability existed in the TFA light
+        curve.
     """
     #
     # Lomb scargle w/ uniformly weighted points.
@@ -163,6 +163,7 @@ def make_log_result(results, N_lcs):
                 print('{}: {:.0%} done'.format(datetime.utcnow().isoformat(),
                                                len(results)/N_lcs))
     return log_result
+
 
 def do_initial_period_finding(
     sectornum=6,
