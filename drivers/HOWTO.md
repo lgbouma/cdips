@@ -14,8 +14,8 @@ TO PRODUCE CANDIDATES FROM CDIPS LCS
 
 1. make lightcurves using cdips-pipeline.
 
-2. to make HLSP lightcurves and period-find: `lc_thru_periodfinding`, which
-   wraps the following steps.
+2. `lc_thru_periodfinding`: makes HLSP lightcurves and period-finds, by
+   wrapping the following steps.
 
   * run `trex_lc_to_mast_lc` (symlinks CDIPS matches into a good directory
     structure; then hard copies the LCs and reformats them into the MAST
