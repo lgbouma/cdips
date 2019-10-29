@@ -9,7 +9,7 @@ def mask_orbit_start_and_end_given_lcpaths(lcpaths):
     raise NotImplementedError
 
 def mask_orbit_start_and_end(time, flux, orbitgap=1, expected_norbits=2,
-                             orbitpadding=6/(24)):
+                             orbitpadding=6/(24), raise_expectation_error=True):
     """
     Ignore the times near the edges of orbits.
 
@@ -23,7 +23,15 @@ def mask_orbit_start_and_end(time, flux, orbitgap=1, expected_norbits=2,
     if norbits != expected_norbits:
         errmsg = 'got {} orbits, expected {}. groups are {}'.format(
             norbits, expected_norbits, repr(groups))
-        raise AssertionError(errmsg)
+
+        if raise_expectation_error:
+            raise AssertionError(errmsg)
+        elif norbits > 0 and not raise_expectation_error:
+            print('WRN! {}'.format(errmsg))
+        else:
+            # no matter what, if you don't get any data, raise the assertion
+            # error.
+            raise AssertionError(errmsg)
 
     sel = np.zeros_like(time).astype(bool)
     for group in groups:
