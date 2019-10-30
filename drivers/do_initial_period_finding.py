@@ -220,6 +220,7 @@ def do_initial_period_finding(
         print('made {}'.format(outpath))
 
     else:
+        print('found periodfinding results, loading them')
         df = pd.read_csv(outpath)
 
     # you want some idea of what references, and what clusters are most
@@ -237,51 +238,55 @@ def do_initial_period_finding(
         mdf.to_csv(outpath, index=False, sep=';')
         print('made {}'.format(outpath))
     else:
-        mdf = pd.read_csv(outpath)
+        print('found supplemented periodfinding results, loading them')
+        mdf = pd.read_csv(outpath, sep=';')
 
     u_ref, u_ref_count = np.unique(mdf['reference'], return_counts=True)
     u_cluster, u_cluster_count = np.unique(
         np.array(mdf['cluster']).astype(str), return_counts=True)
     outpath = os.path.join(outdir, 'which_references_and_clusters_matter.txt')
 
-    with open(outpath, mode='w') as f:
+    if not os.path.exists(outpath):
+        with open(outpath, mode='w') as f:
 
-        txt = (
-        """
-        ==========================================
-        of {ntotal} total CDIPS lightcurves made (including nans)
+            txt = (
+            """
+            ==========================================
+            of {ntotal} total CDIPS lightcurves made (including nans)
 
-        top 20 referred sources:
-        {top20ref}
+            top 20 referred sources:
+            {top20ref}
 
-        top 20 referred sources counts:
-        {top20refcounts}
+            top 20 referred sources counts:
+            {top20refcounts}
 
-        top 20 referred sources counts fraction:
-        {top20refcountsfrac}
+            top 20 referred sources counts fraction:
+            {top20refcountsfrac}
 
-        ==========
+            ==========
 
-        top 20 clusters quoted:
-        {top20cluster}
+            top 20 clusters quoted:
+            {top20cluster}
 
-        top 20 clusters counts:
-        {top20clustercounts}
+            top 20 clusters counts:
+            {top20clustercounts}
 
-        top 20 clusters counts fraction:
-        {top20clustercountsfrac}
-        """
-        ).format(
-            ntotal=len(mdf),
-            top20ref=repr(u_ref[np.argsort(u_ref_count)[::-1]][:20]),
-            top20refcounts=repr(u_ref_count[np.argsort(u_ref_count)[::-1]][:20]),
-            top20refcountsfrac=repr(u_ref_count[np.argsort(u_ref_count)[::-1]][:20]/len(mdf)),
-            top20cluster=repr(u_cluster[np.argsort(u_cluster_count)[::-1]][:20]),
-            top20clustercounts=repr(u_cluster_count[np.argsort(u_cluster_count)[::-1]][:20]),
-            top20clustercountsfrac=repr(u_cluster_count[np.argsort(u_cluster_count)[::-1]][:20]/len(mdf))
-        )
-        f.write(textwrap.dedent(txt))
-    print('made {}'.format(outpath))
+            top 20 clusters counts fraction:
+            {top20clustercountsfrac}
+            """
+            ).format(
+                ntotal=len(mdf),
+                top20ref=repr(u_ref[np.argsort(u_ref_count)[::-1]][:20]),
+                top20refcounts=repr(u_ref_count[np.argsort(u_ref_count)[::-1]][:20]),
+                top20refcountsfrac=repr(u_ref_count[np.argsort(u_ref_count)[::-1]][:20]/len(mdf)),
+                top20cluster=repr(u_cluster[np.argsort(u_cluster_count)[::-1]][:20]),
+                top20clustercounts=repr(u_cluster_count[np.argsort(u_cluster_count)[::-1]][:20]),
+                top20clustercountsfrac=repr(u_cluster_count[np.argsort(u_cluster_count)[::-1]][:20]/len(mdf))
+            )
+            f.write(textwrap.dedent(txt))
+        print('made {}'.format(outpath))
+    else:
+        pass
 
     # plot results distribution
     resultsdir = (
@@ -294,8 +299,7 @@ def do_initial_period_finding(
     )
     df = pd.read_csv(initpfresultspath)
 
-    # SET SNR LIMITS. at least 12 everywhere. 15 if you're in a ratty region of
-    # period space.
+    # SET MANUAL SNR LIMITS, based on plot_initial_period_finding_results
     if sectornum == 6:
         df['limit'] = np.ones(len(df))*12
         df['limit'][df['tls_period']<1] = 15

@@ -7,6 +7,9 @@ period-finding results.
 
 After running, you need to manually tune the SNR distribution for which you
 consider objects, in `do_initial_period_finding`.
+
+USAGE:
+    python -u lc_thru_periodfinding.py &> logs/s9_to_pf.log &
 """
 
 import os, shutil
@@ -37,6 +40,8 @@ def main():
                                 make_symlinks=1, reformat_lcs=1,
                                 OC_MG_CAT_ver=OC_MG_CAT_ver,
                                 cdipsvnum=cdipsvnum, outdir=outdir)
+    else:
+        print('found {} HLSP LCs; wont reformat'.format(len(lcpaths)))
 
     # get stats, make the supp data file, print out the metadata, and move
     # allnan light curves
@@ -49,6 +54,8 @@ def main():
                                 'supplemented_cdips_lc_statistics')
     if not os.path.exists(suppstatsfile) and not overwrite:
         get_cdips_lc_stats.main(sector, OC_MG_CAT_ver, cdipsvnum, overwrite)
+    else:
+        print('found {}'.format(suppstatsfile))
 
     # see how many LCs were expected
     outpath = (
@@ -58,6 +65,8 @@ def main():
     )
     if not os.path.exists(outpath) and not overwrite:
         how_many_cdips_stars_on_silicon(sector=sector, ver=OC_MG_CAT_ver)
+    else:
+        print('found {}'.format(outpath))
 
     # run initial TLS and LS
     do_initial_period_finding(
