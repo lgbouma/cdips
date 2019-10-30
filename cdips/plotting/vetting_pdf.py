@@ -1511,15 +1511,18 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
                                      verbose=True, savewcsheader=True)
     except (OSError, IndexError, TypeError) as e:
         print('downloaded FITS appears to be corrupt, retrying...')
-        dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
-                                     scaling='Linear', convolvewith=None,
-                                     sizepix=sizepix, flip=False,
-                                     cachedir='~/.astrobase/stamp-cache',
-                                     verbose=True, savewcsheader=True,
-                                     forcefetch=True)
-    except Exception as e:
-        print('failed to get DSS stamp ra {} dec {}, error was {}'.
-              format(ra, dec, repr(e)))
+        try:
+            dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
+                                         scaling='Linear', convolvewith=None,
+                                         sizepix=sizepix, flip=False,
+                                         cachedir='~/.astrobase/stamp-cache',
+                                         verbose=True, savewcsheader=True,
+                                         forcefetch=True)
+
+        except Exception as e:
+            print('failed to get DSS stamp ra {} dec {}, error was {}'.
+                  format(ra, dec, repr(e)))
+            return
 
     # image 1: TESS mean OOT. (data: cd['m_oot_flux'], wcs: cutout_wcs)
     # image 2: DSS linear. (data: dss, hdr: dss_hdr)
