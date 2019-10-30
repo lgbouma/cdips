@@ -1005,10 +1005,10 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     #
     # ax2: big text
     #
+
     if have_name_match and have_cluster_parameters:
         mwscid = str(_k13['MWSC'].iloc[0])
         n1sr2 = float(_k13['N1sr2'])
-        logt = float(_k13['logt'])
         k13type = str(_k13['Type'].iloc[0])
         if k13type == '':
             k13type = 'oc'
@@ -1017,7 +1017,6 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         mwscid = 'N/A'
         name_match = cluster
         n1sr2 = np.nan
-        logt = np.nan
         k13type = 'KNOWN ASTERISM'
         k13dist = np.nan
         k13_plx_mas = np.nan
@@ -1025,10 +1024,14 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         mwscid = 'N/A'
         name_match = 'N/A'
         n1sr2 = np.nan
-        logt = np.nan
         k13type = why_not_in_k13
         k13dist = np.nan
         k13_plx_mas = np.nan
+
+
+    logt = str(supprow['logt'].iloc[0])
+    logt_provenance = str(supprow['logt_provenance'].iloc[0])
+    comment = str(supprow['comment'].iloc[0])
 
     d = infodict
 
@@ -1038,9 +1041,11 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     Reference: {reference:s}
     Starname: {ext_catalog_name:s}
     xmatchdist: {xmatchdist:s}
+    logt: {logt:s}, prov: {logt_provenance:s}
+    Note: {comment:s}
 
     K13 match: MWSC {mwscid:s}, {name_match:s}
-    N1sr2: {n1sr2:.0f}, logt = {logt:.1f},
+    N1sr2: {n1sr2:.0f}
     type = {k13type:s}, $d_{{K13}}$ = {k13dist:.0f} pc
     Expect $\omega_{{K13}}$ = {omegak13:.2f} mas
     Got $\omega_{{DR2}}$ = {plx_mas:.2f} $\pm$ {plx_mas_err:.2f} mas
@@ -1060,7 +1065,6 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
             mwscid=mwscid,
             name_match=name_match,
             n1sr2=n1sr2,
-            logt=logt,
             k13type=k13type,
             k13dist=k13dist,
             omegak13=k13_plx_mas,
@@ -1083,7 +1087,10 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
             ext_catalog_name=d['ext_catalog_name'],
             xmatchdist=','.join(
                 ['{:.1e}"'.format(3600*float(l)) for l in str(d['dist']).split(',')]
-            )
+            ),
+            logt=logt,
+            logt_provenance=logt_provenance,
+            comment=comment
         )
     except Exception as e:
         outstr = 'clusterdetails: got bug {}'.format(e)
