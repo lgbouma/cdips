@@ -10,8 +10,6 @@ from astropy.io import fits
 from astropy import wcs
 from datetime import datetime
 
-from cdips.lcproc import mask_orbit_edges as moe
-
 from astropy import units as u, constants as const
 from astropy.coordinates import SkyCoord
 

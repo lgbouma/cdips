@@ -65,7 +65,9 @@ def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
 
     time, mag = lc_sr['TMID_BJD'], lc_sr[fluxap]
     try:
-        time, mag = moe.mask_orbit_start_and_end(time, mag)
+        time, mag = moe.mask_orbit_start_and_end(
+            time, mag, raise_expectation_error=False
+        )
     except AssertionError:
         # got more gaps than expected. ignore.
         pass
@@ -160,15 +162,22 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
     # trim to orbit gaps
     if isinstance(tfatime,np.ndarray):
         try:
-            tfatime, tfamag = moe.mask_orbit_start_and_end(tfatime, tfamag)
+            tfatime, tfamag = moe.mask_orbit_start_and_end(
+                tfatime, tfamag, raise_expectation_error=False
+            )
         except AssertionError:
             # got more gaps than expected. ignore.
             pass
     else:
         raise NotImplementedError
     try:
-        _, rawmag = moe.mask_orbit_start_and_end(time, rawmag)
-        time, bkgdval = moe.mask_orbit_start_and_end(time, bkgdval)
+        _, rawmag = moe.mask_orbit_start_and_end(
+            time, rawmag, raise_expectation_error=False
+        )
+        time, bkgdval = moe.mask_orbit_start_and_end(
+            time, bkgdval, raise_expectation_error=False
+        )
+
     except AssertionError:
         # got more gaps than expected. ignore.
         pass
@@ -318,8 +327,10 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
         masked_yvals = []
         times = []
         for yval in yvals:
-            masked_yvals.append(moe.mask_orbit_start_and_end(time, yval)[1])
-            times.append(moe.mask_orbit_start_and_end(time, yval)[0])
+            masked_yvals.append(moe.mask_orbit_start_and_end(
+                time, yval, raise_expectation_error=False)[1])
+            times.append(moe.mask_orbit_start_and_end(
+                time, yval, raise_expectation_error=False)[0])
         yvals = masked_yvals
         time = times[0]
     except AssertionError:
@@ -514,7 +525,9 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                         sigclip=[50,5]):
 
     try:
-        time, tfasrmag = moe.mask_orbit_start_and_end(tfatime, tfasrmag)
+        time, tfasrmag = moe.mask_orbit_start_and_end(
+            tfatime, tfasrmag, raise_expectation_error=False
+        )
     except AssertionError:
         # got more gaps than expected. ignore.
         time, tfasrmag = tfatime, tfasrmag
