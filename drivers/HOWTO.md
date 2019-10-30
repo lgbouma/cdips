@@ -35,7 +35,8 @@ TO PRODUCE CANDIDATES FROM CDIPS LCS
      your results depend on the Dias 2014 catalog). also makes plots that show
      the distribution of results.
 
-3. manually fine-tune your criteria for "signal detection".
+3. manually fine-tune your criteria for "signal detection" & update
+   `do_initial_period_finding.py`.
 
 4. `reconstructive_tfa/RunTFASR.sh` does signal reconstruction for TFA
    lightcurves
