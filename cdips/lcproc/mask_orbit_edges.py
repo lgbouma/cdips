@@ -4,10 +4,6 @@ import os, textwrap
 from glob import glob
 from datetime import datetime
 
-def mask_orbit_start_and_end_given_lcpaths(lcpaths):
-    #TODO
-    raise NotImplementedError
-
 def mask_orbit_start_and_end(time, flux, orbitgap=1, expected_norbits=2,
                              orbitpadding=6/(24), raise_expectation_error=True):
     """
