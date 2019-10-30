@@ -656,6 +656,7 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
     """
     )
     try:
+        max_nchar = 20
         outstr = txt.format(
             ticid=str(d['TICID']),
             ticdist=float(d['TICDIST']),
@@ -698,12 +699,12 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
             plx_mas_err=float(supprow['Parallax_error[mas][7]']),
             dist_pc=float(hdr['TICGDIST']),
             AstExcNoiseSig=d['AstExcNoiseSig'],
-            cluster='N/A' if pd.isnull(d['cluster']) else d['cluster'],
-            reference=d['reference'],
-            ext_catalog_name=d['ext_catalog_name'],
+            cluster='N/A' if pd.isnull(d['cluster']) else d['cluster'][:max_nchar],
+            reference=d['reference'][:max_nchar],
+            ext_catalog_name=d['ext_catalog_name'][:max_nchar],
             xmatchdist=','.join(
                 ['{:.1e}"'.format(3600*float(l)) for l in str(d['dist']).split(',')]
-            )
+            )[:max_nchar]
         )
     except Exception as e:
         outstr = 'ERR! transitcheckdetails: got bug {}'.format(e)
@@ -850,14 +851,6 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     if not pd.isnull(mdf['k13_name_match'].iloc[0]):
         have_name_match = True
         name_match = mdf['k13_name_match'].iloc[0]
-
-    comment = ''
-    have_comment = False
-    if have_name_match:
-        nrow = k13_notes_df[k13_notes_df['Name'] == name_match]
-        if not pd.isnull(nrow['Note'].iloc[0]):
-            have_comment = True
-            comment = nrow['Note'].iloc[0]
 
     is_known_asterism = False
     if not pd.isnull(mdf['is_known_asterism'].iloc[0]):
@@ -1031,6 +1024,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
 
     logt = str(supprow['logt'].iloc[0])
     logt_provenance = str(supprow['logt_provenance'].iloc[0])
+
     comment = str(supprow['comment'].iloc[0])
 
     d = infodict
@@ -1042,7 +1036,6 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     Starname: {ext_catalog_name:s}
     xmatchdist: {xmatchdist:s}
     logt: {logt:s}, prov: {logt_provenance:s}
-    Note: {comment:s}
 
     K13 match: MWSC {mwscid:s}, {name_match:s}
     N1sr2: {n1sr2:.0f}
@@ -1061,11 +1054,12 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     """
     )
     try:
+        max_nchar = 20
         outstr = txt.format(
             mwscid=mwscid,
             name_match=name_match,
             n1sr2=n1sr2,
-            k13type=k13type,
+            k13type=k13type[:max_nchar],
             k13dist=k13dist,
             omegak13=k13_plx_mas,
             sourceid=hdr['Gaia-ID'],
@@ -1082,26 +1076,22 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
             plx_mas=float(supprow['Parallax[mas][6]']),
             plx_mas_err=float(supprow['Parallax_error[mas][7]']),
             dist_pc=1/(1e-3 * float(hdr['Parallax[mas]'])),
-            cluster='N/A' if pd.isnull(d['cluster']) else d['cluster'],
-            reference=d['reference'],
-            ext_catalog_name=d['ext_catalog_name'],
+            cluster='N/A' if pd.isnull(d['cluster']) else d['cluster'][:max_nchar],
+            reference=d['reference'][:max_nchar],
+            ext_catalog_name=d['ext_catalog_name'][:max_nchar],
             xmatchdist=','.join(
                 ['{:.1e}"'.format(3600*float(l)) for l in str(d['dist']).split(',')]
-            ),
+            )[:max_nchar],
             logt=logt,
-            logt_provenance=logt_provenance,
-            comment=comment
+            logt_provenance=logt_provenance
         )
     except Exception as e:
         outstr = 'clusterdetails: got bug {}'.format(e)
         print(outstr)
 
-    if have_comment:
-        if len(comment)>=1:
-            comment = _insert_newlines(comment, every=30)
-            outstr = textwrap.dedent(outstr) + '\nK13Note: '+comment
-        else:
-            outstr = textwrap.dedent(outstr)
+    if len(comment)>=1:
+        comment = _insert_newlines(comment, every=30)
+        outstr = textwrap.dedent(outstr) + '\nNote: '+comment
     else:
         outstr = textwrap.dedent(outstr)
 
