@@ -164,7 +164,7 @@ def supplement_stats_file(
     cdips_df = ccl.get_cdips_pub_catalog(ver=cdipssource_vnum)
 
     dcols = (
-        'cluster;ext_catalog_name;reference;source_id;unique_cluster_name;logt'
+        'cluster;ext_catalog_name;reference;source_id;unique_cluster_name;logt;logt_provenance;comment'
     )
     dcols = dcols.split(';')
     ccdf = cdips_df[dcols]
@@ -313,14 +313,14 @@ def main(sector, cdipssource_vnum, cdipsvnum, overwrite, get_stats=1,
 
 if __name__ == "__main__":
 
-    sector=6
+    sector=9
     cdipssource_vnum=0.4
     cdipsvnum=1
-    overwrite=1
-    get_stats=1
+    overwrite=0
+    get_stats=0
     make_supp_stats=1
-    print_metadata=1
-    move_allnan=1
+    print_metadata=0
+    move_allnan=0
 
     main(sector, cdipssource_vnum, cdipsvnum, overwrite, get_stats=get_stats,
          make_supp_stats=make_supp_stats, print_metadata=print_metadata,

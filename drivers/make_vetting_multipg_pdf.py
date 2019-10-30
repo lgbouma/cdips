@@ -376,7 +376,7 @@ def main(sector=None, cdips_cat_vnum=None):
               'cdips/results/cdips_lc_periodfinding/'
               'sector-{}/'.format(sector)+
               'initial_period_finding_results_supplemented.csv')
-    pfdf = pd.read_csv(pfpath)
+    pfdf = pd.read_csv(pfpath, sep=';')
 
     toipath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
               'cdips/data/toi-plus-2019-10-19.csv')
