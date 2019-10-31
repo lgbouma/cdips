@@ -621,8 +621,6 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
         d['psdepthratioerr'] = np.nan
     if d['period'] == 0:
         d['period'] = np.nan
-    if float(hdr['Parallax[mas]']) == 0:
-        hdr['Parallax[mas]'] = np.nan
 
     txt = (
     """
