@@ -87,11 +87,13 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # page 1
         ##########
         fluxap = 'TFA2' if is_pspline_dtr else 'TFASR2'
-        fig, tlsp, spdm = vp.two_periodogram_checkplot(
+        fig, tlsp, _ = vp.two_periodogram_checkplot(
             lc_sr, hdr, supprow, pfrow, mask_orbit_edges=mask_orbit_edges,
             fluxap=fluxap, nworkers=nworkers)
         pdf.savefig(fig)
         plt.close()
+        if pd.isnull(tlsp):
+            return
 
         ##########
         # page 2

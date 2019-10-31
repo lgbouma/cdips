@@ -85,13 +85,17 @@ def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
     spdm = periodbase.stellingwerf_pdm(time, flux, err, magsarefluxes=True,
                                        startp=0.1, endp=19, nworkers=nworkers)
 
-    tlsp = periodbase.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
-                                         tls_rstar_min=0.1, tls_rstar_max=10,
-                                         tls_mstar_min=0.1, tls_mstar_max=5.0,
-                                         tls_oversample=8, tls_mintransits=1,
-                                         tls_transit_template='default',
-                                         nbestpeaks=5, sigclip=[50.,5.],
-                                         nworkers=nworkers)
+    try:
+        tlsp = periodbase.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
+                                             tls_rstar_min=0.1, tls_rstar_max=10,
+                                             tls_mstar_min=0.1, tls_mstar_max=5.0,
+                                             tls_oversample=8, tls_mintransits=1,
+                                             tls_transit_template='default',
+                                             nbestpeaks=5, sigclip=[50.,5.],
+                                             nworkers=nworkers)
+    except ValueError as e:
+        fig = plt.Figure(figsize=(30,24))
+        return fig, np.nan, np.nan
 
     objectinfo = {}
     keys = ['objectid','ra','decl','pmra','pmdecl','teff','gmag']
