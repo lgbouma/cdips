@@ -149,7 +149,10 @@ def construct_unique_cluster_name_column(cdips_cat_vnum=0.4):
                  'not_in_k13', 'why_not_in_k13', 'cluster']]
 
     print('beginning big merge...')
+
     fdf = cdips_df.merge(subdf, on='cluster', how='left')
+
+    assert len(fdf) == len(cdips_df)
 
     print(42*'#')
     print('# unique cluster names: {}'.format(
@@ -465,11 +468,9 @@ def get_k13_name_match(task):
     #
     # lowest name match priority: whatever KC2019 said!
     #
-    if reference in ['Kounkel_2019']:
+    if reference in ['Kounkel_2019'] and reference.startswith('kc19group_'):
 
-        # Half of these do have meaningful Kharchenko+2013 matches. However I'm
-        # not super interested in Kharchenko's derived properties when KC19's
-        # membership led to the inclusion.
+        # Don't attempt Kharchenko matches for the new KC2019 groups.
         not_in_k13 = True
         why_not_in_k13 = 'kc19_gaia_supersedes'
         return (np.nan, how_match, have_name_match, have_mwsc_id_match,
@@ -617,10 +618,13 @@ def get_k13_name_match(task):
 
     for trystr in trystrs:
         if trystr in nparr(k13['Name']):
-            have_name_match=True
+            have_name_match = True
             name_match = trystr
             how_match = 'string_match'
+            not_in_k13 = False
+            why_not_in_k13 = ''
             break
+
 
     #
     # try if SIMBAD's name matcher has anything.
@@ -910,17 +914,6 @@ def get_k13_name_match(task):
         name_match = np.nan
 
     #
-    # lowest name match priority: whatever KC2019 said (even if there are
-    # others)!
-    #
-    if 'Kounkel_2019' in reference:
-
-        not_in_k13 = True
-        why_not_in_k13 = 'kc19_gaia_supersedes'
-        return (np.nan, how_match, have_name_match, have_mwsc_id_match,
-                is_known_asterism, not_in_k13, why_not_in_k13)
-
-    #
     # finally, if we failed to get matches above, (e.g., for some of the IR
     # Majaess clusters), skip
     #
@@ -932,6 +925,21 @@ def get_k13_name_match(task):
             return (np.nan, how_match, have_name_match, have_mwsc_id_match,
                     is_known_asterism, not_in_k13, why_not_in_k13)
 
+    if have_name_match:
+
+        return (name_match, how_match, have_name_match, have_mwsc_id_match,
+                is_known_asterism, not_in_k13, why_not_in_k13)
+
+    #
+    # lowest name match priority: whatever KC2019 said (even if there are
+    # others)!
+    #
+    if 'Kounkel_2019' in reference:
+
+        not_in_k13 = True
+        why_not_in_k13 = 'kc19_gaia_lastmatch'
+        return (np.nan, how_match, have_name_match, have_mwsc_id_match,
+                is_known_asterism, not_in_k13, why_not_in_k13)
 
 
     try:
