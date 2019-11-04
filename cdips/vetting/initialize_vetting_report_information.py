@@ -8,13 +8,13 @@ import numpy as np, pandas as pd
 from cdips.utils import collect_cdips_lightcurves as ccl
 from astroquery.vizier import Vizier
 
-def initialize_vetting_report_information(sector, cdips_cat_vnum):
+def initialize_vetting_report_information(
+    sector, cdips_cat_vnum,
+    baseresultsdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting/'
+):
 
-    resultsdir = (
-        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
-        'vetting/'
-        'sector-{}'.format(sector)
-    )
+    resultsdir = os.path.join(baseresultsdir, 'sector-{}'.format(sector))
+
     dirs = [resultsdir, os.path.join(resultsdir,'pdfs'),
             os.path.join(resultsdir,'pkls'),
             os.path.join(resultsdir,'nottransitpdfs'),

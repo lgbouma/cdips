@@ -1,6 +1,7 @@
 import os
 import numpy as np, pandas as pd
 from astropy.io import fits
+from cdips.vetting.make_vetting_multipg_pdf import make_vetting_multipg_pdf
 
 def _get_supprow(sourceid, supplementstatsdf):
 
@@ -65,8 +66,8 @@ def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
             raise AssertionError(errmsg)
 
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
-            mvmp.make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
-                                          sourceid, supprow, suppfulldf, pfdf,
-                                          pfrow, toidf, sector, k13_notes_df)
+            make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
+                                     sourceid, supprow, suppfulldf, pfdf,
+                                     pfrow, toidf, sector, k13_notes_df)
         else:
             print('found {}, continue'.format(outpath))

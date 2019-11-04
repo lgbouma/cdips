@@ -28,3 +28,4 @@ tests/*png
 *review*
 *xlsx
 *s6_s7_curl_script.sh*
+tests/test_vetting_reports/*
