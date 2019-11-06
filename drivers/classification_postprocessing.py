@@ -1,19 +1,26 @@
-import os, shutil
+import os, shutil, socket
 from glob import glob
 import pandas as pd, numpy as np
 from functools import reduce
 
+host = socket.gethostname()
+if host != 'brik':
+    raise NotImplementedError('Paths are defined on brik.')
+
 def main():
-    isfull = 0
+    isfull = 1
     iscollabsubclass = 0
-    getgold = 1
+    getgold = 0
+
+    sector = 9
+    today = '20191101'
 
     if isfull:
-        given_full_classifications_organize(sector=7, today='20190618')
+        given_full_classifications_organize(sector=sector, today=today)
     if iscollabsubclass:
-        given_collab_subclassifications_merge(sector=7)
+        given_collab_subclassifications_merge(sector=sector)
     if getgold:
-        given_merged_gold_organize_PCs(sector=7)
+        given_merged_gold_organize_PCs(sector=sector)
 
 
 def ls_to_df(classfile, classifier='LGB'):
@@ -138,11 +145,6 @@ def given_merged_gold_organize_PCs(sector=None):
             print('copied {} -> {}'.format(src, dst))
         else:
             print('found {}'.format(dst))
-
-
-    import IPython; IPython.embed()
-
-
 
 
 def given_full_classifications_organize(
