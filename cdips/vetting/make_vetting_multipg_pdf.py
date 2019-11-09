@@ -191,7 +191,14 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         else:
             _pfdf = None
 
-        fig = vp.centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,24))
+        fig, catalog_to_gaussian_sep_arcsec = (
+            vp.centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,24))
+        )
+        if not isinstance(catalog_to_gaussian_sep_arcsec, float):
+            catalog_to_gaussian_sep_arcsec = 0
+        infodict['catalog_to_gaussian_sep_arcsec'] = (
+            catalog_to_gaussian_sep_arcsec
+        )
         if fig is not None:
             pdf.savefig(fig)
         plt.close()
@@ -203,7 +210,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         d = pdf.infodict()
         d['Title'] = 'CDIPS vetting report for GAIADR2-{}'.format(sourceid)
         d['Author'] = 'Luke Bouma'
-        d['Keywords'] = 'STARS & PLANETS'
+        d['Keywords'] = 'stars | planets'
         d['CreationDate'] = datetime.today()
         d['ModDate'] = datetime.today()
 
@@ -223,6 +230,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # * primary depth is >10%
         # * primary/secondary depth ratios from gaussian fitting in range of
         #   ~1.2-7, accounting for 1-sigma formal uncertainty in measurement
+        # * the OOT - intra image gaussian fit centroid is > 2 pixels off the
+        #   catalog position.
         ##########
         if (
         (float(supprow['ndet_tf2']) < 100) or
@@ -232,7 +241,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ( (float(infodict['psdepthratio'] - infodict['psdepthratioerr']) > 1.2)
          &
          (float(infodict['psdepthratio'] + infodict['psdepthratioerr']) < 5.0)
-        )
+        ) or
+        (float(infodict['catalog_to_gaussian_sep_arcsec']) > 42)
         ):
             isobviouslynottransit = True
         else:
@@ -244,7 +254,3 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             dst = path.replace('pdfs','nottransitpdfs')
             shutil.move(src,dst)
             print('found was nottransit. moved {} -> {}'.format(src,dst))
-
-
-
-
