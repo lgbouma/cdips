@@ -1263,13 +1263,6 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     # ax4: OOT-intra SNR
     # ax5 (and 9): text
 
-    # ax0 = plt.subplot2grid((2, 3), (0, 0))
-    # ax1 = plt.subplot2grid((2, 3), (0, 1))
-    # ax2 = plt.subplot2grid((2, 3), (0, 2))
-    # ax3 = plt.subplot2grid((2, 3), (1, 0))
-    # ax4 = plt.subplot2grid((2, 3), (1, 1))
-    # ax5 = plt.subplot2grid((2, 3), (1, 2))
-
     ax0 = plt.subplot2grid((3, 3), (0, 0), projection=cutout_wcs)
     ax1 = plt.subplot2grid((3, 3), (0, 1), projection=cutout_wcs)
     ax2 = plt.subplot2grid((3, 3), (0, 2), projection=cutout_wcs)
@@ -1329,20 +1322,24 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     # (over sectors) centroid offset.
     #
 
-    ax2.scatter(px, py, marker='x', c='k', s=15, rasterized=True, zorder=2,
-                linewidths=1)
+    scalefactor=250
+    sizes = scalefactor * (1/tmags)
 
-    ax2.scatter(target_x, target_y, marker='*', c='C0', s=60, rasterized=True,
-                zorder=3, linewidths=1)
+    ax2.scatter(px, py, marker='o', edgecolors='k', s=sizes, rasterized=True,
+                zorder=2, linewidths=1, facecolors='none')
+
+    ax2.scatter(target_x, target_y, marker='o', edgecolors='C0',
+                facecolors='C0', s=sizes[0], rasterized=True, zorder=3,
+                linewidths=1)
 
     for ix, _px, _py, ticid, tmag in zip(np.arange(len(px)),
                                          px,py,ticids,tmags):
-        txtstr = '{:d}, {:.1f}'.format(ix, tmag)
+        txtstr = '{:d}'.format(ix)
         if ix==0:
-            ax2.text(_px, _py, txtstr, ha='center', va='bottom', fontsize=22,
+            ax2.text(_px, _py, txtstr, ha='center', va='bottom', fontsize=18,
                      zorder=4, color='C0')
         else:
-            ax2.text(_px, _py, txtstr, ha='center', va='bottom', fontsize=22,
+            ax2.text(_px, _py, txtstr, ha='center', va='bottom', fontsize=18,
                      zorder=4, color='k')
 
     # white background, for size scale
@@ -1365,23 +1362,34 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
 
     #
     # ax3: oot - intra
+    # fit 2d gaussian to the inner 6x6 pixels to find centroid
     #
+    from photutils.centroids import fit_2dgaussian
+
+    img = cd['m_oot_minus_intra_flux']
+    mask = np.ones((10,10))
+    mask[2:8,2:8] -= 1
+    gfit = fit_2dgaussian(img, mask=mask.astype(bool))
 
     cset3 = ax3.imshow(cd['m_oot_minus_intra_flux'], cmap='YlGnBu_r',
                        origin='lower', zorder=1)
 
     cen_x, cen_y = (cd['ctds_oot_minus_intra'][:,0],
                     cd['ctds_oot_minus_intra'][:,1])
-    sel = (cen_x > 0) & (cen_x < 9) & (cen_y > 0) & (cen_y < 9)
-    ax3.scatter(cen_x[sel], cen_y[sel], marker='*', linewidths=1,
-                rasterized=True, c='fuchsia', alpha=0.9, zorder=3, s=60)
 
-    ax3.scatter(px, py, marker='x', c='r', s=15, rasterized=True, zorder=2,
+    ax3.plot(gfit.x_mean.value, gfit.y_mean.value, mew=0.5,
+             zorder=3, markerfacecolor='white', markersize=25, marker='*',
+             color='k', lw=0)
+
+    ax3.scatter(px, py, marker='x', c='r', s=20, rasterized=True, zorder=4,
                 linewidths=1)
     ax3.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
              markersize=25, marker='*', color='k', lw=0)
 
-    ax3.set_title('OOT - in. (cyan *: centroid per transit)', fontsize='xx-large')
+    ax3.set_title('OOT - in. (cyan *: 2d gaussian fit)', fontsize='xx-large')
+
+    catalog_to_gaussian_sep_px = np.sqrt((target_x - gfit.x_mean.value)**2 +
+                                         (target_y - gfit.y_mean.value)**2)
 
     cb3 = fig.colorbar(cset3, ax=ax3, extend='neither', fraction=0.046, pad=0.04)
 
@@ -1427,28 +1435,24 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     _coord = SkyCoord(_coord[0], _coord[1], unit=(u.deg), frame='icrs')
     sep = float(_coord.separation(c_obj).to(u.arcsec).value)
 
-    # for error, assume error on the centroid dominates that of the catalog
-    # position
+    catalog_to_gaussian_sep_arcsec = catalog_to_gaussian_sep_px*21
 
-    err_x = np.std(cen_x[sel])
-    err_y = np.std(cen_y[sel])
-    err_sep_px = np.sqrt(err_x**2 + err_y**2)
-    err_sep_arcsec = err_sep_px*21 # 21 arcsec/px
+    # determining the error is tricky! the question is "with what precision
+    # have you measured the center of light in the OOT-intra image?" is worked
+    # out in some detail by Bryson+2013 https://arxiv.org/pdf/1303.0052.pdf
 
     txt = (
     """
     DR2 {sourceid}
-    ctd |OOT-intra|: {delta_ctd_arcsec:.1f}" ({delta_ctd_sigma:.1f}$\sigma$)
-    ctlg - <OOT-intra>: {sep:.1f}" ({sepsnr:.1f}$\sigma$)
+    ctlg - <OOT-intra>: {sep:.1f}"
+    ctlg - gauss(OOT-intra): {catalog_to_gaussian_sep_arcsec:.1f}"
     """
     )
     try:
         outstr = txt.format(
             sourceid=hdr['Gaia-ID'],
-            delta_ctd_arcsec=cd['delta_ctd_arcsec'],
-            delta_ctd_sigma=cd['delta_ctd_sigma'],
             sep=sep,
-            sepsnr=sep/err_sep_arcsec
+            catalog_to_gaussian_sep_arcsec=catalog_to_gaussian_sep_arcsec
         )
     except Exception as e:
         outstr = 'centroid analysis: got bug {}'.format(e)
@@ -1572,4 +1576,4 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     ax5.text(txt_x, txt_y, outstr, ha='left', va='top',
              fontsize=22, zorder=2, transform=ax5.transAxes)
 
-    return fig
+    return fig, catalog_to_gaussian_sep_arcsec
