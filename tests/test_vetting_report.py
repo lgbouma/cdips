@@ -20,7 +20,9 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
                                                        baseresultsdir=outdir)
     )
 
-    id_to_test = '5256502966294604800'
+    # id_to_test = '5256502966294604800'  # PC
+    # id_to_test = '5524965566445719168'  # EB offtarget
+    id_to_test = '4666329826478795008'  # contact binary
 
     existing_report_files = glob(
         'test_vetting_reports/*/*/*{}*pdf'.format(id_to_test)
