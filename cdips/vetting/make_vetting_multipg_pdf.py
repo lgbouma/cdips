@@ -233,6 +233,15 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # * the OOT - intra image gaussian fit centroid is > 2 pixels off the
         #   catalog position.
         ##########
+
+        logt = supprow['logt'].iloc[0]
+        if not pd.isnull(logt):
+            if ',' in str(logt):
+                logt_split = list(map(float,logt.split(',')))
+                logt = np.mean(logt_split)
+            if not pd.isnull(logt):
+                logt = float(logt)
+
         isobviouslynottransit = False
         whynottransit = []
         if float(supprow['ndet_tf2']) < 100:
@@ -247,10 +256,6 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             isobviouslynottransit = True
             whynottransit.append('SNR < 8')
 
-        if float(infodict['rp']) > 67.25:
-            isobviouslynottransit = True
-            whynottransit.append('Rp > 67.25')
-
         if ((float(infodict['psdepthratio'] - infodict['psdepthratioerr']) > 1.2)
             &
             (float(infodict['psdepthratio'] + infodict['psdepthratioerr']) < 5.0)
@@ -261,6 +266,15 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         if float(infodict['catalog_to_gaussian_sep_arcsec']) > 42:
             isobviouslynottransit = True
             whynottransit.append('catalog_to_gaussian_sep > 2px')
+
+        if not pd.isnull(logt):
+            if logt > 9 and float(infodict['rp']) > (3*u.Rjup).to(u.Rearth).value:
+                isobviouslynottransit = True
+                whynottransit.append('age>1Gyr and Rp > 3Rjup')
+
+        if float(infodict['rp']) > (6*u.Rjup).to(u.Rearth).value:
+            isobviouslynottransit = True
+            whynottransit.append('Rp > 6Rjup')
 
 
     if isobviouslynottransit:
