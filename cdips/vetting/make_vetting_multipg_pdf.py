@@ -141,8 +141,10 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 5
         ##########
-        fig = vp.cluster_membership_check(hdr, supprow, infodict, suppfulldf,
-                                          mdf, k13_notes_df, figsize=(30,16))
+        fig, mmbr_dict = vp.cluster_membership_check(hdr, supprow, infodict,
+                                                     suppfulldf, mdf,
+                                                     k13_notes_df,
+                                                     figsize=(30,16))
         pdf.savefig(fig)
         plt.close()
 
@@ -225,13 +227,16 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # * depth < 0.85
         # * rp > 6 R_jup = 67.25 R_earth. Based on 2x the limit given at 1Myr
         #   in Burrows+2001, figure 3.
+        # * rp > 3 R_jup and age > 1Gyr
         # * SNR from TLS is < 8 (these will be unbelievable no matter what.
         #   they might exist b/c TFA SR could have lowered overall SDE/SNR)
-        # * primary depth is >10%
         # * primary/secondary depth ratios from gaussian fitting in range of
-        #   ~1.2-7, accounting for 1-sigma formal uncertainty in measurement
+        #   ~1.2-5, accounting for 1-sigma formal uncertainty in measurement
         # * the OOT - intra image gaussian fit centroid is > 2 pixels off the
         #   catalog position.
+        # * Kharchenko+2013 gave a cluster parallax, and the GaiaDR2 measured
+        #   parallax is >5 sigma away from it. (these are 99% of the time
+        #   backgruond stars).
         ##########
 
         logt = supprow['logt'].iloc[0]
@@ -276,6 +281,22 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             isobviouslynottransit = True
             whynottransit.append('Rp > 6Rjup')
 
+        # if clearly a background star according to gaia parallax, remove.
+        omegak13 = float(mmbr_dict['omegak13'])
+        plx_mas = float(mmbr_dict['plx_mas'])
+        plx_mas_err = float(mmbr_dict['plx_mas_err'])
+        params_are_ok = True
+        for param in [omegak13, plx_mas, plx_mas_err]:
+            if pd.isnull(param):
+                params_are_ok = False
+        N_sigma = 5
+        if params_are_ok:
+            if plx_mas + N_sigma*plx_mas_err < omegak13:
+                isobviouslynottransit = True
+                whynottransit.append(
+                    'star plx > {} sigma below K13 plx'.format(N_sigma)
+                )
+
 
     if isobviouslynottransit:
 
@@ -299,3 +320,4 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         )
         with open(writepath, 'w') as f:
             f.writelines(whynottransit)
+        print('Reason written to {}'.format(writepath))

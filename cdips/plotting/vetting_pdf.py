@@ -1091,6 +1091,15 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         outstr = 'clusterdetails: got bug {}'.format(e)
         print(outstr)
 
+    outdict = {
+        'k13dist':k13dist,
+        'omegak13':k13_plx_mas,
+        'plx_mas':float(supprow['Parallax[mas][6]']),
+        'plx_mas_err':float(supprow['Parallax_error[mas][7]']),
+        'pmra':float(d['pmra']),
+        'pmdec':float(d['pmdec'])
+    }
+
     if len(comment)>=1:
         comment = _insert_newlines(comment, every=30)
         outstr = textwrap.dedent(outstr) + '\nNote: '+comment
@@ -1179,7 +1188,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
                                        labelsize='xx-large')
 
     fig.tight_layout(h_pad=0.5)
-    return fig
+    return fig, outdict
 
 
 def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
