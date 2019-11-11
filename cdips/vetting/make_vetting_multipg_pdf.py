@@ -233,24 +233,55 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # * the OOT - intra image gaussian fit centroid is > 2 pixels off the
         #   catalog position.
         ##########
-        if (
-        (float(supprow['ndet_tf2']) < 100) or
-        (float(infodict['depth']) < 0.85) or
-        (float(infodict['snr']) < 8) or
-        (float(infodict['rp']) > 67.25) or
-        ( (float(infodict['psdepthratio'] - infodict['psdepthratioerr']) > 1.2)
-         &
-         (float(infodict['psdepthratio'] + infodict['psdepthratioerr']) < 5.0)
-        ) or
-        (float(infodict['catalog_to_gaussian_sep_arcsec']) > 42)
+        isobviouslynottransit = False
+        whynottransit = []
+        if float(supprow['ndet_tf2']) < 100:
+            isobviouslynottransit = True
+            whynottransit.append('N_points < 100')
+
+        if float(infodict['depth']) < 0.85:
+            isobviouslynottransit = True
+            whynottransit.append('depth < 0.85')
+
+        if float(infodict['snr']) < 8:
+            isobviouslynottransit = True
+            whynottransit.append('SNR < 8')
+
+        if float(infodict['rp']) > 67.25:
+            isobviouslynottransit = True
+            whynottransit.append('Rp > 67.25')
+
+        if ((float(infodict['psdepthratio'] - infodict['psdepthratioerr']) > 1.2)
+            &
+            (float(infodict['psdepthratio'] + infodict['psdepthratioerr']) < 5.0)
         ):
             isobviouslynottransit = True
-        else:
-            isobviouslynottransit = False
+            whynottransit.append('1.2 < pri/occ < 5.0')
+
+        if float(infodict['catalog_to_gaussian_sep_arcsec']) > 42:
+            isobviouslynottransit = True
+            whynottransit.append('catalog_to_gaussian_sep > 2px')
+
 
     if isobviouslynottransit:
+
+        if len(whynottransit) > 1:
+            whynottransit = '|'.join(whynottransit)
+        else:
+            assert len(whynottransit) == 1
+
         for path in [outpath, picklepath]:
             src = path
             dst = path.replace('pdfs','nottransitpdfs')
             shutil.move(src,dst)
             print('found was nottransit. moved {} -> {}'.format(src,dst))
+
+        # create text file that describes why it's been flagged as "not
+        # transit".
+        writepath = (
+            outpath.replace(
+                'pdfs','nottransitpdfs').replace(
+                '.pdf','whynottransit.txt')
+        )
+        with open(writepath, 'w') as f:
+            f.writelines(whynottransit)
