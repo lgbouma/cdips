@@ -1362,13 +1362,13 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
 
     #
     # ax3: oot - intra
-    # fit 2d gaussian to the inner 6x6 pixels to find centroid
+    # fit 2d gaussian to the inner 8x8 pixels to find centroid
     #
     from photutils.centroids import fit_2dgaussian
 
     img = cd['m_oot_minus_intra_flux']
     mask = np.ones((10,10))
-    mask[2:8,2:8] -= 1
+    mask[1:9,1:9] -= 1
     gfit = fit_2dgaussian(img, mask=mask.astype(bool))
 
     cset3 = ax3.imshow(cd['m_oot_minus_intra_flux'], cmap='YlGnBu_r',
