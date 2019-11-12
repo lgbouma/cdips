@@ -14,6 +14,7 @@ USAGE:
 
 import os, shutil
 from glob import glob
+import multiprocessing as mp
 
 import trex_lc_to_mast_lc as tlml
 import get_cdips_lc_stats as get_cdips_lc_stats
@@ -22,14 +23,17 @@ from do_initial_period_finding import do_initial_period_finding
 
 def main():
 
-    sector = 9
+    ##########################################
+    sector = 10
     outdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
     overwrite = 0
     cams = [1,2,3,4]
     ccds = [1,2,3,4]
     OC_MG_CAT_ver = 0.4
     cdipsvnum = 1
-    nworkers = 52
+    ##########################################
+
+    nworkers = mp.cpu_count()
 
     lcpaths = glob(os.path.join(outdir, 'sector-{}'.format(sector),
                                 'cam?_ccd?', 'hlsp*.fits'))
@@ -51,7 +55,7 @@ def main():
         'cdips_lc_statistics.txt'
     )
     suppstatsfile = statsfile.replace('cdips_lc_statistics',
-                                'supplemented_cdips_lc_statistics')
+                                      'supplemented_cdips_lc_statistics')
     if not os.path.exists(suppstatsfile) and not overwrite:
         get_cdips_lc_stats.main(sector, OC_MG_CAT_ver, cdipsvnum, overwrite)
     else:
