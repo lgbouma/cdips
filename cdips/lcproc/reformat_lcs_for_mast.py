@@ -9,7 +9,7 @@ parallel_reformat_headers
 """
 
 import pandas as pd, numpy as np
-import os, requests, time
+import os, requests, time, json
 from astropy.io import fits
 from datetime import datetime
 from astroquery.mast import Catalogs
@@ -389,8 +389,11 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
             catalog="TIC",
             radius=radius
         )
-    except requests.exceptions.ConnectionError:
-        print('ERR! TIC query failed. trying again...')
+    except (
+        requests.exceptions.ConnectionError,
+        json.decoder.JSONDecodeError
+    ) as e:
+        print('ERR! {}. TIC query failed. trying again...'.format(e))
         time.sleep(60)
         stars = Catalogs.query_region(
             "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
