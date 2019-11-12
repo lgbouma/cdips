@@ -1,0 +1,41 @@
+------------------------------------------
+OMITTED TIMES
+
+Using the Vanderspek+ data release notes for each sector, we gauged the
+following times (TJD) to either suffer excessive amounts of scattered
+Earth/Moon light, or else to not be viable for the listed reasons:
+
+badtimewindows:
+
+    (1517.34150, 1517.39566), # sector 8 orbit 23 camera 1 attitude control
+    (1529.06510, 1535.00264), # sector 8 gap + attitude + instr anomaly 23->24
+    (1543.21648, 1543.75080), # sector 9 camera 1 attitude control issues
+    (1555.54148, 1557.00080), # sector 9 downlink, btwn orbits 25->26
+    (1569.43176, 1570.87620), # sector 10 orbit 27 "strong scattered light"
+    (1581.78453, 1584.72342), # sector 10 downlink + "strong scattered light"
+    (1609.69425, 1610.77620), # sector 11 downlink, btwn orbits 29->30
+    (1638.99562, 1640.03312), # sector 12 downlink, btwn orbits 31->32
+
+
+------------------------------------------
+SECTOR-SPECIFIC NOTES
+
+----------
+sector 9:
+
+no major points to note.
+
+----------
+sector 10:
+
+cam3, ccd3 (internal projid 1574): the photometry suffered serious "flux jumps"
+(i.e. the magnitudes being measured on the same star jumped betweeen different
+frames) under the initial reduction, likely due to a defective kernel solution.
+This may have been caused by the heavily saturated star, or its bleed trail.
+For this CCD, we switched from the "i/2;d3/2" kernel to "i/0", i.e., omitting
+the convolution step entirely.  The resulting movies show slightly different
+background level artifacts, and the light curves show spikes once per orbit.
+These spikes can be easily "sigma-clipped", and otherwise the reduction's
+quality is satisfactory.
+
+
