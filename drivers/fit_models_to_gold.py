@@ -7,6 +7,7 @@
 #
 import os, pickle, h5py, json, shutil, requests, configparser, socket
 from glob import glob
+import time as pytime
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -481,7 +482,7 @@ def get_teff_rstar_logg(hdr):
         )
     except requests.exceptions.ConnectionError:
         print('ERR! TIC query failed. trying again...')
-        time.sleep(30)
+        pytime.sleep(30)
         stars = Catalogs.query_region(
             "{} {}".format(float(targetcoord.ra.value),
                            float(targetcoord.dec.value)),

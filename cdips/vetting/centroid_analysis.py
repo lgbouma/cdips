@@ -4,6 +4,7 @@ called from drivers/make_vetting_multipg_pdf.py
 from glob import glob
 import datetime, os, pickle, shutil, requests
 import numpy as np, pandas as pd
+import time as pytime
 
 from numpy import array as nparr
 from astropy.io import fits
@@ -143,7 +144,15 @@ def measure_centroid(t0,per,dur,sector,sourceid,c_obj,outdir):
     except (requests.exceptions.HTTPError,
             requests.exceptions.ConnectionError) as e:
         print('got {}, try again'.format(repr(e)))
-        cuthdul = Tesscut.get_cutouts(c_obj, size=10, sector=sector)
+        pytime.sleep(30)
+        try:
+            cuthdul = Tesscut.get_cutouts(c_obj, size=10, sector=sector)
+        except (requests.exceptions.HTTPError,
+                requests.exceptions.ConnectionError) as e:
+
+            print('ERR! sourceid {} FAILED TO GET TESSCUTOUT'.format(sourceid))
+            return None
+
 
     if len(cuthdul) != 1:
         raise AssertionError('something wrong in tesscut! FIXME')
@@ -184,12 +193,6 @@ def measure_centroid(t0,per,dur,sector,sourceid,c_obj,outdir):
         thistra_oot_time = _get_desired_oot_times(time, thistra_intra_time)
         thistra_oot_flux = flux[np.in1d(time, thistra_oot_time)]
         thistra_oot_flux_err = flux_err[np.in1d(time, thistra_oot_time)]
-
-        #try:
-        #    assert len(thistra_intra_time) == len(thistra_oot_time)
-        #except AssertionError:
-        #    print('fix assertion error...')
-        #    import IPython; IPython.embed()
 
         intra_imgs_flux.append(
             np.mean(thistra_intra_flux, axis=0)

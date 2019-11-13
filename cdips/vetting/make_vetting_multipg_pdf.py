@@ -166,45 +166,48 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             os.mkdir(outdir)
         cd = cdva.measure_centroid(t0,per,dur,sector,sourceid,c_obj,outdir)
 
-        #
-        # check whether the measured ephemeris matches other TCEs.  cutoffs
-        # below came by looking at distribution of errors on the QLP quoted
-        # parameters.
-        #
-        tls_period, tls_t0 = nparr(pfdf['tls_period']), nparr(pfdf['tls_t0'])
-        ras, decs = nparr(pfdf['ra_x']), nparr(pfdf['dec_x'])
-        coords = SkyCoord(ras, decs, unit=(u.deg), frame='icrs')
+        catalog_to_gaussian_sep_arcsec = None
+        if isinstance(cd, dict):
+            #
+            # check whether the measured ephemeris matches other TCEs.  cutoffs
+            # below came by looking at distribution of errors on the QLP quoted
+            # parameters.
+            #
+            tls_period, tls_t0 = nparr(pfdf['tls_period']), nparr(pfdf['tls_t0'])
+            ras, decs = nparr(pfdf['ra_x']), nparr(pfdf['dec_x'])
+            coords = SkyCoord(ras, decs, unit=(u.deg), frame='icrs')
 
-        seps_px = c_obj.separation(coords).to(u.arcsec).value/21
+            seps_px = c_obj.separation(coords).to(u.arcsec).value/21
 
-        period_cutoff = 2e-3 # about 3 minutes
-        t0_cutoff = 5e-3 # 7 minutes
+            period_cutoff = 2e-3 # about 3 minutes
+            t0_cutoff = 5e-3 # 7 minutes
 
-        close_per = np.abs(tls_period - per) < period_cutoff
-        close_t0 = np.abs(tls_t0 - t0) < t0_cutoff
-        is_close = close_per & close_t0
+            close_per = np.abs(tls_period - per) < period_cutoff
+            close_t0 = np.abs(tls_t0 - t0) < t0_cutoff
+            is_close = close_per & close_t0
 
-        if len(seps_px[is_close]) > 1:
+            if len(seps_px[is_close]) > 1:
 
-            _pfdf = pfdf.loc[is_close]
-            _pfdf['seps_px'] = seps_px[is_close]
-            _pfdf = _pfdf[_pfdf['source_id'] != sourceid]
+                _pfdf = pfdf.loc[is_close]
+                _pfdf['seps_px'] = seps_px[is_close]
+                _pfdf = _pfdf[_pfdf['source_id'] != sourceid]
 
-        else:
-            _pfdf = None
+            else:
+                _pfdf = None
 
-        fig, catalog_to_gaussian_sep_arcsec = (
-            vp.centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,24))
-        )
+            fig, catalog_to_gaussian_sep_arcsec = (
+                vp.centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,24))
+            )
+
+            if fig is not None:
+                pdf.savefig(fig)
+            plt.close()
+
         if not isinstance(catalog_to_gaussian_sep_arcsec, float):
             catalog_to_gaussian_sep_arcsec = 0
         infodict['catalog_to_gaussian_sep_arcsec'] = (
             catalog_to_gaussian_sep_arcsec
         )
-        if fig is not None:
-            pdf.savefig(fig)
-        plt.close()
-
 
         ##########
         # set the file's metadata via the PdfPages object:
