@@ -1373,20 +1373,27 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     # ax3: oot - intra
     # fit 2d gaussian to the inner 8x8 pixels to find centroid
     #
+    cen_x, cen_y = (cd['ctds_oot_minus_intra'][:,0],
+                    cd['ctds_oot_minus_intra'][:,1])
+
     from photutils.centroids import fit_2dgaussian
 
     img = cd['m_oot_minus_intra_flux']
     mask = np.ones((10,10))
     mask[1:9,1:9] -= 1
-    gfit = fit_2dgaussian(img, mask=mask.astype(bool))
+    try:
+        gfit = fit_2dgaussian(img, mask=mask.astype(bool))
+        x_ctd = gfit.x_mean.value
+        y_ctd = gfit.y_mean.value
+    except ValueError as e:
+        print('ERR! {}'.format(repr(e)))
+        x_ctd = np.nan
+        y_ctd = np.nan
 
     cset3 = ax3.imshow(cd['m_oot_minus_intra_flux'], cmap='YlGnBu_r',
                        origin='lower', zorder=1)
 
-    cen_x, cen_y = (cd['ctds_oot_minus_intra'][:,0],
-                    cd['ctds_oot_minus_intra'][:,1])
-
-    ax3.plot(gfit.x_mean.value, gfit.y_mean.value, mew=0.5,
+    ax3.plot(x_ctd, y_ctd, mew=0.5,
              zorder=3, markerfacecolor='white', markersize=25, marker='*',
              color='k', lw=0)
 
@@ -1397,8 +1404,8 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
 
     ax3.set_title('OOT - in. (cyan *: 2d gaussian fit)', fontsize='xx-large')
 
-    catalog_to_gaussian_sep_px = np.sqrt((target_x - gfit.x_mean.value)**2 +
-                                         (target_y - gfit.y_mean.value)**2)
+    catalog_to_gaussian_sep_px = np.sqrt((target_x - x_ctd)**2 +
+                                         (target_y - y_ctd)**2)
 
     cb3 = fig.colorbar(cset3, ax=ax3, extend='neither', fraction=0.046, pad=0.04)
 
