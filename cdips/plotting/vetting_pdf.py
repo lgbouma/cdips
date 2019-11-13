@@ -1235,7 +1235,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
         )
     except Exception as e:
         print('ERR! wcs all_world2pix got {}'.format(repr(e)))
-        return
+        return None, None
 
     ticids = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['ID']
     tmags = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['Tmag']
@@ -1537,7 +1537,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
         except Exception as e:
             print('failed to get DSS stamp ra {} dec {}, error was {}'.
                   format(ra, dec, repr(e)))
-            return
+            return None, None
 
     # image 1: TESS mean OOT. (data: cd['m_oot_flux'], wcs: cutout_wcs)
     # image 2: DSS linear. (data: dss, hdr: dss_hdr)
