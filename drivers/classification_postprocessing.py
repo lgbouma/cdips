@@ -12,8 +12,8 @@ def main():
     iscollabsubclass = 0
     getgold = 0
 
-    sector = 9
-    today = '20191101'
+    sector = 10
+    today = '20191118'
 
     if isfull:
         given_full_classifications_organize(sector=sector, today=today)

@@ -21,11 +21,6 @@ badtimewindows:
 SECTOR-SPECIFIC NOTES
 
 ----------
-sector 9:
-
-no major points to note.
-
-----------
 sector 10:
 
 cam3, ccd3 (internal projid 1574): the photometry suffered serious "flux jumps"
@@ -39,3 +34,29 @@ These spikes can be easily "sigma-clipped", and otherwise the reduction's
 quality is satisfactory.
 
 
+----------
+sector 9:
+
+no major points to note.
+
+
+----------
+sector 8:
+
+cam4 ccd3 (internal projid 1546) IRM magnitudes of all stars increased by about
+~0.2 mag over the course of about 20 exposures beginning at BJD 2458522, and
+returned to standard brightnesses around 245826.  A similar jump happened
+shortly after the instrument anomaly. The intermediate times (i.e., BJD 2458522
+- 245826) were stable.  Nonetheless the transition happens over the course of
+  ~20 exposures, and in our initial reduction was poorly corrected by PCA and
+TFA.  Most quality diagnostics for this CCD, which operate on the TFA light
+curves, correspondingly failed.
+
+For this CCD, we switched from the "i/2;d3/2" kernel to "i/0", i.e., omitting
+the convolution step entirely. While the issue of this "transition jump" of the
+baseline flux remained, the TFA cotrending was able to correct the majority of
+the issue. 
+
+The cause of this jump is unclear. The DRN (Vanderpsek+2018) suggests issues in
+the smear correction caused by beta Doradus being in the upper serial register
+may be responsible.
