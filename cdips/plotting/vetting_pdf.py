@@ -1337,9 +1337,12 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     ax2.scatter(px, py, marker='o', edgecolors='k', s=sizes, rasterized=True,
                 zorder=2, linewidths=1, facecolors='none')
 
-    ax2.scatter(target_x, target_y, marker='o', edgecolors='C0',
-                facecolors='C0', s=sizes[0], rasterized=True, zorder=3,
-                linewidths=1)
+    try:
+        ax2.scatter(target_x, target_y, marker='o', edgecolors='C0',
+                    facecolors='C0', s=sizes[0], rasterized=True, zorder=3,
+                    linewidths=1)
+    except IndexError:
+        pass
 
     for ix, _px, _py, ticid, tmag in zip(np.arange(len(px)),
                                          px,py,ticids,tmags):

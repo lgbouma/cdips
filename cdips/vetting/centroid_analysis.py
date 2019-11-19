@@ -153,9 +153,9 @@ def measure_centroid(t0,per,dur,sector,sourceid,c_obj,outdir):
             print('ERR! sourceid {} FAILED TO GET TESSCUTOUT'.format(sourceid))
             return None
 
-
     if len(cuthdul) != 1:
-        raise AssertionError('something wrong in tesscut! FIXME')
+        print('ERR! sourceid {} GOT {} CUTOUTS'.format(sourceid, len(cuthdul)))
+        return None
     else:
         cuthdul = cuthdul[0]
     data, data_hdr = cuthdul[1].data, cuthdul[1].header
