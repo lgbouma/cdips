@@ -41,7 +41,7 @@ TO PRODUCE CANDIDATES FROM CDIPS LCS
 4. `reconstructive_tfa/RunTFASR.sh` does signal reconstruction for TFA
    lightcurves
 
-5. `make_vetting_multipg_pdf`: make a multipage PDF with the information needed
+5. `make_all_vetting_reports`: make a multipage PDF with the information needed
    to make classifications for vetting.
 
     * Check `logs/vetting_pdf.log` for name-matching errors. (First pass, they

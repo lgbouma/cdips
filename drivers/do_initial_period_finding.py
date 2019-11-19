@@ -34,11 +34,12 @@ import pygam
 import wotan
 
 DEBUG = False
+nworkers = mp.cpu_count()
 
 def main():
 
     do_initial_period_finding(
-        sectornum=6, nworkers=40, maxworkertasks=1000,
+        sectornum=10, nworkers=nworkers, maxworkertasks=1000,
         outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
         OC_MG_CAT_ver=0.4
     )
@@ -321,6 +322,12 @@ def do_initial_period_finding(
         df['limit'][(df['tls_period']>21)] = 18
         df['limit'][(df['tls_period']<13.6) & (df['tls_period']>13.0)] = 25
         df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
+    elif sectornum == 10:
+        df['limit'] = np.ones(len(df))*12
+        df['limit'][df['tls_period']<1] = 16
+        df['limit'][(df['tls_period']<1.2) & (df['tls_period']>1)] = 14
+        df['limit'][(df['tls_period']>21)] = 20
+        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
     else:
         df['limit'] = np.ones(len(df))*12
         df['limit'][df['tls_period']<1] = 15
@@ -337,7 +344,7 @@ def do_initial_period_finding(
 
     plot_initial_period_finding_results(df, resultsdir)
 
-    if sectornum not in [6,7,9]:
+    if sectornum not in [6,7,9,10]:
         raise NotImplementedError(
             'you need to manually set SNR limits for this sector!'
         )

@@ -30,3 +30,4 @@ tests/*png
 *s6_s7_curl_script.sh*
 tests/test_vetting_reports/*
 doc/notes_on_weirdos/*
+drivers/reconstructive_tfa/sector-?_output*
