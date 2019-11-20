@@ -76,6 +76,15 @@ def plot_initial_period_finding_results(
     f.savefig(outpath, dpi=300, bbox_inches='tight')
     print('made {}'.format(outpath))
 
+    # save the relevant numbers to a text file too
+    N_above = len(df[df['tls_sde']>df['limit']])
+    N_below = len(df[df['tls_sde']<df['limit']])
+    outpath = os.path.join(resultsdir, 'n_above_and_below_limit.txt')
+    with open(outpath, mode='w') as f:
+        f.writelines(
+            'N_above={}|N_below={}'.format(N_above, N_below)
+        )
+
 
 def skim_cream(sectornum=6, tls_sde_cut=12, fap_cut=1e-30, SR_TFA=None):
 
