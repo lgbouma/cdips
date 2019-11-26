@@ -1,4 +1,12 @@
 ------------------------------------------
+Updates in the v0.3 -> v0.4 CDIPS target star catalog.
+
+* Added Kounkel & Covey 2019 (KC19) catalog members (their tables 1 & 2).
+* Added Kounkel et al (2018) orion catalog (their Table 2).
+* Added Villa-Velez_Brown_2018_PMS_ScoCen list.
+* Added Cantat-Gaudin et al (2019) vela OB2 catalog (vizier result)
+
+------------------------------------------
 OMITTED TIMES
 
 Using the Vanderspek+ data release notes for each sector, we gauged the
@@ -19,6 +27,21 @@ badtimewindows:
 
 ------------------------------------------
 SECTOR-SPECIFIC NOTES
+
+----------
+sector 11:
+
+cam4, ccd4 (internal projid 1595): a subset of the raw light curves are
+affected by a nasty "chopping" systematic from about BJDTDB 2458618 to 2458621.
+It seems to be weakly correlated with the background level.  It was mostly
+corrected by TFA (the RMS vs mag performance wasn't greatly worsened), so we
+didn't investigate further.
+
+cam2, ccd2 (internal projid 1585): the WCS quality assurance tests failed for
+a subset of frames due to the crowding affecting the centroid measurements.
+This field is galactic latitude 0, galactic longitude 300-320. We forced
+omission of the QA tests, believing the SPOC WCS solution based on other
+experience. The light curve of TOIs 1092 suggests this worked.
 
 ----------
 sector 10:
@@ -47,8 +70,8 @@ cam4 ccd3 (internal projid 1546) IRM magnitudes of all stars increased by about
 ~0.2 mag over the course of about 20 exposures beginning at BJD 2458522, and
 returned to standard brightnesses around 245826.  A similar jump happened
 shortly after the instrument anomaly. The intermediate times (i.e., BJD 2458522
-- 245826) were stable.  Nonetheless the transition happens over the course of
-  ~20 exposures, and in our initial reduction was poorly corrected by PCA and
+to 245826) were stable.  Nonetheless the transition happens over the course of
+~20 exposures, and in our initial reduction was poorly corrected by PCA and
 TFA.  Most quality diagnostics for this CCD, which operate on the TFA light
 curves, correspondingly failed.
 
