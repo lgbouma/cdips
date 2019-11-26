@@ -69,6 +69,18 @@ def given_collab_subclassifications_merge(sector=6):
             os.path.join(datadir, '20190621_sector-7_PCs_LGB_class.txt'),
             os.path.join(datadir, '20190621_sector-7_PCs_JH_class.txt')
         ]
+    elif sector==9:
+        classfiles = [
+            os.path.join(datadir, '20191101_sector-9_PCs_LGB_class.txt'),
+            os.path.join(datadir, '20191101_sector-9_PCs_JH_class.txt'),
+            os.path.join(datadir, '20191101_sector-9_PCs_JNW_class.txt')
+        ]
+    elif sector==10:
+        classfiles = [
+            os.path.join(datadir, '20191118_sector-10_PCs_LGB_class.txt'),
+            os.path.join(datadir, '20191118_sector-10_PCs_JH_class.txt'),
+            os.path.join(datadir, '20191118_sector-10_PCs_JNW_class.txt')
+        ]
 
     outpath = os.path.join(
         datadir, 'sector-{}_PCs_MERGED_SUBCLASSIFICATIONS.csv'.format(sector)
@@ -93,8 +105,10 @@ def given_collab_subclassifications_merge(sector=6):
 
 def given_merged_gold_organize_PCs(sector=None):
     """
-    using output from given_collab_subclassifications_merge, select unanimous
-    "gold" that will be the PCs.
+    Using output from given_collab_subclassifications_merge, assign gold=2,
+    maybe=1, junk, and look closer at anything with average rating >=1. The one
+    exception: things classified as "not_cdips_still_good", which go in their
+    own pile.
     """
 
     datadir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/'

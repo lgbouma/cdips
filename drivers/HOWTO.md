@@ -60,9 +60,11 @@ TO PROCESS VETTING CLASSIFICATIONS
 
     1. `given_full_classifications_organize`: LGB classifies everything, sends
        PCs to team
-    2. `given_collab_subclassifications_merge`: team responds w/
+    2. LGB gold/maybe/junk classification of PCs. Write output to e.g.,
+       `ls *pdf > 20190621_sector-6_PCs_LGB_class.txt`
+    3. `given_collab_subclassifications_merge`: team responds w/
        classifications (csvs and txt files). they must be merged
-    3. `given_merged_gold_organize_PCs`: the results of the merge must be
+    4. `given_merged_gold_organize_PCs`: the results of the merge must be
        organized.
 
 2. `fit_models_to_gold`: MCMC fit Mandel-Agol transits to gold above -- these
