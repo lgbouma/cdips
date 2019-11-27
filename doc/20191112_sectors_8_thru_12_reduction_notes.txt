@@ -29,41 +29,6 @@ badtimewindows:
 SECTOR-SPECIFIC NOTES
 
 ----------
-sector 11:
-
-cam4, ccd4 (internal projid 1595): a subset of the raw light curves are
-affected by a nasty "chopping" systematic from about BJDTDB 2458618 to 2458621.
-It seems to be weakly correlated with the background level.  It was mostly
-corrected by TFA (the RMS vs mag performance wasn't greatly worsened), so we
-didn't investigate further.
-
-cam2, ccd2 (internal projid 1585): the WCS quality assurance tests failed for
-a subset of frames due to the crowding affecting the centroid measurements.
-This field is galactic latitude 0, galactic longitude 300-320. We forced
-omission of the QA tests, believing the SPOC WCS solution based on other
-experience. The light curve of TOIs 1092 suggests this worked.
-
-----------
-sector 10:
-
-cam3, ccd3 (internal projid 1574): the photometry suffered serious "flux jumps"
-(i.e. the magnitudes being measured on the same star jumped betweeen different
-frames) under the initial reduction, likely due to a defective kernel solution.
-This may have been caused by the heavily saturated star, or its bleed trail.
-For this CCD, we switched from the "i/2;d3/2" kernel to "i/0", i.e., omitting
-the convolution step entirely.  The resulting movies show slightly different
-background level artifacts, and the light curves show spikes once per orbit.
-These spikes can be easily "sigma-clipped", and otherwise the reduction's
-quality is satisfactory.
-
-
-----------
-sector 9:
-
-no major points to note.
-
-
-----------
 sector 8:
 
 cam4 ccd3 (internal projid 1546) IRM magnitudes of all stars increased by about
@@ -80,6 +45,43 @@ the convolution step entirely. While the issue of this "transition jump" of the
 baseline flux remained, the TFA cotrending was able to correct the majority of
 the issue. 
 
-The cause of this jump is unclear. The DRN (Vanderpsek+2018) suggests issues in
+The cause of the jump is unclear. The DRN (Vanderpsek+2018) suggests issues in
 the smear correction caused by beta Doradus being in the upper serial register
 may be responsible.
+
+----------
+sector 9:
+
+no major points to note.
+
+----------
+sector 10:
+
+cam3, ccd3 (internal projid 1574): the photometry suffered serious "flux jumps"
+(i.e. the magnitudes being measured on the same star jumped betweeen different
+frames) under the initial reduction, likely due to a defective kernel solution.
+This may have been caused by the heavily saturated star, or its bleed trail.
+For this CCD, we switched from the "i/2;d3/2" kernel to "i/0", i.e., omitting
+the convolution step entirely.  The resulting movies show slightly different
+"fluttering" of the overall background level, and the light curves show spikes
+once per orbit.  These spikes can be easily "sigma-clipped", and otherwise the
+reduction's quality is satisfactory.
+
+----------
+sector 11:
+
+cam4, ccd4 (internal projid 1595): a subset of the raw light curves are
+affected by a nasty "chopping" systematic from about BJDTDB 2458618 to 2458621.
+It seems to be weakly correlated with the background level.  It was mostly
+corrected by TFA (the RMS vs mag performance wasn't greatly worsened), so we
+didn't investigate further.
+
+cam2, ccd2 (internal projid 1585): the WCS quality assurance tests failed for
+a subset of frames due to the crowding affecting the centroid measurements.
+This field is galactic latitude 0, galactic longitude 300-320. We forced
+omission of the QA tests, believing the SPOC WCS solution based on other
+experience. While the standard i/2;d3/2 reduction completed, the image quality
+in a subset of frames was poor, suggesting the kernel solution failed (perhaps
+due to crowding). Repeating the reduction with an i/0 kernel gave TFA LCs with
+comparable quality metrics, but RAW LCs with noticeably better RMS vs mag, and
+by-eye produced much cleaner images. We adopted the i/0 kernel.
