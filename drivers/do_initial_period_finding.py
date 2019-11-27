@@ -97,12 +97,12 @@ def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
     bls_time, bls_flux = moe.mask_orbit_start_and_end(tfa_time, tfa_flux)
 
     #
-    # sig clip asymmetric [50,5]
+    # sig clip asymmetric [40,4] (40 is the dip-side).
     #
     bls_time, bls_flux, _ = sigclip_magseries(bls_time, bls_flux,
                                               np.ones_like(bls_flux)*1e-4,
                                               magsarefluxes=True,
-                                              sigclip=[50,5])
+                                              sigclip=[40,4], iterative=True)
 
     #
     # detrend if required.
