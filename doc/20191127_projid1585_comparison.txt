@@ -1,0 +1,55 @@
+Wed Nov 27 07:46:38 2019
+
+The initial i/2;d3/2 reduction of 1585, a field at galactic latitude 0 and
+longitude ~320 (so, 40 degrees in longitude from the galactic center), looked
+rough.
+
+Light-curves of the three available TOIs only showed 1 obvious one, by eye.
+
+The TFA RMS vs mag reached sub-mmag, but not for the 75th percentile.
+
+Inspecting RANDOM light-curves pushed me to think "what if I redid this with
+i/0?". (Because random draws of ~15th to 16th mag LCs gave very poor results in
+the raw LCs, even if TFA corrected them somewhat).
+
+----------
+
+So I did an i/0 reduction of the same field.
+
+Light-curves of the three available TOIs only showed 1 obvious one.  However
+TOI 1093, previously not visible in i/2;d3/2, seemed more noticeable in i/0.
+
+Comparing each TOI LC to the i/2;d3/2 counterpart, the raw light curves seemed
+to have more point-to-point scatter for i/0. However they had less long-term
+red noise. The TFA LCs looked comparable.
+
+Inspecting the ACF plots of the raw LCs, the i/0 showed weaker correlation at
+short time lags (of <~1 day). (By an ACF value of about 0.1-0.2).
+
+For the TFA ACFs, no real difference.
+
+In TFA RMS vs mag:
+* ap1, the i/0 vs i/2;d3/2 plots look comparable in 25th and 50th percentiles.
+  The 75th percentile for i/0 is maybe a bit better.
+* In ap2, i/0 is also marginally better, mostly in the 75th percentile envelope.
+
+The MAJOR DIFFERENCE is in the RMS vs mag plots of the RAW light curves.
+In ap1, there's a factor of ~1.5x better for i/0.
+
+----------
+
+What about the images?
+
+The i/0 reduction is clean.
+The i/2;d3/2 reduction has many artifacts.
+
+----------
+
+How to choose?
+
+We care about transits. So we don't want correlated signals at transit duration
+timescales (hours), or orbital perid timescales (many days). The ACFs showed
+the i/0 reduction was better for all of these, even if point-to-point it seemed
+a bit worse.
+
+So, i/0.
