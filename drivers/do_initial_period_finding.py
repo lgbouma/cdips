@@ -340,6 +340,17 @@ def do_initial_period_finding(
         df['limit'][(df['tls_period']>21)] = 20
         df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
 
+    elif sectornum == 11:
+        df['limit'] = np.ones(len(df))*12
+        df['limit'][df['tls_period']<1] = 17
+        df['limit'][(df['tls_period']<1.2) & (df['tls_period']>1)] = 14.5
+        df['limit'][(df['tls_period']<14.9) & (df['tls_period']>13.5)] = 25
+        df['limit'][(df['tls_period']<14.4) & (df['tls_period']>14.0)] = 45
+        df['limit'][(df['tls_period']<14.9/2) & (df['tls_period']>13.5/2)] = 14
+        df['limit'][(df['tls_period']<14.9/3) & (df['tls_period']>13.5/3)] = 14
+        df['limit'][(df['tls_period']>24)] = 30
+        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
+
     else:
         df['limit'] = np.ones(len(df))*12
         df['limit'][df['tls_period']<1] = 15
