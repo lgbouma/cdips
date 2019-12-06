@@ -67,8 +67,8 @@ def initialize_vetting_report_information(
     pfdf = pd.read_csv(pfpath, sep=';')
 
     toipath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-              'cdips/data/toi-plus-2019-10-19.csv')
-    toidf = pd.read_csv(toipath)
+              'cdips/data/csv-file-toi-plus-2019-12-05.csv')
+    toidf = pd.read_csv(toipath, comment='#')
 
     Vizier.ROW_LIMIT = -1
     catalog_list = Vizier.find_catalogs('J/A+A/558/A53')

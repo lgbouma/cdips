@@ -35,14 +35,14 @@ def main():
     catalog_coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree),
                              frame='icrs')
 
-    toidate = '2019-10-19'
+    toidate = '2019-12-05'
     toidf = ccl.get_toi_catalog(ver=toidate)
 
-    toi_ra, toi_dec = nparr(toidf['RA']), nparr(toidf['Dec'])
+    toi_ra, toi_dec = (nparr(toidf['TIC Right Ascension']),
+                       nparr(toidf['TIC Declination']))
     toi_coord = SkyCoord(ra=toi_ra, dec=toi_dec, unit=(u.degree, u.degree),
                          frame='icrs')
-    names = nparr(toidf['toi_id'])
-
+    names = nparr(toidf['Full TOI ID'])
     #
     # # toi 251;  tic 146520535
     # names = ['toi 251', 'tic 146520535']

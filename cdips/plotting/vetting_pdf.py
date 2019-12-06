@@ -1481,7 +1481,8 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     outstr = textwrap.dedent(outstr)
 
     # check TOI list for spatial matches
-    toicoords = SkyCoord(nparr(toidf['RA']), nparr(toidf['Dec']),
+    toicoords = SkyCoord(nparr(toidf['TIC Right Ascension']),
+                         nparr(toidf['TIC Declination']),
                          unit=(u.deg), frame='icrs')
     toiseps = toicoords.separation(c_obj).to(u.arcsec).value
     spatial_cutoff = 126 # arcseconds ~= 6 pixels
@@ -1489,7 +1490,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     if len(toiseps[toiseps < spatial_cutoff]) >= 1:
 
         seldf = toidf[toiseps < spatial_cutoff]
-        selcols = ['tic_id','toi_id','Disposition','comments']
+        selcols = ['TIC','Full TOI ID','TOI Disposition','Public Comment']
         outstr += '\nGot spatial TOI list match!\n{}\n'.format(
             seldf[selcols].to_string(index=False))
 

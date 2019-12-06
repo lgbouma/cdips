@@ -181,7 +181,7 @@ def get_cdips_pub_catalog(ver=0.4):
     return df
 
 
-def get_toi_catalog(ver='2019-10-19'):
+def get_toi_catalog(ver='2019-12-05'):
 
     dir_d = {
         'brik':'/home/luke/Dropbox/proj/cdips/data/',
@@ -193,10 +193,10 @@ def get_toi_catalog(ver='2019-10-19'):
     toi_stars_dir = dir_d[socket.gethostname()]
 
     toi_stars_path = os.path.join(
-        toi_stars_dir, 'toi-plus-{}.csv'.format(ver)
+        toi_stars_dir, 'csv-file-toi-plus-catalog-{}.csv'.format(ver)
     )
 
-    df = pd.read_csv(toi_stars_path, sep=',')
+    df = pd.read_csv(toi_stars_path, sep=',', comment='#')
 
     return df
 

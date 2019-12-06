@@ -240,10 +240,10 @@ def _get_data(sector, cdips_cat_vnum=None):
                 'supplemented_cdips_lc_statistics.txt')
     supplementstatsdf = pd.read_csv(supppath, sep=';')
 
-    toipath = os.path.join(database, 'toi-plus-2019-10-19.csv')
+    toipath = os.path.join(database, 'csv-file-toi-plus-catalog-2019-12-05.csv')
     toidf = pd.read_csv(toipath, sep=',')
 
-    ctoipath = os.path.join(database, 'ctoi-exofop-2019-08-29.csv')
+    ctoipath = os.path.join(database, 'ctoi-exofop-2019-12-05.csv')
     ctoidf = pd.read_csv(ctoipath, sep='|')
 
     return df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf
@@ -763,29 +763,29 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
     # check MIT TSO TOI list for whether there are matches by TIC ID.
     # for disposition, take whatever the MIT TSO labelled as truth.
     #
-    sel = nparr(toidf['tic_id']==ticid)
+    sel = nparr(toidf['TIC']==ticid)
     if len(toidf[sel]) == 1:
         tdf = toidf[sel]
-        toiname = tdf['toi_id'].iloc[0]
+        toiname = tdf['Full TOI ID'].iloc[0]
         target = toiname
         flag = 'newparams'
-        disp = tdf['Disposition'].iloc[0]
+        disp = tdf['TOI Disposition'].iloc[0]
 
     elif len(toidf[sel]) > 1:
         # get match within 0.5 days
         print('WRN! MORE THAN 1 TOI')
         sel &= np.isclose(
             period,
-            nparr(toidf[toidf['tic_id']==ticid]['Period']),
+            nparr(toidf[toidf['TIC']==ticid]['Orbital Period Value']),
             atol=0.5
         )
         if len(toidf[sel]) > 1:
             raise NotImplementedError('got 2 TOIs within 0.5d of obsd period')
         tdf = toidf[sel]
-        toiname = tdf['toi_id'].iloc[0]
+        toiname = tdf['Full TOI ID'].iloc[0]
         target = toiname
         flag = 'newparams'
-        disp = tdf['Disposition'].iloc[0]
+        disp = tdf['TOI Disposition'].iloc[0]
 
     #
     # check EXOFOP-TESS CTOI list for matches by TIC ID
@@ -816,7 +816,8 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
     ##########################################
     # check for matches by spatial position + period
-    toicoords = SkyCoord(nparr(toidf['RA']), nparr(toidf['Dec']), unit=(u.deg),
+    toicoords = SkyCoord(nparr(toidf['TIC Right Ascension']),
+                         nparr(toidf['TIC Declination']), unit=(u.deg),
                          frame='icrs')
     ctoicoords = SkyCoord(nparr(ctoidf['RA']), nparr(ctoidf['Dec']),
                           unit=(u.deg), frame='icrs')
@@ -832,7 +833,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
         sel &= np.isclose(
             period,
-            nparr(toidf[toidf['tic_id']==ticid]['Period']),
+            nparr(toidf[toidf['TIC']==ticid]['Orbital Period Value']),
             atol=0.5
         )
 
@@ -842,10 +843,10 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
             # by default, assume TOI program got it right.
             #
             tdf = toidf[sel]
-            toiname = tdf['toi_id'].iloc[0]
+            toiname = tdf['Full TOI ID'].iloc[0]
             target = toiname
             flag = 'newparams'
-            disp = tdf['Disposition'].iloc[0]
+            disp = tdf['TOI Disposition'].iloc[0]
 
         else:
             #
@@ -853,7 +854,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
             # assume i got it right, but add warning to note.
             #
             tdf = toidf[sel]
-            toiname = tdf['toi_id'].iloc[0]
+            toiname = tdf['Full TOI ID'].iloc[0]
             extranote = "<2' from TOI{} but diff period.".format(repr(toiname))
 
     ctoisel = nparr(ctoiseps < spatial_cutoff)
