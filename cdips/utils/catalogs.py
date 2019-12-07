@@ -67,7 +67,7 @@ def get_toi_catalog(ver='2019-12-05'):
     return df
 
 
-def get_exofop_toi_catalog(ver='2019-12-07'):
+def get_exofop_toi_catalog(ver='2019-12-07', returnpath=False):
     # https://exofop.ipac.caltech.edu/tess/view_toi.php, with pipe
 
     dir_d = {
@@ -86,7 +86,7 @@ def get_exofop_toi_catalog(ver='2019-12-07'):
 
     df = pd.read_csv(toi_stars_path, sep='|')
 
-    return df
-
-
-
+    if not returnpath:
+        return df
+    if returnpath:
+        return toi_stars_path
