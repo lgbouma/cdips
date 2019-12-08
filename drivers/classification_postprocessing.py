@@ -8,12 +8,12 @@ if host != 'brik':
     raise NotImplementedError('Paths are defined on brik.')
 
 def main():
-    isfull = 1
-    iscollabsubclass = 0
+    isfull = 0
+    iscollabsubclass = 1
     getgold = 0
 
-    sector = 10
-    today = '20191118'
+    sector = 11
+    today = '20191205'
 
     if isfull:
         given_full_classifications_organize(sector=sector, today=today)
@@ -80,6 +80,12 @@ def given_collab_subclassifications_merge(sector=6):
             os.path.join(datadir, '20191118_sector-10_PCs_LGB_class.txt'),
             os.path.join(datadir, '20191118_sector-10_PCs_JH_class.txt'),
             os.path.join(datadir, '20191118_sector-10_PCs_JNW_class.txt')
+        ]
+    elif sector==11:
+        classfiles = [
+            os.path.join(datadir, '20191205_sector-11_PCs_LGB_class.txt'),
+            os.path.join(datadir, '20191205_sector-11_PCs_JH_class.txt'),
+            os.path.join(datadir, '20191205_sector-11_PCs_JNW_class.txt')
         ]
 
     outpath = os.path.join(
