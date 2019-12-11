@@ -6,6 +6,7 @@ import os
 import numpy as np, pandas as pd
 
 from cdips.utils import collect_cdips_lightcurves as ccl
+from cdips.utils.catalogs import get_toi_catalog
 from astroquery.vizier import Vizier
 
 def initialize_vetting_report_information(
@@ -66,9 +67,7 @@ def initialize_vetting_report_information(
               'initial_period_finding_results_supplemented.csv')
     pfdf = pd.read_csv(pfpath, sep=';')
 
-    toipath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
-              'cdips/data/csv-file-toi-plus-2019-12-05.csv')
-    toidf = pd.read_csv(toipath, comment='#')
+    toidf = get_toi_catalog()
 
     Vizier.ROW_LIMIT = -1
     catalog_list = Vizier.find_catalogs('J/A+A/558/A53')
