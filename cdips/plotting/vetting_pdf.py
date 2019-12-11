@@ -59,6 +59,13 @@ def _insert_newlines(string, every=64):
     return '\n'.join(lines)
 
 
+def _get_a_given_P_and_Mstar(period, mstar):
+
+    return (
+        const.G * mstar / (4*np.pi*np.pi) * period**2
+    )**(1/3.)
+
+
 def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
                               mask_orbit_edges=True, fluxap='TFASR2',
                               nworkers=32):
@@ -515,13 +522,6 @@ def _get_full_infodict(tlsp, hdr, mdf):
         megad['cluster'] = 'N/A'
 
     return megad
-
-def _get_a_given_P_and_Mstar(period, mstar):
-
-    return (
-        const.G * mstar / (4*np.pi*np.pi) * period**2
-    )**(1/3.)
-
 
 def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                         pfrow,
