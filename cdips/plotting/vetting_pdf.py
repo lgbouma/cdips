@@ -1097,7 +1097,10 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         'plx_mas':float(supprow['Parallax[mas][6]']),
         'plx_mas_err':float(supprow['Parallax_error[mas][7]']),
         'pmra':float(d['pmra']),
-        'pmdec':float(d['pmdec'])
+        'pmdec':float(d['pmdec']),
+        'mwscid':mwscid,
+        'n1sr2':n1sr2,
+        'k13type':k13type
     }
 
     if len(comment)>=1:
