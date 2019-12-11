@@ -18,7 +18,7 @@ from astrobase.services.gaia import objectid_search
 # config #
 ##########
 
-homedir = os.path.basedir(os.path.abspath('~'))
+homedir = os.path.expanduser("~")
 credentials_file = os.path.join(homedir, '.gaia_credentials')
 if not os.path.exists(credentials_file):
     raise AssertionError(
