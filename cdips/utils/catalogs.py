@@ -41,6 +41,47 @@ def get_cdips_pub_catalog(ver=0.4):
     return df
 
 
+def get_cdips_pub_catalog_entry(source_id, ver=0.4):
+    """
+    Given a Gaia DR2 source_id, query the CDIPS target star catalog for the
+    information it contains.
+
+    Under the hood, the query uses grep, because this is much faster than
+    reading the entire catalog. It returns a single-row dataframe.
+    """
+
+    dir_d = {
+        'brik':'/home/luke/local/cdips/catalogs/',
+        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
+    }
+
+    cdips_stars_dir = dir_d[socket.gethostname()]
+
+    cdips_stars_path = os.path.join(
+        cdips_stars_dir, 'OC_MG_FINAL_v{}_publishable.csv'.format(ver)
+    )
+
+    colnames = r = os.popen(
+        'head -n1 {}'.format(cdips_stars_path)
+    ).read()
+    colnames = colnames.rstrip('\n').split(';')
+
+    rowentry = r = os.popen(
+        'grep {} {}'.format(source_id, cdips_stars_path)
+    ).read()
+    rowentry = rowentry.rstrip('\n').split(';')
+
+    df = pd.DataFrame(
+        {k: v for (k, v) in zip(colnames, rowentry)},
+        index=[0]
+    )
+
+    return df
+
+
+
 def get_toi_catalog(ver='2019-12-05'):
     # a misnomer: really, the TOI-plus catalog, from MIT. (exported from
     # https://tev.mit.edu/)
