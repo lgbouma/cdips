@@ -140,4 +140,148 @@ def given_source_ids_get_gaia_data(source_ids, groupname, overwrite=True,
     return df
 
 
+def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
+                       is_cg18_group=True, is_kc19_group=False,
+                       is_k13_group=False):
+    """
+    Given the bounds in position and parallx corresponding to some group (e.g.,
+    from Cantat-Gaudin+2018 or Kounkel & Covey 2019), get the DR2 stars from
+    the group's neighborhood.
 
+    The bounds are lower and upper in ra, dec, parallax, and there is a
+    limiting G magnitude. A maximum number of stars, `n_max`, are selected from
+    within these bounds.
+
+    Args:
+        bounds (dict): with parallax, ra, dec bounds.
+
+        groupname (str)
+
+        n_max (int): maximum number of stars in the neighborhood to acquire.
+
+        is_kc19_group (bool): if the group is from Kounkel & Covey 2019,
+        slightly different query is required.
+
+    Returns:
+        dataframe of DR2 stars within the bounds given. This is useful for
+        querying stars that are in the neighborhood of some group.
+    """
+
+    if is_cg18_group:
+        g_mag_limit=18
+    elif is_kc19_group:
+        g_mag_limit=14
+    elif is_k13_group:
+        g_mag_limit=16
+
+    dlpath = os.path.join(
+        gaiadir,'nbhd_group{}_matches.xml.gz'.format(groupname)
+    )
+
+    if os.path.exists(dlpath) and overwrite:
+        os.remove(dlpath)
+
+    if not os.path.exists(dlpath):
+
+        Gaia.login(credentials_file=credentials_file)
+
+        jobstr = (
+        """
+        select top {n_max:d}
+            g.source_id, g.phot_bp_mean_mag, g.phot_rp_mean_mag,
+            g.phot_g_mean_mag, g.parallax, g.ra, g.dec, g.pmra, g.pmdec,
+            g.radial_velocity, g.radial_velocity_error
+        from gaiadr2.gaia_source as g
+        where
+            g.parallax > {parallax_lower:.2f}
+        and
+            g.parallax < {parallax_upper:.2f}
+        and
+            g.dec < {dec_upper:.2f}
+        and
+            g.dec > {dec_lower:.2f}
+        and
+            g.ra > {ra_lower:.2f}
+        and
+            g.ra < {ra_upper:.2f}
+        and
+            g.phot_g_mean_mag < {g_mag_limit:d}
+        order by
+            random_index
+        """
+        )
+        query = jobstr.format(
+            n_max=n_max,
+            parallax_lower=bounds['parallax_lower'],
+            parallax_upper=bounds['parallax_upper'],
+            ra_lower=bounds['ra_lower'],
+            ra_upper=bounds['ra_upper'],
+            dec_lower=bounds['dec_lower'],
+            dec_upper=bounds['dec_upper'],
+            g_mag_limit=g_mag_limit
+        )
+
+        if is_kc19_group:
+            # Kounkel & Covey impose some extra quality cuts.
+            jobstr = (
+            """
+            select top {n_max:d}
+                g.source_id, g.phot_bp_mean_mag, g.phot_rp_mean_mag,
+                g.phot_g_mean_mag, g.parallax, g.ra, g.dec, g.pmra, g.pmdec,
+                g.radial_velocity, g.radial_velocity_error
+            from gaiadr2.gaia_source as g
+            where
+                g.parallax > {parallax_lower:.2f}
+            and
+                g.parallax < {parallax_upper:.2f}
+            and
+                g.dec < {dec_upper:.2f}
+            and
+                g.dec > {dec_lower:.2f}
+            and
+                g.ra > {ra_lower:.2f}
+            and
+                g.ra < {ra_upper:.2f}
+            and
+                g.phot_g_mean_mag < {g_mag_limit:d}
+            and
+                parallax > 1
+            and
+                parallax_error < 0.1
+            and
+                1.0857/phot_g_mean_flux_over_error < 0.03
+            and
+                astrometric_sigma5d_max < 0.3
+            and
+                visibility_periods_used > 8
+            and (
+                    (astrometric_excess_noise < 1)
+                    or
+                    (astrometric_excess_noise > 1 and astrometric_excess_noise_sig < 2)
+            )
+            order by
+                random_index
+            """
+            )
+            query = jobstr.format(
+                n_max=n_max,
+                parallax_lower=bounds['parallax_lower'],
+                parallax_upper=bounds['parallax_upper'],
+                ra_lower=bounds['ra_lower'],
+                ra_upper=bounds['ra_upper'],
+                dec_lower=bounds['dec_lower'],
+                dec_upper=bounds['dec_upper'],
+                g_mag_limit=g_mag_limit
+            )
+
+        # async jobs can avoid timeout
+        j = Gaia.launch_job_async(query=query, verbose=True, dump_to_file=True,
+                                  output_file=dlpath)
+        #j = Gaia.launch_job(query=query, verbose=True, dump_to_file=True,
+        #                    output_file=dlpath)
+
+        Gaia.logout()
+
+    df = given_votable_get_df(dlpath, assert_equal='source_id')
+
+    return df
