@@ -6,7 +6,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from cdips.plotting import vetting_pdf as vp
 from cdips.utils import collect_cdips_lightcurves as ccl
-from cdips.vetting import centroid_analysis as cdva
+from cdips.vetting import (
+    centroid_analysis as cdva,
+    initialize_neighborhood_information as ini
+)
 
 from numpy import array as nparr
 from astropy.io import fits
@@ -208,6 +211,36 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         infodict['catalog_to_gaussian_sep_arcsec'] = (
             catalog_to_gaussian_sep_arcsec
         )
+
+        ##########
+        # page 7
+        ##########
+        info = (
+             ini.get_neighborhood_information(sourceid, mmbr_dict=mmbr_dict,
+                                              k13_notes_df=k13_notes_df)
+        )
+        if isinstance(info, tuple):
+            (targetname, groupname, group_df_dr2, target_df, nbhd_df,
+             cutoff_probability, pmdec_min, pmdec_max, pmra_min, pmra_max,
+             group_in_k13, group_in_cg18, group_in_kc19
+            ) = info
+
+            fig = vp.plot_group_neighborhood(targetname, groupname, group_df_dr2,
+                                             target_df, nbhd_df,
+                                             cutoff_probability,
+                                             pmdec_min=pmdec_min,
+                                             pmdec_max=pmdec_max,
+                                             pmra_min=pmra_min, pmra_max=pmra_max,
+                                             group_in_k13=group_in_k13,
+                                             group_in_cg18=group_in_cg18,
+                                             group_in_kc19=group_in_kc19)
+
+            pdf.savefig(fig)
+            plt.close()
+
+        elif info is None:
+            pass
+
 
         ##########
         # set the file's metadata via the PdfPages object:

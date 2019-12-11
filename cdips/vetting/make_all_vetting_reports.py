@@ -68,6 +68,7 @@ def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
             make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
                                      sourceid, supprow, suppfulldf, pfdf,
-                                     pfrow, toidf, sector, k13_notes_df)
+                                     pfrow, toidf, sector, k13_notes_df,
+                                     mask_orbit_edges=True, nworkers=40)
         else:
             print('found {}, continue'.format(outpath))
