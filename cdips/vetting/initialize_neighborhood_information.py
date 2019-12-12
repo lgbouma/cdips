@@ -1,3 +1,6 @@
+import numpy as np, matplotlib.pyplot as plt, pandas as pd
+import os, socket
+
 from cdips.utils.catalogs import (
     get_cdips_pub_catalog_entry,
     ticid_to_toiid
@@ -39,8 +42,8 @@ KC19_PATH = kc19_path_d[socket.gethostname()]
 def get_neighborhood_information(
     source_id,
     mmbr_dict=None,
-    k13_notes_df=None
-    overwrite = 0):
+    k13_notes_df=None,
+    overwrite=0):
     """
     Given a source_id for a cluster member, acquire information necessary for
     neighborhood diagnostic plots. (Namely, find all the group members, then do
@@ -65,9 +68,9 @@ def get_neighborhood_information(
 
     # multiple memberships ,-separated. get lists of references, cluster names,
     # ext catalog names.
-    references = row['reference'].iloc[0].split(',')
-    clusters = row['cluster'].iloc[0].split(',')
-    ext_catalog_names = row['ext_catalog_name'].iloc[0].split(',')
+    references = np.array(row['reference'].iloc[0].split(','))
+    clusters = np.array(row['cluster'].iloc[0].split(','))
+    ext_catalog_names = np.array(row['ext_catalog_name'].iloc[0].split(','))
 
     #
     # See if target source hits any of Cantat-Gaudin+2018, Kounkel&Covey2019,
@@ -81,15 +84,16 @@ def get_neighborhood_information(
 
     if 'CantatGaudin_2018' in references:
         group_in_cg18 = True
-        groupname = clusters[np.in1d(references, 'CantatGaudin_2018')]
+        groupname = clusters[np.in1d(references, 'CantatGaudin_2018')][0]
 
     elif 'Kounkel_2019' in references:
         group_in_kc19 = True
-        groupname = clusters[np.in1d(references, 'Kounkel_2019')]
+        groupname = clusters[np.in1d(references, 'Kounkel_2019')][0]
 
     elif 'Kharchenko2013' in references:
         group_in_k13 = True
-        groupname = clusters[np.in1d(references, 'Kharchenko2013')]
+        groupname = clusters[np.in1d(references, 'Kharchenko2013')][0]
+        mwscid = mmbr_dict['mwscid']
 
     elif isinstance(mmbr_dict, dict):
         if mmbr_dict['mwscid'] == 'N/A':

@@ -212,9 +212,9 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             catalog_to_gaussian_sep_arcsec
         )
 
-        ##########
-        # page 7
-        ##########
+        ############
+        # pages 7
+        ############
         info = (
              ini.get_neighborhood_information(sourceid, mmbr_dict=mmbr_dict,
                                               k13_notes_df=k13_notes_df)
@@ -233,7 +233,10 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                                              pmra_min=pmra_min, pmra_max=pmra_max,
                                              group_in_k13=group_in_k13,
                                              group_in_cg18=group_in_cg18,
-                                             group_in_kc19=group_in_kc19)
+                                             group_in_kc19=group_in_kc19,
+                                             source_id=sourceid,
+                                             figsize=(30,20)
+                                            )
 
             pdf.savefig(fig)
             plt.close()

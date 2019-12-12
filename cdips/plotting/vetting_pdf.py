@@ -12,6 +12,7 @@ from astrobase.plotbase import skyview_stamp
 
 from cdips.lcproc import detrend as dtr
 from cdips.lcproc import mask_orbit_edges as moe
+from cdips.utils.catalogs import get_cdips_pub_catalog_entry
 
 from astropy.io import fits
 from astropy import units as u, constants as const
@@ -1603,18 +1604,26 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
 
 
 def plot_group_neighborhood(
-    targetname, groupname, group_df_dr2, target_df, nbhd_df,
-    cutoff_probability,
-    pmdec_min=None,
-    pmdec_max=None,
-    pmra_min=None,
-    pmra_max=None,
-    group_in_k13=False,
-    group_in_cg18=True,
-    group_in_kc19=False,
-    plx_ylim=None,
-    return_figure=True
-):
+        targetname, groupname, group_df_dr2, target_df, nbhd_df,
+        cutoff_probability,
+        pmdec_min=None,
+        pmdec_max=None,
+        pmra_min=None,
+        pmra_max=None,
+        group_in_k13=False,
+        group_in_cg18=True,
+        group_in_kc19=False,
+        plx_ylim=None,
+        return_figure=True,
+        figsize=(30,30),
+        source_id=None,
+        show_rvs=False
+    ):
+    """
+    source_id: optional, but recommended!
+
+    show_rvs: usually not worthwhile
+    """
 
     if group_in_k13:
         l = 'K13 P>{}'.format(cutoff_probability)
@@ -1625,186 +1634,317 @@ def plot_group_neighborhood(
     else:
         raise NotImplementedError
 
-    fig, axs = plt.subplots(2, 3, figsize=(18,12))
+    nrows, ncols = 3, 3
+    if show_rvs:
+        nrows, ncols = 4, 3
+    fig, axs = plt.subplots(nrows, ncols, figsize=figsize)
 
-    ######################
-    # parallax vs pm dec #
-    ######################
-    ax0 = axs[0,0]
+    # both with and without overplot:
+    # * parallax vs pm dec
+    # * parallax vs pm ra
+    # * proper motions
+    for row_ix in range(2):
 
-    ax0.scatter(
-        nbhd_df['pmdec'], nbhd_df['parallax'], c='gray', alpha=0.9, zorder=2,
-        s=15, rasterized=True, linewidths=0, label='nbhd stars'
-    )
-    if extra_overplot:
-        ax0.scatter(
-            group_df_dr2['pmdec'], group_df_dr2['parallax'], c='k', alpha=0.9,
-            zorder=3, s=15, rasterized=True, linewidths=0, label=l
+        extra_overplot = False if row_ix == 0 else True
+
+        ######################
+        # parallax vs pm dec #
+        ######################
+        ax = axs[row_ix,0]
+
+        ax.scatter(
+            nbhd_df['pmdec'], nbhd_df['parallax'], c='gray', alpha=0.9,
+            zorder=2, s=15, rasterized=True, linewidths=0, label='nbhd stars'
+        )
+        if extra_overplot:
+            ax.scatter(
+                group_df_dr2['pmdec'], group_df_dr2['parallax'], c='k',
+                alpha=0.9, zorder=3, s=20, rasterized=True, linewidths=0,
+                label=l
+            )
+
+        ax.plot(
+            target_df['pmdec'],
+            target_df['parallax'],
+            alpha=1, mew=0.5, zorder=8, label=targetname,
+            markerfacecolor='yellow', markersize=16, marker='*', color='black',
+            lw=0
         )
 
-    ax0.plot(
-        target_df['pmdec'],
-        target_df['parallax'],
-        alpha=1, mew=0.5, zorder=8, label=targetname,
-        markerfacecolor='yellow', markersize=16, marker='*', color='black',
-        lw=0
-    )
+        ax.legend(loc='best', fontsize='x-large')
+        ax.set_xlabel(r'pmDEC, $\mu_{{\delta}}$ [mas/yr]', fontsize='xx-large')
+        ax.set_ylabel('star parallax [mas]', fontsize='xx-large')
 
-    ax0.legend(loc='best')
-    ax0.set_xlabel(r'pmDEC, $\mu_{{\delta}}$ [mas/yr]', fontsize='xx-large')
-    ax0.set_ylabel('star parallax [mas]', fontsize='xx-large')
+        ax.set_xlim([pmdec_min, pmdec_max])
 
-    ax0.set_xlim([pmdec_min, pmdec_max])
+        ######################
+        # parallax vs pm ra #
+        ######################
+        ax = axs[row_ix,1]
 
-    ######################
-    # parallax vs pm ra #
-    ######################
-    ax1 = axs[0,1]
-
-    ax1.scatter(
-        nbhd_df['pmra'], nbhd_df['parallax'], c='gray', alpha=0.9, zorder=2, s=15,
-        rasterized=True, linewidths=0, label='nbhd stars'
-    )
-    if extra_overplot:
-        ax1.scatter(
-            group_df_dr2['pmra'], group_df_dr2['parallax'], c='k', alpha=0.9,
-            zorder=3, s=15, rasterized=True, linewidths=0, label=l
+        ax.scatter(
+            nbhd_df['pmra'], nbhd_df['parallax'], c='gray', alpha=0.9,
+            zorder=2, s=15, rasterized=True, linewidths=0, label='nbhd stars'
         )
-    ax1.plot(
-        target_df['pmra'], target_df['parallax'], alpha=1, mew=0.5, zorder=8,
-        label=targetname, markerfacecolor='yellow', markersize=16, marker='*',
-        color='black', lw=0
-    )
-
-    ax1.legend(loc='best')
-    ax1.set_xlabel(r'pmRA, $\mu_{{\alpha}} \cos\delta$ [mas/yr]',
-                   fontsize='xx-large')
-    ax1.set_ylabel('star parallax [mas]', fontsize='xx-large')
-
-    ax1.set_xlim([pmra_min, pmra_max])
-
-    ##################
-    # proper motions #
-    ##################
-    ax2 = axs[0,2]
-
-    ax2.scatter(
-        nbhd_df['pmra'], nbhd_df['pmdec'], c='gray', alpha=0.9, zorder=2, s=15,
-        rasterized=True, linewidths=0, label='nbhd stars'
-    )
-    if extra_overplot:
-        ax2.scatter(
-            group_df_dr2['pmra'], group_df_dr2['pmdec'], c='k', alpha=0.9,
-            zorder=3, s=15, rasterized=True, linewidths=0, label=l
+        if extra_overplot:
+            ax.scatter(
+                group_df_dr2['pmra'], group_df_dr2['parallax'], c='k',
+                alpha=0.9, zorder=3, s=20, rasterized=True, linewidths=0,
+                label=l
+            )
+        ax.plot(
+            target_df['pmra'], target_df['parallax'], alpha=1, mew=0.5,
+            zorder=8, label=targetname, markerfacecolor='yellow',
+            markersize=16, marker='*', color='black', lw=0
         )
-    ax2.plot(
-        target_df['pmra'], target_df['pmdec'], alpha=1, mew=0.5, zorder=8,
-        label=targetname, markerfacecolor='yellow', markersize=16, marker='*',
-        color='black', lw=0
-    )
 
-    ax2.legend(loc='best')
+        ax.legend(loc='best', fontsize='x-large')
+        ax.set_xlabel(r'pmRA, $\mu_{{\alpha}} \cos\delta$ [mas/yr]',
+                      fontsize='xx-large')
+        ax.set_ylabel('star parallax [mas]', fontsize='xx-large')
 
-    ax2.set_xlabel(r'pmRA, $\mu_{{\alpha}} \cos\delta$ [mas/yr]',
-                   fontsize='xx-large')
-    ax2.set_ylabel(r'pmDEC, $\mu_{{\delta}}$ [mas/yr]',
-                   fontsize='xx-large')
+        ax.set_xlim([pmra_min, pmra_max])
 
-    ax2.set_xlim([pmra_min, pmra_max])
-    ax2.set_ylim([pmdec_min, pmdec_max])
+        ##################
+        # proper motions #
+        ##################
+        ax = axs[row_ix,2]
 
-    ##############
-    # HR diagram #
-    ##############
-    ax3 = axs[1,0]
+        ax.scatter(
+            nbhd_df['pmra'], nbhd_df['pmdec'], c='gray', alpha=0.9, zorder=2,
+            s=15, rasterized=True, linewidths=0, label='nbhd stars'
+        )
+        if extra_overplot:
+            ax.scatter(
+                group_df_dr2['pmra'], group_df_dr2['pmdec'], c='k', alpha=0.9,
+                zorder=3, s=20, rasterized=True, linewidths=0, label=l
+            )
+        ax.plot(
+            target_df['pmra'], target_df['pmdec'], alpha=1, mew=0.5, zorder=8,
+            label=targetname, markerfacecolor='yellow', markersize=16,
+            marker='*', color='black', lw=0
+        )
 
-    ax3.scatter(
+        ax.legend(loc='best', fontsize='x-large')
+
+        ax.set_xlabel(r'pmRA, $\mu_{{\alpha}} \cos\delta$ [mas/yr]',
+                      fontsize='xx-large')
+        ax.set_ylabel(r'pmDEC, $\mu_{{\delta}}$ [mas/yr]',
+                      fontsize='xx-large')
+
+        ax.set_xlim([pmra_min, pmra_max])
+        ax.set_ylim([pmdec_min, pmdec_max])
+
+    #######
+    # CMD #
+    #######
+    ax = axs[2,0]
+
+    ax.scatter(
         nbhd_df['phot_bp_mean_mag']-nbhd_df['phot_rp_mean_mag'], nbhd_df['phot_g_mean_mag'],
         c='gray', alpha=1., zorder=2, s=15, rasterized=True, linewidths=0,
         label='nbhd stars'
     )
-    ax3.scatter(
+    ax.scatter(
         group_df_dr2['phot_bp_mean_mag']-group_df_dr2['phot_rp_mean_mag'],
         group_df_dr2['phot_g_mean_mag'],
         c='k', alpha=1., zorder=3, s=15, rasterized=True, linewidths=0, label=l
     )
-    ax3.plot(
+    ax.plot(
         target_df['phot_bp_mean_mag']-target_df['phot_rp_mean_mag'],
         target_df['phot_g_mean_mag'],
         alpha=1, mew=0.5, zorder=8, label=targetname, markerfacecolor='yellow',
         markersize=16, marker='*', color='black', lw=0
     )
 
-    ax3.legend(loc='best')
-    ax3.set_ylabel('G', fontsize='xx-large')
-    ax3.set_xlabel('Bp - Rp', fontsize='xx-large')
+    ax.legend(loc='best', fontsize='x-large')
+    ax.set_ylabel('G', fontsize='xx-large')
+    ax.set_xlabel('Bp - Rp', fontsize='xx-large')
 
-    ylim = ax3.get_ylim()
-    ax3.set_ylim((max(ylim),min(ylim)))
-    ax3.set_xlim((-0.5, 3.0))
+    ylim = ax.get_ylim()
+    ax.set_ylim((max(ylim),min(ylim)))
+    ax.set_xlim((-0.5, 3.0))
+
+    ##############
+    # HR diagram #
+    ##############
+    ax = axs[2,1]
+
+    nbhd_yval = np.array([nbhd_df['phot_g_mean_mag'] +
+                          5*np.log10(nbhd_df['parallax']/1e3) + 5])
+    ax.scatter(
+        nbhd_df['phot_bp_mean_mag']-nbhd_df['phot_rp_mean_mag'], nbhd_yval,
+        c='gray', alpha=1., zorder=2, s=15, rasterized=True, linewidths=0,
+        label='nbhd stars'
+    )
+    yval = group_df_dr2['phot_g_mean_mag'] + 5*np.log10(group_df_dr2['parallax']/1e3) + 5
+    ax.scatter(
+        group_df_dr2['phot_bp_mean_mag']-group_df_dr2['phot_rp_mean_mag'],
+        yval,
+        c='k', alpha=1., zorder=3, s=15, rasterized=True, linewidths=0, label=l
+    )
+    target_yval = np.array([target_df['phot_g_mean_mag'] +
+                            5*np.log10(target_df['parallax']/1e3) + 5])
+    ax.plot(
+        target_df['phot_bp_mean_mag']-target_df['phot_rp_mean_mag'],
+        target_yval,
+        alpha=1, mew=0.5, zorder=8, label=targetname, markerfacecolor='yellow',
+        markersize=16, marker='*', color='black', lw=0
+    )
+
+    ax.legend(loc='best', fontsize='x-large')
+    ax.set_ylabel('$G + 5\log_{10}(\omega_{\mathrm{as}}) + 5$', fontsize='xx-large')
+    ax.set_xlabel('Bp - Rp', fontsize='xx-large')
+
+    ylim = ax.get_ylim()
+    ax.set_ylim((max(ylim),min(ylim)))
+    ax.set_xlim((-0.5, 3.0))
+
+    # set M_omega y limits
+    min_y = np.nanmin(np.array([np.nanpercentile(nbhd_yval, 2), target_yval]))
+    max_y = np.nanmax(np.array([np.nanpercentile(nbhd_yval, 98), target_yval]))
+    edge_y = 0.01*(max_y - min_y)
+    momega_ylim = [max_y+edge_y, min_y-edge_y]
+    ax.set_ylim(momega_ylim)
 
     #############
     # positions #
     #############
-    ax4 = axs[1,1]
+    ax = axs[2,2]
 
-    ax4.scatter(
+    ax.scatter(
         nbhd_df['ra'], nbhd_df['dec'], c='gray', alpha=1., zorder=2, s=15,
         rasterized=True, linewidths=0, label='nbhd stars'
     )
-    ax4.scatter(
+    ax.scatter(
         group_df_dr2['ra'], group_df_dr2['dec'], c='k', alpha=1., zorder=3,
         s=15, rasterized=True, linewidths=0, label=l
     )
-    ax4.plot(
+    ax.plot(
         target_df['ra'], target_df['dec'], alpha=1, mew=0.5, zorder=8,
         label=targetname, markerfacecolor='yellow', markersize=16, marker='*',
         color='black', lw=0
     )
 
-    ax4.legend(loc='best')
-    ax4.set_xlabel(r'RA, $\alpha$ [deg]', fontsize='xx-large')
-    ax4.set_ylabel('Dec, $\delta$ [deg]', fontsize='xx-large')
+    ax.legend(loc='best', fontsize='x-large')
+    ax.set_xlabel(r'RA, $\alpha$ [deg]', fontsize='xx-large')
+    ax.set_ylabel('Dec, $\delta$ [deg]', fontsize='xx-large')
 
-    ######################
-    # parallax vs DR2 rv #
-    ######################
-    ax5 = axs[1,2]
+    if show_rvs:
+        ######################
+        # parallax vs DR2 rv #
+        ######################
+        for col_ix in range(2):
 
-    ax5.scatter(
-        nbhd_df['radial_velocity'], nbhd_df['parallax'], c='gray', alpha=0.9,
-        zorder=2, s=15, rasterized=True, linewidths=0, label='nbhd stars'
-    )
-    ax5.plot(
-        target_df['radial_velocity'], target_df['parallax'], alpha=1, mew=0.5,
-        zorder=8, label=targetname, markerfacecolor='yellow', markersize=16,
-        marker='*', color='black', lw=0
-    )
-    if extra_overplot:
-        ax5.scatter(
-            group_df_dr2['radial_velocity'], group_df_dr2['parallax'], c='k',
-            alpha=0.9, zorder=3, s=15, rasterized=True, linewidths=0, label=l
+            extra_overplot = False if col_ix == 0 else True
+
+            ax = axs[3,col_ix]
+
+            ax.scatter(
+                nbhd_df['radial_velocity'], nbhd_df['parallax'], c='gray', alpha=0.9,
+                zorder=2, s=15, rasterized=True, linewidths=0, label='nbhd stars'
+            )
+            ax.plot(
+                target_df['radial_velocity'], target_df['parallax'], alpha=1, mew=0.5,
+                zorder=8, label=targetname, markerfacecolor='yellow', markersize=16,
+                marker='*', color='black', lw=0
+            )
+            if extra_overplot:
+                ax.scatter(
+                    group_df_dr2['radial_velocity'], group_df_dr2['parallax'], c='k',
+                    alpha=0.9, zorder=3, s=30, rasterized=True, linewidths=0, label=l
+                )
+
+            ax.legend(loc='best', fontsize='x-large')
+            ax.set_xlabel('DR2 RV (if available) [km/s]', fontsize='xx-large')
+            ax.set_ylabel('star parallax [mas]', fontsize='xx-large')
+
+        ########
+        # text #
+        ########
+
+        ax = axs[3,2]
+
+        if isinstance(source_id, int) or isinstance(source_id, str):
+            row = get_cdips_pub_catalog_entry(source_id, ver=0.4)
+            references = row['reference'].iloc[0]
+            clusters = row['cluster'].iloc[0]
+            ext_catalog_names = row['ext_catalog_name'].iloc[0]
+        else:
+            references = 'N/A'
+            clusters = 'N/A'
+            ext_catalog_names = 'N/A'
+
+        max_nchar = 30
+        outstr = (
+            'Target: {targetname}'
+            '\nGAIADR2: {source_id}'
+            '\nGroup: {groupname}'
+            '\nRefs: {references}'
+            '\nNames: {clusters}'
+        ).format(
+            targetname=targetname,
+            source_id=source_id,
+            groupname=groupname,
+            references=references[:max_nchar],
+            clusters=clusters[:max_nchar],
+            ext_catalog_names=ext_catalog_names[:max_nchar]
         )
 
+        txt_x, txt_y = 0.03, 0.98
 
-    ax5.legend(loc='best')
-    ax5.set_xlabel('DR2 RV (if available) [km/s]', fontsize='xx-large')
-    ax5.set_ylabel('star parallax [mas]', fontsize='xx-large')
+        ax.set_axis_off()
+        ax.text(txt_x, txt_y, outstr, ha='left', va='top', fontsize=22, zorder=2,
+                transform=ax.transAxes)
+
+
+    ############
+    # fix axes #
+    ############
+    for row_ix in range(nrows):
+        for col_ix in range(ncols):
+            ax = axs[row_ix, col_ix]
+            ax.get_yaxis().set_tick_params(which='both', direction='in',
+                                           labelsize='xx-large')
+            ax.get_xaxis().set_tick_params(which='both', direction='in',
+                                           labelsize='xx-large')
+
+    # set parallax y limits
+    min_plx = np.nanmin(np.array([np.nanpercentile(nbhd_df['parallax'], 2),
+                                  target_df['parallax'].iloc[0]]))
+    max_plx = np.nanmax(np.array([np.nanpercentile(nbhd_df['parallax'], 98),
+                                  target_df['parallax'].iloc[0]]))
+    edge_plx = 0.01*(max_plx - min_plx)
+    plx_ylim = [min_plx-edge_plx, max_plx+edge_plx]
+
+    if show_rvs:
+        for ax in [
+            axs[0,0], axs[0,1], axs[1,0], axs[1,1], axs[3,0], axs[3,1]
+        ]:
+            ax.set_ylim(plx_ylim)
+
+        # set RV x limits
+        min_rv = np.nanmin(np.array([np.nanpercentile(nbhd_df['radial_velocity'], 2),
+                                     target_df['parallax'].iloc[0]]))
+        max_rv = np.nanmax(np.array([np.nanpercentile(nbhd_df['radial_velocity'], 98),
+                                     target_df['parallax'].iloc[0]]))
+        edge_rv = 0.01*(max_rv - min_rv)
+        rv_ylim = [min_rv - edge_rv, max_rv + edge_rv]
+        for ax in [
+            axs[3,0], axs[3,1]
+        ]:
+            ax.set_xlim(rv_ylim)
+
+    else:
+        for ax in [
+            axs[0,0], axs[0,1], axs[1,0], axs[1,1]
+        ]:
+            ax.set_ylim(plx_ylim)
 
 
     ########
     # save #
     ########
-    for ax in [ax0,ax1,ax2,ax3,ax4,ax5]:
-        ax.get_yaxis().set_tick_params(which='both', direction='in',
-                                       labelsize='xx-large')
-        ax.get_xaxis().set_tick_params(which='both', direction='in',
-                                       labelsize='xx-large')
-
-    if plx_ylim:
-        for ax in [ax0,ax1,ax5]:
-            ax.set_ylim(plx_ylim)
-
     fig.tight_layout()
 
     if return_figure:
@@ -1815,11 +1955,6 @@ def plot_group_neighborhood(
             '../results/neighborhoods/{}_{}_neighborhood.png'.
             format(targetname, groupname)
         )
-        if extra_overplot:
-            outpath = (
-                '../results/neighborhoods/{}_{}_neighborhood_extra.png'.
-                format(targetname, groupname)
-            )
 
         fig.savefig(outpath, dpi=300, bbox_inches='tight')
         print('made {}'.format(outpath))
