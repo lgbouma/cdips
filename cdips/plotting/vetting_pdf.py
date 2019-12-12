@@ -468,11 +468,6 @@ def _get_full_infodict(tlsp, hdr, mdf):
     if h['TICCONT'] != 'nan':
         h['TICCONT'] = '{:.2f}'.format(h['TICCONT'])
 
-    # if you have Gaia Rstar, use that to estimate stellar mass, and the
-    # circular transit duration timescale
-    mamadf = pd.read_csv('../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
-                         delim_whitespace=True)
-
     if h['rstar'] != 'nan' and h['mstar'] != 'nan':
         mstar = float(h['mstar'])
         rstar = float(h['rstar'])*u.Rsun
@@ -481,6 +476,11 @@ def _get_full_infodict(tlsp, hdr, mdf):
         h['circduration'] = '{:.1f}'.format(tdur_circ)
 
     elif h['rstar'] != 'nan' and h['mstar'] == 'nan':
+
+        # if you have only Rstar, use that to estimate stellar mass (assuming
+        # it's a dwarf), and therefore the circular transit duration timescale
+        mamadf = pd.read_csv('../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
+                             delim_whitespace=True)
 
         #
         # mass monotonically decreases, but radius does not (in Mamajek's
