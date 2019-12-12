@@ -29,6 +29,16 @@ def main(sector=None, cdips_cat_vnum=None):
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting/'
         'sector-{}_remake/'.format(sector)
     )
+    if not os.path.exists(resultsdir):
+        os.mkdir(resultsdir)
+    dirs = [resultsdir, os.path.join(resultsdir,'pdfs'),
+            os.path.join(resultsdir,'pkls'),
+            os.path.join(resultsdir,'nottransitpdfs'),
+            os.path.join(resultsdir,'nottransitpkls')]
+    for _d in dirs:
+        if not os.path.exists(_d):
+            os.mkdir(_d)
+
     classifxn_path = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
         'vetting_classifications/'
