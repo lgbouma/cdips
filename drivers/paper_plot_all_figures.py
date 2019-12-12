@@ -53,7 +53,18 @@ OC_MG_CAT_ver=0.4
 
 def main():
 
-    sectors = [6,7]
+    sectors = [6,7,8,9,10,11]
+
+    # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
+    plot_rms_vs_mag(sectors, overwrite=1)
+
+    # fig N: average autocorrelation fn of LCs
+    plot_avg_acf(sectors, size=10000, overwrite=1, cleanprevacf=False)
+
+    # fig N: positions of field and cluster LC stars (currently all cams)
+    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=1,
+                                        galacticcoords=True)
+    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=1)
 
     # fig N: stages of image processing.
     plot_stages_of_image_processing(niceimage=1, overwrite=1)
@@ -68,9 +79,6 @@ def main():
     # fig N: quilt of interesting light curves, phase-folded
     pqps.plot_quilt_s6_s7(overwrite=1)
 
-    # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
-    plot_rms_vs_mag(sectors, overwrite=1)
-
     # fig N: 3x2 quilt of phased PC
     pqp.plot_quilt_PCs(overwrite=1, paper_aspect_ratio=0)
     pqp.plot_quilt_PCs(overwrite=1, paper_aspect_ratio=1)
@@ -81,9 +89,6 @@ def main():
 
     # fig N: histogram of ages of LC stars
     plot_hist_logt(sectors, overwrite=1)
-
-    # fig N: average autocorrelation fn of LCs
-    plot_avg_acf(sectors, size=10000, overwrite=1, cleanprevacf=False)
 
     # timeseries figures
     for sector in range(6,8):
@@ -134,12 +139,6 @@ def main():
     # calculated for CTL stars, so by definition it has limited use
     plot_cdf_cont(sectors, overwrite=0)
 
-    # fig N: positions of field and cluster LC stars (currently all cams)
-    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=1,
-                                        galacticcoords=True)
-    plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=0)
-    plot_cluster_and_field_star_scatter(sectors=[6], overwrite=0, cams=[1],
-                                        ccds=[1,2,3,4])
 
 
 def get_Tmag(fitspath):
@@ -1524,7 +1523,7 @@ def plot_cluster_and_field_star_scatter(sectors=None, overwrite=0,
 
               # all lightcurves
               lcdir = (
-                  '/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s{}/ISP_{}-{}-15??/'.
+                  '/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s{}/ISP_{}-{}-1???/'.
                   format(str(sector).zfill(4), cam, ccd)
               )
               lcglob = '*_llc.fits'
