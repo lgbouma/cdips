@@ -6,7 +6,7 @@ from matplotlib.colors import ListedColormap
 
 from astrobase import periodbase, checkplot
 from astrobase.checkplot.png import _make_phased_magseries_plot
-from astrobase.lcmath import sigclip_magseries
+from astrobase.lcmath import sigclip_magseries, phase_magseries
 from astrobase.lcfit.eclipses import gaussianeb_fit_magseries
 from astrobase.plotbase import skyview_stamp
 
@@ -734,6 +734,18 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                     phasems=6.0, phasebinms=12.0, verbose=True,
                                     lowerleftstr='primary',
                                     lowerleftfontsize='xx-large')
+
+        model_time = tlsp['tlsresult']['model_lightcurve_time']
+        model_y = tlsp['tlsresult']['model_lightcurve_model']
+
+        phasedlc = phase_magseries(model_time, model_y, d['period'], d['t0'],
+                                   wrap=True, sort=True)
+        plotphase = phasedlc['phase']
+        plotmags = phasedlc['mags']
+        ax2.plot(
+            plotphase, plotmags, zorder=0, color='gray'
+        )
+
     except (TypeError, ValueError) as e:
         print('ERR! phased magseries ax2 failed {}'.format(repr(e)))
         pass
@@ -750,6 +762,9 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                     phasems=6.0, phasebinms=12.0, verbose=True,
                                     lowerleftstr='secondary',
                                     lowerleftfontsize='xx-large')
+        ax3.plot(
+            plotphase, plotmags, zorder=0, color='gray'
+        )
     except (TypeError, ValueError) as e:
         print('ERR! phased magseries ax3 failed {}'.format(repr(e)))
         pass
@@ -783,6 +798,9 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                     phasems=6.0, phasebinms=12.0, verbose=True,
                                     lowerleftstr='odd',
                                     lowerleftfontsize='xx-large')
+        ax4.plot(
+            plotphase, plotmags, zorder=0, color='gray'
+        )
     except (TypeError, ValueError) as e:
         print('ERR! phased magseries ax4 failed {}'.format(repr(e)))
         pass
@@ -800,6 +818,9 @@ def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
                                     phasems=6.0, phasebinms=12.0, verbose=True,
                                     lowerleftstr='even',
                                     lowerleftfontsize='xx-large')
+        ax5.plot(
+            plotphase, plotmags, zorder=0, color='gray'
+        )
     except (TypeError, ValueError) as e:
         print('ERR! phased magseries ax4 failed {}'.format(repr(e)))
         pass
@@ -1667,7 +1688,7 @@ def plot_group_neighborhood(
             target_df['pmdec'],
             target_df['parallax'],
             alpha=1, mew=0.5, zorder=8, label=targetname,
-            markerfacecolor='yellow', markersize=16, marker='*', color='black',
+            markerfacecolor='yellow', markersize=22, marker='*', color='black',
             lw=0
         )
 
@@ -1695,7 +1716,7 @@ def plot_group_neighborhood(
         ax.plot(
             target_df['pmra'], target_df['parallax'], alpha=1, mew=0.5,
             zorder=8, label=targetname, markerfacecolor='yellow',
-            markersize=16, marker='*', color='black', lw=0
+            markersize=22, marker='*', color='black', lw=0
         )
 
         ax.legend(loc='best', fontsize='x-large')
@@ -1721,7 +1742,7 @@ def plot_group_neighborhood(
             )
         ax.plot(
             target_df['pmra'], target_df['pmdec'], alpha=1, mew=0.5, zorder=8,
-            label=targetname, markerfacecolor='yellow', markersize=16,
+            label=targetname, markerfacecolor='yellow', markersize=22,
             marker='*', color='black', lw=0
         )
 
@@ -1754,7 +1775,7 @@ def plot_group_neighborhood(
         target_df['phot_bp_mean_mag']-target_df['phot_rp_mean_mag'],
         target_df['phot_g_mean_mag'],
         alpha=1, mew=0.5, zorder=8, label=targetname, markerfacecolor='yellow',
-        markersize=16, marker='*', color='black', lw=0
+        markersize=22, marker='*', color='black', lw=0
     )
 
     ax.legend(loc='best', fontsize='x-large')
@@ -1789,7 +1810,7 @@ def plot_group_neighborhood(
         target_df['phot_bp_mean_mag']-target_df['phot_rp_mean_mag'],
         target_yval,
         alpha=1, mew=0.5, zorder=8, label=targetname, markerfacecolor='yellow',
-        markersize=16, marker='*', color='black', lw=0
+        markersize=22, marker='*', color='black', lw=0
     )
 
     ax.legend(loc='best', fontsize='x-large')
@@ -1822,7 +1843,7 @@ def plot_group_neighborhood(
     )
     ax.plot(
         target_df['ra'], target_df['dec'], alpha=1, mew=0.5, zorder=8,
-        label=targetname, markerfacecolor='yellow', markersize=16, marker='*',
+        label=targetname, markerfacecolor='yellow', markersize=22, marker='*',
         color='black', lw=0
     )
 
@@ -1846,8 +1867,8 @@ def plot_group_neighborhood(
             )
             ax.plot(
                 target_df['radial_velocity'], target_df['parallax'], alpha=1, mew=0.5,
-                zorder=8, label=targetname, markerfacecolor='yellow', markersize=16,
-                marker='*', color='black', lw=0
+                zorder=8, label=targetname, markerfacecolor='yellow',
+                markersize=22, marker='*', color='black', lw=0
             )
             if extra_overplot:
                 ax.scatter(
