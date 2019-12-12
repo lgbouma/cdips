@@ -60,7 +60,8 @@ def given_votable_get_df(votablepath, assert_equal='source_id'):
 
 def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
                                    overwrite=True,
-                                   enforce_all_sourceids_viable=True):
+                                   enforce_all_sourceids_viable=True,
+                                   savstr=''):
     """
     Args:
 
@@ -73,6 +74,9 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
 
         enforce_all_sourceids_viable: if True, will raise an assertion error if
         every source id does not return a result.
+
+        savstr (str); optional string that will be included in the path to
+        the downloaded vizier table.
 
     Returns:
 
@@ -88,8 +92,12 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
             'source_ids must be np.ndarray of np.int64 Gaia DR2 source_ids'
         )
 
-    xmltouploadpath = os.path.join(gaiadir,'toupload_{}.xml'.format(groupname))
-    dlpath = os.path.join(gaiadir,'group{}_matches.xml.gz'.format(groupname))
+    xmltouploadpath = os.path.join(
+        gaiadir, 'toupload_{}{}.xml'.format(groupname, savstr)
+    )
+    dlpath = os.path.join(
+        gaiadir,'group{}_matches{}.xml.gz'.format(groupname, savstr)
+    )
 
     if overwrite:
         if os.path.exists(xmltouploadpath):
@@ -131,6 +139,8 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
             'ERROR! got {} matches vs {} source id queries'.
             format(len(df), len(source_ids))
         )
+        print(errmsg)
+        import IPython; IPython.embed()
         raise AssertionError(errmsg)
 
     if len(df) != len(source_ids) and not enforce_all_sourceids_viable:

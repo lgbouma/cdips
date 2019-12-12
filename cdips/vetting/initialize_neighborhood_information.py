@@ -162,17 +162,21 @@ def get_neighborhood_information(
     #
     if group_in_cg18:
         enforce_all_sourceids_viable = True
+        savstr='_cg18'
     elif group_in_kc19:
         enforce_all_sourceids_viable = True
+        savstr='_kc19'
     elif group_in_k13:
         enforce_all_sourceids_viable = False
+        savstr='_k13match'
     else:
         enforce_all_sourceids_viable = True
 
     group_df_dr2 = given_source_ids_get_gaia_data(
         group_source_ids, groupname, overwrite=overwrite,
         enforce_all_sourceids_viable=enforce_all_sourceids_viable,
-        n_max=min((len(group_source_ids), 10000))
+        n_max=min((len(group_source_ids), 10000)),
+        savstr=savstr
     )
 
     target_d = objectid_search(

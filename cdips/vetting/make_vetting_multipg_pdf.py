@@ -217,7 +217,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ############
         info = (
              ini.get_neighborhood_information(sourceid, mmbr_dict=mmbr_dict,
-                                              k13_notes_df=k13_notes_df)
+                                              k13_notes_df=k13_notes_df,
+                                              overwrite=0)
         )
         if isinstance(info, tuple):
             (targetname, groupname, group_df_dr2, target_df, nbhd_df,
