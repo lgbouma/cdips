@@ -58,7 +58,8 @@ def given_votable_get_df(votablepath, assert_equal='source_id'):
 
     return df
 
-def given_source_ids_get_gaia_data(source_ids, groupname, overwrite=True,
+def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
+                                   overwrite=True,
                                    enforce_all_sourceids_viable=True):
     """
     Args:
@@ -106,10 +107,12 @@ def given_source_ids_get_gaia_data(source_ids, groupname, overwrite=True,
 
         jobstr = (
         '''
-        SELECT *
+        SELECT top {n_max:d} *
         FROM tap_upload.foobar as u, gaiadr2.gaia_source AS g
         WHERE u.source_id=g.source_id
         '''
+        ).format(
+            n_max=n_max
         )
         query = jobstr
 

@@ -150,11 +150,12 @@ def get_neighborhood_information(
         group_source_ids = np.array(k13_df['gaia_dr2_match_id']).astype(np.int64)
 
     elif group_in_kc19:
-
         cutoff_probability = 1
         kc19_df = pd.read_csv(KC19_PATH)
-        kc19_df = kc19_df[kc19_df['group_id'] == group_id]
-        group_source_ids = np.array(kc19_df['source_id']).astype(np.int64)
+        group_id = kc19_df[kc19_df.source_id == source_id].group_id.iloc[0]
+        group_df = kc19_df[kc19_df.group_id == group_id]
+        group_source_ids = np.array(group_df['source_id']).astype(np.int64)
+        np.testing.assert_array_equal(group_df['source_id'], group_source_ids)
 
     #
     # Given the source ids, get all the relevant Gaia information.
@@ -170,7 +171,8 @@ def get_neighborhood_information(
 
     group_df_dr2 = given_source_ids_get_gaia_data(
         group_source_ids, groupname, overwrite=overwrite,
-        enforce_all_sourceids_viable=enforce_all_sourceids_viable
+        enforce_all_sourceids_viable=enforce_all_sourceids_viable,
+        n_max=min((len(group_source_ids), 10000))
     )
 
     target_d = objectid_search(
