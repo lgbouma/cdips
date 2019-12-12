@@ -12,8 +12,8 @@ def main():
     iscollabsubclass = 1
     getgold = 0
 
-    sector = 11
-    today = '20191205'
+    sector = 8
+    today = '20191121'
 
     if isfull:
         given_full_classifications_organize(sector=sector, today=today)
@@ -68,6 +68,12 @@ def given_collab_subclassifications_merge(sector=6):
         classfiles = [
             os.path.join(datadir, '20190621_sector-7_PCs_LGB_class.txt'),
             os.path.join(datadir, '20190621_sector-7_PCs_JH_class.txt')
+        ]
+    elif sector==8:
+        classfiles = [
+            os.path.join(datadir, '20191121_sector-8_PCs_LGB_class.txt'),
+            os.path.join(datadir, '20191121_sector-8_PCs_JH_class.txt'),
+            os.path.join(datadir, '20191121_sector-8_PCs_JNW_class.txt')
         ]
     elif sector==9:
         classfiles = [
