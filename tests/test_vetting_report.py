@@ -21,6 +21,8 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
     )
 
     ids_to_test = [
+        '5489726768531119616',  # PC
+        '5432321060287733888',  # PC
         '5256502966294604800',  # PC
         '5524965566445719168',  # EB offtarget
         '4666329826478795008',  # contact binary
