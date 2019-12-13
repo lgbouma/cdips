@@ -9,18 +9,18 @@ if host != 'brik':
 
 def main():
     isfull = 0
-    iscollabsubclass = 1
-    getgold = 0
+    iscollabsubclass = 0
+    organize_PCs = 1
 
-    sector = 8
-    today = '20191121'
+    sector = 11
+    today = '20191205'
 
     if isfull:
         given_full_classifications_organize(sector=sector, today=today)
     if iscollabsubclass:
         given_collab_subclassifications_merge(sector=sector)
-    if getgold:
-        given_merged_gold_organize_PCs(sector=sector)
+    if organize_PCs:
+        given_merged_organize_PCs(sector=sector)
 
 
 def ls_to_df(classfile, classifier='LGB'):
@@ -115,12 +115,12 @@ def given_collab_subclassifications_merge(sector=6):
     print('wrote {}'.format(outpath))
 
 
-def given_merged_gold_organize_PCs(sector=None):
+def given_merged_organize_PCs(sector=None):
     """
     Using output from given_collab_subclassifications_merge, assign gold=2,
-    maybe=1, junk, and look closer at anything with average rating >=1. The one
-    exception: things classified as "not_cdips_still_good", which go in their
-    own pile.
+    maybe=1, junk, and look closer at anything with average rating >1 (note:
+    not >=). The one exception: things classified as "not_cdips_still_good",
+    which go in their own pile.
     """
 
     datadir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/'
@@ -131,41 +131,131 @@ def given_merged_gold_organize_PCs(sector=None):
 
     tag_colnames = [c for c in df.columns if 'Tags' in c]
 
-    allisgold = np.ones_like(df['Name'])
+    # iterate over ["LGB_tags", "JH_tags", "JNW_tags"] to get scores assigned
+    # by each
     for tag_colname in tag_colnames:
-        newcol = tag_colname.split('_')[0]+'_isgold'
+
+        newcol = tag_colname.split('_')[0]+'_score'
 
         classifier_isgold = np.array(
             df[tag_colname].str.lower().str.contains('gold')
         )
+        classifier_ismaybe = np.array(
+            df[tag_colname].str.lower().str.contains('maybe')
+        )
+        classifier_isjunk = np.array(
+            df[tag_colname].str.lower().str.contains('junk')
+        )
 
-        df[newcol] = classifier_isgold
+        df[newcol] = (
+            2*classifier_isgold +
+            1*classifier_ismaybe +
+            0*classifier_isjunk
+        )
 
-        allisgold &= classifier_isgold
+    df['average_score'] = (
+        df['LGB_score'] + df['JH_score']  + df['JNW_score']
+    ) / 3
 
-    df['unanimous_gold'] = allisgold
+    threshold_cutoff = 1.0
 
-    df_gold = df[df['unanimous_gold']==1]
+    df['clears_threshold'] = (df['average_score'] > threshold_cutoff)
+
+    #
+    # nb. not_cdips_still_good will go in a special pile!
+    #
+
+    classifier_isnotcdipsstillgood = np.array(
+        df["LGB_Tags"].str.lower().str.contains('not_cdips_still_good')
+    )
+
+    df['is_not_cdips_still_good'] = classifier_isnotcdipsstillgood
 
     outpath = os.path.join(
-        datadir, 'sector-{}_UNANIMOUS_GOLD.csv'.format(sector)
+        datadir, 'sector-{}_PCs_MERGED_RATINGS.csv'.format(sector)
     )
-    df_gold.to_csv(outpath, sep=';', index=False)
+    df.to_csv(outpath, sep=';', index=False)
+    print('made {}'.format(outpath))
+
+
+    #
+    # output:
+    # 1) things that clear threshold, and are CDIPS objects (not field stars)
+    # 2) things that are in the "not CDIPS, still good" pile
+    #
+
+    df_clears_threshold = df[df.clears_threshold & ~df.is_not_cdips_still_good]
+    df_is_not_cdips_still_good = df[df.is_not_cdips_still_good]
+
+
+    #
+    # 1) CDIPS OBJECTS
+    #
+    outpath = os.path.join(
+        datadir, 'sector-{}_PCs_CLEAR_THRESHOLD.csv'.format(sector)
+    )
+    df_clears_threshold.to_csv(outpath, sep=';', index=False)
     print('made {}'.format(outpath))
 
     # now copy to new directory
-    golddir = os.path.join(datadir, 'sector-{}_UNANIMOUS_GOLD'.format(sector))
-    if not os.path.exists(golddir):
-        os.mkdir(golddir)
+    outdir = os.path.join(datadir, 'sector-{}_CLEAR_THRESHOLD'.format(sector))
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
 
     if sector==6:
         srcdir = '../results/vetting_classifications/20190617_sector-6_PC_cut'
     elif sector==7:
         srcdir = '../results/vetting_classifications/20190618_sector-7_PC_cut'
+    elif sector in [8,9,10,11]:
+        # NB. I "remade" these vetting plots to add the neighborhood charts
+        srcdir = glob(
+            '../results/vetting_classifications/2019????_sector-{}_PC_cut_remake'.
+            format(sector)
+        )
+        assert len(srcdir) == 1
+        srcdir = srcdir[0]
 
-    for n in df_gold['Name']:
+    for n in df_clears_threshold['Name']:
         src = os.path.join(srcdir, str(n))
-        dst = os.path.join(golddir, str(n))
+        dst = os.path.join(outdir, str(n))
+        if not os.path.exists(dst):
+            try:
+                shutil.copyfile(src, dst)
+                print('copied {} -> {}'.format(src, dst))
+            except FileNotFoundError:
+                print('WRN! DID NOT FIND {}'.format(src))
+        else:
+            print('found {}'.format(dst))
+
+    #
+    # 2) NOT_CDIPS_STILL_GOOD
+    #
+    outpath = os.path.join(
+        datadir, 'sector-{}_PCs_NOT_CDIPS_STILL_GOOD.csv'.format(sector)
+    )
+    df_is_not_cdips_still_good.to_csv(outpath, sep=';', index=False)
+    print('made {}'.format(outpath))
+
+    # now copy to new directory
+    outdir = os.path.join(
+        datadir, 'sector-{}_NOT_CDIPS_STILL_GOOD'.format(sector)
+    )
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+
+    if sector in [6,7]:
+        raise NotImplementedError
+    elif sector in [8,9,10,11]:
+        srcdir = glob(
+            '../results/vetting_classifications/2019????_sector-{}_PC_cut_remake'.
+            format(sector)
+        )
+        assert len(srcdir) == 1
+        srcdir = srcdir[0]
+
+    for n in df_is_not_cdips_still_good['Name']:
+        src = os.path.join(srcdir, str(n))
+        dst = os.path.join(outdir, str(n))
         if not os.path.exists(dst):
             shutil.copyfile(src, dst)
             print('copied {} -> {}'.format(src, dst))
@@ -173,10 +263,11 @@ def given_merged_gold_organize_PCs(sector=None):
             print('found {}'.format(dst))
 
 
+
 def given_full_classifications_organize(
     sector=7,
     today='20190618'
-):
+    ):
     """
     given a directory classified w/ TagSpaces tags, produce a CSV file with the
     classifications
