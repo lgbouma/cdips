@@ -81,7 +81,6 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.4):
     return df
 
 
-
 def get_toi_catalog(ver='2019-12-05'):
     # a misnomer: really, the TOI-plus catalog, from MIT. (exported from
     # https://tev.mit.edu/)
@@ -131,6 +130,23 @@ def get_exofop_toi_catalog(ver='2019-12-07', returnpath=False):
         return df
     if returnpath:
         return toi_stars_path
+
+def get_exofop_ctoi_catalog(ver='2019-12-05'):
+
+    dir_d = {
+        'brik':'/home/luke/Dropbox/proj/cdips/data/',
+        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/'
+    }
+
+    ctoi_dir = dir_d[socket.gethostname()]
+
+    ctoipath = os.path.join(ctoi_dir, 'ctoi-exofop-{}.csv'.format(ver))
+    ctoidf = pd.read_csv(ctoipath, sep='|')
+
+    return ctoidf
 
 
 def ticid_to_toiid(tic_id):
