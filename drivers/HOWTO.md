@@ -64,8 +64,9 @@ TO PROCESS VETTING CLASSIFICATIONS
        `ls *pdf > 20190621_sector-6_PCs_LGB_class.txt`
     3. `given_collab_subclassifications_merge`: team responds w/
        classifications (csvs and txt files). they must be merged
-    4. `given_merged_gold_organize_PCs`: the results of the merge must be
-       organized.
+    4. `given_merged_gold_organize_PCs`: organize the results of the merge into
+       objects that clear the classification cutoff threshold, and those that
+       are not CDIPS objects, but still good.
 
 2. `fit_models_to_gold`: MCMC fit Mandel-Agol transits to gold above -- these
    parameters are used for CTOIs (and probably shouldn't be blindly believed in

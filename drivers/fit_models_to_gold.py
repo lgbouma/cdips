@@ -29,12 +29,18 @@ from astrobase.lcfit.transits import fivetransitparam_fit_magseries
 from cdips.lcproc import detrend as dtr
 from cdips.lcproc import mask_orbit_edges as moe
 from cdips.plotting import vetting_pdf as vp
-from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils import today_YYYYMMDD, str2bool
 from cdips.utils.pipelineutils import save_status, load_status
+from cdips.utils.catalogs import (
+    get_cdips_catalog, get_toi_catalog, get_exofop_ctoi_catalog
+)
 
-import make_vetting_multipg_pdf as mvp
+import cdips.vetting.make_all_vetting_reports as mavr
 from astrobase import imageutils as iu
+
+##########
+# config #
+##########
 
 LONG_RUN_IDENTIFIERS = [
     3217331693306617344, # s6 begin
@@ -64,7 +70,6 @@ KNOWN_EXTRA_DETREND = [
     5290781443841554432 # s7, systematic trends in TFASR LC, 2 transit
 ]
 
-
 host = socket.gethostname()
 if 'phtess' in host:
     CLASSIFXNDIR = "/home/lbouma/proj/cdips/results/vetting_classifications"
@@ -75,7 +80,12 @@ elif 'brik' in host:
     resultsbase = '/home/luke/Dropbox/proj/cdips/results/'
     database = '/home/luke/Dropbox/proj/cdips/data/'
 
-def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None):
+###############
+# main driver #
+###############
+
+def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None,
+         is_not_cdips_still_good=False):
     """
     ------------------------------------------
     Description:
@@ -105,9 +115,10 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None):
 
         First, all these directories are made.
 
-        Then, pdf files under
-        /results/vetting_classifications/sector-?_UNANIMOUS_GOLD are parsed to
-        collect the light curves and any necessary metadata.
+        Then, pdf files under either
+        /results/vetting_classifications/sector-?_CLEAR_THRESHOLD or
+        /results/vetting_classifications/sector-?_NOT_CDIPS_STILL_GOOD
+        are parsed to collect the light curves and any necessary metadata.
 
         Then there's a for loop for over each planet candidate, in which the
         fit is performed.
@@ -125,9 +136,15 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None):
         cdipsvnum: version number of CDIPS LCs in their name
 
         cdips_cat_vnum: target star catalog version identifier.
+
+        is_not_cdips_still_good: if true, parses planet candidates from
+        `/results/vetting_classifications/sector-?_NOT_CDIPS_STILL_GOOD`;
+        otherwise does the CLEAR_THRESHOLD directory.
+
     """
 
-    lcbasedir, tfasrdir, resultsdir = _define_and_make_directories(sector)
+    lcbasedir, tfasrdir, resultsdir = _define_and_make_directories(
+        sector, is_not_cdips_still_good=is_not_cdips_still_good)
 
     df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf = _get_data(
         sector, cdips_cat_vnum=cdips_cat_vnum)
@@ -139,7 +156,7 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None):
         #
         # given the TFASR LC path, get the complete LC path
         #
-        sourceid = int(tfa_sr_path.split('gaiatwo')[1].split('-')[0].lstrip('0'))
+        sourceid = np.int64(tfa_sr_path.split('gaiatwo')[1].split('-')[0].lstrip('0'))
         mdf = cdips_df[cdips_df['source_id']==sourceid]
         if len(mdf) != 1:
             errmsg = 'expected exactly 1 source match in CDIPS cat'
@@ -177,7 +194,7 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None):
         #
         # collect metadata for this target star
         #
-        supprow = mvp._get_supprow(sourceid, supplementstatsdf)
+        supprow = mavr._get_supprow(sourceid, supplementstatsdf)
         suppfulldf = supplementstatsdf
 
         pfrow = pfdf.loc[pfdf['source_id']==sourceid]
@@ -221,35 +238,41 @@ def main(overwrite=0, sector=7, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None):
                 )
 
 
-def _get_data(sector, cdips_cat_vnum=None):
+def _get_data(sector, cdips_cat_vnum=None, is_not_cdips_still_good=0):
 
-    classifxn_csv = os.path.join(CLASSIFXNDIR,
-                                 "sector-{}_UNANIMOUS_GOLD.csv".format(sector))
+    if is_not_cdips_still_good:
+        classifxn_csv = os.path.join(
+            CLASSIFXNDIR,
+            "sector-{}_PCs_NOT_CDIPS_STILL_GOOD.csv".format(sector)
+        )
+    else:
+        classifxn_csv = os.path.join(
+            CLASSIFXNDIR,
+            "sector-{}_PCs_CLEAR_THRESHOLD.csv".format(sector)
+        )
+
     df = pd.read_csv(classifxn_csv, sep=';')
 
-    cdips_df = ccl.get_cdips_catalog(ver=cdips_cat_vnum)
+    cdips_df = get_cdips_catalog(ver=cdips_cat_vnum)
 
     pfpath = os.path.join(resultsbase,
               'cdips_lc_periodfinding/'
               'sector-{}/'.format(sector)+
               'initial_period_finding_results_supplemented.csv')
-    pfdf = pd.read_csv(pfpath)
+    pfdf = pd.read_csv(pfpath, sep=';')
 
     supppath = os.path.join(resultsbase,
                 'cdips_lc_stats/sector-{}/'.format(sector)+
                 'supplemented_cdips_lc_statistics.txt')
     supplementstatsdf = pd.read_csv(supppath, sep=';')
 
-    toipath = os.path.join(database, 'csv-file-toi-plus-catalog-2019-12-05.csv')
-    toidf = pd.read_csv(toipath, sep=',')
-
-    ctoipath = os.path.join(database, 'ctoi-exofop-2019-12-05.csv')
-    ctoidf = pd.read_csv(ctoipath, sep='|')
+    toidf = get_toi_catalog()
+    ctoidf = get_exofop_ctoi_catalog()
 
     return df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf
 
 
-def _define_and_make_directories(sector):
+def _define_and_make_directories(sector, is_not_cdips_still_good=0):
 
     host = socket.gethostname()
 
@@ -258,9 +281,14 @@ def _define_and_make_directories(sector):
     elif 'brik' in host:
         lcbase = '/home/luke/Dropbox/proj/cdips/data/'
 
-    resultsdir = os.path.join(
-        resultsbase, 'fit_gold/sector-{}'.format(sector)
-    )
+    if is_not_cdips_still_good:
+        resultsdir = os.path.join(
+            resultsbase, 'fit_gold/sector-{}_NOT_CDIPS_STILL_GOOD'.format(sector)
+        )
+    else:
+        resultsdir = os.path.join(
+            resultsbase, 'fit_gold/sector-{}_CLEAR_THRESHOLD'.format(sector)
+        )
     dirs = [resultsdir,
             os.path.join(resultsdir,'fitresults'),
             os.path.join(resultsdir,'samples')
@@ -954,5 +982,11 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
 
 if __name__=="__main__":
-    cdips_cat_vnum=0.4
-    main(cdips_cat_vnum=cdips_cat_vnum)
+
+    sector = 8
+
+    cdips_cat_vnum = 0.4
+    is_not_cdips_still_good = False
+
+    main(sector=sector, cdips_cat_vnum=cdips_cat_vnum,
+         is_not_cdips_still_good=is_not_cdips_still_good)
