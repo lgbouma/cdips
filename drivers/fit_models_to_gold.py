@@ -25,6 +25,7 @@ from astroquery.mast import Catalogs
 
 from astrobase.lcmath import sigclip_magseries
 from astrobase.lcfit.transits import fivetransitparam_fit_magseries
+from astrobase.periodbase import htls
 
 from cdips.lcproc import detrend as dtr
 from cdips.lcproc import mask_orbit_edges as moe
@@ -156,8 +157,8 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None
         #
         # given the TFASR LC path, get the complete LC path
         #
-        sourceid = np.int64(tfa_sr_path.split('gaiatwo')[1].split('-')[0].lstrip('0'))
-        mdf = cdips_df[cdips_df['source_id']==sourceid]
+        source_id = np.int64(tfa_sr_path.split('gaiatwo')[1].split('-')[0].lstrip('0'))
+        mdf = cdips_df[cdips_df['source_id']==source_id]
         if len(mdf) != 1:
             errmsg = 'expected exactly 1 source match in CDIPS cat'
             raise AssertionError(errmsg)
@@ -167,12 +168,12 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None
 
         lcname = (
             'hlsp_cdips_tess_ffi_'
-            'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
+            'gaiatwo{zsource_id}-{zsector}-cam{cam}-ccd{ccd}_'
             'tess_v{zcdipsvnum}_llc.fits'
         ).format(
             cam=cam,
             ccd=ccd,
-            zsourceid=str(sourceid).zfill(22),
+            zsource_id=str(source_id).zfill(22),
             zsector=str(sector).zfill(4),
             zcdipsvnum=str(cdipsvnum).zfill(2)
         )
@@ -194,10 +195,10 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None
         #
         # collect metadata for this target star
         #
-        supprow = mavr._get_supprow(sourceid, supplementstatsdf)
+        supprow = mavr._get_supprow(source_id, supplementstatsdf)
         suppfulldf = supplementstatsdf
 
-        pfrow = pfdf.loc[pfdf['source_id']==sourceid]
+        pfrow = pfdf.loc[pfdf['source_id']==source_id]
         if len(pfrow) != 1:
             errmsg = 'expected exactly 1 source match in period find df'
             raise AssertionError(errmsg)
@@ -213,7 +214,7 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None
         if not os.path.exists(outpath):
 
             _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
-                                             sourceid, supprow, suppfulldf,
+                                             source_id, supprow, suppfulldf,
                                              pfdf, pfrow, toidf, ctoidf,
                                              sector, nworkers,
                                              cdipsvnum=cdipsvnum,
@@ -229,12 +230,12 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None
             fittype = 'fivetransitparam_fit'
             if str2bool(status[fittype]['is_converged']):
                 print('{} converged and already wrote wrote ctoi csv.'.
-                      format(sourceid))
+                      format(source_id))
 
             else:
                 raise ValueError(
                     'got parameter file existing, but not converged.'
-                    'should never happen. for DR2 {}'.format(sourceid)
+                    'should never happen. for DR2 {}'.format(source_id)
                 )
 
 
@@ -329,11 +330,11 @@ def _get_lcpaths(df, tfasrdir):
 
 
 def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
-                                     sourceid, supprow, suppfulldf, pfdf,
+                                     source_id, supprow, suppfulldf, pfdf,
                                      pfrow, toidf, ctoidf, sector, nworkers,
                                      cdipsvnum=1, overwrite=1):
     try_mcmc = True
-    identifier = sourceid
+    identifier = source_id
     #
     # read and re-detrend lc if needed. (recall: these planet candidates were
     # found using a penalized spline detrending in some cases).
@@ -399,7 +400,8 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
         )
     except NotImplementedError as e:
         print(e)
-        print('did not get rstar for {}. MUST MANUALLY FIX.')
+        print('did not get rstar for {}. MUST MANUALLY FIX.'.
+              format(source_id))
         try_mcmc = False
 
     #
@@ -479,6 +481,34 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
     status = load_status(status_file)[fittype]
 
     if str2bool(status['is_converged']):
+
+        try:
+            _ = isinstance(mafr, dict)
+        except UnboundLocalError:
+            #
+            # get the MCMC results from the pickle file; regenerate the TLS
+            # result.
+            #
+
+            fitparamdir = os.path.dirname(status_file)
+            fitpklsavpath = os.path.join(
+                fitparamdir,
+                '{}_phased_fivetransitparam_fit_empiricalerrs.pickle'.
+                format(identifier)
+            )
+            with open(fitpklsavpath, 'rb') as f:
+                mafr = pickle.load(f)
+
+            tlsp = htls.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
+                                           tls_rstar_min=0.1, tls_rstar_max=10,
+                                           tls_mstar_min=0.1,
+                                           tls_mstar_max=5.0, tls_oversample=8,
+                                           tls_mintransits=1,
+                                           tls_transit_template='default',
+                                           nbestpeaks=5, sigclip=None,
+                                           nworkers=nworkers)
+            tlsr = tlsp['tlsresult']
+
         ticid = int(hdr['TICID'])
         ra, dec = hdr['RA_OBJ'], hdr['DEC_OBJ']
         print('{} converged. writing ctoi csv.'.format(identifier))
@@ -888,18 +918,18 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
     ctoisel = nparr(ctoiseps < spatial_cutoff)
     if len(ctoiseps[ctoisel]) == 1:
 
-        sel &= np.isclose(
+        ctoisel &= np.isclose(
             period,
             nparr(ctoidf[ctoidf['TIC ID']==ticid]['Period (days)']),
             atol=0.5
         )
 
-        if len(ctoiseps[sel]) == 1:
+        if len(ctoiseps[ctoisel]) == 1:
             #
             # match is within 6 pixels of a cTOI, and has same period. 
             # by default, assume I got it right. add warning to note.
             #
-            tdf = ctoidf[sel]
+            tdf = ctoidf[ctoisel]
             ctoiname = tdf['CTOI'].iloc[0]
             extranote = "WRN! <2' from CTOI{}.".format(repr(ctoiname))
 
@@ -908,7 +938,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
             # match is within 6 pixels of a TOI, but has different period. 
             # assume i got it right, but add warning to note.
             #
-            tdf = ctoidf[sel]
+            tdf = ctoidf[ctoisel]
             ctoiname = tdf['CTOI'].iloc[0]
             extranote = "<2' from CTOI{}, but diff period.".format(repr(ctoiname))
 
@@ -983,10 +1013,12 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
 if __name__=="__main__":
 
-    sector = 8
+    sectors = [9,10,11]
 
-    cdips_cat_vnum = 0.4
-    is_not_cdips_still_good = False
+    for sector in sectors:
 
-    main(sector=sector, cdips_cat_vnum=cdips_cat_vnum,
-         is_not_cdips_still_good=is_not_cdips_still_good)
+        cdips_cat_vnum = 0.4
+        is_not_cdips_still_good = False
+
+        main(sector=sector, cdips_cat_vnum=cdips_cat_vnum,
+             is_not_cdips_still_good=is_not_cdips_still_good)
