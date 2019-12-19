@@ -1515,9 +1515,17 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     if len(toiseps[toiseps < spatial_cutoff]) >= 1:
 
         seldf = toidf[toiseps < spatial_cutoff]
-        selcols = ['TIC','Full TOI ID','TOI Disposition','Public Comment']
-        outstr += '\nGot spatial TOI list match!\n{}\n'.format(
-            seldf[selcols].to_string(index=False))
+        selcols = ['TIC', 'Full TOI ID', 'TOI Disposition', 'Public Comment']
+        outstr += '\nGot spatial TOI list match!'
+
+        if int(seldf[selcols]['TIC']) == int(ticids[0]):
+            outstr += '\nTICIDs match too'
+        else:
+            outstr += '\nWRN: TICIDs do not match!'
+
+        outstr += '\n{}\n'.format(
+            seldf[selcols].to_string(index=False)
+        )
 
     for ix, _px, _py, ticid, tmag in zip(np.arange(len(px)),
                                          px,py,ticids,tmags):

@@ -22,6 +22,7 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
     if sector == 9:
         ids_to_test = [
+            '5256717749007641344', # PC near TOI 684
             '5523104093269203712', # PC
             '5489726768531119616', # PC
             '5432321060287733888', # PC
