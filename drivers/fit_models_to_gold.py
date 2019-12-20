@@ -44,33 +44,25 @@ import cdips.vetting.make_all_vetting_reports as mavr
 # config #
 ##########
 
-LONG_RUN_IDENTIFIERS = [
-    3217331693306617344, # s6 begin
-    3126526081688850304,
-    3107333698210242176,
-    3340674976430098688,
-    4827527233363019776,
-    5584409013334503936,
-    3050033749239975552, # s7 begin
-    2919143383943171200,
-    5541111035713815552,
-    5599752663752776192,
-    5516140233292943872,
-    3064530810048196352,
-    3114869682184835584,
-    5715454237977779968,
-    5290781443841554432
-]
+DATADIR = '../data/mcmc_fitting_identifiers'
 
-KNOWN_MCMC_FAILS = [
-    5290761583912487424, # s7, TLS gets 2x period, and extra detrending needed.
-    5290968085934209152, # s7, systematic trends in TFASR LC, 2 transit
-    5618515825371166464, # s7, wonky cluster ASCC 39 (skip)
-]
+long_run_df = pd.read_csv(
+    os.path.join(DATADIR, 'LONG_RUN_IDENTIFIERS.csv')
+)
+mcmc_fails_df = pd.read_csv(
+    os.path.join(DATADIR, 'KNOWN_MCMC_FAILS.csv'), sep=';'
+)
+extra_detrend_df = pd.read_csv(
+    os.path.join(DATADIR, 'KNOWN_EXTRA_DETREND.csv'), sep=';'
+)
+skip_convergence_df = pd.read_csv(
+    os.path.join(DATADIR, 'SKIP_CONVERGENCE_IDENTIFIERS.csv')
+)
 
-KNOWN_EXTRA_DETREND = [
-    5290781443841554432 # s7, systematic trends in TFASR LC, 2 transit
-]
+KNOWN_EXTRA_DETREND = list(nparr(extra_detrend_df.source_id))
+LONG_RUN_IDENTIFIERS = list(nparr(long_run_df.source_id))
+KNOWN_MCMC_FAILS = list(nparr(mcmc_fails_df.source_id))
+SKIP_CONVERGENCE_IDENTIFIERS = list(nparr(skip_convergence_df.source_id))
 
 host = socket.gethostname()
 if 'phtess' in host:
@@ -477,11 +469,16 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
         save_status(status_file, fittype, status)
 
     #
-    # if converged, convert fit results to ctoi csv format
+    # if converged or in the list of IDs for which its fine to skip convegence
+    # (because by-eye, the fits are converged), convert fit results to ctoi csv
+    # format
     #
     status = load_status(status_file)[fittype]
 
-    if str2bool(status['is_converged']):
+    if (
+        str2bool(status['is_converged'])
+        or int(identifier) in SKIP_CONVERGENCE_IDENTIFIERS
+    ):
 
         try:
             _ = isinstance(mafr, dict)
@@ -1014,7 +1011,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
 if __name__=="__main__":
 
-    sectors = [9,10,11]
+    sectors = [8,9,10,11]
 
     for sector in sectors:
 
