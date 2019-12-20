@@ -23,21 +23,22 @@ from astropy.io import fits
 from astropy import units as u, constants as const
 from astroquery.mast import Catalogs
 
+from astrobase import imageutils as iu
 from astrobase.lcmath import sigclip_magseries
 from astrobase.lcfit.transits import fivetransitparam_fit_magseries
 from astrobase.periodbase import htls
 
-from cdips.lcproc import detrend as dtr
-from cdips.lcproc import mask_orbit_edges as moe
+from cdips.lcproc import (
+    detrend as dtr,
+    mask_orbit_edges as moe
+)
 from cdips.plotting import vetting_pdf as vp
 from cdips.utils import today_YYYYMMDD, str2bool
 from cdips.utils.pipelineutils import save_status, load_status
 from cdips.utils.catalogs import (
     get_cdips_catalog, get_toi_catalog, get_exofop_ctoi_catalog
 )
-
 import cdips.vetting.make_all_vetting_reports as mavr
-from astrobase import imageutils as iu
 
 ##########
 # config #
@@ -398,7 +399,7 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
         teff, teff_err, rstar, rstar_err, logg, logg_err = (
             get_teff_rstar_logg(hdr)
         )
-    except NotImplementedError as e:
+    except (NotImplementedError, ValueError) as e:
         print(e)
         print('did not get rstar for {}. MUST MANUALLY FIX.'.
               format(source_id))
@@ -628,7 +629,7 @@ def get_teff_rstar_logg(hdr):
                 logg_err = 0.3*logg
 
     else:
-        raise ValueError('bad xmatch for {}'.format(tfa_sr_path))
+        raise ValueError('bad xmatch for {}'.format(hdr['GAIA-ID']))
 
     return teff, teff_err, rstar, rstar_err, logg, logg_err
 
