@@ -65,7 +65,11 @@ def initialize_vetting_report_information(
               'cdips/results/cdips_lc_periodfinding/'
               'sector-{}/'.format(sector)+
               'initial_period_finding_results_supplemented.csv')
-    pfdf = pd.read_csv(pfpath, sep=';')
+    with open(pfpath) as f:
+        first_line = f.readline()
+    _temp = first_line.split(';')
+    sep = ',' if len(_temp) == 1 else ';'
+    pfdf = pd.read_csv(pfpath, sep=sep)
 
     toidf = get_toi_catalog()
 

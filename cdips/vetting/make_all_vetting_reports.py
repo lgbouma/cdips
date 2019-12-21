@@ -27,17 +27,28 @@ def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
         cam, ccd = hdr['CAMERA'], hdr['CCD']
         hdul.close()
 
-        lcname = (
-            'hlsp_cdips_tess_ffi_'
-            'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
-            'tess_v{zcdipsvnum}_llc.fits'
-        ).format(
-            cam=cam,
-            ccd=ccd,
-            zsourceid=str(sourceid).zfill(22),
-            zsector=str(sector).zfill(4),
-            zcdipsvnum=str(cdipsvnum).zfill(2)
-        )
+        if sector not in [6,7]:
+            lcname = (
+                'hlsp_cdips_tess_ffi_'
+                'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
+                'tess_v{zcdipsvnum}_llc.fits'
+            ).format(
+                cam=cam,
+                ccd=ccd,
+                zsourceid=str(sourceid).zfill(22),
+                zsector=str(sector).zfill(4),
+                zcdipsvnum=str(cdipsvnum).zfill(2)
+            )
+        elif sector in [6,7]:
+            lcname = (
+                'hlsp_cdips_tess_ffi_'
+                'gaiatwo{zsourceid}-{zsector}_'
+                'tess_v{zcdipsvnum}_llc.fits'
+            ).format(
+                zsourceid=str(sourceid).zfill(22),
+                zsector=str(sector).zfill(4),
+                zcdipsvnum=str(cdipsvnum).zfill(2)
+            )
 
         lcpath = os.path.join(
             lcbasedir,

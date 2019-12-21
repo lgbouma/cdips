@@ -1045,7 +1045,6 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         k13dist = np.nan
         k13_plx_mas = np.nan
 
-
     logt = str(supprow['logt'].iloc[0])
     logt_provenance = str(supprow['logt_provenance'].iloc[0])
 
@@ -1879,6 +1878,10 @@ def plot_group_neighborhood(
                 markersize=22, marker='*', color='black', lw=0
             )
             if extra_overplot:
+                l += (
+                    r' ($\langle$RV$\rangle$'+
+                    '{:.1f}'.format(np.nanmean(group_df_dr2.radial_velocity))
+                )
                 ax.scatter(
                     group_df_dr2['radial_velocity'], group_df_dr2['parallax'], c='k',
                     alpha=0.9, zorder=3, s=30, rasterized=True, linewidths=0, label=l

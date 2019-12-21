@@ -20,6 +20,11 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
                                                        baseresultsdir=outdir)
     )
 
+    if sector == 7:
+        ids_to_test = [
+            '5596735638203997824' # PC
+        ]
+
     if sector == 9:
         ids_to_test = [
             '5256717749007641344', # PC near TOI 684
@@ -52,5 +57,5 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
 if __name__ == "__main__":
 
-    test_vetting_report(sector=9, cdips_cat_vnum=0.4)
+    test_vetting_report(sector=7, cdips_cat_vnum=0.4)
 
