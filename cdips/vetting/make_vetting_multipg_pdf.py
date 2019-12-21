@@ -212,9 +212,9 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             catalog_to_gaussian_sep_arcsec
         )
 
-        ############
-        # pages 7
-        ############
+        ##########
+        # page 7
+        ##########
         info = (
              ini.get_neighborhood_information(sourceid, mmbr_dict=mmbr_dict,
                                               k13_notes_df=k13_notes_df,
@@ -236,7 +236,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                                              group_in_cg18=group_in_cg18,
                                              group_in_kc19=group_in_kc19,
                                              source_id=sourceid,
-                                             figsize=(30,20)
+                                             figsize=(30,20),
+                                             show_rvs=False
                                             )
 
             pdf.savefig(fig)
@@ -279,7 +280,9 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         #   backgruond stars).
         ##########
 
-        logt = supprow['logt'].iloc[0]
+        time_key = 'logt' if 'logt' in list(supprow.columns) else 'k13_logt'
+        logt = str(supprow[time_key].iloc[0])
+
         if not pd.isnull(logt):
             if ',' in str(logt):
                 logt_split = list(map(float,logt.split(',')))

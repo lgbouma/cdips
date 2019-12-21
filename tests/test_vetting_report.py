@@ -20,6 +20,11 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
                                                        baseresultsdir=outdir)
     )
 
+    if sector == 6:
+        ids_to_test = [
+            '5579734916388215808' # PC
+        ]
+
     if sector == 7:
         ids_to_test = [
             '5596735638203997824' # PC
@@ -57,5 +62,4 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
 if __name__ == "__main__":
 
-    test_vetting_report(sector=7, cdips_cat_vnum=0.4)
-
+    test_vetting_report(sector=6, cdips_cat_vnum=0.4)

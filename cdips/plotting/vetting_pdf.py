@@ -1045,10 +1045,17 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         k13dist = np.nan
         k13_plx_mas = np.nan
 
-    logt = str(supprow['logt'].iloc[0])
-    logt_provenance = str(supprow['logt_provenance'].iloc[0])
+    time_key = 'logt' if 'logt' in list(supprow.columns) else 'k13_logt'
+    logt = str(supprow[time_key].iloc[0])
+    if time_key == 'logt':
+        logt_provenance = str(supprow['logt_provenance'].iloc[0])
+    else:
+        logt_provenance = 'K13'
 
-    comment = str(supprow['comment'].iloc[0])
+    if 'comment' in list(supprow.columns):
+        comment = str(supprow['comment'].iloc[0])
+    else:
+        comment = 'N/A'
 
     d = infodict
 
@@ -1879,8 +1886,8 @@ def plot_group_neighborhood(
             )
             if extra_overplot:
                 l += (
-                    r' ($\langle$RV$\rangle$'+
-                    '{:.1f}'.format(np.nanmean(group_df_dr2.radial_velocity))
+                    r' ($\langle$RV$\rangle$='+
+                    '{:.1f})'.format(np.nanmean(group_df_dr2.radial_velocity))
                 )
                 ax.scatter(
                     group_df_dr2['radial_velocity'], group_df_dr2['parallax'], c='k',
