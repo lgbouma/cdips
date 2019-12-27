@@ -239,6 +239,108 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None
                 )
 
 
+def get_interp_mass_from_rstar(rstar):
+    """
+    Given a stellar radius, use the Pecaut & Mamajek (2013) table from
+    http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt to
+    interpolate the stellar mass. Assumes the star is a dwarf, which may not be
+    true. This should obviously not be trusted to better than 50%.
+    """
+
+    mamadf = pd.read_csv(
+        '../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
+        delim_whitespace=True
+    )
+    mamarstar, mamamstar = (
+        nparr(mamadf['Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
+    )
+
+    #
+    # mstar and rstar are not strictly monotonic, at least according to this
+    # table. sort the tuples by mstar, since that will be the x-value we will
+    # interpolate over. then split back once sorted.
+    #
+    points = zip(mamamstar, mamarstar)
+    points = sorted(points, key=lambda point: point[0])
+    mamamstar, mamarstar = zip(*points)
+    mamamstar, mamarstar = nparr(mamamstar), nparr(mamarstar)
+
+    # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
+    # rstars. so remove anything where diff not strictly greater than...
+    isbad = np.insert(np.diff(mamamstar) == 0, False, 0)
+
+    fn_mass_to_rstar = interp1d(mamamstar[~isbad],
+                                mamarstar[~isbad],
+                                kind='quadratic',
+                                bounds_error=False,
+                                fill_value='extrapolate')
+    radiusval = rstar
+    fn = lambda mass: fn_mass_to_rstar(mass) - radiusval
+    mass_guess = (
+        mamamstar[np.argmin(np.abs(mamarstar - radiusval))]
+    )
+    try:
+        mass_val = optimize.newton(fn, mass_guess)
+    except RuntimeError:
+        mass_val = mass_guess
+        print('WRN! optimization for mass failed; returning initial guess.')
+
+    mstar = mass_val
+    return mstar
+
+
+def get_interp_rstar_from_teff(teff):
+    """
+    Given an effective temperature, use the Pecaut & Mamajek (2013) table from
+    http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt to
+    interpolate the stellar radius. Assumes the star is a dwarf, which may not
+    be true. This should obviously not be trusted to better than 50%.
+    """
+
+    mamadf = pd.read_csv(
+        '../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
+        delim_whitespace=True
+    )
+    mamarstar, mamamstar, mamateff = (
+        nparr(mamadf['Rsun'])[::-1],
+        nparr(mamadf['Msun'])[::-1],
+        nparr(mamadf['Teff'])[::-1]
+    )
+
+    #
+    # teff and rstar are not strictly monotonic, at least according to this
+    # table. sort the tuples by rstar, since that will be the x-value we will
+    # interpolate over. then split back once sorted.
+    #
+    points = zip(mamarstar, mamateff)
+    points = sorted(points, key=lambda point: point[0])
+    mamarstar, mamateff = zip(*points)
+    mamarstar, mamateff = nparr(mamarstar), nparr(mamateff)
+
+    # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
+    # rstars. so remove anything where diff not strictly greater than...
+    isbad = np.insert(np.diff(mamarstar) == 0, False, 0)
+
+    fn_rstar_to_teff = interp1d(mamarstar[~isbad],
+                                mamateff[~isbad],
+                                kind='quadratic',
+                                bounds_error=False,
+                                fill_value='extrapolate')
+    teffval = teff
+    fn = lambda rstar: fn_rstar_to_teff(rstar) - teffval
+    rstar_guess = (
+        mamarstar[np.argmin(np.abs(mamateff - teffval))]
+    )
+    try:
+        rstar_val = optimize.newton(fn, rstar_guess)
+    except RuntimeError:
+        rstar_val = rstar_guess
+        print('WRN! optimization for rstar failed; returning initial guess.')
+
+    rstar = rstar_val
+    return rstar
+
+
 def _get_data(sector, cdips_cat_vnum=None, is_not_cdips_still_good=0):
 
     if is_not_cdips_still_good:
@@ -527,10 +629,13 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
 
 def get_teff_rstar_logg(hdr):
     #
-    # Given CDIPS header, acquire estimates of Teff, Rstar, logg from TIC. If
+    # Given CDIPS header, acquire estimates of Teff, Rstar, logg from TICv8. If
     # Teff fails, go with the Gaia DR2 Teff.  If Rstar fails, go with Gaia DR2
-    # Rstar.  If logg fails, but you have Gaia DR2 Rstar, then go from Rstar to
-    # Mstar using Mamajek relation, and combine to estimate a ratty logg.
+    # Rstar.  If Rstar still fails, use Teff and Mamajek relation to
+    # interpolate Rstar.
+    #
+    # If logg fails, but you have Gaia DR2 Rstar, then go from Rstar to Mstar
+    # using Mamajek relation, and combine to estimate a ratty logg.
     #
     identifier = hdr['TICID']
     ra, dec = hdr['RA_OBJ'], hdr['DEC_OBJ']
@@ -582,48 +687,34 @@ def get_teff_rstar_logg(hdr):
         rstar_err = seltab['e_rad']
 
         if type(teff)==np.ma.core.MaskedConstant:
-            print('WRN! TIC teff nan. why? trying gaia value')
+            print('WRN! TIC teff nan. why? trying gaia value...')
             teff = hdr['teff_val']
             teff_err = 100
 
         if type(rstar)==np.ma.core.MaskedConstant:
-            print('WRN! TIC rstar nan. why? trying gaia value')
+
+            print('WRN! TIC rstar nan. why? trying gaia value...')
             rstar = hdr['radius_val']
-            # get mass given rstar, so that you can get logg
-            mamadf = pd.read_csv(
-                '../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
-                delim_whitespace=True
-            )
+
+            if rstar == 'NaN':
+                print('WRN! Gaia rstar also nan. Trying to interpolate from '
+                      'Teff...')
+
+                if teff == 'NaN':
+                    raise NotImplementedError(
+                        'need rstar somehow. didnt get for {}'.
+                        format(identifier)
+                    )
+
+                rstar = get_interp_rstar_from_teff(teff)
+            else:
+                raise NotImplementedError('got unexpected value for rstar! '
+                                          'manual debug required')
 
             if rstar != 'NaN':
-
+                # given rstar, get mass, so that you can get logg
                 rstar_err = 0.3*rstar
-
-                mamarstar, mamamstar = (
-                    nparr(mamadf['Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
-                )
-                isbad = np.insert(np.diff(mamamstar) <= 0, False, 0)
-                fn_mass_to_rstar = interp1d(mamamstar[~isbad],
-                                            mamarstar[~isbad],
-                                            kind='quadratic',
-                                            bounds_error=False,
-                                            fill_value='extrapolate')
-                radiusval = rstar
-                fn = lambda mass: fn_mass_to_rstar(mass) - radiusval
-                mass_guess = (
-                    mamamstar[np.argmin(np.abs(mamarstar - radiusval))]
-                )
-                try:
-                    mass_val = optimize.newton(fn, mass_guess)
-                except RuntimeError:
-                    mass_val = mass_guess
-                mstar = mass_val
-
-            else:
-
-                raise NotImplementedError(
-                    'need rstar somehow. didnt get for {}'.format(identifier)
-                )
+                mstar = get_interp_mass_from_rstar(rstar)
 
             _Mstar = mstar*u.Msun
             _Rstar = rstar*u.Rsun
