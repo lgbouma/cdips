@@ -225,6 +225,13 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None
                 print('{} converged and already wrote wrote ctoi csv.'.
                       format(source_id))
 
+            elif (
+                not str2bool(status[fittype]['is_converged'])
+                and int(source_id) in SKIP_CONVERGENCE_IDENTIFIERS
+            ):
+                print('WRN! {} not converged, but wrote wrote ctoi csv b/c in '
+                      'SKIP_CONVERGENCE_IDENTIFIERS.'.format(source_id))
+
             else:
                 raise ValueError(
                     'got parameter file existing, but not converged.'
