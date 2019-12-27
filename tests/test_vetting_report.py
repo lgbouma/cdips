@@ -30,6 +30,11 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
             '5596735638203997824' # PC
         ]
 
+    if sector == 8:
+        ids_to_test = [
+            '5510676828723793920' # PC
+        ]
+
     if sector == 9:
         ids_to_test = [
             '5256717749007641344', # PC near TOI 684
@@ -56,10 +61,10 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
         mavp.make_all_vetting_reports(
             paths, lcbasedir, resultsdir, cddf, supplementstatsdf, pfdf,
-            toidf, k13_notes_df, sector=sector
+            toidf, k13_notes_df, show_rvs=True, sector=sector
         )
 
 
 if __name__ == "__main__":
 
-    test_vetting_report(sector=6, cdips_cat_vnum=0.4)
+    test_vetting_report(sector=8, cdips_cat_vnum=0.4)
