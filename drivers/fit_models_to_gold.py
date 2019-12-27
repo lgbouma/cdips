@@ -987,56 +987,110 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
         sel &= np.isclose(
             period,
-            nparr(toidf[toidf['TIC']==ticid]['Orbital Period Value']),
+            nparr(toidf['Orbital Period Value']),
             atol=0.5
         )
 
         if len(toiseps[sel]) == 1:
             #
-            # match is within 6 pixels of a TOI, and has same period. 
-            # by default, assume TOI program got it right.
+            # match is within 6 pixels of a TOI, and has same period and TIC
+            # ID.  by default, assume TOI program got it right.
             #
-            tdf = toidf[sel]
-            toiname = tdf['Full TOI ID'].iloc[0]
-            target = toiname
-            flag = 'newparams'
-            disp = tdf['TOI Disposition'].iloc[0]
+            if len(toidf[toidf['TIC']==ticid])==1:
+                tdf = toidf[sel]
+                toiname = tdf['Full TOI ID'].iloc[0]
+                target = toiname
+                flag = 'newparams'
+                disp = tdf['TOI Disposition'].iloc[0]
+
+            #
+            # match is within 6 pixels of a TOI, has same period, but different
+            # TIC ID. 
+            #
+            elif len(toidf[toidf['TIC']==ticid])==0:
+                sel = nparr(toiseps < spatial_cutoff)
+                tdf = toidf[sel]
+                toiname = tdf['Full TOI ID'].iloc[0]
+                extranote = "<2' from TOI{}, same period; diff TICID.".format(repr(toiname))
 
         else:
             #
             # match is within 6 pixels of a TOI, but has different period. 
             # assume i got it right, but add warning to note.
             #
-            tdf = toidf[sel]
-            toiname = tdf['Full TOI ID'].iloc[0]
-            extranote = "<2' from TOI{} but diff period.".format(repr(toiname))
+            if len(toidf[toidf['TIC']==ticid])==0:
+                sel = nparr(toiseps < spatial_cutoff)
+                tdf = toidf[sel]
+                toiname = tdf['Full TOI ID'].iloc[0]
+                extranote = "<2' from TOI{} but diff period & TICID.".format(repr(toiname))
+
+            #
+            # matched within 6 pixels of TOI, has same TICID, but different
+            # period. most likely if a different planet was discovered.
+            #
+            else:
+                raise NotImplementedError(
+                    'need to manually inspect this case!'
+                )
+                sel = nparr(toiseps < spatial_cutoff)
+                tdf = toidf[sel]
+                toiname = tdf['Full TOI ID'].iloc[0]
+                target = toiname
+                flag = 'newparams'
+                extranote = "<2' from TOI{}, same TICID; diff period.".format(repr(toiname))
 
     ctoisel = nparr(ctoiseps < spatial_cutoff)
     if len(ctoiseps[ctoisel]) == 1:
 
         ctoisel &= np.isclose(
             period,
-            nparr(ctoidf[ctoidf['TIC ID']==ticid]['Period (days)']),
+            nparr(ctoidf['Period (days)']),
             atol=0.5
         )
 
-        if len(ctoiseps[ctoisel]) == 1:
-            #
-            # match is within 6 pixels of a cTOI, and has same period. 
-            # by default, assume I got it right. add warning to note.
-            #
+        #
+        # match is within 6 pixels of a CTOI, and has same period and TIC
+        # ID.  by default, assume CTOI got it right, and add new params
+        #
+        if (len(ctoidf[ctoidf['TIC ID']==ticid])==1
+            and
+            len(ctoiseps[ctoisel])==1
+        ):
             tdf = ctoidf[ctoisel]
             ctoiname = tdf['CTOI'].iloc[0]
-            extranote = "WRN! <2' from CTOI{}.".format(repr(ctoiname))
+            target = ctoiname
+            flag = 'newparams'
+            extranote = "Same period and TICID as CTOI{}.".format(repr(ctoiname))
+            # disp = tdf['TOI Disposition'].iloc[0] #NOTE: don't update disposition
 
-        else:
-            #
-            # match is within 6 pixels of a TOI, but has different period. 
-            # assume i got it right, but add warning to note.
-            #
+        elif (len(ctoidf[ctoidf['TIC ID']==ticid])==0
+            and
+            len(ctoiseps[ctoisel])==0
+        ):
             tdf = ctoidf[ctoisel]
             ctoiname = tdf['CTOI'].iloc[0]
-            extranote = "<2' from CTOI{}, but diff period.".format(repr(ctoiname))
+            extranote = "WRN! <2' from CTOI{} (diff period and TICID).".format(repr(ctoiname))
+
+        elif (len(ctoidf[ctoidf['TIC ID']==ticid])==0
+            and
+            len(ctoiseps[ctoisel])==1
+        ):
+            tdf = ctoidf[ctoisel]
+            ctoiname = tdf['CTOI'].iloc[0]
+            extranote = "<2' from CTOI{}, matching period, but diff TICID. Blend?".format(repr(ctoiname))
+            raise NotImplementedError('manually fix {}'.format(extranote))
+
+        elif (len(ctoidf[ctoidf['TIC ID']==ticid])==1
+            and
+            len(ctoiseps[ctoisel])==0
+        ):
+            tdf = ctoidf[ctoisel]
+            ctoiname = tdf['CTOI'].iloc[0]
+            target = ctoiname
+            flag = 'newparams'
+            extranote = "Same TICID as CTOI{}; different period. New planet?".format(repr(ctoiname))
+            raise NotImplementedError('manually fix {}'.format(extranote))
+            # disp = tdf['TOI Disposition'].iloc[0] #NOTE: don't update disposition
 
     ##########################################
 
