@@ -21,7 +21,8 @@ from astroquery.vizier import Vizier
 
 def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                              supprow, suppfulldf, pfdf, pfrow, toidf, sector,
-                             k13_notes_df, mask_orbit_edges=True, nworkers=40):
+                             k13_notes_df, mask_orbit_edges=True, nworkers=40,
+                             show_rvs=False):
     """
     args:
 
@@ -237,7 +238,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                                              group_in_kc19=group_in_kc19,
                                              source_id=sourceid,
                                              figsize=(30,20),
-                                             show_rvs=False
+                                             show_rvs=show_rvs
                                             )
 
             pdf.savefig(fig)

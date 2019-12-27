@@ -12,6 +12,7 @@ def _get_supprow(sourceid, supplementstatsdf):
 
 def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
                              supplementstatsdf, pfdf, toidf, k13_notes_df,
+                             show_rvs=False,
                              sector=6, cdipsvnum=1):
 
     for tfa_sr_path in tfa_sr_paths:
@@ -80,6 +81,7 @@ def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
             make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
                                      sourceid, supprow, suppfulldf, pfdf,
                                      pfrow, toidf, sector, k13_notes_df,
-                                     mask_orbit_edges=True, nworkers=40)
+                                     mask_orbit_edges=True, nworkers=40,
+                                     show_rvs=show_rvs)
         else:
             print('found {}, continue'.format(outpath))
