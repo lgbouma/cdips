@@ -665,7 +665,7 @@ def get_teff_rstar_logg(hdr):
         - 0.633923 * (hdr['phot_bp_mean_mag'] - hdr['phot_rp_mean_mag'])
         + 0.0324473
     )
-    Tmag_cutoff = 1
+    Tmag_cutoff = 1.2
 
     selstars = stars[np.abs(stars['Tmag'] - Tmag_pred)<Tmag_cutoff]
 
@@ -948,7 +948,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
     if len(ctoidf[sel]) == 1:
         tdf = ctoidf[sel]
         ctoiname = tdf['CTOI'].iloc[0]
-        target = ctoiname
+        target = 'TIC'+ctoiname
         flag = 'newparams'
         disp = 'PC'
 
@@ -1058,7 +1058,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
         ):
             tdf = ctoidf[ctoisel]
             ctoiname = tdf['CTOI'].iloc[0]
-            target = ctoiname
+            target = 'TIC'+ctoiname
             flag = 'newparams'
             extranote = "Same period and TICID as CTOI{}.".format(repr(ctoiname))
             # disp = tdf['TOI Disposition'].iloc[0] #NOTE: don't update disposition
@@ -1086,7 +1086,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
         ):
             tdf = ctoidf[ctoisel]
             ctoiname = tdf['CTOI'].iloc[0]
-            target = ctoiname
+            target = 'TIC'+ctoiname
             flag = 'newparams'
             extranote = "Same TICID as CTOI{}; different period. New planet?".format(repr(ctoiname))
             raise NotImplementedError('manually fix {}'.format(extranote))
