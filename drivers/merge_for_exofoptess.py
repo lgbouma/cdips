@@ -16,6 +16,10 @@ from cdips.utils import get_vizier_catalogs as gvc
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils.pipelineutils import save_status, load_status
 
+##########
+# config #
+##########
+
 hostname = socket.gethostname()
 if 'phtess1' in hostname or 'phtess2' in hostname:
     fitdir = "/home/lbouma/proj/cdips/results/fit_gold"
@@ -26,7 +30,60 @@ elif 'brik' in hostname:
 else:
     raise ValueError('where is fit_gold directory on {}?'.format(hostname))
 
-def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
+FORMATDICT = {
+    'period': 8,
+    'period_unc': 8,
+    'epoch': 8,
+    'epoch_unc': 8,
+    'depth': -1,
+    'depth_unc': -1,
+    'duration': 3,
+    'duration_unc': 3,
+    'inc': 1,
+    'inc_unc': 1,
+    'imp': 3,
+    'imp_unc': 3,
+    'r_planet': 5,
+    'r_planet_unc': 5,
+    'ar_star': 2,
+    'a_rstar_unc': 2,
+    'radius': 2,
+    'radius_unc': 2,
+    'mass': 2,
+    'mass_unc': 2,
+    'temp': 2,
+    'temp_unc': 2,
+    'insol': 2,
+    'insol_unc': 2,
+    'dens': 2,
+    'dens_unc': 2,
+    'sma': 2,
+    'sma_unc': 2,
+    'ecc': 2,
+    'ecc_unc': 2,
+    'arg_peri': 2,
+    'arg_peri_unc': 2,
+    'time_peri': 2,
+    'time_peri_unc': 2,
+    'vsa': 2,
+    'vsa_unc': 2,
+}
+
+COLUMN_ORDER = ['target', 'flag', 'disp', 'period', 'period_unc', 'epoch',
+                'epoch_unc', 'depth', 'depth_unc', 'duration', 'duration_unc',
+                'inc', 'inc_unc', 'imp', 'imp_unc', 'r_planet', 'r_planet_unc',
+                'ar_star', 'a_rstar_unc', 'radius', 'radius_unc', 'mass',
+                'mass_unc', 'temp', 'temp_unc', 'insol', 'insol_unc', 'dens',
+                'dens_unc', 'sma', 'sma_unc', 'ecc', 'ecc_unc', 'arg_peri',
+                'arg_peri_unc', 'time_peri', 'time_peri_unc', 'vsa', 'vsa_unc',
+                'tag', 'group', 'prop_period', 'notes', 'source_id']
+
+########
+# main #
+########
+
+def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
+         uploadnamestr='sectors_8_thru_11_clear_threshold'):
     """
     Put together a few useful CSV candidate summaries:
 
@@ -47,25 +104,19 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
         is_dayspecific_exofop_upload: if True, reads in the manually-written (from
         google spreadsheet) comments and source_ids, and writes those to a
         special "TO_EXOFOP" csv file.
-    """
 
-    #FIXME FIXME
-    # 1) need to update your "tag" scheme, s.t. each CTOI in the same upload
-    # gets the same tag. (I guess this makes sense)
-    # 2) need to fix your float truncation length. round to reasonable
-    # numbers!!
-    #FIXME FIXME
-    # raise AssertionError('fix above items')
+        uploadnamestr: used as unique identifying string in file names
+    """
 
     #
     # read in the results from the fits
     #
     paramglob = os.path.join(
-        fitdir, "sector-?/fitresults/hlsp_*gaiatwo*_llc/*fitparameters.csv"
+        fitdir, "sector-*_CLEAR_THRESHOLD/fitresults/hlsp_*gaiatwo*_llc/*fitparameters.csv"
     )
     parampaths = glob(paramglob)
     statusglob = os.path.join(
-        fitdir, "sector-*/fitresults/hlsp_*gaiatwo*_llc/*.stat"
+        fitdir, "sector-*_CLEAR_THRESHOLD/fitresults/hlsp_*gaiatwo*_llc/*.stat"
     )
     statuspaths = glob(statusglob)
 
@@ -75,9 +126,10 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
     param_df = pd.concat((pd.read_csv(f, sep='|') for f in parampaths))
 
     outpath = os.path.join(
-        fitdir, "{}_sector6_and_sector7_gold_mergedfitparams.csv".
-        format(today_YYYYMMDD())
+        fitdir, "{}_{}_mergedfitparams.csv".
+        format(today_YYYYMMDD(), uploadnamestr)
     )
+    param_df['param_path'] = parampaths
     param_df.to_csv(outpath, index=False, sep='|')
     print('made {}'.format(outpath))
 
@@ -96,12 +148,11 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
     if is_dayspecific_exofop_upload:
 
         #
-        # These manually commented candidates are the only ones we're
-        # uploading.
+        # Manually commented candidates are the only ones we're uploading.
         #
         manual_comment_df = pd.read_csv(
             '../data/exoFOP_uploads/{}_cdips_candidate_upload.csv'.
-            format(today_YYYYMMDD()), sep="|"
+            format(today_YYYYMMDD()), sep=","
         )
         common = status_df.merge(manual_comment_df,
                                  on='source_id',
@@ -110,8 +161,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
 
         #
         # WARN: the MCMC fits should have converged before uploading.
-        # (20190918 had two exceptions, 5618515825371166464, and
-        # 5715454237977779968, where the fits look OK.)
+        # (20190918 had two exceptions, where the fit looked fine.)
         #
         if len(sel_status_df[sel_status_df['is_converged']=='False'])>0:
 
@@ -126,7 +176,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
         param_df['source_id'] = param_gaiaids
 
         #
-        # Just require that you actually have a parameter file (...).
+        # Require that you actually have a parameter file (...).
         #
         _df = sel_status_df.merge(param_df, on='source_id', how='inner')
 
@@ -145,6 +195,33 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
             )
             print('\n')
 
+        #
+        # Duplicate entries in "to_exofop_df" are multi-sector. Average their
+        # parameters across sectors, and remove the duplicate multi-sector rows
+        # using the "groupby" aggregator. This removes the string-based
+        # columns, which we can reclaim by a "drop_duplicates" call, since they
+        # don't have sector-specific information.  Then, assign comments and
+        # format as appropriate for ExoFop-TESS. Unique tag for the entire
+        # upload.
+        #
+
+        to_exofop_df['source_id'] = to_exofop_df['source_id'].astype(str)
+
+        mean_val_to_exofop_df = to_exofop_df.groupby('target').mean().reset_index()
+
+        string_cols = ['target', 'flag', 'disp', 'tag', 'group', 'notes',
+                       'source_id']
+        dup_dropped_str_df = (
+            to_exofop_df.drop_duplicates(
+                subset=['target'], keep='first', inplace=False
+                )[string_cols]
+        )
+
+        out_df = mean_val_to_exofop_df.merge(dup_dropped_str_df, how='left',
+                                             on='target')
+
+        to_exofop_df = out_df[COLUMN_ORDER]
+
         _df = manual_comment_df[
             manual_comment_df.source_id.isin(to_exofop_df.source_id)
         ]
@@ -158,35 +235,43 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
         _df = _df.sort_values(by="source_id")
 
         to_exofop_df['notes'] = comments
+        to_exofop_df['tag'] = (
+            '{}_bouma_cdips_v01_00001'.format(today_YYYYMMDD())
+        )
 
         outpath = os.path.join(
-            exofopdir, "{}_s6_and_s7_w_sourceid.csv".
-            format(today_YYYYMMDD())
+            exofopdir, "{}_{}_w_sourceid.csv".
+            format(today_YYYYMMDD(), uploadnamestr)
         )
         to_exofop_df.to_csv(outpath, index=False, sep='|')
         print('made {}'.format(outpath))
 
         to_exofop_df = to_exofop_df.drop(['source_id'], axis=1)
+
         outpath = os.path.join(
             exofopdir, "params_planet_{}_001.txt".
             format(today_YYYYMMDD())
         )
+        to_exofop_df = to_exofop_df.round(FORMATDICT)
+        to_exofop_df['depth'] = to_exofop_df['depth'].astype(int)
+        to_exofop_df['depth_unc'] = to_exofop_df['depth_unc'].astype(int)
         to_exofop_df.to_csv(outpath, index=False, sep='|', header=False)
         print('made {}'.format(outpath))
 
         # manually check these...
+        print('\n'+42*'='+'\n')
         print('\nPeriod uncertainties [minutes]')
         print(to_exofop_df['period_unc']*24*60)
         print('\nEpoch uncertainties [minutes]')
         print(to_exofop_df['epoch_unc']*24*60)
         print('\nPlanet radii [Rearth]')
         print(to_exofop_df[['radius','radius_unc','notes']])
+        print('\n'+42*'='+'\n')
 
     #
     # above is the format exofop-TESS wants. however it's not particularly
     # useful for followup. for that, we want: gaia IDs, magnitudes, ra, dec.
     #
-    assert 0 #FIXME : remove once phtess2 is up!
     gaiaids = list(map(
         lambda x: int(
             os.path.basename(x).split('gaiatwo')[1].split('-')[0].lstrip('0')
@@ -198,7 +283,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
         parampaths
     ))
 
-    lcdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-?/cam?_ccd?/'
+    lcdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-*/cam?_ccd?/'
     lcpaths = [ glob(os.path.join(lcdir,lcn))[0] for lcn in lcnames ]
 
     # now get the header values
@@ -242,7 +327,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
     dcols = 'cluster;reference;source_id;unique_cluster_name'
     ccdf = cdips_df[dcols.split(';')]
     ccdf['source_id'] = ccdf['source_id'].astype(np.int64)
-    mdf = df.merge(ccdf, how='left', left_on='Gaia-ID', right_on='source_id')
+    mdf = param_df.merge(ccdf, how='left', left_on='source_id', right_on='source_id')
     param_df['unique_cluster_name'] = nparr(mdf['unique_cluster_name'])
 
     s19 = gvc.get_soubiran_19_rv_table()
@@ -283,8 +368,8 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
     #
 
     outpath = ("/home/lbouma/proj/cdips/results/fit_gold/"
-               "{}_sector6_and_sector7_gold_fitparams_plus_observer_info.csv".
-               format(today_YYYYMMDD()))
+               "{}_{}_fitparams_plus_observer_info.csv".
+               format(today_YYYYMMDD(), uploadnamestr))
     param_df.to_csv(outpath, index=False, sep='|')
     print('made {}'.format(outpath))
 
@@ -299,8 +384,8 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
     sparam_df = param_df[scols]
 
     outpath = ("/home/lbouma/proj/cdips/results/fit_gold/"
-               "{}_sector6_and_sector7_gold_observer_info_sparse.csv".
-               format(today_YYYYMMDD()))
+               "{}_{}_observer_info_sparse.csv".
+               format(today_YYYYMMDD(), uploadnamestr))
     sparam_df.to_csv(outpath, index=False, sep='|')
     print('made {}'.format(outpath))
 
@@ -320,8 +405,8 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4):
     sparam_df = param_df[scols]
 
     outpath = ("/home/lbouma/proj/cdips/results/fit_gold/"
-               "{}_sector6_and_sector7_gold_observer_info_full.csv".
-               format(today_YYYYMMDD()))
+               "{}_{}_observer_info_full.csv".
+               format(today_YYYYMMDD(), uploadnamestr))
     sparam_df.to_csv(outpath, index=False, sep='|')
     print('made {}'.format(outpath))
 
