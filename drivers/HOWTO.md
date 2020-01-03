@@ -74,6 +74,8 @@ TO PROCESS VETTING CLASSIFICATIONS
 
 3. `merge_for_exofoptess`: merge csv results from `fit_models_to_gold`
 
+4. `collect_bulk_upload_files_for_exofoptess`
+
 TO COMMUNICATE RESULTS
 ----------
 
