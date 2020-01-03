@@ -236,8 +236,13 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
 
         to_exofop_df['notes'] = comments
         to_exofop_df['tag'] = (
-            '{}_bouma_cdips_v01_00001'.format(today_YYYYMMDD())
+            '{}_bouma_cdips-v01_00001'.format(today_YYYYMMDD())
         )
+
+        istoi = ~to_exofop_df['target'].astype(str).str.startswith('TIC')
+        if np.any(istoi):
+            newtargetname = 'TOI'+to_exofop_df[istoi].target.astype(str)
+            to_exofop_df.loc[istoi, 'target'] = newtargetname
 
         outpath = os.path.join(
             exofopdir, "{}_{}_w_sourceid.csv".
