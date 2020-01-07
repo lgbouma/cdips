@@ -18,6 +18,10 @@ from cdips.utils.pipelineutils import save_status, load_status
 # config #
 ##########
 
+DATESTR = '20200103' # NOTE
+if DATESTR is None:
+    DATESTR = today_YYYYMMDD()
+
 hostname = socket.gethostname()
 if 'phtess' in hostname:
     fitdir = "/home/lbouma/proj/cdips/results/fit_gold"
@@ -25,13 +29,8 @@ if 'phtess' in hostname:
 elif 'brik' in hostname:
     fitdir = "/home/luke/Dropbox/proj/cdips/results/fit_gold"
     exofopdir = "/home/luke/Dropbox/proj/cdips/data/exoFOP_uploads"
-
 else:
     raise ValueError('need to define directories on {}'.format(hostname))
-
-DATESTR = None
-if DATESTR is None:
-    DATESTR = today_YYYYMMDD()
 
 hlspreportdir = os.path.join(exofopdir, 'files_to_upload',
                              'hlsp_vetting_reports', DATESTR)
@@ -154,7 +153,7 @@ def main(uploadnamestr='sectors_8_thru_11_clear_threshold'):
 
         tags.append(str(sdf['tag'].iloc[0]))
 
-        if 'vet_hlsp' in f:
+        if 'vet_gaia' in f:
             sectornum = f.split('-')[2].lstrip('0')
             description.append('CDIPS pipeline report (S{})'.format(sectornum))
 
