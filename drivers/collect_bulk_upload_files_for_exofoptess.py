@@ -113,6 +113,7 @@ def main(uploadnamestr='sectors_8_thru_11_clear_threshold'):
         for reportpath in reportpaths:
 
             reportname = os.path.basename(reportpath).replace('.pdf','')
+            reportname = reportname.replace('_hlsp_cdips_tess_ffi', '')
 
             lettercode = "O" # other
             dstname = (
