@@ -81,7 +81,7 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.4):
     return df
 
 
-def get_toi_catalog(ver='2019-12-05'):
+def get_toi_catalog(ver='2020-01-08'):
     # a misnomer: really, the TOI-plus catalog, from MIT. (exported from
     # https://tev.mit.edu/)
     # note: this catalog is a bit janky. for example, they give transit epoch
@@ -107,7 +107,7 @@ def get_toi_catalog(ver='2019-12-05'):
     return df
 
 
-def get_exofop_toi_catalog(ver='2019-12-07', returnpath=False):
+def get_exofop_toi_catalog(ver='2020-01-08', returnpath=False):
     # https://exofop.ipac.caltech.edu/tess/view_toi.php, with pipe
 
     dir_d = {
@@ -131,7 +131,7 @@ def get_exofop_toi_catalog(ver='2019-12-07', returnpath=False):
     if returnpath:
         return toi_stars_path
 
-def get_exofop_ctoi_catalog(ver='2019-12-05'):
+def get_exofop_ctoi_catalog(ver='2020-01-08'):
 
     dir_d = {
         'brik':'/home/luke/Dropbox/proj/cdips/data/',
