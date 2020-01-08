@@ -47,7 +47,8 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.4):
     information it contains.
 
     Under the hood, the query uses grep, because this is much faster than
-    reading the entire catalog. It returns a single-row dataframe.
+    reading the entire catalog. It returns a single-row dataframe if it
+    succeeds; else, returns None.
     """
 
     dir_d = {
@@ -73,12 +74,18 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.4):
     ).read()
     rowentry = rowentry.rstrip('\n').split(';')
 
-    df = pd.DataFrame(
-        {k: v for (k, v) in zip(colnames, rowentry)},
-        index=[0]
-    )
+    if len(rowentry) >= 1:
 
-    return df
+        df = pd.DataFrame(
+            {k: v for (k, v) in zip(colnames, rowentry)},
+            index=[0]
+        )
+
+        return df
+
+    else:
+
+        return None
 
 
 def get_toi_catalog(ver='2020-01-08'):
