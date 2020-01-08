@@ -1,5 +1,6 @@
 import pandas as pd
-import socket, os
+import socket, os, json
+from astrobase.services.mast import tic_objectsearch
 
 def get_cdips_catalog(ver=0.4):
 
@@ -175,4 +176,66 @@ def ticid_to_toiid(tic_id):
         else:
             return None
     except:
+        return None
+
+
+def get_tic_star_information(
+    ticid,
+    desiredcols=['ID', 'GAIA', 'Bmag', 'Vmag', 'Jmag', 'Hmag', 'Kmag', 'Tmag',
+                 'Teff', 'logg', 'rad', 'mass'],
+    raise_error_on_multiple_match=True):
+    """
+    Given sting ticid, return single-rowed dataframe with TICv8 information of
+    star. If no ticid match is found, None is returned.
+
+    desiredcols : a subset of
+
+        ['ID', 'version', 'HIP', 'TYC', 'UCAC', 'TWOMASS', 'SDSS', 'ALLWISE', 'GAIA',
+        'APASS', 'KIC', 'objType', 'typeSrc', 'ra', 'dec', 'POSflag', 'pmRA', 'e_pmRA',
+        'pmDEC', 'e_pmDEC', 'PMflag', 'plx', 'e_plx', 'PARflag', 'gallong', 'gallat',
+        'eclong', 'eclat', 'Bmag', 'e_Bmag', 'Vmag', 'e_Vmag', 'umag', 'e_umag',
+        'gmag', 'e_gmag', 'rmag', 'e_rmag', 'imag', 'e_imag', 'zmag', 'e_zmag', 'Jmag',
+        'e_Jmag', 'Hmag', 'e_Hmag', 'Kmag', 'e_Kmag', 'TWOMflag', 'prox', 'w1mag',
+        'e_w1mag', 'w2mag', 'e_w2mag', 'w3mag', 'e_w3mag', 'w4mag', 'e_w4mag',
+        'GAIAmag', 'e_GAIAmag', 'Tmag', 'e_Tmag', 'TESSflag', 'SPFlag', 'Teff',
+        'e_Teff', 'logg', 'e_logg', 'MH', 'e_MH', 'rad', 'e_rad', 'mass', 'e_mass',
+        'rho', 'e_rho', 'lumclass', 'lum', 'e_lum', 'd', 'e_d', 'ebv', 'e_ebv',
+        'numcont', 'contratio', 'disposition', 'duplicate_id', 'priority', 'eneg_EBV',
+        'epos_EBV', 'EBVflag', 'eneg_Mass', 'epos_Mass', 'eneg_Rad', 'epos_Rad',
+        'eneg_rho', 'epos_rho', 'eneg_logg', 'epos_logg', 'eneg_lum', 'epos_lum',
+        'eneg_dist', 'epos_dist', 'distflag', 'eneg_Teff', 'epos_Teff', 'TeffFlag',
+        'gaiabp', 'e_gaiabp', 'gaiarp', 'e_gaiarp', 'gaiaqflag', 'starchareFlag',
+        'VmagFlag', 'BmagFlag', 'splists', 'e_RA', 'e_Dec', 'RA_orig', 'Dec_orig',
+        'e_RA_orig', 'e_Dec_orig', 'raddflag', 'wdflag', 'objID']
+    """
+
+    if not isinstance(ticid, str):
+        raise ValueError('ticid needs to be string')
+
+    ticres = tic_objectsearch(ticid)
+
+    with open(ticres['cachefname'], 'r') as json_file:
+        data = json.load(json_file)
+
+    if len(data['data']) >= 1:
+
+        if len(data['data']) > 1:
+            errmsg = (
+                'Got {} hits for TICID {}'.format(len(data['data']), ticid)
+            )
+            raise ValueError(errmsg)
+
+        d = data['data'][0]
+
+        outd = {}
+
+        for col in desiredcols:
+            outd[col] = d[col]
+
+        df = pd.DataFrame(outd, index=[0])
+
+        return df
+
+    else:
+
         return None
