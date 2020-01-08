@@ -1,3 +1,19 @@
+"""
+Contents:
+
+get_cdips_catalog: Updated version of Table 1 from Bouma+2019 CDIPS-I
+get_cdips_pub_catalog: ""
+get_cdips_pub_catalog_entry: Single row from above.
+
+get_toi_catalog: TOI-plus catalog from MIT TEV.
+get_exofop_toi_catalog: ExoFOP-TESS TOI table.
+get_exofop_ctoi_catalog: ExoFOP-TESS CTOI table.
+get_exofop_ctoi_catalog_entry: Single row from above.
+
+ticid_to_toiid: Given a TICID, get a TOI identifer
+get_tic_star_information: Given TICID, query TICv8 for arbitrary columns.
+"""
+
 import pandas as pd
 import socket, os, json
 from astrobase.services.mast import tic_objectsearch
