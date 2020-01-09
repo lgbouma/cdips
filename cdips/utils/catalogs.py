@@ -126,7 +126,7 @@ def get_toi_catalog(ver='2020-01-08'):
     toi_stars_dir = dir_d[socket.gethostname()]
 
     toi_stars_path = os.path.join(
-        toi_stars_dir, 'csv-file-toi-plus-catalog-{}.csv'.format(ver)
+        toi_stars_dir, 'toi-plus-catalog-{}.csv'.format(ver)
     )
 
     df = pd.read_csv(toi_stars_path, sep=',', comment='#')
