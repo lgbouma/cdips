@@ -14,7 +14,7 @@ ticid_to_toiid: Given a TICID, get a TOI identifer
 get_tic_star_information: Given TICID, query TICv8 for arbitrary columns.
 """
 
-import pandas as pd
+import pandas as pd, numpy as np
 import socket, os, json
 from astrobase.services.mast import tic_objectsearch
 
@@ -98,6 +98,9 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.4):
             index=[0]
         )
 
+        if np.all(df.columns == 'source_id'):
+            return None
+
         return df
 
     else:
@@ -155,6 +158,20 @@ def get_exofop_toi_catalog(ver='2020-01-08', returnpath=False):
     if returnpath:
         return toi_stars_path
 
+
+def get_exofop_toi_catalog_entry(tic_id):
+
+    df = get_exofop_toi_catalog()
+
+    out_r = df[df['TIC ID'].astype(str) == str(tic_id)]
+
+    if len(out_r) >= 1:
+        return out_r
+
+    else:
+        return None
+
+
 def get_exofop_ctoi_catalog(ver='2020-01-08'):
 
     dir_d = {
@@ -171,6 +188,19 @@ def get_exofop_ctoi_catalog(ver='2020-01-08'):
     ctoidf = pd.read_csv(ctoipath, sep='|')
 
     return ctoidf
+
+
+def get_exofop_ctoi_catalog_entry(tic_id):
+
+    df = get_exofop_ctoi_catalog()
+
+    out_r = df[df['TIC ID'].astype(str) == str(tic_id)]
+
+    if len(out_r) >= 1:
+        return out_r
+
+    else:
+        return None
 
 
 def ticid_to_toiid(tic_id):
