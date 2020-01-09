@@ -47,6 +47,11 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
             '5436252604630719488', # non-CM from parallax
         ]
 
+    if sector == 11:
+        ids_to_test = [
+            '6113920619134019456'
+        ]
+
     for id_to_test in ids_to_test:
 
         existing_report_files = glob(
@@ -67,4 +72,4 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
 if __name__ == "__main__":
 
-    test_vetting_report(sector=8, cdips_cat_vnum=0.4)
+    test_vetting_report(sector=11, cdips_cat_vnum=0.4)
