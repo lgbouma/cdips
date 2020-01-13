@@ -28,10 +28,14 @@ Date: Thu 18 Jan 2018 05:47:35 PM EST
 '''
 from __future__ import division, print_function
 
+import os
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy.coordinates import SkyCoord
 import astropy.units as units
+
+import cdips as cd
+datadir = os.path.join(os.path.dirname(cd.__path__[0]), 'data')
 
 ###############################################################################
 # Fixed TESS properties are kept as globals.
@@ -66,7 +70,7 @@ def N_pixels_in_aperture_Sullivan(T):
     '''
     from scipy.interpolate import interp1d
     df = pd.read_csv(
-            '../data/Sullivan_2015_optimalnumberofpixels.txt',
+            os.path.join(datadir, 'Sullivan_2015_optimalnumberofpixels.txt'),
             comment='#', delimiter=','
             )
     tmag = np.array(df['tmag']) # it's really I_C
@@ -209,7 +213,7 @@ def noise_model(
     ph_source = f_ph_source * effective_area * exptime
 
     # Load in average PRF produced by `ctd_avg_field_angle_avg.py`.
-    prf_file = '../data/average_PRF.fits'
+    prf_file = os.path.join(datadir, 'average_PRF.fits')
     hdu = fits.open(prf_file)
     avg_PRF = hdu[0].data
 
