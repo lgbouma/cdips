@@ -485,11 +485,11 @@ def only_extended_only_primary(overplot_galactic_plane=True, for_proposal=False,
     orbit_duration_days = 1/2 #27.32 / 2
 
     # things to change
-    filenames = [ 'primary_mission.csv' ]
+    filenames = [ 'primary_mission_truenorth.csv' ]
 
-    eclsavnames = [ 'primary_mission_eclmap.png' ]
+    eclsavnames = [ 'primary_mission_truenorth_eclmap.png' ]
 
-    icrssavnames = [ 'primary_mission_icrsmap.png' ]
+    icrssavnames = [ 'primary_mission_truenorth_icrsmap.png' ]
 
     titles = [ 'primary mission' ]
 
@@ -563,7 +563,7 @@ if __name__=="__main__":
     overplot_k2_fields=0       # true to activate k2 field overplot
     plot_tess=1                # true to activate tess field overplot
     overplot_cdips=1           # true to overplot CDIPS target stars
-    overplot_sfr_labels=1      # TODO true to overplot names of nearby star forming regions
+    overplot_sfr_labels=0      # TODO true to overplot names of nearby star forming regions
     overplot_galactic_plane=0  # ...
 
     # END OPTIONS
