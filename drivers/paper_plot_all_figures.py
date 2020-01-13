@@ -57,6 +57,8 @@ def main():
 
     # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
     plot_rms_vs_mag(sectors, overwrite=1)
+    # plot_singleccd_rms_vs_mag(sectors, overwrite=0)
+    assert 0
 
     # fig N: average autocorrelation fn of LCs
     plot_avg_acf(sectors, size=10000, overwrite=1, cleanprevacf=False)
@@ -1769,6 +1771,54 @@ def get_lc_stats(lcpaths, cdipslcdir, outpath, sector, cdipsvnum=1,
     print('made {}'.format(outpath))
 
 
+def plot_singleccd_rms_vs_mag(sectors, overwrite=0):
+
+    #
+    # make plot for TFA only
+    #
+
+    cams = [1,2,3,4]
+    ccds = [1,2,3,4]
+
+    N_max = 100000
+
+    stages = ['TFA']
+    stagestr = '-'.join(stages) + '_'
+
+    for sector in sectors:
+        for cam in cams:
+            for ccd in ccds:
+
+                prestr = 'sector{}cam{}ccd{}_'.format(sector,cam,ccd)
+                outpath = os.path.join(OUTDIR, 'singleccd_rms_vs_mag',
+                                       prestr+stagestr+'rms_vs_mag.png')
+
+                if os.path.exists(outpath) and not overwrite:
+                    print('found {} and not overwrite; return'.format(outpath))
+                    return
+
+                cdipslcdir = (
+                    '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/cam{}_ccd{}'.
+                    format(sector, cam, ccd)
+                )
+                lcglob = '*_llc.fits'
+                cdipslcpaths = glob(os.path.join(cdipslcdir, lcglob))
+
+                csvpath = os.path.join(
+                    OUTDIR,'sector{}_cam{}_ccd{}_rms_vs_mag_data.csv'.
+                    format(sector, cam, ccd)
+                )
+
+                get_lc_stats(cdipslcpaths, cdipslcdir, csvpath, sector,
+                             N_desired=N_max)
+
+                df = pd.read_csv(csvpath)
+
+                _plot_rms_vs_mag_stages(df, stages, outpath,
+                                        overwrite=overwrite, yaxisval='RMS')
+
+
+
 def plot_rms_vs_mag(sectors, overwrite=0):
 
     cams = [1,2,3,4]
@@ -1788,6 +1838,10 @@ def plot_rms_vs_mag(sectors, overwrite=0):
     for sector in sectors:
       for cam in cams:
           for ccd in ccds:
+
+              if sector == 10 and cam == 3 and ccd == 3:
+                  print('WRN! skipping sector10, cam3, ccd3 (bad ramp systematics)')
+                  continue
               cdipslcdir = (
                   '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/cam{}_ccd{}'.
                   format(sector, cam, ccd)
