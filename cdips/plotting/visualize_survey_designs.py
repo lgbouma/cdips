@@ -207,7 +207,7 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
     if overplot_cdips:
 
         from cdips.utils import collect_cdips_lightcurves as ccl
-        df = ccl.get_cdips_catalog(ver=0.4)
+        df = ccl.get_cdips_pub_catalog(ver=0.4)
 
         c = SkyCoord(np.array(df['ra'])*u.deg, np.array(df['dec'])*u.deg,
                      frame='icrs')
@@ -417,7 +417,7 @@ def get_n_observations(dirnfile, outpath, n_stars, merged=False,
 
     if merged:
         df_pri = pd.read_csv(os.path.join(
-            datadir,'primary_mission.csv', sep=';'))
+            datadir,'primary_mission_truenorth.csv', sep=';'))
         df_ext = pd.read_csv(dirnfile, sep=';')
         df = pd.concat([df_pri, df_ext])
 
