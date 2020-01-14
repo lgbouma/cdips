@@ -172,7 +172,7 @@ def get_exofop_toi_catalog_entry(tic_id):
         return None
 
 
-def get_exofop_ctoi_catalog(ver='2020-01-08'):
+def get_exofop_ctoi_catalog(ver='2020-01-08', returnpath=False):
 
     dir_d = {
         'brik':'/home/luke/Dropbox/proj/cdips/data/',
@@ -185,9 +185,12 @@ def get_exofop_ctoi_catalog(ver='2020-01-08'):
     ctoi_dir = dir_d[socket.gethostname()]
 
     ctoipath = os.path.join(ctoi_dir, 'ctoi-exofop-{}.csv'.format(ver))
-    ctoidf = pd.read_csv(ctoipath, sep='|')
 
-    return ctoidf
+    if returnpath:
+        return ctoipath
+    else:
+        ctoidf = pd.read_csv(ctoipath, sep='|')
+        return ctoidf
 
 
 def get_exofop_ctoi_catalog_entry(tic_id):
