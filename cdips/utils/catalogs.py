@@ -17,6 +17,10 @@ get_tic_star_information: Given TICID, query TICv8 for arbitrary columns.
 import pandas as pd, numpy as np
 import socket, os, json
 from astrobase.services.mast import tic_objectsearch
+from cdips.utils import today_YYYYMMDD
+TODAYSTR = '-'.join([today_YYYYMMDD()[:4],
+                     today_YYYYMMDD()[4:6],
+                     today_YYYYMMDD()[6:]])
 
 def get_cdips_catalog(ver=0.4):
 
@@ -134,7 +138,7 @@ def get_toi_catalog(ver='2020-01-08'):
     return df
 
 
-def get_exofop_toi_catalog(ver='2020-01-08', returnpath=False):
+def get_exofop_toi_catalog(ver=TODAYSTR, returnpath=False):
     # https://exofop.ipac.caltech.edu/tess/view_toi.php, with pipe
 
     dir_d = {
@@ -151,7 +155,14 @@ def get_exofop_toi_catalog(ver='2020-01-08', returnpath=False):
         toi_stars_dir, 'toi-exofop-{}.csv'.format(ver)
     )
 
-    df = pd.read_csv(toi_stars_path, sep='|')
+    if not os.path.exists(toi_stars_path):
+        df =  pd.read_csv(
+            'https://exofop.ipac.caltech.edu/tess/download_toi.php?sort=toi&output=csv'
+        )
+        df.to_csv(toi_stars_path, index=False, sep='|')
+
+    else:
+        df = pd.read_csv(toi_stars_path, sep='|')
 
     if not returnpath:
         return df
@@ -172,7 +183,7 @@ def get_exofop_toi_catalog_entry(tic_id):
         return None
 
 
-def get_exofop_ctoi_catalog(ver='2020-01-08', returnpath=False):
+def get_exofop_ctoi_catalog(ver=TODAYSTR, returnpath=False):
 
     dir_d = {
         'brik':'/home/luke/Dropbox/proj/cdips/data/',
@@ -185,6 +196,12 @@ def get_exofop_ctoi_catalog(ver='2020-01-08', returnpath=False):
     ctoi_dir = dir_d[socket.gethostname()]
 
     ctoipath = os.path.join(ctoi_dir, 'ctoi-exofop-{}.csv'.format(ver))
+
+    if not os.path.exists(ctoipath):
+        ctoidf =  pd.read_csv(
+            'https://exofop.ipac.caltech.edu/tess/download_ctoi.php?sort=ctoi&output=csv'
+        )
+        ctoidf.to_csv(ctoipath, index=False, sep='|')
 
     if returnpath:
         return ctoipath
