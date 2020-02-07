@@ -7,10 +7,12 @@ import os, socket
 from glob import glob
 import numpy as np, pandas as pd
 from numpy import array as nparr
-from cdips.utils import today_YYYYMMDD
+from scipy.optimize import curve_fit
 
 from astrobase import imageutils as iu
+from astrobase.timeutils import get_epochs_given_midtimes_and_period
 
+from cdips.utils import today_YYYYMMDD
 from cdips.utils import find_rvs as fr
 from cdips.utils import get_vizier_catalogs as gvc
 from cdips.utils import collect_cdips_lightcurves as ccl
@@ -19,6 +21,8 @@ from cdips.utils.pipelineutils import save_status, load_status
 ##########
 # config #
 ##########
+
+DEBUG = 1
 
 hostname = socket.gethostname()
 if 'phtess1' in hostname or 'phtess2' in hostname:
@@ -78,6 +82,13 @@ COLUMN_ORDER = ['target', 'flag', 'disp', 'period', 'period_unc', 'epoch',
                 'arg_peri_unc', 'time_peri', 'time_peri_unc', 'vsa', 'vsa_unc',
                 'tag', 'group', 'prop_period', 'notes', 'source_id']
 
+
+####################
+# helper functions #
+####################
+def linear_model(xdata, m, b):
+    return m*xdata + b
+
 ########
 # main #
 ########
@@ -109,7 +120,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
     """
 
     #
-    # read in the results from the fits
+    # Read in the results from the fits
     #
     paramglob = os.path.join(
         fitdir, "sector-*_CLEAR_THRESHOLD/fitresults/hlsp_*gaiatwo*_llc/*fitparameters.csv"
@@ -197,12 +208,12 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
 
         #
         # Duplicate entries in "to_exofop_df" are multi-sector. Average their
-        # parameters across sectors, and remove the duplicate multi-sector rows
-        # using the "groupby" aggregator. This removes the string-based
-        # columns, which we can reclaim by a "drop_duplicates" call, since they
-        # don't have sector-specific information.  Then, assign comments and
-        # format as appropriate for ExoFop-TESS. Unique tag for the entire
-        # upload.
+        # parameters (really will end up just being durations) across sectors,
+        # and then remove the duplicate multi-sector rows using the "groupby"
+        # aggregator. This removes the string-based columns, which we can
+        # reclaim by a "drop_duplicates" call, since they don't have
+        # sector-specific information.  Then, assign comments and format as
+        # appropriate for ExoFop-TESS. Unique tag for the entire upload.
         #
 
         to_exofop_df['source_id'] = to_exofop_df['source_id'].astype(str)
@@ -217,16 +228,98 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
                 )[string_cols]
         )
 
-        out_df = mean_val_to_exofop_df.merge(dup_dropped_str_df, how='left',
-                                             on='target')
+        out_df = mean_val_to_exofop_df.merge(
+            dup_dropped_str_df, how='left', on='target'
+        )
+
+        #
+        # The above procedure got the epochs on multisector planets wrong.
+        # Determine (t0,P) by fitting a line to entries with >=3 sectors
+        # instead. For the two-sector case, due to bad covariance matrices,
+        # just use the newest ephemeris.
+        #
+        multisector_df = (
+            to_exofop_df[to_exofop_df.target.groupby(to_exofop_df.target).
+                         transform('value_counts') > 1]
+        )
+        u_multisector_df = out_df[out_df.target.isin(multisector_df.target)]
+
+        # temporarily drop the multisector rows from out_df (they will be
+        # re-merged)
+        out_df = out_df.drop(
+            np.argwhere(out_df.target.isin(multisector_df.target)).flatten(),
+            axis=0
+        )
+
+        ephem_d = {}
+        for ix, t in enumerate(np.unique(multisector_df.target)):
+            sel = (multisector_df.target == t)
+            tmid = nparr(multisector_df[sel].epoch)
+            tmid_err = nparr(multisector_df[sel].epoch_unc)
+            init_period = nparr(multisector_df[sel].period.mean())
+
+            E, init_t0 = get_epochs_given_midtimes_and_period(
+                tmid, init_period, verbose=False
+            )
+
+            popt, pcov = curve_fit(
+                linear_model, E, tmid, p0=(init_period, init_t0), sigma=tmid_err
+            )
+
+            if np.all(np.isinf(pcov)):
+                # if least-squares doesn't give good error (i.e., just two
+                # epochs), take the most recent epoch.
+                s = np.argmax(tmid)
+                use_t0 = tmid[s]
+                use_t0_err = tmid_err[s]
+                use_period = nparr(multisector_df[sel].period)[s]
+                use_period_err = nparr(multisector_df[sel].period_unc)[s]
+
+            else:
+                use_t0 = popt[1]
+                use_t0_err = pcov[1,1]**0.5
+                use_period = popt[0]
+                use_period_err = pcov[0,0]**0.5
+
+            if DEBUG:
+                print(
+                    'init tmid {}, tmiderr {}\nperiod {}, perioderr {}'.
+                    format(tmid, tmid_err, nparr(multisector_df[sel].period),
+                           nparr(multisector_df[sel].period_unc))
+                )
+                print(
+                    'use tmid {}, tmiderr {}\nperiod {}, perioderr {}'.
+                    format(use_t0, use_t0_err, use_period, use_period_err)
+                )
+                print(10*'-')
+
+            ephem_d[ix] = {
+                'target': t, 'epoch': use_t0, 'epoch_unc': use_t0_err,
+                'period': use_period, 'period_unc': use_period_err
+            }
+
+        ephem_df = pd.DataFrame(ephem_d).T
+
+        mdf = ephem_df.merge(u_multisector_df, how='left', on='target',
+                             suffixes=('','_DEPRECATED'))
+        mdf = mdf.drop([c for c in mdf.columns if 'DEPRECATED' in c],
+                       axis=1, inplace=False)
+
+
+        temp_df = out_df.append(mdf, ignore_index=True, sort=False)
+        out_df = temp_df
 
         to_exofop_df = out_df[COLUMN_ORDER]
+
+        # to_exofop_df = mdf[COLUMN_ORDER] # special behavior for 2020/02/07 fix
+        # to_exofop_df['flag'] = 'newparams'
 
         _df = manual_comment_df[
             manual_comment_df.source_id.isin(to_exofop_df.source_id)
         ]
 
         comments = list(_df['comment'])
+        # comments = 'Fixed ephemeris bug. (Old epoch was erroneous).' # #2020/02/07
 
         for c in comments:
             assert len(c)<=119
@@ -257,6 +350,8 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
             exofopdir, "params_planet_{}_001.txt".
             format(today_YYYYMMDD())
         )
+        for c in ['epoch','epoch_unc','period','period_unc']:
+            to_exofop_df[c] = to_exofop_df[c].astype(float)
         to_exofop_df = to_exofop_df.round(FORMATDICT)
         to_exofop_df['depth'] = to_exofop_df['depth'].astype(int)
         to_exofop_df['depth_unc'] = to_exofop_df['depth_unc'].astype(int)
