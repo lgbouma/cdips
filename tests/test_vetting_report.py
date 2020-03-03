@@ -32,24 +32,37 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
     if sector == 8:
         ids_to_test = [
-            '5510676828723793920' # PC
+            '5290781443841554432',
+            #'5510676828723793920' # PC
         ]
 
     if sector == 9:
         ids_to_test = [
-            '5256717749007641344', # PC near TOI 684
-            '5523104093269203712', # PC
-            '5489726768531119616', # PC
-            '5432321060287733888', # PC
-            '5256502966294604800', # PC
-            '5524965566445719168', # EB offtarget
-            '4666329826478795008', # contact binary
-            '5436252604630719488', # non-CM from parallax
+            '5489726768531119616', # TIC 268
+            # '5326491313765089792' # detrending debugger
+            # '5256717749007641344', # PC near TOI 684
+            # '5523104093269203712', # PC
+            # '5489726768531119616', # PC
+            # '5432321060287733888', # PC
+            # '5256502966294604800', # PC
+            # '5524965566445719168', # EB offtarget
+            # '4666329826478795008', # contact binary
+            # '5436252604630719488', # non-CM from parallax
+        ]
+
+    if sector == 10:
+        ids_to_test = [
+            '5334408965769940608', # detrending debugger
+            # '5290781443841554432',
+            #'5251470948229949568' # TOI-837
         ]
 
     if sector == 11:
         ids_to_test = [
-            '6113920619134019456'
+            '5339389268061191040',
+            #'5838450865699668736',
+            #'5245968236116294016',
+            #'6113920619134019456'
         ]
 
     for id_to_test in ids_to_test:
@@ -72,4 +85,4 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
 if __name__ == "__main__":
 
-    test_vetting_report(sector=11, cdips_cat_vnum=0.4)
+    test_vetting_report(sector=9, cdips_cat_vnum=0.4)
