@@ -15,18 +15,29 @@ from sklearn.decomposition import PCA, FactorAnalysis
 from sklearn.linear_model import LinearRegression, BayesianRidge
 from sklearn.model_selection import cross_val_score
 
-from wotan import flatten
+from wotan import flatten, version
+wotanversion = version.WOTAN_VERSIONING
+wotanversiontuple = tuple(wotanversion.split('.'))
+assert int(wotanversiontuple[0]) >= 1
+assert int(wotanversiontuple[1]) >= 4
 
 
-def detrend_flux(time, flux):
+def detrend_flux(time, flux, break_tolerance=0.5):
 
     # matched detrending to do_initial_period_finding
-
-    break_tolerance = 0.5
     flat_flux, trend_flux = flatten(time, flux,
                                     method='pspline',
                                     return_trend=True,
                                     break_tolerance=break_tolerance)
+
+    # # another option:
+    # flat_flux, trend_flux = flatten(time, flux,
+    #                                 method='biweight',
+    #                                 return_trend=True,
+    #                                 break_tolerance=0.5,
+    #                                 window_length=0.3,
+    #                                 cval=6)
+
 
     return flat_flux, trend_flux
 
