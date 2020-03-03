@@ -19,6 +19,8 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astroquery.vizier import Vizier
 
+DEBUG = 0
+
 def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                              supprow, suppfulldf, pfdf, pfrow, toidf, sector,
                              k13_notes_df, mask_orbit_edges=True, nworkers=40,
@@ -221,25 +223,27 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                                               k13_notes_df=k13_notes_df,
                                               overwrite=0)
         )
+
+        if DEBUG:
+            picklepath = 'nbhd_info_{}.pkl'.format(sourceid)
+            with open(picklepath , 'wb') as f:
+                pickle.dump(info, f)
+                print('made {}'.format(picklepath))
+
         if isinstance(info, tuple):
             (targetname, groupname, group_df_dr2, target_df, nbhd_df,
              cutoff_probability, pmdec_min, pmdec_max, pmra_min, pmra_max,
              group_in_k13, group_in_cg18, group_in_kc19
             ) = info
 
-            fig = vp.plot_group_neighborhood(targetname, groupname, group_df_dr2,
-                                             target_df, nbhd_df,
-                                             cutoff_probability,
-                                             pmdec_min=pmdec_min,
-                                             pmdec_max=pmdec_max,
-                                             pmra_min=pmra_min, pmra_max=pmra_max,
-                                             group_in_k13=group_in_k13,
-                                             group_in_cg18=group_in_cg18,
-                                             group_in_kc19=group_in_kc19,
-                                             source_id=sourceid,
-                                             figsize=(30,20),
-                                             show_rvs=show_rvs
-                                            )
+            fig = vp.plot_group_neighborhood(
+                targetname, groupname, group_df_dr2, target_df, nbhd_df,
+                cutoff_probability, pmdec_min=pmdec_min, pmdec_max=pmdec_max,
+                pmra_min=pmra_min, pmra_max=pmra_max,
+                group_in_k13=group_in_k13, group_in_cg18=group_in_cg18,
+                group_in_kc19=group_in_kc19, source_id=sourceid,
+                figsize=(30,20), show_rvs=show_rvs
+            )
 
             pdf.savefig(fig)
             plt.close()
