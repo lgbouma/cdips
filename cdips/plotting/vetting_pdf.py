@@ -30,6 +30,8 @@ from astroquery.gaia import Gaia
 from astroquery.simbad import Simbad
 from astroquery.mast import Catalogs
 
+DEBUG = False
+
 def _given_mag_get_flux(mag, err_mag=None):
 
     mag_0, f_0 = 12, 1e4
@@ -232,6 +234,22 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
     else:
         yvals = [rawflux,tfaflux,flat_flux,bkgdval]
     nums = list(range(len(yvals)))
+
+    if DEBUG:
+        df = pd.DataFrame({
+            'rawflux':rawflux,
+            'tfaflux':tfaflux,
+            'flat_flux':flat_flux,
+            'bkgdval':bkgdval,
+            'time':time,
+            'tfatime':tfatime
+        })
+        source_id = pfrow.source_id.squeeze()
+        outpath = 'example_data_{}.csv'.format(source_id)
+        df.to_csv(
+            outpath, index=False
+        )
+        print('made {}'.format(outpath))
 
     for ax, yval, txt, num in zip(axs, yvals, stagestrs, nums):
 
