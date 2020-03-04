@@ -77,7 +77,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
 
     # define "detrended mag". by default, this is the TFASR signal.  however,
     # if residual stellar variability was found after TFA detrending, then,
-    # this is defined as the TFA LC + penalized spline detrending.
+    # this is defined as the RAW LC + penalized spline detrending.
 
     is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
 
@@ -87,7 +87,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 1
         ##########
-        fluxap = 'TFA2' if is_pspline_dtr else 'TFASR2'
+        fluxap = 'IRM2' if is_pspline_dtr else 'TFASR2'
+        tfaap = 'TFA2' if is_pspline_dtr else 'TFASR2'
         fig, tlsp, _ = vp.two_periodogram_checkplot(
             lc_sr, hdr, supprow, pfrow, mask_orbit_edges=mask_orbit_edges,
             fluxap=fluxap, nworkers=nworkers)
@@ -103,7 +104,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         time, rawmag, tfasrmag, bkgdval, tfatime = (
             lc['TMID_BJD'],
             lc['IRM2'],
-            lc_sr[fluxap],
+            lc_sr[tfaap],
             lc['BGV'],
             lc_sr['TMID_BJD']
         )
@@ -128,7 +129,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # page 3 -- it's a QLP ripoff
         ##########
         fig, infodict = vp.transitcheckdetails(
-            tfasrmag, tfatime, tlsp, mdf, hdr, supprow, pfrow,
+            rawmag, time, tlsp, mdf, hdr, supprow, pfrow,
             obsd_midtimes=obsd_midtimes, figsize=(30,20)
         )
         pdf.savefig(fig)

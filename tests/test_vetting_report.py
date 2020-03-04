@@ -27,7 +27,8 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
     if sector == 7:
         ids_to_test = [
-            '5596735638203997824' # PC
+            '3050033749239975552', # PC for vetting report description doc
+            # '5596735638203997824' # PC
         ]
 
     if sector == 8:
@@ -85,4 +86,4 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
 if __name__ == "__main__":
 
-    test_vetting_report(sector=9, cdips_cat_vnum=0.4)
+    test_vetting_report(sector=7, cdips_cat_vnum=0.4)

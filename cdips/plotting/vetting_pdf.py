@@ -204,8 +204,8 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
                                             magsarefluxes=True, sigclip=[50,5])
 
     if is_pspline_dtr:
-        flat_flux, trend_flux = dtr.detrend_flux(tfatime, tfaflux)
-        if len(tfatime) != len(trend_flux):
+        flat_flux, trend_flux = dtr.detrend_flux(time, rawflux)
+        if len(time) != len(trend_flux):
             raise ValueError('got length of array error')
 
     ##########################################
@@ -260,8 +260,8 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
             ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
                        rasterized=True, linewidths=0)
 
-        if 'TF' in txt and len(stagestrs)==4:
-            ax.scatter(tfatime, trend_flux, c='red', alpha=0.9, zorder=1, s=20,
+        if 'RM' in txt and len(stagestrs)==4:
+            ax.scatter(time, trend_flux, c='red', alpha=0.9, zorder=1, s=20,
                        rasterized=True, linewidths=0)
 
         if num in [0]:
@@ -348,7 +348,7 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
     if not is_pspline_dtr:
         stagestrs = ['TFASR1','TFASR2','TFASR3']
     else:
-        stagestrs = ['TFA1','TFA2','TFA3']
+        stagestrs = ['IRM1','IRM2','IRM3']
 
     time = lc_sr['TMID_BJD']
     yvals = [_given_mag_get_flux(lc_sr[i]) for i in stagestrs]
@@ -370,6 +370,9 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
     nums = list(range(len(yvals)))
 
     for ax, yval, txt, num in zip(axs, yvals, stagestrs, nums):
+
+        if is_pspline_dtr and 'IRM' in txt:
+            yval, _ = dtr.detrend_flux(time, yval)
 
         ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
                    rasterized=True, linewidths=0)
@@ -426,7 +429,7 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
     ax_hidden = fig.add_subplot(111, frameon=False)
     ax_hidden.tick_params(labelcolor='none', top=False, bottom=False,
                           left=False, right=False)
-    ax_hidden.set_title('flux vs time. top: smallest aperture. middle: '+
+    ax_hidden.set_title('detrended flux vs time. top: smallest aperture. middle: '+
                         'detection (medium) aperture. bottom: biggest',
                         fontsize='xx-large')
 
@@ -542,20 +545,21 @@ def _get_full_infodict(tlsp, hdr, mdf):
 
     return megad
 
-def transitcheckdetails(tfasrmag, tfatime, tlsp, mdf, hdr, supprow,
+
+def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
                         pfrow,
                         obsd_midtimes=None, figsize=(30,24), returnfig=True,
                         sigclip=[50,5]):
 
     try:
-        time, tfasrmag = moe.mask_orbit_start_and_end(
-            tfatime, tfasrmag, raise_expectation_error=False
+        time, startmag = moe.mask_orbit_start_and_end(
+            starttime, startmag, raise_expectation_error=False
         )
     except AssertionError:
         # got more gaps than expected. ignore.
-        time, tfasrmag = tfatime, tfasrmag
+        time, startmag = starttime, startmag
 
-    flux = _given_mag_get_flux(tfasrmag)
+    flux = _given_mag_get_flux(startmag)
 
     stime, sflux, _ = sigclip_magseries(time, flux, np.ones_like(flux)*1e-4,
                                         magsarefluxes=True, sigclip=sigclip)
