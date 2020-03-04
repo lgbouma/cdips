@@ -377,7 +377,7 @@ def do_initial_period_finding(
 
     plot_initial_period_finding_results(df, resultsdir)
 
-    if sectornum not in [6,7,8,9,10]:
+    if sectornum not in [6,7,8,9,10,11]:
         raise NotImplementedError(
             'you need to manually set SNR limits for this sector!'
         )
