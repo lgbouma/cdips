@@ -22,22 +22,26 @@ assert int(wotanversiontuple[0]) >= 1
 assert int(wotanversiontuple[1]) >= 4
 
 
-def detrend_flux(time, flux, break_tolerance=0.5):
+def detrend_flux(time, flux, break_tolerance=0.5, method='pspline'):
 
-    # matched detrending to do_initial_period_finding
-    flat_flux, trend_flux = flatten(time, flux,
-                                    method='pspline',
-                                    return_trend=True,
-                                    break_tolerance=break_tolerance)
+    if method == 'pspline':
+        # matched detrending to do_initial_period_finding
+        flat_flux, trend_flux = flatten(time, flux,
+                                        method='pspline',
+                                        return_trend=True,
+                                        break_tolerance=break_tolerance)
 
-    # # another option:
-    # flat_flux, trend_flux = flatten(time, flux,
-    #                                 method='biweight',
-    #                                 return_trend=True,
-    #                                 break_tolerance=0.5,
-    #                                 window_length=0.3,
-    #                                 cval=6)
+    elif method == 'biweight':
+        # another option:
+        flat_flux, trend_flux = flatten(time, flux,
+                                        method='biweight',
+                                        return_trend=True,
+                                        break_tolerance=0.5,
+                                        window_length=0.3,
+                                        cval=6)
 
+    else:
+        raise NotImplementedError
 
     return flat_flux, trend_flux
 
