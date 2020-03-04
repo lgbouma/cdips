@@ -568,8 +568,9 @@ if __name__=="__main__":
 
     # END OPTIONS
 
-    only_extended_only_primary(overplot_galactic_plane=overplot_galactic_plane,
-                               for_proposal=for_proposal,
-                               overplot_k2_fields=overplot_k2_fields,
-                               plot_tess=plot_tess,
-                               overplot_cdips=overplot_cdips)
+    for overplot_cdips in [0,1]:
+        only_extended_only_primary(overplot_galactic_plane=overplot_galactic_plane,
+                                   for_proposal=for_proposal,
+                                   overplot_k2_fields=overplot_k2_fields,
+                                   plot_tess=plot_tess,
+                                   overplot_cdips=overplot_cdips)
