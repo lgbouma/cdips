@@ -45,10 +45,11 @@ def main():
     )
 
 
-def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
+def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
                                  period_max=27, orbitgap=1, expected_norbits=2,
                                  orbitpadding=6/(24), detrend_if_variable=True,
-                                 ls_fap_cutoff=1e-5):
+                                 ls_fap_cutoff=1e-5, tfa_time=None,
+                                 tfa_mag=None):
     """
     kwargs:
 
@@ -68,7 +69,6 @@ def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
         is 50, which for TESS data (total time ~=25 days) is commensurate with
         0.5 day periodic signal.
 
-
         In injection-recovery tests (/tests/detrend_checks.py),  the result was
         that the additional trending was only helpful in detecting planets
         whenever substantial non-gaussian variability existed in the TFA light
@@ -83,18 +83,27 @@ def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
     ls_fap = ls.false_alarm_probability(power.max())
     ls_period = 1/freq[np.argmax(power)]
 
+    # If the light-curve is still variable in TFA-form, then default to just
+    # running wotan on the raw light-curve. If it's not variable in TFA form,
+    # then don't run wotan, just search the TFA light-curve.
+    if detrend_if_variable and ls_fap > ls_fap_cutoff:
+        flux = tfa_flux
+        time = tfa_time
+    else:
+        pass
+
     #
     # prepare flux for transit least squares.
     #
     f_x0 = 1e4
     m_x0 = 10
-    tfa_flux = f_x0 * 10**( -0.4 * (tfa_mag - m_x0) )
-    tfa_flux /= np.nanmedian(tfa_flux)
+    flux = f_x0 * 10**( -0.4 * (mag - m_x0) )
+    flux /= np.nanmedian(flux)
 
     #
     # ignore the times near the edges of orbits for TLS.
     #
-    bls_time, bls_flux = moe.mask_orbit_start_and_end(tfa_time, tfa_flux)
+    bls_time, bls_flux = moe.mask_orbit_start_and_end(time, flux)
 
     #
     # sig clip asymmetric [40,4] (40 is the dip-side).
@@ -133,21 +142,22 @@ def run_periodograms_and_detrend(source_id, tfa_time, tfa_mag, period_min=0.5,
     return r
 
 
-def get_lc_data(lcpath, tfa_aperture='TFA2'):
+def get_lc_data(lcpath, mag_aperture='IRM2'):
 
-    return lcu.get_lc_data(lcpath, tfa_aperture='TFA2')
+    return lcu.get_lc_data(lcpath, mag_aperture=mag_aperture)
 
 
 def periodfindingworker(lcpath):
 
-    source_id, tfa_time, tfa_mag, xcc, ycc, ra, dec, _ = get_lc_data(lcpath)
+    source_id, time, mag, xcc, ycc, ra, dec, _, tfa_mag = get_lc_data(lcpath)
 
-    if np.all(pd.isnull(tfa_mag)):
+    if np.all(pd.isnull(mag)):
         r = [source_id, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
              False, xcc, ycc, ra, dec]
 
     else:
-        r = run_periodograms_and_detrend(source_id, tfa_time, tfa_mag)
+        r = run_periodograms_and_detrend(source_id, time, mag,
+                                         tfa_time=time, tfa_mag=tfa_mag)
         r.append(xcc)
         r.append(ycc)
         r.append(ra)
@@ -211,8 +221,8 @@ def do_initial_period_finding(
 
         df = pd.DataFrame(
             results,
-            columns=['source_id', 'ls_period', 'ls_fap', 'tls_period', 'tls_sde',
-                     'tls_t0', 'tls_depth', 'tls_duration',
+            columns=['source_id', 'ls_period', 'ls_fap', 'tls_period',
+                     'tls_sde', 'tls_t0', 'tls_depth', 'tls_duration',
                      'pspline_detrended', 'xcc', 'ycc', 'ra', 'dec']
         )
         df = df.sort_values(by='source_id')
