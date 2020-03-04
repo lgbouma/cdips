@@ -65,13 +65,12 @@ University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 University, 4 Ivy Lane, Princeton, NJ 08540, USA}
 
 \begin{abstract}
-To find planet candidates in clusters,
-we make vetting reports using our light-curves \citep{bouma_cdips_2019} and
-auxiliary data.
-This document describes the CDIPS planet candidate vetting reports
-uploaded by \texttt{lbouma} to ExoFOP-TESS 2019-12-15 through present.
-Earlier versions of this document are available at
-  \url{lgbouma.com}.
+To find planet candidates in clusters, we make vetting reports using
+our light-curves \citep{bouma_cdips_2019} and auxiliary data.  This
+document describes the CDIPS planet candidate vetting reports
+uploaded by \texttt{bouma} to ExoFOP-TESS 2020-01-20 through
+2020-05-01.  Earlier versions of this document are available at
+\url{lgbouma.com/notes}.
 \\
 
 \end{abstract}
@@ -98,9 +97,9 @@ The code used to make these reports is available online\footnote{
 
 Figures~\ref{fig:pg1} to~\ref{fig:pg7} summarize the document
 construed for these purposes.  The planet candidate chosen for these
-figures (Gaia-DR2 \texttt{532542547468722176} = TIC
-\texttt{401153825}) was chosen because it showcases many of the
-vetting report features, while also being a likely eclipsing binary.
+figures (Gaia-DR2 \texttt{3050033749239975552} = TIC
+\texttt{125192758}) was chosen because it showcases many of the
+vetting report features, in this case for a neighboring eclipsing binary.
 
 \subsection{Transit search summary}
 \label{sec:pg1}
@@ -123,31 +122,46 @@ are pulled from NASA's \texttt{skyview} service\footnote{See
 
 Figure~\ref{fig:pg2}.
 Time-series of raw flux (\texttt{IRM2}),  TFA-detrended flux
-(\texttt{TF2}), stellar-variability detrended flux, and the background
+(\texttt{TF2}), stellar-variability ``detrended flux'', and the background
 are shown as a function of barycentric Julian date.  The overplotted
 dashed vertical lines are the ephemeris of the highest-power TLS peak
 from Figure~\ref{fig:pg1}.  An important visual check is whether the flux
 dips are correlated with changes in the background level -- in this
 case, they are not.  The standard deviation and TESS magnitude are
-quoted in the upper right.  The red line in the second from the top
-plot is a spline fit, which in this case was not an essential step for
+quoted in the upper right.  The red line in the top
+plot is a spline fit, which in this case helped in
 finding the eclipse signal.
 
 The spline is an optional feature: it is only fitted and removed if
 the star is found to be ``variable'' (the Lomb-Scargle peak period is
-found with false alarm probability below $10^{-5}$). The spline is a
+found with false alarm probability below $10^{-5}$, within the TFA light-curves). The spline is a
 robust penalized B-spline, which is a B-spline with knot-length
 automatically determined via cross-validation
 \citep{eilers_flexible_1996}. The idea behind the cross-validation is
 that more knots leads to smaller residuals on training data, but
 larger errors when tested on the entire dataset.  We used the
-\texttt{wotan} implementation, which is a wrapper to the
+\texttt{wotan} implementation\footnote{
+We use \texttt{wotan} versions greater than \texttt{1.4}. Before \texttt{2020-03-01}, an earlier version
+was used, which led to qualitatively worse detrending performance for a subset
+of light-curves due to a floating point truncation error. See \texttt{\url{https://github.com/hippke/wotan/issues/51}}.
+}, which is a wrapper to the
 \texttt{pyGAM} spline fitter, with $2\sigma$ clipping of outliers from
 the fit residuals at each iteration
 \citep{serven_pygam_2018_1476122,hippke_wotan_2019}.  The maximum
 number of spline knots was set to 50, which for each TESS sector
 ($\approx 25\,{\rm days}$) is commensurate with a $\approx0.5\,{\rm
 day}$ window.
+
+Whenever the TFA light-curve is found to be variable, the ``stellar variability detrended flux'' is
+the result of dividing the raw \texttt{IRM2} flux by the best-fit spline\footnote{
+Before \texttt{2020-03-01}, this definition was different. For the initial
+single-sector processing of S6-S11, it was the result of dividing the \texttt{TFA2} flux
+by the best-fit spline.
+}.
+This is the light-curve that is then searched for transiting planets, and used
+in {\it e.g.}, Figure~\ref{fig:pg1} and Figure~\ref{fig:pg3}.
+If the TFA light-curve is not found to be variable, then the \texttt{TFA2} light-curve is used for
+this purpose.
 
 
 \subsection{Transit diagnostics}
@@ -199,7 +213,8 @@ based on the TICv8 stellar radius and masses discussed above.
 \label{sec:pg4}
 
 Figure~\ref{fig:pg4}.
-Apertures of radius 1, 1.5, and 2.25 pixels are shown from top to
+Apertures of radius 1, 1.5, and 2.25 pixels are shown in maximally detrended
+light-curves from top to
 bottom.  The blue line is the reference transit depth from the
 best-fitting TLS model.  Changes in depth with increasing aperture
 size can indicate that the source of variability is off-center from
@@ -212,9 +227,9 @@ Figure~\ref{fig:pg5}.
 The star was considered a candidate cluster member by the source(s)
 listed under ``Reference'', in this case
 \citet{cantat-gaudin_gaia_2018}.  The name used in their catalog was
-\texttt{5325425474687221760}, a Gaia-DR2 identifier, which can be
+in this case a Gaia-DR2 identifier, which can be
 back-referenced to find the membership probability they assigned this
-star for being in Collinder 205.  The base catalog however for this page
+star for being in NGC 2323.  The base catalog however for this page
 of plots is \citet{Kharchenko_et_al_2013}, due to its homogeneous
 parameter determination procedure (particularly for age).  If a match to
 the \citet{Kharchenko_et_al_2013} catalog is found, then the subplots on
@@ -235,7 +250,7 @@ radius; $\log t$ is the base-10 logarithm of the age in years;
 of the cluster from \citet{Kharchenko_et_al_2013}, if any is available.
 Extra caution must be taken when interpreting this set of plots, since
 they can only show disagreement between the observed star's properties
-and those of the listed Kharchenko members (and the latter may be
+and those of the listed Kharchenko members (and the latter is in some cases
 incomplete or otherwise biased).
 
 \subsection{Imaging variability diagnostics}
@@ -317,6 +332,8 @@ might happen if the membership labelling is {\it incomplete}),
 and whether the target star is within those clusters.
 The middle three subplots overplot cluster members from the reference
 noted in the legend.
+The radial velocity plots (bottom row) use radial velocities from Gaia-DR2,
+and so are limited to roughly 3500-7000$\,$K, for $G\lesssim 12.5$ \citep{katz_gaia_2019}.
 
 \begin{figure*}[!h]
 	\begin{center}
