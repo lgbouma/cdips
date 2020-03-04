@@ -49,7 +49,7 @@ def main(sector=None, cdips_cat_vnum=None):
 
     mavp.make_all_vetting_reports(
         tfa_sr_paths, lcbasedir, resultsdir, cddf, supplementstatsdf, pfdf,
-        toidf, k13_notes_df, sector=sector
+        toidf, k13_notes_df, sector=sector, show_rvs=True
     )
 
 

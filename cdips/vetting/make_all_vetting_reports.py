@@ -12,7 +12,7 @@ def _get_supprow(sourceid, supplementstatsdf):
 
 def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
                              supplementstatsdf, pfdf, toidf, k13_notes_df,
-                             show_rvs=False,
+                             show_rvs=True,
                              sector=6, cdipsvnum=1):
 
     for tfa_sr_path in tfa_sr_paths:
