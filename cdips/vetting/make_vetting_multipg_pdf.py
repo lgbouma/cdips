@@ -329,21 +329,30 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             isobviouslynottransit = True
             whynottransit.append('Rp > 6Rjup')
 
-        # if clearly a background star according to gaia parallax, remove.
-        omegak13 = float(mmbr_dict['omegak13'])
-        plx_mas = float(mmbr_dict['plx_mas'])
-        plx_mas_err = float(mmbr_dict['plx_mas_err'])
-        params_are_ok = True
-        for param in [omegak13, plx_mas, plx_mas_err]:
-            if pd.isnull(param):
-                params_are_ok = False
-        N_sigma = 5
-        if params_are_ok:
-            if plx_mas + N_sigma*plx_mas_err < omegak13:
-                isobviouslynottransit = True
-                whynottransit.append(
-                    'star plx > {} sigma below K13 plx'.format(N_sigma)
-                )
+        # NOTE this is a deprecated filter, b/c the Kharchenko parallaxes can
+        # be faulty. TIC 268 is a classic example.
+        filter_by_kharchenko_plx = False
+        if filter_by_kharchenko_plx:
+
+            # if clearly a background star according to gaia + kharchenko parallax
+            # comparison, remove.
+            omegak13 = float(mmbr_dict['omegak13'])
+            omega_dr2_median = float(np.nanmedian(group_df_dr2.parallax))
+            omega_dr2_std = float(np.nanstd(group_df_dr2.parallax))
+            plx_mas = float(mmbr_dict['plx_mas'])
+            plx_mas_err = float(mmbr_dict['plx_mas_err'])
+            params_are_ok = True
+            for param in [omegak13, omega_dr2, plx_mas, plx_mas_err]:
+                if pd.isnull(param):
+                    params_are_ok = False
+
+            N_sigma = 5
+            if params_are_ok:
+                if plx_mas + N_sigma*plx_mas_err < omegak13:
+                    isobviouslynottransit = True
+                    whynottransit.append(
+                        'star plx > {} sigma below K13 plx'.format(N_sigma)
+                    )
 
 
     if isobviouslynottransit:
