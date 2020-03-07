@@ -20,6 +20,7 @@ import os, textwrap
 from glob import glob
 from datetime import datetime
 from astropy.io import fits
+from copy import deepcopy
 
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils import lcutils as lcu
@@ -39,7 +40,7 @@ nworkers = mp.cpu_count()
 def main():
 
     do_initial_period_finding(
-        sectornum=10, nworkers=nworkers, maxworkertasks=1000,
+        sectornum=12, nworkers=nworkers, maxworkertasks=1000,
         outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
         OC_MG_CAT_ver=0.4
     )
@@ -52,6 +53,10 @@ def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
                                  tfa_mag=None):
     """
     kwargs:
+
+        time, mag : time and magnitude vector of IRM (raw) light-curve.
+
+        tfa_time, tfa_mag: ditto for the TFA light-curve.
 
         orbitpadding (float): amount of time to clip near TESS perigee to
         remove ramp signals. 12 data points = 6 hours = 0.25 days (and must
@@ -83,13 +88,14 @@ def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
     ls_fap = ls.false_alarm_probability(power.max())
     ls_period = 1/freq[np.argmax(power)]
 
-    # If the light-curve is still variable in TFA-form, then default to just
-    # running wotan on the raw light-curve. If it's not variable in TFA form,
-    # then don't run wotan, just search the TFA light-curve.
     if detrend_if_variable and ls_fap > ls_fap_cutoff:
-        flux = tfa_flux
+        # If light-curve was not variable in TFA form (FAP > cutoff), don't run
+        # wotan, just search the TFA LC.
+        mag = deepcopy(tfa_mag)
         time = tfa_time
     else:
+        # If the light-curve is still variable in TFA-form, then default to just
+        # running wotan on the raw light-curve.
         pass
 
     #
@@ -103,7 +109,9 @@ def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
     #
     # ignore the times near the edges of orbits for TLS.
     #
-    bls_time, bls_flux = moe.mask_orbit_start_and_end(time, flux)
+    bls_time, bls_flux = moe.mask_orbit_start_and_end(
+        time, flux, raise_expectation_error=False
+    )
 
     #
     # sig clip asymmetric [40,4] (40 is the dip-side).
@@ -118,8 +126,8 @@ def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
     #
     detrended = False
     if detrend_if_variable and ls_fap < ls_fap_cutoff:
-
-        print('fap<cutoff for sourceid : {} '.format(source_id))
+        if DEBUG:
+            print('fap<cutoff for sourceid : {} '.format(source_id))
         bls_flux, _ = dtr.detrend_flux(bls_time, bls_flux)
         detrended = True
 
@@ -196,7 +204,7 @@ def do_initial_period_finding(
 
     if DEBUG:
         # when debugging, period find on fewer LCs
-        lcpaths = np.random.choice(lcpaths,size=200)
+        lcpaths = np.random.choice(lcpaths,size=100)
 
     outdir = os.path.join(outdir, 'sector-{}'.format(sectornum))
     if not os.path.exists(outdir):

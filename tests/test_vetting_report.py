@@ -6,7 +6,6 @@ from cdips.vetting import (
     make_all_vetting_reports as mavp
 )
 
-
 def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
     outdir = 'test_vetting_reports'
@@ -33,7 +32,8 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
     if sector == 8:
         ids_to_test = [
-            '5290781443841554432',
+            '5423913124931271424', # EB w/ rot + dips
+            # '5290781443841554432',
             #'5510676828723793920' # PC
         ]
 
@@ -85,5 +85,4 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
 
 if __name__ == "__main__":
-
-    test_vetting_report(sector=7, cdips_cat_vnum=0.4)
+    test_vetting_report(sector=8, cdips_cat_vnum=0.4)

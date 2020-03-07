@@ -29,7 +29,8 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline'):
         flat_flux, trend_flux = flatten(time, flux,
                                         method='pspline',
                                         return_trend=True,
-                                        break_tolerance=break_tolerance)
+                                        break_tolerance=break_tolerance,
+                                        robust=True)
 
     elif method == 'biweight':
         # another option:
