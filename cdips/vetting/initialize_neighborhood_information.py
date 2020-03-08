@@ -22,11 +22,13 @@ from astroquery.vizier import Vizier
 ##########
 
 k13_dir_d = {
+    'phn12':'/home/lbouma/proj/cdips/data/cluster_data/MWSC_1sigma_members_Gaia_matched',
     'phtess2':'/home/lbouma/proj/cdips/data/cluster_data/MWSC_1sigma_members_Gaia_matched',
     'brik':'/home/luke/Dropbox/proj/cdips/data/cluster_data/MWSC_1sigma_members_Gaia_matched',
     'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/cluster_data/MWSC_1sigma_members_Gaia_matched'
 }
 kc19_path_d = {
+    'phn12':'/home/lbouma/proj/cdips/data/cluster_data/kc19_string_table1.csv',
     'phtess2':'/home/lbouma/proj/cdips/data/cluster_data/kc19_string_table1.csv',
     'brik':'/home/luke/Dropbox/proj/cdips/data/cluster_data/kc19_string_table1.csv',
     'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/cluster_data/kc19_string_table1.csv'
@@ -43,7 +45,9 @@ def get_neighborhood_information(
     source_id,
     mmbr_dict=None,
     k13_notes_df=None,
-    overwrite=0):
+    overwrite=0,
+    force_groupname=None,
+    force_references=None):
     """
     Given a source_id for a cluster member, acquire information necessary for
     neighborhood diagnostic plots. (Namely, find all the group members, then do
@@ -62,6 +66,11 @@ def get_neighborhood_information(
         k13_notes_df: optional. If passing mmbr_dict, pass this as well.
 
         overwrite: Whether the Gaia cache gets overwritten.
+
+        Optional kwargs: force_groupname and force_references. If passed, for
+        example as the strings "kc19group_1222" and "Kounkel_2019", plot
+        generation will be forced without verifying that the target "source_id"
+        is a member of the group.
     """
 
     row = get_cdips_pub_catalog_entry(source_id, ver=0.4)
@@ -71,6 +80,9 @@ def get_neighborhood_information(
     references = np.array(row['reference'].iloc[0].split(','))
     clusters = np.array(row['cluster'].iloc[0].split(','))
     ext_catalog_names = np.array(row['ext_catalog_name'].iloc[0].split(','))
+    if force_references and force_groupname:
+        references = force_references
+        clusters = np.array([force_groupname])
 
     #
     # See if target source hits any of Cantat-Gaudin+2018, Kounkel&Covey2019,
@@ -152,7 +164,13 @@ def get_neighborhood_information(
     elif group_in_kc19:
         cutoff_probability = 1
         kc19_df = pd.read_csv(KC19_PATH)
-        group_id = kc19_df[kc19_df.source_id == source_id].group_id.iloc[0]
+        try:
+            group_id = kc19_df[kc19_df.source_id == source_id].group_id.iloc[0]
+        except IndexError as e:
+            if not force_groupname is None:
+                group_id = int(force_groupname.split('_')[-1])
+            else:
+                raise IndexError(e)
         group_df = kc19_df[kc19_df.group_id == group_id]
         group_source_ids = np.array(group_df['source_id']).astype(np.int64)
         np.testing.assert_array_equal(group_df['source_id'], group_source_ids)
