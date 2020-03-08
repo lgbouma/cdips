@@ -369,6 +369,16 @@ def do_initial_period_finding(
         df['limit'][(df['tls_period']>24)] = 30
         df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
 
+    elif sectornum == 12:
+        df['limit'] = np.ones(len(df))*12
+        df['limit'][df['tls_period']<1] = 17
+        df['limit'][(df['tls_period']<1.2) & (df['tls_period']>1)] = 14.5
+        df['limit'][(df['tls_period']<8.8) & (df['tls_period']>8.4)] = 19
+        df['limit'][(df['tls_period']<15.5) & (df['tls_period']>13.4)] = 19
+        df['limit'][(df['tls_period']<18.9) & (df['tls_period']>18.3)] = 19
+        df['limit'][(df['tls_period']>21)] = 30
+        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
+
     else:
         df['limit'] = np.ones(len(df))*12
         df['limit'][df['tls_period']<1] = 15
@@ -385,7 +395,7 @@ def do_initial_period_finding(
 
     plot_initial_period_finding_results(df, resultsdir)
 
-    if sectornum not in [6,7,8,9,10,11]:
+    if sectornum not in [6,7,8,9,10,11,12]:
         raise NotImplementedError(
             'you need to manually set SNR limits for this sector!'
         )
