@@ -254,8 +254,11 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
     for ax, yval, txt, num in zip(axs, yvals, stagestrs, nums):
 
         if 'TF' in txt or 'DTR' in txt:
-            ax.scatter(tfatime, yval, c='black', alpha=0.9, zorder=2, s=50,
-                       rasterized=True, linewidths=0)
+            try:
+                ax.scatter(tfatime, yval, c='black', alpha=0.9, zorder=2, s=50,
+                           rasterized=True, linewidths=0)
+            except:
+                pass
         elif 'BKGD' in txt or 'RM' in txt:
             ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
                        rasterized=True, linewidths=0)

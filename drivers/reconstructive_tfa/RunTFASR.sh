@@ -4,7 +4,7 @@
 # NOTE: you need to have a clean directory for this to work
 # NOTE: "s00$sector" below can cause issues if wrong number of zeros
 
-sector=11
+sector=12
 baselcdir=/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-$sector
 statsdirbase=/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s00$sector/ISP
 periodfindingresults=/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding/sector-$sector/initial_period_finding_results_with_limit.csv

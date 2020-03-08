@@ -32,3 +32,4 @@ tests/test_vetting_reports/*
 doc/notes_on_weirdos/*
 drivers/reconstructive_tfa/sector-?_output*
 tests/test_nbhd_plot/*
+drivers/reconstructive_tfa/sector-*_output/

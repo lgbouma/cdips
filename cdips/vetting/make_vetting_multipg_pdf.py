@@ -89,9 +89,12 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         fluxap = 'IRM2' if is_pspline_dtr else 'TFASR2'
         tfaap = 'TFA2' if is_pspline_dtr else 'TFASR2'
-        fig, tlsp, _ = vp.two_periodogram_checkplot(
-            lc_sr, hdr, supprow, pfrow, mask_orbit_edges=mask_orbit_edges,
-            fluxap=fluxap, nworkers=nworkers)
+        try:
+            fig, tlsp, _ = vp.two_periodogram_checkplot(
+                lc_sr, hdr, supprow, pfrow, mask_orbit_edges=mask_orbit_edges,
+                fluxap=fluxap, nworkers=nworkers)
+        except Exception as e:
+            return
         pdf.savefig(fig)
         plt.close()
         if pd.isnull(tlsp):
