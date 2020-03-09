@@ -58,10 +58,15 @@ def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.4,
 
 if __name__ == "__main__":
 
-    source_id = '5245968236116294016'
-    sector = 9
-    force_references = "Kounkel_2019" # can be none
-    force_groupname = "kc19group_1091"
+    source_id = '2192733400508791552'
+    sector = 42
+    force_references = None
+    force_groupname = None
+
+    # source_id = '5245968236116294016'
+    # sector = 9
+    # force_references = "Kounkel_2019" # can be none
+    # force_groupname = "kc19group_1091"
 
     test_nbhd_plot(source_id, sector, force_references=force_references,
                    force_groupname=force_groupname)

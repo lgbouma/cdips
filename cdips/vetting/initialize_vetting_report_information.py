@@ -59,17 +59,25 @@ def initialize_vetting_report_information(
     supppath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
                 'cdips_lc_stats/sector-{}/'.format(sector)+
                 'supplemented_cdips_lc_statistics.txt')
-    supplementstatsdf = pd.read_csv(supppath, sep=';')
+    try:
+        supplementstatsdf = pd.read_csv(supppath, sep=';')
+    except FileNotFoundError:
+        print('WRN! Did not find supppath {}'.format(supppath))
+        supplementstatsdf = None
 
     pfpath = ('/nfs/phtess2/ar0/TESS/PROJ/lbouma/'
               'cdips/results/cdips_lc_periodfinding/'
               'sector-{}/'.format(sector)+
               'initial_period_finding_results_supplemented.csv')
-    with open(pfpath) as f:
-        first_line = f.readline()
-    _temp = first_line.split(';')
-    sep = ',' if len(_temp) == 1 else ';'
-    pfdf = pd.read_csv(pfpath, sep=sep)
+    try:
+        with open(pfpath) as f:
+            first_line = f.readline()
+        _temp = first_line.split(';')
+        sep = ',' if len(_temp) == 1 else ';'
+        pfdf = pd.read_csv(pfpath, sep=sep)
+    except FileNotFoundError:
+        print('WRN! Did not find pfpath {}'.format(pfpath))
+        pfdf = None
 
     toidf = get_toi_catalog()
 

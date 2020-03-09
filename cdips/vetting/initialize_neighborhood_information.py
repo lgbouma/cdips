@@ -165,9 +165,11 @@ def get_neighborhood_information(
         cutoff_probability = 1
         kc19_df = pd.read_csv(KC19_PATH)
         try:
-            group_id = kc19_df[kc19_df.source_id == source_id].group_id.iloc[0]
+            group_id = kc19_df[
+                kc19_df.source_id.astype(str) == source_id
+            ].group_id.iloc[0]
         except IndexError as e:
-            if not force_groupname is None:
+            if not force_groupname is None and 'kc19' in force_groupname:
                 group_id = int(force_groupname.split('_')[-1])
             else:
                 raise IndexError(e)
