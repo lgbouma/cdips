@@ -18,7 +18,7 @@ from astroquery.vizier import Vizier
 
 def main():
 
-    df = ccl.get_cdips_pub_catalog(ver=0.3)
+    df = ccl.get_cdips_pub_catalog(ver=0.4)
 
     ra = nparr(df['ra'])
     dec = nparr(df['dec'])
@@ -26,7 +26,7 @@ def main():
     cdips_coord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree),
                            frame='icrs')
 
-    toidate = '2019-12-05'
+    toidate = '2020-03-09'
     toidf = ccl.get_toi_catalog(ver=toidate)
 
     toi_ra, toi_dec = (nparr(toidf['TIC Right Ascension']),

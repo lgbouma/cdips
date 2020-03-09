@@ -48,7 +48,9 @@ def get_cdips_pub_catalog(ver=0.4):
         'brik':'/home/luke/local/cdips/catalogs/',
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'PU-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/',
+        'WWS-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/'
     }
 
     cdips_stars_dir = dir_d[socket.gethostname()]
@@ -76,7 +78,9 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.4):
         'brik':'/home/luke/local/cdips/catalogs/',
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'PU-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/',
+        'WWS-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/'
     }
 
     cdips_stars_dir = dir_d[socket.gethostname()]
@@ -112,7 +116,7 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.4):
         return None
 
 
-def get_toi_catalog(ver='2020-01-08'):
+def get_toi_catalog(ver=TODAYSTR):
     # a misnomer: really, the TOI-plus catalog, from MIT. (exported from
     # https://tev.mit.edu/)
     # note: this catalog is a bit janky. for example, they give transit epoch
@@ -124,7 +128,9 @@ def get_toi_catalog(ver='2020-01-08'):
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/'
+        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/',
+        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/',
+        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/'
     }
 
     toi_stars_dir = dir_d[socket.gethostname()]
@@ -133,9 +139,16 @@ def get_toi_catalog(ver='2020-01-08'):
         toi_stars_dir, 'toi-plus-{}.csv'.format(ver)
     )
 
-    df = pd.read_csv(toi_stars_path, sep=',', comment='#')
+    if not os.path.exists(toi_stars_path):
+        df = pd.read_csv('https://tev.mit.edu/data/collection/193/csv/6/',
+                         sep=',', comment='#')
+        df.to_csv(toi_stars_path, index=False, sep=',')
+
+    else:
+        df = pd.read_csv(toi_stars_path, sep=',', comment='#')
 
     return df
+
 
 
 def get_exofop_toi_catalog(ver=TODAYSTR, returnpath=False):
@@ -146,7 +159,9 @@ def get_exofop_toi_catalog(ver=TODAYSTR, returnpath=False):
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/'
+        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/',
+        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/',
+        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/'
     }
 
     toi_stars_dir = dir_d[socket.gethostname()]
@@ -190,7 +205,9 @@ def get_exofop_ctoi_catalog(ver=TODAYSTR, returnpath=False):
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/'
+        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/',
+        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/',
+        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/'
     }
 
     ctoi_dir = dir_d[socket.gethostname()]
