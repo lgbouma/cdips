@@ -81,6 +81,7 @@ def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
         supprow = _get_supprow(sourceid, supplementstatsdf)
         suppfulldf = supplementstatsdf
 
+        # don't make a report if the membership claim is insufficient
         reference = str(supprow['reference'].iloc[0])
         referencesplt = reference.split(',')
         INSUFFICIENT = ['Dias2014', 'Zari_2018_UMS', 'Kharchenko2013']
@@ -97,6 +98,15 @@ def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
         if len(pfrow) != 1:
             errmsg = 'expected exactly 1 source match in period find df'
             raise AssertionError(errmsg)
+
+        DEPTH_CUTOFF = 0.75
+        if float(pfrow.tls_depth) < DEPTH_CUTOFF:
+            msg = (
+                'Found {} had TLS depth {}. Too low. Skip.'.
+                format(sourceid, float(pfrow.tls_depth))
+            )
+            print(msg)
+            continue
 
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
             try:
