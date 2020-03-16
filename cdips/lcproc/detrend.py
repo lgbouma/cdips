@@ -10,6 +10,7 @@ from glob import glob
 from numpy import array as nparr, all as npall, isfinite as npisfinite
 
 from astrobase import imageutils as iu
+from astrobase.lcmath import find_lc_timegroups
 
 from sklearn.decomposition import PCA, FactorAnalysis
 from sklearn.linear_model import LinearRegression, BayesianRidge
@@ -23,6 +24,14 @@ assert int(wotanversiontuple[1]) >= 4
 
 
 def detrend_flux(time, flux, break_tolerance=0.5, method='pspline'):
+
+    # Initial pre-processing: verify that under break_tolerance, time and flux
+    # do not have any sections with <=2 points. Spline detrending routines do
+    # not like fitting lines.
+    N_groups, group_inds = find_lc_timegroups(time, mingap=break_tolerance)
+    for g in group_inds:
+        if len(time[g]) <= 2:
+            time[g], flux[g] = np.nan, np.nan
 
     if method == 'pspline':
         # matched detrending to do_initial_period_finding
