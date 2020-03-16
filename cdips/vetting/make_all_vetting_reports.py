@@ -7,6 +7,15 @@ def _get_supprow(sourceid, supplementstatsdf):
 
     mdf = supplementstatsdf.loc[supplementstatsdf['lcobj']==sourceid]
 
+    if len(mdf) > 1:
+        print('WRN! Got multiple supplementstatsdf entries for {}'.
+              format(sourceid))
+        # Case: multiple matches. Take whichever has the least NaNs. Maintain
+        # it as a ~160 column, 1 row dataframe.
+        mdf = pd.DataFrame(
+            mdf.iloc[mdf.isnull().sum(axis=1).values.argmin()]
+        ).T
+
     return mdf
 
 
