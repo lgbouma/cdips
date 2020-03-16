@@ -91,6 +91,7 @@ def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
     is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
     if is_pspline_dtr:
         flux, _ = dtr.detrend_flux(time, flux)
+    assert len(flux) == len(time)
 
     spdm = periodbase.stellingwerf_pdm(time, flux, err, magsarefluxes=True,
                                        startp=0.1, endp=19, nworkers=nworkers)
@@ -551,8 +552,12 @@ def _get_full_infodict(tlsp, hdr, mdf):
 
 def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
                         pfrow,
-                        obsd_midtimes=None, figsize=(30,24), returnfig=True,
-                        sigclip=[50,5]):
+                        obsd_midtimes=None, tfamag=None, figsize=(30,24),
+                        returnfig=True, sigclip=[50,3]):
+
+    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
+    if not is_pspline_dtr:
+        startmag = tfamag
 
     try:
         time, startmag = moe.mask_orbit_start_and_end(
@@ -628,6 +633,7 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
     #
     # ax0: flux v time, top left
     #
+
     ax0.scatter(stime, sflux, c='black', alpha=0.9, zorder=2, s=50,
                 rasterized=True, linewidths=0)
     ax0.set_xlabel('BJDTDB', fontsize='xx-large')
@@ -1681,7 +1687,6 @@ def plot_group_neighborhood(
     ):
     """
     source_id: optional, but recommended!
-
     show_rvs: usually not worthwhile
     """
 
