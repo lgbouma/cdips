@@ -182,13 +182,19 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
 
     if is_cg18_group:
         g_mag_limit=18
+        mstr = '_cg18'
     elif is_kc19_group:
-        g_mag_limit=14
+        g_mag_limit=15
+        mstr = '_kc19'
     elif is_k13_group:
         g_mag_limit=16
+        mstr = '_k13'
+    else:
+        g_mag_limit=14
+        mstar = ''
 
     dlpath = os.path.join(
-        gaiadir,'nbhd_group{}_matches.xml.gz'.format(groupname)
+        gaiadir,'nbhd_group{}_matches{}.xml.gz'.format(groupname, mstr)
     )
 
     if os.path.exists(dlpath) and overwrite:
