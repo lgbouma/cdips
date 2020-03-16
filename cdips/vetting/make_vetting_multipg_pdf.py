@@ -329,9 +329,9 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                 isobviouslynottransit = True
                 whynottransit.append('age>1Gyr and Rp > 3Rjup')
 
-        if float(infodict['rp']) > (6*u.Rjup).to(u.Rearth).value:
+        if float(infodict['rp']) > (3.5*u.Rjup).to(u.Rearth).value:
             isobviouslynottransit = True
-            whynottransit.append('Rp > 6Rjup')
+            whynottransit.append('Rp > 3.5Rjup')
 
         # NOTE this is a deprecated filter, b/c the Kharchenko parallaxes can
         # be faulty. TIC 268 is a classic example.
