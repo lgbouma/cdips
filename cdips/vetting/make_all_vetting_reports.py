@@ -81,16 +81,31 @@ def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
         supprow = _get_supprow(sourceid, supplementstatsdf)
         suppfulldf = supplementstatsdf
 
+        reference = str(supprow['reference'].iloc[0])
+        referencesplt = reference.split(',')
+        INSUFFICIENT = ['Dias2014', 'Zari_2018_UMS', 'Kharchenko2013']
+        is_insufficient = [c in INSUFFICIENT for c in referencesplt]
+        if np.all(is_insufficient):
+            msg = (
+                'Found {} had membership only in {}: was {}. Skip.'.
+                format(sourceid, repr(INSUFFICIENT), repr(referencesplt))
+            )
+            print(msg)
+            continue
+
         pfrow = pfdf.loc[pfdf['source_id']==sourceid]
         if len(pfrow) != 1:
             errmsg = 'expected exactly 1 source match in period find df'
             raise AssertionError(errmsg)
 
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
-            make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
-                                     sourceid, supprow, suppfulldf, pfdf,
-                                     pfrow, toidf, sector, k13_notes_df,
-                                     mask_orbit_edges=True, nworkers=40,
-                                     show_rvs=show_rvs)
+            try:
+                make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf,
+                                         sourceid, supprow, suppfulldf, pfdf,
+                                         pfrow, toidf, sector, k13_notes_df,
+                                         mask_orbit_edges=True, nworkers=40,
+                                         show_rvs=show_rvs)
+            except Exception as e:
+                print('WRN! {} continue.'.format(repr(e)))
         else:
             print('found {}, continue'.format(outpath))
