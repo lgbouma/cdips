@@ -254,15 +254,20 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
 
     for ax, yval, txt, num in zip(axs, yvals, stagestrs, nums):
 
-        if 'TF' in txt or 'DTR' in txt:
-            try:
-                ax.scatter(tfatime, yval, c='black', alpha=0.9, zorder=2, s=50,
-                           rasterized=True, linewidths=0)
-            except:
-                pass
-        elif 'BKGD' in txt or 'RM' in txt:
-            ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
+        if 'TF' in txt:
+            ax.scatter(tfatime, yval, c='black', alpha=0.9, zorder=2, s=50,
                        rasterized=True, linewidths=0)
+        elif 'BKGD' in txt or 'RM' in txt or 'DTR' in txt:
+            if 'DTR' in txt:
+                stime, sflux, _ = sigclip_magseries(
+                    time, yval, np.ones_like(yval)*1e-4, magsarefluxes=True,
+                    sigclip=[50,3]
+                )
+                ax.scatter(stime, sflux, c='black', alpha=0.9, zorder=2, s=50,
+                           rasterized=True, linewidths=0)
+            else:
+                ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
+                           rasterized=True, linewidths=0)
 
         if 'RM' in txt and len(stagestrs)==4:
             ax.scatter(time, trend_flux, c='red', alpha=0.9, zorder=1, s=20,
@@ -377,9 +382,16 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
 
         if is_pspline_dtr and 'IRM' in txt:
             yval, _ = dtr.detrend_flux(time, yval)
+            stime, syval, _ = sigclip_magseries(
+                time, yval, np.ones_like(yval)*1e-4, magsarefluxes=True,
+                sigclip=[50,3]
+            )
+            ax.scatter(stime, syval, c='black', alpha=0.9, zorder=2, s=50,
+                       rasterized=True, linewidths=0)
 
-        ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
-                   rasterized=True, linewidths=0)
+        else:
+            ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
+                       rasterized=True, linewidths=0)
 
         if num in [0]:
             txt_x, txt_y = 0.99, 0.98
@@ -572,9 +584,12 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
     stime, sflux, _ = sigclip_magseries(time, flux, np.ones_like(flux)*1e-4,
                                         magsarefluxes=True, sigclip=sigclip)
 
-    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
     if is_pspline_dtr:
         sflux, _ = dtr.detrend_flux(stime, sflux)
+        stime, sflux, _ = sigclip_magseries(
+            stime, sflux, np.ones_like(sflux)*1e-4, magsarefluxes=True,
+            sigclip=sigclip
+        )
 
     d = _get_full_infodict(tlsp, hdr, mdf)
 
