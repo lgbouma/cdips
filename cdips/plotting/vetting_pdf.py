@@ -31,6 +31,8 @@ from astroquery.simbad import Simbad
 from astroquery.mast import Catalogs
 
 DEBUG = False
+import multiprocessing as mp
+nworkers = mp.cpu_count()
 
 def _given_mag_get_flux(mag, err_mag=None):
 
@@ -336,7 +338,7 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
 
 def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
                                xlabel='BJDTDB', customstr='', figsize=(30,24),
-                               returnfig=True):
+                               returnfigdict=True, auto_depth_vs_apsize=False):
     """
     Plot 3 row, 1 column plot with rows of:
         * TFASR ap 1 (smallest)
@@ -378,6 +380,7 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
 
     nums = list(range(len(yvals)))
 
+    _plottimes, _plotfluxs = [], []
     for ax, yval, txt, num in zip(axs, yvals, stagestrs, nums):
 
         if is_pspline_dtr and 'IRM' in txt:
@@ -388,10 +391,14 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
             )
             ax.scatter(stime, syval, c='black', alpha=0.9, zorder=2, s=50,
                        rasterized=True, linewidths=0)
+            _plottimes.append(stime)
+            _plotfluxs.append(syval)
 
         else:
             ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
                        rasterized=True, linewidths=0)
+            _plottimes.append(time)
+            _plotfluxs.append(yval)
 
         if num in [0]:
             txt_x, txt_y = 0.99, 0.98
@@ -419,6 +426,52 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
             # show transit depth in detection aperture (ap2). depth is saved as
             # 1-delta.
             ax.axhline(infodict['depth'], lw=2, alpha=0.3, color='C0')
+
+    depth_vs_apsize_increasing = False
+    tcounts, depths, depth_uncs = [], [], []
+    if auto_depth_vs_apsize:
+        tlsps = []
+        for t,f in zip(_plottimes, _plotfluxs):
+            try:
+                tlsp = periodbase.tls_parallel_pfind(
+                    t, f, np.ones_like(f)*1e-4, magsarefluxes=True,
+                    tls_rstar_min=0.1, tls_rstar_max=10, tls_mstar_min=0.1,
+                    tls_mstar_max=5.0, tls_oversample=8, tls_mintransits=1,
+                    tls_transit_template='default', nbestpeaks=5, sigclip=[50.,5.],
+                    nworkers=nworkers
+                )
+                tlsps.append(tlsp)
+            except ValueError as e:
+                print(e)
+                return fig, None
+
+        for tlsp in tlsps:
+            tcounts.append(
+                tlsp['tlsresult']['distinct_transit_count']
+            )
+            depths.append(
+                1-tlsp['tlsresult']['depth']
+            )
+            depth_uncs.append(
+                np.nanmedian(tlsp['tlsresult']['transit_depths_uncertainties'])
+            )
+
+        a1_to_a2_increase = depths[0] + 2*depth_uncs[0] < depths[1]
+        a2_to_a3_increase = depths[1] + 2*depth_uncs[1] < depths[2]
+
+        if (
+            np.all(nparr(tcounts) >= 3)
+            and a1_to_a2_increase
+            and a2_to_a3_increase
+        ):
+            depth_vs_apsize_increasing = True
+
+    apdict = {
+        'depth_vs_apsize_increasing': depth_vs_apsize_increasing,
+        'tcounts': tcounts,
+        'depths': depths,
+        'depth_uncs': depth_uncs
+    }
 
     if not isinstance(obsd_midtimes, np.ndarray):
         for ax in axs:
@@ -450,8 +503,8 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
                         fontsize='xx-large')
 
     fig.tight_layout(h_pad=1)
-    if returnfig:
-        return fig
+    if returnfigdict:
+        return fig, apdict
     else:
         raise NotImplementedError
         fig.savefig(savpath, dpi=250, bbox_inches='tight')

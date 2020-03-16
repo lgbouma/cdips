@@ -141,10 +141,11 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 4 
         ##########
-        fig = vp.scatter_increasing_ap_size(lc_sr, pfrow, infodict=infodict,
-                                            obsd_midtimes=obsd_midtimes,
-                                            customstr=customstr,
-                                            xlabel='BJDTDB', figsize=(30,20))
+        fig, apdict = vp.scatter_increasing_ap_size(
+            lc_sr, pfrow, infodict=infodict, obsd_midtimes=obsd_midtimes,
+            customstr=customstr, xlabel='BJDTDB', figsize=(30,20),
+            auto_depth_vs_apsize=True
+        )
         pdf.savefig(fig)
         plt.close()
 
@@ -312,6 +313,17 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         if float(infodict['snr']) < 8:
             isobviouslynottransit = True
             whynottransit.append('SNR < 8')
+
+        if isinstance(apdict, dict):
+            if apdict['depth_vs_apsize_increasing']:
+                isobviouslynottransit = True
+                msg = (
+                    'tcounts {} transits, depths {}, uncs {}'.
+                    format(repr(apdict['tcounts']),
+                           repr(apdict['depths']),
+                           repr(apdict['depth_uncs']))
+                )
+                whynottransit.append(msg)
 
         if ((float(infodict['psdepthratio'] - infodict['psdepthratioerr']) > 1.2)
             &
