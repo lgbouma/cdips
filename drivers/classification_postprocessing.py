@@ -8,12 +8,12 @@ if host != 'brik':
     raise NotImplementedError('Paths are defined on brik.')
 
 def main():
-    isfull = 0
+    isfull = 1
     iscollabsubclass = 0
-    organize_PCs = 1
+    organize_PCs = 0
 
-    sector = 11
-    today = '20191205'
+    sector = 12
+    today = '20200317'
 
     if isfull:
         given_full_classifications_organize(sector=sector, today=today)
