@@ -71,7 +71,8 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
     if sector == 12:
         ids_to_test = [
-            '5938237284044738944',
+            '5989314684373466624',
+            # '5938237284044738944',
             # '4054631994268958208', # dias nonCM
             # '5832122489147732352', # kharchenko nonCM
             # '5851066108057126912', # dias

@@ -34,25 +34,55 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline'):
         if len(time[g]) <= SECTION_CUTOFF:
             time[g], flux[g] = np.nan, np.nan
 
-    if method == 'pspline':
-        # matched detrending to do_initial_period_finding
-        flat_flux, trend_flux = flatten(time, flux,
-                                        method='pspline',
-                                        return_trend=True,
-                                        break_tolerance=break_tolerance,
-                                        robust=True)
+    try:
+        if method == 'pspline':
+            # matched detrending to do_initial_period_finding
+            flat_flux, trend_flux = flatten(time, flux,
+                                            method='pspline',
+                                            return_trend=True,
+                                            break_tolerance=break_tolerance,
+                                            robust=True)
+        elif method == 'biweight':
+            # another option:
+            flat_flux, trend_flux = flatten(time, flux,
+                                            method='biweight',
+                                            return_trend=True,
+                                            break_tolerance=0.5,
+                                            window_length=0.3,
+                                            cval=6)
+        else:
+            raise NotImplementedError
 
-    elif method == 'biweight':
-        # another option:
-        flat_flux, trend_flux = flatten(time, flux,
-                                        method='biweight',
-                                        return_trend=True,
-                                        break_tolerance=0.5,
-                                        window_length=0.3,
-                                        cval=6)
+    except ValueError as e:
+        msg = (
+            'WRN! {}. Probably have a short segment. Trying to nan it out.'
+            .format(repr(e))
+        )
+        print(msg)
 
-    else:
-        raise NotImplementedError
+        SECTION_CUTOFF = min([len(time[g]) for g in group_inds])
+        for g in group_inds:
+            if len(time[g]) <= SECTION_CUTOFF:
+                time[g], flux[g] = np.nan, np.nan
+
+        # NOTE: code duplication here
+        if method == 'pspline':
+            # matched detrending to do_initial_period_finding
+            flat_flux, trend_flux = flatten(time, flux,
+                                            method='pspline',
+                                            return_trend=True,
+                                            break_tolerance=break_tolerance,
+                                            robust=True)
+        elif method == 'biweight':
+            # another option:
+            flat_flux, trend_flux = flatten(time, flux,
+                                            method='biweight',
+                                            return_trend=True,
+                                            break_tolerance=0.5,
+                                            window_length=0.3,
+                                            cval=6)
+        else:
+            raise NotImplementedError
 
     return flat_flux, trend_flux
 
