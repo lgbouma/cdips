@@ -13,7 +13,6 @@ import os
 from glob import glob
 
 def main(sector=None, cdips_cat_vnum=None):
-
     #
     # enforce that TFA-SR worked through file counts.
     # directory containing both TFA-SR light curves, as well as just ordinary
@@ -52,7 +51,5 @@ def main(sector=None, cdips_cat_vnum=None):
         toidf, k13_notes_df, sector=sector, show_rvs=True
     )
 
-
 if __name__ == "__main__":
-
     main(sector=12, cdips_cat_vnum=0.4)

@@ -94,6 +94,9 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                 lc_sr, hdr, supprow, pfrow, mask_orbit_edges=mask_orbit_edges,
                 fluxap=fluxap, nworkers=nworkers)
         except Exception as e:
+            # NOTE: if this is raised, probably a detrending singularity issue.
+            # perhaps fine-tune the cutoff further.
+            raise(e)
             return
         pdf.savefig(fig)
         plt.close()
