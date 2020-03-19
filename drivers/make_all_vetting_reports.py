@@ -52,4 +52,4 @@ def main(sector=None, cdips_cat_vnum=None):
     )
 
 if __name__ == "__main__":
-    main(sector=12, cdips_cat_vnum=0.4)
+    main(sector=13, cdips_cat_vnum=0.4)

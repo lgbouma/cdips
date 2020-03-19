@@ -24,7 +24,7 @@ from do_initial_period_finding import do_initial_period_finding
 def main():
 
     ##########################################
-    sector = 12
+    sector = 13
     outdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
     overwrite = 0
     cams = [1,2,3,4]
