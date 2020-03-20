@@ -96,8 +96,16 @@ def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
 
         pfrow = pfdf.loc[pfdf['source_id']==sourceid]
         if len(pfrow) != 1:
-            errmsg = 'expected exactly 1 source match in period find df'
-            raise AssertionError(errmsg)
+            if len(pfrow) == 0:
+                errmsg = (
+                    '{} expected 1 source match in period find df, got {}.'
+                    .format(sourceid, len(pfrow))
+                )
+                raise AssertionError(errmsg)
+            else:
+                # If you have multiple hits for a given source (e.g., because
+                # of geometric camera overlap), take the max SDE.
+                pfrow = pd.DataFrame(pfrow.ix[pfrow.tls_sde.idxmax]).T
 
         DEPTH_CUTOFF = 0.75
         if float(pfrow.tls_depth) < DEPTH_CUTOFF:
@@ -118,4 +126,4 @@ def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
             except Exception as e:
                 print('WRN! {} continue.'.format(repr(e)))
         else:
-            print('found {}, continue'.format(outpath))
+            print('Found {}, continue'.format(outpath))
