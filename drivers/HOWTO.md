@@ -44,8 +44,8 @@ TO PRODUCE CANDIDATES FROM CDIPS LCS
 5. `make_all_vetting_reports`: make a multipage PDF with the information needed
    to make classifications for vetting.
 
-    * Check `logs/vetting_pdf.log` for name-matching errors. (First pass, they
-      will always show up! Grep for "ERR!")
+    * Run it twice, and verify you made all of them with
+      `verify_vetting_reports.sh`
 
 
 TO CHECK STAR CATALOGS AGAINST TOIS
