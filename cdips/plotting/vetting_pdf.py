@@ -1370,7 +1370,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     ticids = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['ID']
     tmags = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['Tmag']
 
-    sel = (px > 0) & (px < 9) & (py > 0) & (py < 9)
+    sel = (px > 0) & (px < 10) & (py > 0) & (py < 10)
     px,py = px[sel], py[sel]
     ticids, tmags = ticids[sel], tmags[sel]
 
