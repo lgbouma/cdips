@@ -1,3 +1,9 @@
+Sector 12 produced 106k CDIPS light-curves.  Sector 13 produced 22k CDIPS
+light-curves.  The difference is because TESS began to look away from the
+galactic plane.  The Sector 13 CDIPS light-curves are also particularly
+affected by scattered light from the Earth, since the galactic plane is mostly
+in Camera 1, which points closest to the ecliptic.
+
 ---------
 sector 12
 ---------
