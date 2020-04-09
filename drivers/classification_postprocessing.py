@@ -3,17 +3,13 @@ from glob import glob
 import pandas as pd, numpy as np
 from functools import reduce
 
-host = socket.gethostname()
-if host != 'brik':
-    raise NotImplementedError('Paths are defined on brik.')
-
 def main():
-    isfull = 1
+    isfull = 0
     iscollabsubclass = 0
-    organize_PCs = 0
+    organize_PCs = 1
 
-    sector = 12
-    today = '20200317'
+    sector = 13
+    today = '20200320'
 
     if isfull:
         given_full_classifications_organize(sector=sector, today=today)
@@ -57,7 +53,10 @@ def given_collab_subclassifications_merge(sector=6):
     """
     LGB or JH or JNW has done classifications. merge them, save to csv.
     """
-    datadir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/'
+    datadir = os.path.join(
+        os.path.expanduser('~'),
+        'Dropbox/proj/cdips/results/vetting_classifications/'
+    )
     if sector==6:
         classfiles = [
             os.path.join(datadir, '20190621_sector-6_PCs_LGB_class.txt'),
@@ -93,6 +92,18 @@ def given_collab_subclassifications_merge(sector=6):
             os.path.join(datadir, '20191205_sector-11_PCs_JH_class.txt'),
             os.path.join(datadir, '20191205_sector-11_PCs_JNW_class.txt')
         ]
+    elif sector==12:
+        classfiles = [
+            os.path.join(datadir, '20200317_sector-12_PCs_LGB_class.txt'),
+            os.path.join(datadir, '20200317_sector-12_PCs_JH_class.txt'),
+            os.path.join(datadir, '20200317_sector-12_PCs_JNW_class.txt')
+        ]
+    elif sector==13:
+        classfiles = [
+            os.path.join(datadir, '20200320_sector-13_PCs_LGB_class.txt'),
+            os.path.join(datadir, '20200320_sector-13_PCs_JH_class.txt'),
+            os.path.join(datadir, '20200320_sector-13_PCs_JNW_class.txt')
+        ]
 
     outpath = os.path.join(
         datadir, 'sector-{}_PCs_MERGED_SUBCLASSIFICATIONS.csv'.format(sector)
@@ -109,6 +120,7 @@ def given_collab_subclassifications_merge(sector=6):
             df = hartmanformat_to_df(classfile, classifier='JH')
         dfs.append(df)
 
+    # merge all the classication dataframes on Name to one dataframe
     mdf = reduce(lambda x, y: pd.merge(x, y, on='Name'), dfs)
 
     mdf.to_csv(outpath, sep=';', index=False)
@@ -123,7 +135,11 @@ def given_merged_organize_PCs(sector=None):
     which go in their own pile.
     """
 
-    datadir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/'
+    datadir = os.path.join(
+        os.path.expanduser('~'),
+        'Dropbox/proj/cdips/results/vetting_classifications/'
+    )
+
     inpath = os.path.join(
         datadir, 'sector-{}_PCs_MERGED_SUBCLASSIFICATIONS.csv'.format(sector)
     )
@@ -214,6 +230,13 @@ def given_merged_organize_PCs(sector=None):
         )
         assert len(srcdir) == 1
         srcdir = srcdir[0]
+    elif sector in [12,13]:
+        srcdir = glob(
+            '../results/vetting_classifications/2020????_sector-{}_PC_cut'.
+            format(sector)
+        )
+        assert len(srcdir) == 1
+        srcdir = srcdir[0]
 
     for n in df_clears_threshold['Name']:
         src = os.path.join(srcdir, str(n))
@@ -252,6 +275,13 @@ def given_merged_organize_PCs(sector=None):
         )
         assert len(srcdir) == 1
         srcdir = srcdir[0]
+    elif sector in [12,13]:
+        srcdir = glob(
+            '../results/vetting_classifications/2020????_sector-{}_PC_cut'.
+            format(sector)
+        )
+        assert len(srcdir) == 1
+        srcdir = srcdir[0]
 
     for n in df_is_not_cdips_still_good['Name']:
         src = os.path.join(srcdir, str(n))
@@ -278,9 +308,16 @@ def given_full_classifications_organize(
     """
     ##########################################
     # modify these
-    classified_dir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/sector_{}_{}_LGB_DONE/'.format(sector,today)
-    outdir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/'
-    outtocollabdir = '/home/luke/Dropbox/proj/cdips/results/vetting_classifications/{}_sector-{}_{}'
+    outdir = os.path.join(
+        os.path.expanduser('~'),
+        'Dropbox/proj/cdips/results/vetting_classifications/'
+    )
+    classified_dir = os.path.join(
+        outdir, 'sector_{}_{}_LGB_DONE/'.format(sector,today)
+    )
+    outtocollabdir = os.path.join(
+        outdir, '{}_sector-{}_{}'
+    )
     outname = '{}_LGB_sector{}_classifications.csv'.format(today,sector)
     ##########################################
 
@@ -324,7 +361,10 @@ def given_full_classifications_organize(
 
     for n in outdf['Name']:
         shutil.copyfile(
-            '/home/luke/local/cdips/vetting/sector-{}/pdfs/vet_'.format(sector)+str(n)+'_llc.pdf',
+            os.path.join(
+                os.path.expanduser('~'),
+                'local/cdips/vetting/sector-{}/pdfs/vet_'.format(sector)+str(n)+'_llc.pdf'
+            ),
             os.path.join(collabdir,'vet_'+str(n)+'_llc.pdf')
         )
 
@@ -346,7 +386,10 @@ def given_full_classifications_organize(
 
     for n in outdf['Name']:
         shutil.copyfile(
-            '/home/luke/local/cdips/vetting/sector-{}/pdfs/vet_'.format(sector)+str(n)+'_llc.pdf',
+            os.path.join(
+                os.path.expanduser('~'),
+                'local/cdips/vetting/sector-{}/pdfs/vet_'.format(sector)+str(n)+'_llc.pdf'
+            ),
             os.path.join(collabdir,'vet_'+str(n)+'_llc.pdf')
         )
 
