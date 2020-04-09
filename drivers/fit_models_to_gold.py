@@ -342,7 +342,7 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
     identifier = source_id
     #
     # read and re-detrend lc if needed. (recall: these planet candidates were
-    # found using a penalized spline detrending in some cases).
+    # found using a penalized spline detrending in most cases).
     #
     hdul_sr = fits.open(tfa_sr_path)
     hdul = fits.open(lcpath)
@@ -352,7 +352,7 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
 
     is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
 
-    fluxap = 'TFA2' if is_pspline_dtr else 'TFASR2'
+    fluxap = 'IRM2' if is_pspline_dtr else 'TFASR2'
 
     time, mag = lc_sr['TMID_BJD'], lc_sr[fluxap]
     try:
@@ -1066,7 +1066,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
 if __name__=="__main__":
 
-    sectors = [8,9,10,11]
+    sectors = [12,13]
 
     for sector in sectors:
 
