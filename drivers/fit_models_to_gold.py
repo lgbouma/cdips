@@ -356,7 +356,8 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
 
     time, mag = lc_sr['TMID_BJD'], lc_sr[fluxap]
     try:
-        time, mag = moe.mask_orbit_start_and_end(time, mag)
+        time, mag = moe.mask_orbit_start_and_end(time, mag,
+                                                 raise_expectation_error=False)
     except AssertionError:
         raise AssertionError(
             'moe.mask_orbit_start_and_end failed for {}'.format(tfa_sr_path)
@@ -851,7 +852,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
     if len(ctoidf[sel]) == 1:
         tdf = ctoidf[sel]
         ctoiname = tdf['CTOI'].iloc[0]
-        target = 'TIC'+ctoiname
+        target = 'TIC'+str(ctoiname)
         flag = 'newparams'
         disp = 'PC'
 
@@ -961,7 +962,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
         ):
             tdf = ctoidf[ctoisel]
             ctoiname = tdf['CTOI'].iloc[0]
-            target = 'TIC'+ctoiname
+            target = 'TIC'+str(ctoiname)
             flag = 'newparams'
             extranote = "Same period and TICID as CTOI{}.".format(repr(ctoiname))
             # disp = tdf['TOI Disposition'].iloc[0] #NOTE: don't update disposition
@@ -989,7 +990,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
         ):
             tdf = ctoidf[ctoisel]
             ctoiname = tdf['CTOI'].iloc[0]
-            target = 'TIC'+ctoiname
+            target = 'TIC'+str(ctoiname)
             flag = 'newparams'
             extranote = "Same TICID as CTOI{}; different period. New planet?".format(repr(ctoiname))
             raise NotImplementedError('manually fix {}'.format(extranote))
