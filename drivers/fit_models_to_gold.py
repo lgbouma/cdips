@@ -611,14 +611,15 @@ def get_teff_rstar_logg(hdr):
                     )
 
                 rstar = get_interp_rstar_from_teff(teff)
-            else:
-                raise NotImplementedError('got unexpected value for rstar! '
-                                          'manual debug required')
 
             if rstar != 'NaN':
                 # given rstar, get mass, so that you can get logg
                 rstar_err = 0.3*rstar
                 mstar = get_interp_mass_from_rstar(rstar)
+
+            if not isinstance(rstar, float):
+                raise NotImplementedError('got unexpected value for rstar! '
+                                          'manual debug required')
 
             _Mstar = mstar*u.Msun
             _Rstar = rstar*u.Rsun
