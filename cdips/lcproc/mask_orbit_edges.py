@@ -5,7 +5,9 @@ from glob import glob
 from datetime import datetime
 
 def mask_orbit_start_and_end(time, flux, orbitgap=1, expected_norbits=2,
-                             orbitpadding=6/(24), raise_expectation_error=True):
+                             orbitpadding=6/(24),
+                             raise_expectation_error=True,
+                             return_inds=False):
     """
     Ignore the times near the edges of orbits.
 
@@ -41,4 +43,7 @@ def mask_orbit_start_and_end(time, flux, orbitgap=1, expected_norbits=2,
     return_time = time[sel]
     return_flux = flux[sel]
 
-    return return_time, return_flux
+    if not return_inds:
+        return return_time, return_flux
+    elif return_inds:
+        return return_time, return_flux, sel
