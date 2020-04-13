@@ -94,12 +94,11 @@ def linear_model(xdata, m, b):
 ########
 
 def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
-         uploadnamestr='sectors_8_thru_11_clear_threshold'):
+         uploadnamestr='sectors_12_thru_13_clear_threshold'):
     """
     Put together a few useful CSV candidate summaries:
 
-    * bulk uploads to exofop/tess (targets, planet and stellar parameters and
-    uncertainties)
+    * bulk uploads to exofop/tess
 
     * observer info sparse (focus on TICIDs, gaia mags, positions on sky, etc)
 
