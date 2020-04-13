@@ -75,6 +75,10 @@ TO PROCESS VETTING CLASSIFICATIONS
 3. `merge_for_exofoptess`: merge csv results from `fit_models_to_gold`
 
 4. `collect_bulk_upload_files_for_exofoptess`
+    1. (phtess2) /home/lbouma/proj/cdips/data/exoFOP_uploads/files_to_upload/collect_reports.sh
+    2. (phtess2) Execute the main driver.
+    3. (brik) /home/luke/Dropbox/proj/cdips/data/exoFOP_uploads/pull_from_phtess2.sh
+
 
 TO COMMUNICATE RESULTS
 ----------
