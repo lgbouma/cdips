@@ -18,7 +18,7 @@ from cdips.utils.pipelineutils import save_status, load_status
 # config #
 ##########
 
-DATESTR = '20200103' # NOTE
+DATESTR = '20200413' # NOTE
 if DATESTR is None:
     DATESTR = today_YYYYMMDD()
 
@@ -64,7 +64,7 @@ while uploadnumber < 999:
 # main #
 ########
 
-def main(uploadnamestr='sectors_8_thru_11_clear_threshold'):
+def main(uploadnamestr='sectors_12_thru_13_clear_threshold'):
     """
     ----------
     Args:
