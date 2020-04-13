@@ -1,15 +1,15 @@
 comment,name,source_id
-"6.0Re, 4.6d, Theia 597 (KC19); cluster existence dubious.",vet_hlsp_cdips_tess_ffi_gaiatwo0005805824988445654144-0012-cam2-ccd2_tess_v01_llc.pdf,5805824988445654144
-"5.2Re, 1.7d, PMS M dwarf (Zari+18), Prot 2d, RotAmp 2%.",vet_hlsp_cdips_tess_ffi_gaiatwo0005838183443852841216-0012-cam3-ccd2_tess_v01_llc.pdf,5838183443852841216
-"2.5Re, 9.2d, Theia 64 (KC19). TOI 1097.",vet_hlsp_cdips_tess_ffi_gaiatwo0005838450865699668736-0012-cam3-ccd2_tess_v01_llc.pdf,5838450865699668736
-"5.44d WJ or EB, NGC 5617 (170Myr, CG18).",vet_hlsp_cdips_tess_ffi_gaiatwo0005878452576220299520-0012-cam2-ccd1_tess_v01_llc.pdf,5878452576220299520
-"5.64d WJ or EB, NGC 5925 (180Myr, CG18). Star properties unclear. ",vet_hlsp_cdips_tess_ffi_gaiatwo0005885456190393040512-0012-cam2-ccd4_tess_v01_llc.pdf,5885456190393040512
-"WJ or EB, Alessi 8 (CG18, 120Myr). Prot 6d; dubious bc Teff 6500K.",vet_hlsp_cdips_tess_ffi_gaiatwo0005889360246986113024-0012-cam2-ccd4_tess_v01_llc.pdf,5889360246986113024
+"Hot Jup or Nept, Theia 597 (KC19); cluster existence dubious.",vet_hlsp_cdips_tess_ffi_gaiatwo0005805824988445654144-0012-cam2-ccd2_tess_v01_llc.pdf,5805824988445654144
+"Hot Nept, PMS M dwarf (Zari+18), Prot 2d, RotAmp 2%.",vet_hlsp_cdips_tess_ffi_gaiatwo0005838183443852841216-0012-cam3-ccd2_tess_v01_llc.pdf,5838183443852841216
+"Warm subNept, Theia 64 (KC19). TOI 1097.",vet_hlsp_cdips_tess_ffi_gaiatwo0005838450865699668736-0012-cam3-ccd2_tess_v01_llc.pdf,5838450865699668736
+"EB or Warm Jup, NGC 5617 (170Myr, CG18).",vet_hlsp_cdips_tess_ffi_gaiatwo0005878452576220299520-0012-cam2-ccd1_tess_v01_llc.pdf,5878452576220299520
+"Likely EB, NGC 5925 (180Myr, CG18). Star properties unclear. ",vet_hlsp_cdips_tess_ffi_gaiatwo0005885456190393040512-0012-cam2-ccd4_tess_v01_llc.pdf,5885456190393040512
+"Likely EB, Alessi 8 (CG18, 120Myr). Prot 6d; dubious bc Teff 6500K.",vet_hlsp_cdips_tess_ffi_gaiatwo0005889360246986113024-0012-cam2-ccd4_tess_v01_llc.pdf,5889360246986113024
 "Crowded. HJ or EB. Collinder 307 (CG18, 30Myr). pmDec off.",vet_hlsp_cdips_tess_ffi_gaiatwo0005940265981724168064-0012-cam1-ccd2_tess_v01_llc.pdf,5940265981724168064
-"10 Myr HJ or EB. PMS K dwarf host (NGC 6193, CG18).",vet_hlsp_cdips_tess_ffi_gaiatwo0005940850376492524800-0012-cam1-ccd2_tess_v01_llc.pdf,5940850376492524800
+"10 Myr EB or HJ. PMS K dwarf host (NGC 6193, CG18).",vet_hlsp_cdips_tess_ffi_gaiatwo0005940850376492524800-0012-cam1-ccd2_tess_v01_llc.pdf,5940850376492524800
 "PMS K dwarf HJ (Zari+18). Prot 2d, RotAmp 8%. Good target.",vet_hlsp_cdips_tess_ffi_gaiatwo0005952590785523816960-0012-cam1-ccd2_tess_v01_llc.pdf,5952590785523816960
-"EB or HJ. PMS (Zari+18), Teff 5000K, Prot 5d, ampltiude 2%.",vet_hlsp_cdips_tess_ffi_gaiatwo0006024033615115982848-0012-cam1-ccd4_tess_v01_llc.pdf,6024033615115982848
-"8.9Re, 1.4d. PMS M dwarf (Zari+18), Prot 2d?, Tdur a bit long.",vet_hlsp_cdips_tess_ffi_gaiatwo0006037044827717626112-0012-cam1-ccd4_tess_v01_llc.pdf,6037044827717626112
-"6.9Re, 0.96d. PMS M dwarf (Zari+18). Prot 0.8d, RotAmp 5%.",vet_hlsp_cdips_tess_ffi_gaiatwo0006042883578050870912-0012-cam1-ccd4_tess_v01_llc.pdf,6042883578050870912
+"Likely EB. PMS (Zari+18), Teff 5000K, Prot 5d, ampltiude 2%.",vet_hlsp_cdips_tess_ffi_gaiatwo0006024033615115982848-0012-cam1-ccd4_tess_v01_llc.pdf,6024033615115982848
+"Hot Jup. PMS M dwarf (Zari+18), Prot 2d?, Tdur a bit long.",vet_hlsp_cdips_tess_ffi_gaiatwo0006037044827717626112-0012-cam1-ccd4_tess_v01_llc.pdf,6037044827717626112
+"Hot superNept. PMS M dwarf (Zari+18). Prot  0.8d, RotAmp 5%.",vet_hlsp_cdips_tess_ffi_gaiatwo0006042883578050870912-0012-cam1-ccd4_tess_v01_llc.pdf,6042883578050870912
 Host is a subgiant field star.,vet_hlsp_cdips_tess_ffi_gaiatwo0006637496339607744768-0013-cam2-ccd4_tess_v01_llc.pdf,6637496339607744768
 HATS-47. Theia 1098 (KC19); cluster existence dubious.,vet_hlsp_cdips_tess_ffi_gaiatwo0006658373007402886400-0013-cam1-ccd2_tess_v01_llc.pdf,6658373007402886400
