@@ -2,7 +2,7 @@ Sector 12 produced 106k CDIPS light-curves.  Sector 13 produced 22k CDIPS
 light-curves.  The difference is because TESS began to look away from the
 galactic plane.  The Sector 13 CDIPS light-curves are also particularly
 affected by scattered light from the Earth, since the galactic plane is mostly
-in Camera 1, which points closest to the ecliptic.
+in Camera 1, which also points closest to the ecliptic.
 
 ---------
 sector 12
@@ -12,7 +12,7 @@ sector 12
 field). This was avoided by killing processes on all non-phtess1 systems and
 rerunning.
 
-1604 had spikes that IMO are nasty. they come from one of the template vectors.
+1604 had spikes that IMO are nasty. They come from one of the template vectors.
 (which SOMEHOW isn't being flagged as varible, when it clearly is...). Reran
 with "i/0" instead of "i/2;d=3/2".
 
@@ -23,9 +23,12 @@ with "i/0" instead of "i/2;d=3/2".
 sector 13
 ---------
 
-  * 1612 no, it has bad spikes.
-  * 1615 no. a contact EB was injected.
-  * 1617 no. bad short-period variability.
-  * 1625 (cam4, ccd2). no, they all have the same pulsation mode injection.
+1612 initially had bad spikes.
 
-  * 1612, 1615, 1625 all need to be rerun with "i/0" kernel.
+1615 initially injected a contact EB.
+
+1617 initially injected bad short-period variability.
+
+1625 initially had injected the same pulsation mode across LCs.
+
+-> All 4 of these CCDs were rerun sans convolution, in "i/0" mode.
