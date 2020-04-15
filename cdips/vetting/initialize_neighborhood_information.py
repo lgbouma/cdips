@@ -33,9 +33,16 @@ kc19_path_d = {
     'brik':'/home/luke/Dropbox/proj/cdips/data/cluster_data/kc19_string_table1.csv',
     'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/cluster_data/kc19_string_table1.csv'
 }
+k18_path_d = {
+    'phn12':'/home/lbouma/proj/cdips/data/cluster_data/Kounkel_2018_orion_table2_cut_only_source_cluster.csv',
+    'phtess2':'/home/lbouma/proj/cdips/data/cluster_data/Kounkel_2018_orion_table2_cut_only_source_cluster.csv',
+    'brik':'/home/luke/Dropbox/proj/cdips/data/cluster_data/Kounkel_2018_orion_table2_cut_only_source_cluster.csv',
+    'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/cluster_data/Kounkel_2018_orion_table2_cut_only_source_cluster.csv'
+}
 
 K13_GAIA_DIR = k13_dir_d[socket.gethostname()]
 KC19_PATH = kc19_path_d[socket.gethostname()]
+K18_PATH = k18_path_d[socket.gethostname()]
 
 #############
 # functions #
@@ -90,11 +97,16 @@ def get_neighborhood_information(
     # Kharchenko "match" is through the indirect naming scheme from the
     # appendix.
     #
+    group_in_k18 = False
     group_in_cg18 = False
     group_in_k13 = False
     group_in_kc19 = False
 
-    if 'CantatGaudin_2018' in references:
+    if 'Kounkel_2018_Ori' in references:
+        group_in_k18 = True
+        groupname = clusters[np.in1d(references, 'Kounkel_2018_Ori')][0]
+
+    elif 'CantatGaudin_2018' in references:
         group_in_cg18 = True
         groupname = clusters[np.in1d(references, 'CantatGaudin_2018')][0]
 
@@ -116,7 +128,7 @@ def get_neighborhood_information(
             group_in_k13 = True
             groupname = k13_notes_df[k13_notes_df.MWSC == mwscid].Name.iloc[0]
 
-    if not (group_in_kc19 or group_in_k13 or group_in_cg18):
+    if not (group_in_kc19 or group_in_k13 or group_in_cg18 or group_in_k18):
         print('WRN! Did not get any valid group matches for {}'.
               format(source_id))
         return None
@@ -135,7 +147,15 @@ def get_neighborhood_information(
     #
     # Get the group members!
     #
-    if group_in_cg18:
+    if group_in_k18:
+        cutoff_probability = 1
+        k18_df = pd.read_csv(K18_PATH, sep=',')
+        sel = (k18_df.cluster == groupname)
+        group_df = k18_df[sel]
+        group_source_ids = np.array(group_df['source_id']).astype(np.int64)
+        np.testing.assert_array_equal(group_df['source_id'], group_source_ids)
+
+    elif group_in_cg18:
         cutoff_probability = 0.1
         v = Vizier(column_filters={"Cluster":groupname})
         v.ROW_LIMIT = 3000
@@ -180,7 +200,10 @@ def get_neighborhood_information(
     #
     # Given the source ids, get all the relevant Gaia information.
     #
-    if group_in_cg18:
+    if group_in_k18:
+        enforce_all_sourceids_viable = True
+        savstr='_k18'
+    elif group_in_cg18:
         enforce_all_sourceids_viable = True
         savstr='_cg18'
     elif group_in_kc19:
@@ -250,7 +273,8 @@ def get_neighborhood_information(
                                  overwrite=overwrite,
                                  is_cg18_group=group_in_cg18,
                                  is_kc19_group=group_in_kc19,
-                                 is_k13_group=group_in_k13)
+                                 is_k13_group=group_in_k13,
+                                 is_k18_group=group_in_k18)
 
     # ensure no overlap between the group members and the neighborhood sample.
     common = group_df_dr2.merge(nbhd_df, on='source_id', how='inner')
@@ -269,4 +293,4 @@ def get_neighborhood_information(
 
     return (targetname, groupname, group_df_dr2, target_df, nbhd_df,
             cutoff_probability, pmdec_min, pmdec_max, pmra_min, pmra_max,
-            group_in_k13, group_in_cg18, group_in_kc19)
+            group_in_k13, group_in_cg18, group_in_kc19, group_in_k18)

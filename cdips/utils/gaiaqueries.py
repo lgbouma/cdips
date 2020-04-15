@@ -155,11 +155,11 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
 
 def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
                        is_cg18_group=True, is_kc19_group=False,
-                       is_k13_group=False):
+                       is_k13_group=False, is_k18_group=False):
     """
     Given the bounds in position and parallx corresponding to some group (e.g.,
-    from Cantat-Gaudin+2018 or Kounkel & Covey 2019), get the DR2 stars from
-    the group's neighborhood.
+    from Cantat-Gaudin+2018, Kounkel & Covey 2019, Kharchenko+13, Kounkel et al
+    2018 APOGEE), get the DR2 stars from the group's neighborhood.
 
     The bounds are lower and upper in ra, dec, parallax, and there is a
     limiting G magnitude. A maximum number of stars, `n_max`, are selected from
@@ -180,7 +180,10 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
         querying stars that are in the neighborhood of some group.
     """
 
-    if is_cg18_group:
+    if is_k18_group:
+        g_mag_limit=18
+        mstr = '_k18'
+    elif is_cg18_group:
         g_mag_limit=18
         mstr = '_cg18'
     elif is_kc19_group:

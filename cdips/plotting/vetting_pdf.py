@@ -1747,6 +1747,7 @@ def plot_group_neighborhood(
         group_in_k13=False,
         group_in_cg18=True,
         group_in_kc19=False,
+        group_in_k18=False,
         plx_ylim=None,
         return_figure=True,
         figsize=(30,30),
@@ -1758,12 +1759,14 @@ def plot_group_neighborhood(
     show_rvs: usually not worthwhile
     """
 
-    if group_in_k13:
-        l = 'K13 P>{}'.format(cutoff_probability)
+    if group_in_k18:
+        l = 'K18 P={:d}'.format(cutoff_probability)
     elif group_in_cg18:
         l = 'CG18 P>{}'.format(cutoff_probability)
     elif group_in_kc19:
         l = 'KC19 P={:d}'.format(cutoff_probability)
+    elif group_in_k13:
+        l = 'K13 P>{}'.format(cutoff_probability)
     else:
         raise NotImplementedError
 

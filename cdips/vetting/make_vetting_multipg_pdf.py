@@ -241,7 +241,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         if isinstance(info, tuple):
             (targetname, groupname, group_df_dr2, target_df, nbhd_df,
              cutoff_probability, pmdec_min, pmdec_max, pmra_min, pmra_max,
-             group_in_k13, group_in_cg18, group_in_kc19
+             group_in_k13, group_in_cg18, group_in_kc19, group_in_k18
             ) = info
 
             fig = vp.plot_group_neighborhood(
@@ -249,8 +249,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                 cutoff_probability, pmdec_min=pmdec_min, pmdec_max=pmdec_max,
                 pmra_min=pmra_min, pmra_max=pmra_max,
                 group_in_k13=group_in_k13, group_in_cg18=group_in_cg18,
-                group_in_kc19=group_in_kc19, source_id=sourceid,
-                figsize=(30,20), show_rvs=show_rvs
+                group_in_kc19=group_in_kc19, group_in_k18=group_in_k18,
+                source_id=sourceid, figsize=(30,20), show_rvs=show_rvs
             )
 
             pdf.savefig(fig)
