@@ -2,7 +2,7 @@
 Given a source_id and group information, make the neighborhood plot.
 (Even if the target star has not been labelled as a member of the group)
 """
-import os
+import os, pickle
 from glob import glob
 import numpy as np, matplotlib.pyplot as plt
 
@@ -12,6 +12,8 @@ from cdips.vetting import (
     initialize_neighborhood_information as ini
 )
 from cdips.plotting import vetting_pdf as vp
+
+DEBUG = 1
 
 def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.4,
                    force_references=None, force_groupname=None):
@@ -34,6 +36,11 @@ def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.4,
                                           force_references=force_references,
                                           force_groupname=force_groupname)
     )
+    if DEBUG:
+        picklepath = 'nbhd_info_{}.pkl'.format(source_id)
+        with open(picklepath , 'wb') as f:
+            pickle.dump(info, f)
+            print('made {}'.format(picklepath))
 
     (targetname, groupname, group_df_dr2, target_df, nbhd_df,
      cutoff_probability, pmdec_min, pmdec_max, pmra_min, pmra_max,
