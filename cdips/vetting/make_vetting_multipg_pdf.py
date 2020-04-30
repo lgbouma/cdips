@@ -227,18 +227,19 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # page 7
         ##########
         info = (
-             ini.get_neighborhood_information(sourceid, mmbr_dict=mmbr_dict,
-                                              k13_notes_df=k13_notes_df,
-                                              overwrite=0)
+             ini.get_group_and_neighborhood_information(
+                 sourceid, mmbr_dict=mmbr_dict, k13_notes_df=k13_notes_df,
+                 overwrite=0)
         )
 
-        if DEBUG:
-            picklepath = 'nbhd_info_{}.pkl'.format(sourceid)
-            with open(picklepath , 'wb') as f:
-                pickle.dump(info, f)
-                print('made {}'.format(picklepath))
-
         if isinstance(info, tuple):
+
+            if DEBUG:
+                picklepath = 'nbhd_info_{}.pkl'.format(sourceid)
+                with open(picklepath , 'wb') as f:
+                    pickle.dump(info, f)
+                    print('made {}'.format(picklepath))
+
             (targetname, groupname, group_df_dr2, target_df, nbhd_df,
              cutoff_probability, pmdec_min, pmdec_max, pmra_min, pmra_max,
              group_in_k13, group_in_cg18, group_in_kc19, group_in_k18
@@ -257,7 +258,28 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             plt.close()
 
         elif info is None:
-            pass
+
+            info = ini.get_neighborhood_information(source_id, overwrite=0,
+                                                    min_n_nbhrs=1000)
+
+            (targetname, groupname, target_df, nbhd_df, pmdec_min, pmdec_max,
+             pmra_min, pmra_max) = info
+
+            fig = vp.plot_neighborhood_only(
+                targetname, groupname, target_df, nbhd_df,
+                pmdec_min=pmdec_min, pmdec_max=pmdec_max,
+                pmra_min=pmra_min, pmra_max=pmra_max,
+                source_id=source_id, figsize=(30,20),
+            )
+
+            pdf.savefig(fig)
+            plt.close()
+
+        else:
+
+            raise NotImplementedError
+
+
 
 
         ##########
