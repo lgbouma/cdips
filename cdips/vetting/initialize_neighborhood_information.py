@@ -50,11 +50,121 @@ K18_PATH = k18_path_d[socket.gethostname()]
 
 def get_neighborhood_information(
     source_id,
+    overwrite=0,
+    min_n_nbhrs=1000
+    ):
+    """
+    Given a source_id for a star (potentially a field star), acquire
+    information necessary for neighborhood diagnostic plots.
+
+    Parameters:
+
+        source_id: Gaia DR2 source_id
+
+        overwrite: Whether the Gaia cache gets overwritten.
+    """
+
+    #
+    # Get the targetname
+    #
+    ticid = gaiadr2_to_tic(str(source_id))
+    toiid = ticid_to_toiid(ticid)
+
+    if isinstance(toiid, str):
+        targetname = toiid
+    else:
+        targetname = 'TIC{}.01'.format(ticid)
+
+    #
+    # Get Gaia information for target.
+    #
+    enforce_all_sourceids_viable = True
+    savstr = '_nbhdonly'
+
+    target_d = objectid_search(
+        source_id,
+        columns=('source_id', 'ra','dec', 'ra_error', 'dec_error',
+                 'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag',
+                 'l','b', 'parallax, parallax_error', 'pmra','pmra_error',
+                 'pmdec','pmdec_error', 'radial_velocity'),
+        forcefetch=True
+    )
+    target_df = pd.read_csv(target_d['result'])
+    assert len(target_df) == 1
+
+    # now acquire the mean properties of the group, and query the neighborhood
+    # based on those properties. the number of neighbor stars to randomly
+    # select is min(5* the number of group members, 5000). (cutoff group
+    # bounds based on parallax because further groups more uncertain).
+    bounds = {}
+    params = ['parallax', 'ra', 'dec']
+
+    plx_mean = float(target_df.parallax)
+
+    n_std = 5
+    n_nbhrs = 0
+
+    while n_nbhrs < min_n_nbhrs:
+
+        print('trying when bounding by {} stdevns'.format(n_std))
+
+        for param in params:
+            mult = 1 if 'parallax' in param else 2
+            bounds[param+'_upper'] = (
+                float(target_df[param]) + mult*n_std*float(target_df[param + '_error'])
+            )
+            bounds[param+'_lower'] = (
+                float(target_df[param]) - mult*n_std*float(target_df[param + '_error'])
+            )
+
+        if bounds['ra_upper'] > 360:
+            bounds['ra_upper'] = 359.99
+        if bounds['ra_lower'] < 0:
+            bounds['ra_lower'] = 0
+        if bounds['parallax_lower'] < 0:
+            bounds['parallax_lower'] = 0
+
+        n_max = int(1e4)
+        groupname = '{}'.format(source_id)
+        # only force overwrite if iterating
+        if n_nbhrs == 0:
+            nbhd_df = query_neighborhood(bounds, groupname, n_max=n_max,
+                                         overwrite=overwrite)
+        else:
+            nbhd_df = query_neighborhood(bounds, groupname, n_max=n_max,
+                                         overwrite=True)
+
+        n_nbhrs = len(nbhd_df)
+        print(42*'=')
+        print('Got {} neighborhods, when minimum was {}'.
+              format(n_nbhrs, min_n_nbhrs))
+        print(42*'=')
+
+        n_std += 5
+
+    n_std = 3
+    pmdec_min = np.nanmean(nbhd_df['pmdec']) - n_std*np.nanstd(nbhd_df['pmdec'])
+    pmdec_max = np.nanmean(nbhd_df['pmdec']) + n_std*np.nanstd(nbhd_df['pmdec'])
+    pmra_min = np.nanmean(nbhd_df['pmra']) - n_std*np.nanstd(nbhd_df['pmra'])
+    pmra_max = np.nanmean(nbhd_df['pmra']) + n_std*np.nanstd(nbhd_df['pmra'])
+
+    pmdec_min = min((pmdec_min, float(target_df['pmdec'])))
+    pmdec_max = max((pmdec_max, float(target_df['pmdec'])))
+    pmra_min = min((pmra_min, float(target_df['pmra'])))
+    pmra_max = max((pmra_max, float(target_df['pmra'])))
+
+    return (targetname, groupname, target_df, nbhd_df,
+            pmdec_min, pmdec_max, pmra_min, pmra_max)
+
+
+def get_group_and_neighborhood_information(
+    source_id,
     mmbr_dict=None,
     k13_notes_df=None,
     overwrite=0,
     force_groupname=None,
-    force_references=None):
+    force_references=None,
+    force_cdips_match=True):
     """
     Given a source_id for a cluster member, acquire information necessary for
     neighborhood diagnostic plots. (Namely, find all the group members, then do
@@ -81,6 +191,10 @@ def get_neighborhood_information(
     """
 
     row = get_cdips_pub_catalog_entry(source_id, ver=0.4)
+
+    if row is None and force_cdips_match:
+        print('Failed to get CDIPS target list match for {}'.format(source_id))
+        return None
 
     # multiple memberships ,-separated. get lists of references, cluster names,
     # ext catalog names.
