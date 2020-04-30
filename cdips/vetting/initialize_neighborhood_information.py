@@ -291,6 +291,7 @@ def get_neighborhood_information(
     pmra_min = min((pmra_min, float(target_df['pmra'])))
     pmra_max = max((pmra_max, float(target_df['pmra'])))
 
-    return (targetname, groupname, group_df_dr2, target_df, nbhd_df,
+    return (targetname, groupname, group_df_dr2, target_df, snbhd_df,
             cutoff_probability, pmdec_min, pmdec_max, pmra_min, pmra_max,
             group_in_k13, group_in_cg18, group_in_kc19, group_in_k18)
+
