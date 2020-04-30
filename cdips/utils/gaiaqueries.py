@@ -154,7 +154,7 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
 
 
 def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
-                       is_cg18_group=True, is_kc19_group=False,
+                       is_cg18_group=False, is_kc19_group=False,
                        is_k13_group=False, is_k18_group=False):
     """
     Given the bounds in position and parallx corresponding to some group (e.g.,
@@ -168,7 +168,8 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
     Args:
         bounds (dict): with parallax, ra, dec bounds.
 
-        groupname (str)
+        groupname (str): string used when cacheing for files. if you are
+        querying a field star, best to include sourceid.
 
         n_max (int): maximum number of stars in the neighborhood to acquire.
 
@@ -187,14 +188,14 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
         g_mag_limit=18
         mstr = '_cg18'
     elif is_kc19_group:
-        g_mag_limit=15
+        g_mag_limit=16
         mstr = '_kc19'
     elif is_k13_group:
         g_mag_limit=16
         mstr = '_k13'
     else:
-        g_mag_limit=14
-        mstar = ''
+        g_mag_limit=16
+        mstr = ''
 
     dlpath = os.path.join(
         gaiadir,'nbhd_group{}_matches{}.xml.gz'.format(groupname, mstr)
