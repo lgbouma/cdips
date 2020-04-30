@@ -2098,3 +2098,218 @@ def plot_group_neighborhood(
 
         fig.savefig(outpath, dpi=300, bbox_inches='tight')
         print('made {}'.format(outpath))
+
+
+def plot_neighborhood_only(
+        targetname, groupname, target_df, nbhd_df,
+        pmdec_min=None, pmdec_max=None,
+        pmra_min=None, pmra_max=None,
+        source_id=None, figsize=(30,20),
+        plx_ylim=None,
+        return_figure=True
+    ):
+    """
+    source_id: optional, but recommended!
+    """
+
+    nrows, ncols = 2, 3
+    fig, axs = plt.subplots(nrows, ncols, figsize=figsize)
+
+    # both with and without overplot:
+    # * parallax vs pm dec
+    # * parallax vs pm ra
+    # * proper motions
+    for row_ix in range(1):
+
+        ######################
+        # parallax vs pm dec #
+        ######################
+        ax = axs[row_ix,0]
+
+        ax.scatter(
+            nbhd_df['pmdec'], nbhd_df['parallax'], c='gray', alpha=0.9,
+            zorder=2, s=15, rasterized=True, linewidths=0, label='nbhd stars'
+        )
+
+        ax.plot(
+            target_df['pmdec'],
+            target_df['parallax'],
+            alpha=1, mew=0.5, zorder=8, label=targetname,
+            markerfacecolor='yellow', markersize=22, marker='*', color='black',
+            lw=0
+        )
+
+        ax.legend(loc='best', fontsize='x-large')
+        ax.set_xlabel(r'pmDEC, $\mu_{{\delta}}$ [mas/yr]', fontsize='xx-large')
+        ax.set_ylabel('star parallax [mas]', fontsize='xx-large')
+
+        ax.set_xlim([pmdec_min, pmdec_max])
+
+        ######################
+        # parallax vs pm ra #
+        ######################
+        ax = axs[row_ix,1]
+
+        ax.scatter(
+            nbhd_df['pmra'], nbhd_df['parallax'], c='gray', alpha=0.9,
+            zorder=2, s=15, rasterized=True, linewidths=0, label='nbhd stars'
+        )
+        ax.plot(
+            target_df['pmra'], target_df['parallax'], alpha=1, mew=0.5,
+            zorder=8, label=targetname, markerfacecolor='yellow',
+            markersize=22, marker='*', color='black', lw=0
+        )
+
+        ax.legend(loc='best', fontsize='x-large')
+        ax.set_xlabel(r'pmRA, $\mu_{{\alpha}} \cos\delta$ [mas/yr]',
+                      fontsize='xx-large')
+        ax.set_ylabel('star parallax [mas]', fontsize='xx-large')
+
+        ax.set_xlim([pmra_min, pmra_max])
+
+        ##################
+        # proper motions #
+        ##################
+        ax = axs[row_ix,2]
+
+        ax.scatter(
+            nbhd_df['pmra'], nbhd_df['pmdec'], c='gray', alpha=0.9, zorder=2,
+            s=15, rasterized=True, linewidths=0, label='nbhd stars'
+        )
+        ax.plot(
+            target_df['pmra'], target_df['pmdec'], alpha=1, mew=0.5, zorder=8,
+            label=targetname, markerfacecolor='yellow', markersize=22,
+            marker='*', color='black', lw=0
+        )
+
+        ax.legend(loc='best', fontsize='x-large')
+
+        ax.set_xlabel(r'pmRA, $\mu_{{\alpha}} \cos\delta$ [mas/yr]',
+                      fontsize='xx-large')
+        ax.set_ylabel(r'pmDEC, $\mu_{{\delta}}$ [mas/yr]',
+                      fontsize='xx-large')
+
+        ax.set_xlim([pmra_min, pmra_max])
+        ax.set_ylim([pmdec_min, pmdec_max])
+
+    #######
+    # CMD #
+    #######
+    ax = axs[1,0]
+
+    ax.scatter(
+        nbhd_df['phot_bp_mean_mag']-nbhd_df['phot_rp_mean_mag'], nbhd_df['phot_g_mean_mag'],
+        c='gray', alpha=1., zorder=2, s=15, rasterized=True, linewidths=0,
+        label='nbhd stars'
+    )
+    ax.plot(
+        target_df['phot_bp_mean_mag']-target_df['phot_rp_mean_mag'],
+        target_df['phot_g_mean_mag'],
+        alpha=1, mew=0.5, zorder=8, label=targetname, markerfacecolor='yellow',
+        markersize=22, marker='*', color='black', lw=0
+    )
+
+    ax.legend(loc='best', fontsize='x-large')
+    ax.set_ylabel('G', fontsize='xx-large')
+    ax.set_xlabel('Bp - Rp', fontsize='xx-large')
+
+    ylim = ax.get_ylim()
+    ax.set_ylim((max(ylim),min(ylim)))
+    ax.set_xlim((-0.5, 3.0))
+
+    ##############
+    # HR diagram #
+    ##############
+    ax = axs[1,1]
+
+    nbhd_yval = np.array([nbhd_df['phot_g_mean_mag'] +
+                          5*np.log10(nbhd_df['parallax']/1e3) + 5])
+    ax.scatter(
+        nbhd_df['phot_bp_mean_mag']-nbhd_df['phot_rp_mean_mag'], nbhd_yval,
+        c='gray', alpha=1., zorder=2, s=15, rasterized=True, linewidths=0,
+        label='nbhd stars'
+    )
+    target_yval = np.array([target_df['phot_g_mean_mag'] +
+                            5*np.log10(target_df['parallax']/1e3) + 5])
+    ax.plot(
+        target_df['phot_bp_mean_mag']-target_df['phot_rp_mean_mag'],
+        target_yval,
+        alpha=1, mew=0.5, zorder=8, label=targetname, markerfacecolor='yellow',
+        markersize=22, marker='*', color='black', lw=0
+    )
+
+    ax.legend(loc='best', fontsize='x-large')
+    ax.set_ylabel('$G + 5\log_{10}(\omega_{\mathrm{as}}) + 5$', fontsize='xx-large')
+    ax.set_xlabel('Bp - Rp', fontsize='xx-large')
+
+    ylim = ax.get_ylim()
+    ax.set_ylim((max(ylim),min(ylim)))
+    ax.set_xlim((-0.5, 3.0))
+
+    # set M_omega y limits
+    min_y = np.nanmin(np.array([np.nanpercentile(nbhd_yval, 2), target_yval]))
+    max_y = np.nanmax(np.array([np.nanpercentile(nbhd_yval, 98), target_yval]))
+    edge_y = 0.01*(max_y - min_y)
+    momega_ylim = [max_y+edge_y, min_y-edge_y]
+    ax.set_ylim(momega_ylim)
+
+    #############
+    # positions #
+    #############
+    ax = axs[1,2]
+
+    ax.scatter(
+        nbhd_df['ra'], nbhd_df['dec'], c='gray', alpha=1., zorder=2, s=15,
+        rasterized=True, linewidths=0, label='nbhd stars'
+    )
+    ax.plot(
+        target_df['ra'], target_df['dec'], alpha=1, mew=0.5, zorder=8,
+        label=targetname, markerfacecolor='yellow', markersize=22, marker='*',
+        color='black', lw=0
+    )
+
+    ax.legend(loc='best', fontsize='x-large')
+    ax.set_xlabel(r'RA, $\alpha$ [deg]', fontsize='xx-large')
+    ax.set_ylabel('Dec, $\delta$ [deg]', fontsize='xx-large')
+
+    ############
+    # fix axes #
+    ############
+    for row_ix in range(nrows):
+        for col_ix in range(ncols):
+            ax = axs[row_ix, col_ix]
+            ax.get_yaxis().set_tick_params(which='both', direction='in',
+                                           labelsize='xx-large')
+            ax.get_xaxis().set_tick_params(which='both', direction='in',
+                                           labelsize='xx-large')
+
+    # set parallax y limits
+    min_plx = np.nanmin(np.array([np.nanpercentile(nbhd_df['parallax'], 2),
+                                  target_df['parallax'].iloc[0]]))
+    max_plx = np.nanmax(np.array([np.nanpercentile(nbhd_df['parallax'], 98),
+                                  target_df['parallax'].iloc[0]]))
+    edge_plx = 0.01*(max_plx - min_plx)
+    plx_ylim = [min_plx-edge_plx, max_plx+edge_plx]
+
+    for ax in [
+        axs[0,0], axs[0,1]
+    ]:
+        ax.set_ylim(plx_ylim)
+
+
+    ########
+    # save #
+    ########
+    fig.tight_layout()
+
+    if return_figure:
+        return fig
+
+    else:
+        outpath = (
+            '../results/neighborhoods/{}_{}_neighborhood.png'.
+            format(targetname, groupname)
+        )
+
+        fig.savefig(outpath, dpi=300, bbox_inches='tight')
+        print('made {}'.format(outpath))
