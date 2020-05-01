@@ -73,10 +73,10 @@ def make_local_lc_directories(
 
 def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
 
-    projid = 1300
+    projid = 1650
 
     d = {}
-    for snum in [2,3,4,5,1]:
+    for snum in [1,2,3,4,5]:
         d[snum] = {}
         for cam in range(1,5):
             d[snum][cam] = {}
