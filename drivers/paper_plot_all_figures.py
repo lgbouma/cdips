@@ -53,20 +53,22 @@ OC_MG_CAT_ver=0.4
 
 def main():
 
-    sectors = [6,7,8,9,10,11]
+    sectors = [6,7,8,9,10,11,12,13]
 
     # fig N: RMS vs catalog T mag for LC stars, with TFA LCs
     plot_rms_vs_mag(sectors, overwrite=1)
-    # plot_singleccd_rms_vs_mag(sectors, overwrite=0)
-    assert 0
 
-    # fig N: average autocorrelation fn of LCs
-    plot_avg_acf(sectors, size=10000, overwrite=1, cleanprevacf=False)
+    assert 0
 
     # fig N: positions of field and cluster LC stars (currently all cams)
     plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=1,
                                         galacticcoords=True)
     plot_cluster_and_field_star_scatter(sectors=sectors, overwrite=1)
+
+    # plot_singleccd_rms_vs_mag(sectors, overwrite=0)
+
+    # fig N: average autocorrelation fn of LCs
+    plot_avg_acf(sectors, size=10000, overwrite=1, cleanprevacf=False)
 
     # fig N: stages of image processing.
     plot_stages_of_image_processing(niceimage=1, overwrite=1)

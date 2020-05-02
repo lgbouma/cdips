@@ -45,7 +45,10 @@ TO PRODUCE CANDIDATES FROM CDIPS LCS
    to make classifications for vetting.
 
     * Run it twice, and verify you made all of them with
-      `verify_vetting_reports.sh`
+    `python -u make_all_vetting_reports.py &> logs/s#_vetting_report.log &`
+    `python -u make_all_vetting_reports.py &> logs/s#_vetting_report_check.log &`
+    `verify_vetting_reports.sh`
+
 
 
 TO CHECK STAR CATALOGS AGAINST TOIS
