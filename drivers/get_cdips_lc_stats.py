@@ -109,7 +109,7 @@ def supplement_stats_file(
 
     lcobjcsv = os.path.join(outdir, 'sector{}_lcobj.csv'.format(sector))
     lcobjtxt = os.path.join(outdir, 'sector{}_lcobj.txt'.format(sector))
-    df['lcobj'].to_csv(lcobjcsv, index=False)
+    df['lcobj'].to_csv(lcobjcsv, index=False, header=False)
 
     # run the gaia2read on this list
     if not os.path.exists(lcobjtxt):
