@@ -40,7 +40,7 @@ nworkers = mp.cpu_count()
 def main():
 
     do_initial_period_finding(
-        sectornum=13, nworkers=nworkers, maxworkertasks=1000,
+        sectornum=5, nworkers=nworkers, maxworkertasks=1000,
         outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
         OC_MG_CAT_ver=0.4
     )
@@ -319,7 +319,14 @@ def do_initial_period_finding(
     df = pd.read_csv(initpfresultspath)
 
     # SET MANUAL SNR LIMITS, based on plot_initial_period_finding_results
-    if sectornum == 6:
+    if sectornum == 5:
+        df['limit'] = np.ones(len(df))*12
+        df['limit'][df['tls_period']<1] = 15
+        df['limit'][(df['tls_period']<14) & (df['tls_period']>11.5)] = 18
+        df['limit'][(df['tls_period']>21)] = 30
+        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
+
+    elif sectornum == 6:
         df['limit'] = np.ones(len(df))*12
         df['limit'][df['tls_period']<1] = 15
         df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.925)] = 20
@@ -403,7 +410,7 @@ def do_initial_period_finding(
 
     plot_initial_period_finding_results(df, resultsdir)
 
-    if sectornum not in [6,7,8,9,10,11,12,13]:
+    if sectornum not in [5,5,5,5,5,6,7,8,9,10,11,12,13]:
         raise NotImplementedError(
             'you need to manually set SNR limits for this sector!'
         )

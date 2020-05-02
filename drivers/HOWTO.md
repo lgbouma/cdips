@@ -36,7 +36,7 @@ TO PRODUCE CANDIDATES FROM CDIPS LCS
      the distribution of results.
 
 3. manually fine-tune your criteria for "signal detection" & update
-   `do_initial_period_finding.py`.
+   `do_initial_period_finding.py` (w/ the sector number too).
 
 4. `reconstructive_tfa/RunTFASR.sh` does signal reconstruction for TFA
    lightcurves
