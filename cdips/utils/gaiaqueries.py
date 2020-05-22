@@ -12,8 +12,6 @@ from astropy.coordinates import SkyCoord
 
 from astroquery.gaia import Gaia
 
-from astrobase.services.gaia import objectid_search
-
 ##########
 # config #
 ##########
