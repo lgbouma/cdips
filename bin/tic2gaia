@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+
+import argparse
+from astrobase.services.identifiers import tic_to_gaiadr2
+
+def main():
+    """
+    example test-case: `tic2gaia 100097716`
+    """
+    parser = argparse.ArgumentParser(
+        description= 'TIC identifier to GAIA DR2 identifier.'
+    )
+    parser.add_argument(
+        'ticid', type=int, help='TIC identifier'
+    )
+
+    args = parser.parse_args()
+
+    ticid = str(args.ticid)
+
+    print(tic_to_gaiadr2(ticid))
+
+if __name__ == "__main__":
+    main()

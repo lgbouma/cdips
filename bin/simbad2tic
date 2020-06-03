@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+
+import argparse
+from astrobase.services.identifiers import simbad_to_tic
+
+def main():
+    """
+    example test-case: `simbad2tic 'Pi Men'`
+    """
+    parser = argparse.ArgumentParser(
+        description= 'SIMBAD identifier to TIC identifier.'
+    )
+    parser.add_argument(
+        'simbad', type=str, help='SIMBAD identifier'
+    )
+
+    args = parser.parse_args()
+
+    simbadid = str(args.simbad)
+
+    print(simbad_to_tic(simbadid))
+
+if __name__ == "__main__":
+    main()
