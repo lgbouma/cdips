@@ -1,0 +1,56 @@
+---------
+Sector 5
+---------
+
+  1720 (cam2 ccd3) initially had EB variability injected. Went with "i/0".
+
+  * i/0 did not fix. Interesting. So all the raw lightcurves from this camera
+    still have it.
+  * So I don't understand what is causing that, which makes this CCD a good
+    test-case for understanding WTF causes this janky variability to be injected.
+
+  1721 (cam2 ccd4) initially had EB variability injected. Went with "i/0".
+
+  * i/0 fixed this one.
+
+
+--------
+Sector 4
+--------
+
+A zero-point offset is present in all the raw LCs at around BJD 2458413.  This
+is corrected reasonably well by the cotrending. However many of the raw LCs
+suffer from an offset at this time.
+
+  1709 (cam3 ccd4) had an injected pulsation signal. Reran as i/0.
+  This (surprisingly) did not fix the injectec signal. The signal is well removed
+  by cotrending, but its initial origin will be the subject of future debugging.
+
+  1713 (cam4 ccd4) had an injected eclipsing binary. Reran as i/0. This fixed the
+  injected EB.
+
+
+--------
+Sector 3
+--------
+
+In an initial run, we empirically found that BJDs 2458394 through 2458396
+(roughly) showed a ~2-2.5 day slow rise and decrease across all cameras and
+ccds. These time windows were masked.
+
+Compared to later sectors (e.g., S6-S13), the effects of periodic momentum
+wheel dumps on the raw light curves is more noticeable. It is corrected
+reasonably well by cotrending.
+
+  projid 1684 (cam1 ccd3) had an injected eclipsing binary. Reran it with i/0.
+  Worked.
+
+  1687 (cam2 ccd2) had an injected RR Lyrae signal across raw LCs. Reran as i/0.
+  Worked.
+
+  1693 (cam3 ccd4) had an injected pulsation signal. Reran as i/0.  Seems to have
+  worked in removing it.
+
+  1694 (cam4 ccd1) showed "fluttering" happening in a reasonably large fraction
+  (~30%?) of the raw LCs. TFA does ~OK~ correcting.  Reran as i/0 regardless. It
+  fixed the problem.
