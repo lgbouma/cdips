@@ -136,7 +136,8 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         fig, infodict = vp.transitcheckdetails(
             rawmag, time, tlsp, mdf, hdr, supprow, pfrow,
-            obsd_midtimes=obsd_midtimes, tfamag=tfasrmag, figsize=(30,20)
+            obsd_midtimes=obsd_midtimes, tfamag=tfasrmag, tfatime=tfatime,
+            figsize=(30,20)
         )
         pdf.savefig(fig)
         plt.close()

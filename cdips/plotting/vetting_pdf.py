@@ -617,12 +617,14 @@ def _get_full_infodict(tlsp, hdr, mdf):
 
 def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
                         pfrow,
-                        obsd_midtimes=None, tfamag=None, figsize=(30,24),
-                        returnfig=True, sigclip=[50,3]):
+                        obsd_midtimes=None, tfamag=None, tfatime=None,
+                        figsize=(30,24), returnfig=True, sigclip=[50,3]):
 
     is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
     if not is_pspline_dtr:
         startmag = tfamag
+        starttime = tfatime
+    assert len(starttime) == len(startmag)
 
     try:
         time, startmag = moe.mask_orbit_start_and_end(
