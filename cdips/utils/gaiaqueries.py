@@ -71,7 +71,8 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         deletes previous cached output and reruns anyway.
 
         enforce_all_sourceids_viable: if True, will raise an assertion error if
-        every source id does not return a result.
+        every source id does not return a result. (Unless the query returns
+        n_max entries, in which case only a warning will be raised).
 
         savstr (str); optional string that will be included in the path to
         the downloaded vizier table.
@@ -133,13 +134,20 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
     df = given_votable_get_df(dlpath, assert_equal='source_id')
 
     if len(df) != len(source_ids) and enforce_all_sourceids_viable:
-        errmsg = (
-            'ERROR! got {} matches vs {} source id queries'.
-            format(len(df), len(source_ids))
-        )
-        print(errmsg)
-        import IPython; IPython.embed()
-        raise AssertionError(errmsg)
+        if len(df) == n_max:
+            wrnmsg = (
+                'WRN! got {} matches vs {} source id queries'.
+                format(len(df), len(source_ids))
+            )
+            print(wrnmsg)
+        else:
+            errmsg = (
+                'ERROR! got {} matches vs {} source id queries'.
+                format(len(df), len(source_ids))
+            )
+            print(errmsg)
+            import IPython; IPython.embed()
+            raise AssertionError(errmsg)
 
     if len(df) != len(source_ids) and not enforce_all_sourceids_viable:
         wrnmsg = (
