@@ -260,7 +260,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
 
         elif info is None:
 
-            info = ini.get_neighborhood_information(source_id, overwrite=0,
+            info = ini.get_neighborhood_information(sourceid, overwrite=0,
                                                     min_n_nbhrs=1000)
 
             (targetname, groupname, target_df, nbhd_df, pmdec_min, pmdec_max,
@@ -270,7 +270,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
                 targetname, groupname, target_df, nbhd_df,
                 pmdec_min=pmdec_min, pmdec_max=pmdec_max,
                 pmra_min=pmra_min, pmra_max=pmra_max,
-                source_id=source_id, figsize=(30,20),
+                source_id=sourceid, figsize=(30,20),
             )
 
             pdf.savefig(fig)
