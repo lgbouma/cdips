@@ -175,7 +175,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
 
         ap = ix+1
 
-        n_components = int(n_comp_df['fa_cv_ap{}'.format(ap)])
+        n_components = max([int(n_comp_df['fa_cv_ap{}'.format(ap)]), 5])
 
         reg = LinearRegression(fit_intercept=True)
 
