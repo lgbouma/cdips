@@ -263,18 +263,20 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
             info = ini.get_neighborhood_information(sourceid, overwrite=0,
                                                     min_n_nbhrs=1000)
 
-            (targetname, groupname, target_df, nbhd_df, pmdec_min, pmdec_max,
-             pmra_min, pmra_max) = info
+            if info is not None:
 
-            fig = vp.plot_neighborhood_only(
-                targetname, groupname, target_df, nbhd_df,
-                pmdec_min=pmdec_min, pmdec_max=pmdec_max,
-                pmra_min=pmra_min, pmra_max=pmra_max,
-                source_id=sourceid, figsize=(30,20),
-            )
+                (targetname, groupname, target_df, nbhd_df, pmdec_min,
+                 pmdec_max, pmra_min, pmra_max) = info
 
-            pdf.savefig(fig)
-            plt.close()
+                fig = vp.plot_neighborhood_only(
+                    targetname, groupname, target_df, nbhd_df,
+                    pmdec_min=pmdec_min, pmdec_max=pmdec_max,
+                    pmra_min=pmra_min, pmra_max=pmra_max,
+                    source_id=sourceid, figsize=(30,20),
+                )
+
+                pdf.savefig(fig)
+                plt.close()
 
         else:
 

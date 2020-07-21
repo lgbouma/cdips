@@ -92,7 +92,12 @@ if __name__ == "__main__":
     # force_references = "Kounkel_2018_Ori" # can be none
     # force_groupname = "k18orion_25Ori-1"
 
-    source_id = '6539037542941988736' # '2974906868489280768' # 
+    # source_id = '5290968085934209152'
+    # sector = 7
+    # force_references = None
+    # force_groupname = None
+
+    source_id = '565706429072383232'
     sector = 42
     force_references = None
     force_groupname = None

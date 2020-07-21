@@ -1901,7 +1901,8 @@ def plot_group_neighborhood(
 
     ylim = ax.get_ylim()
     ax.set_ylim((max(ylim),min(ylim)))
-    ax.set_xlim((-0.5, 3.0))
+    xlim = ax.get_xlim()
+    ax.set_ylim((min(xlim),max(xlim)))
 
     ##############
     # HR diagram #
@@ -1936,7 +1937,8 @@ def plot_group_neighborhood(
 
     ylim = ax.get_ylim()
     ax.set_ylim((max(ylim),min(ylim)))
-    ax.set_xlim((-0.5, 3.0))
+    xlim = ax.get_xlim()
+    ax.set_ylim((min(xlim),max(xlim)))
 
     # set M_omega y limits
     min_y = np.nanmin(np.array([np.nanpercentile(nbhd_yval, 2), target_yval]))
@@ -2217,7 +2219,8 @@ def plot_neighborhood_only(
 
     ylim = ax.get_ylim()
     ax.set_ylim((max(ylim),min(ylim)))
-    ax.set_xlim((-0.5, 3.0))
+    xlim = ax.get_xlim()
+    ax.set_xlim((min(xlim),max(xlim)))
 
     ##############
     # HR diagram #
@@ -2246,7 +2249,6 @@ def plot_neighborhood_only(
 
     ylim = ax.get_ylim()
     ax.set_ylim((max(ylim),min(ylim)))
-    ax.set_xlim((-0.5, 3.0))
 
     # set M_omega y limits
     min_y = np.nanmin(np.array([np.nanpercentile(nbhd_yval, 2), target_yval]))
@@ -2254,6 +2256,9 @@ def plot_neighborhood_only(
     edge_y = 0.01*(max_y - min_y)
     momega_ylim = [max_y+edge_y, min_y-edge_y]
     ax.set_ylim(momega_ylim)
+
+    xlim = ax.get_xlim()
+    ax.set_xlim((min(xlim),max(xlim)))
 
     #############
     # positions #

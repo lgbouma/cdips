@@ -101,10 +101,20 @@ def get_neighborhood_information(
 
     plx_mean = float(target_df.parallax)
 
-    n_std = 5
     n_nbhrs = 0
+    n_std = 5
+    n_std_incr = 5
+    n_std_max = 200
+
+    if plx_mean > 10:
+        n_std = 5
+        n_std_incr = 20
+        n_std_max = 1000
 
     while n_nbhrs < min_n_nbhrs:
+
+        if n_std > n_std_max:
+            return None
 
         print('trying when bounding by {} stdevns'.format(n_std))
 
@@ -140,7 +150,7 @@ def get_neighborhood_information(
               format(n_nbhrs, min_n_nbhrs))
         print(42*'=')
 
-        n_std += 5
+        n_std += n_std_incr
 
     n_std = 3
     pmdec_min = np.nanmean(nbhd_df['pmdec']) - n_std*np.nanstd(nbhd_df['pmdec'])
