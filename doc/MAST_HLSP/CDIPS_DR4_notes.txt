@@ -1,0 +1,92 @@
+Title: Cluster Difference Imaging Photometric Survey Fourth Data Release Notes.
+
+Authors: Bouma, L., Hartman, J., Bhatti, W., Winn, J., Bakos, G.
+
+Address correspondence to: luke@astro.princeton.edu
+
+Date: Thu Jun 25 13:15:17 2020
+
+===============================================================================
+OVERVIEW
+
+These data release notes accompany the fourth Cluster Difference Imaging
+Photometric Survey (CDIPS) data release.
+
+Sectors 1 through 5 had 4.9k, 3.5k, 3k, 5.6k, and 9.7k LCs in each sector.  The
+first four sectors look away from the galactic plane, and so there are fewer
+young stars than in Sectors 6-13. Some of the Orion complex is visible in
+Sector 5.
+
+The reduction methods used for this release are identical to those from Bouma
+et al., (2019, ApJS, 245, 13), and described in previous release notes, except
+as detailed below.
+
+===============================================================================
+CONTENTS
+
+1. Omitted Time Windows.
+2. Sector and CCD Specific Notes.
+
+===============================================================================
+1. Omitted Time Windows.
+
+Using the Vanderspek+ data release notes for each sector, we gauged the
+following times (quoted in TJD) to either suffer excessive amounts of scattered
+Earth/Moon light, or else to not be viable for the reasons listed.
+
+(start,      end       ): comment
+-----------------------------------------------------------------------------
+(1347.00000, 1349.50000): sector 1 coarse pointing
+(1338.52153, 1339.65310): sector 1 downlink, between orbits 9->10
+(1367.15347, 1368.59406): sector 2 downlink, between orbits 11->12
+(1382.03986, 1385.89664): sector 3 orbit 13 start
+(1395.47997, 1396.60497): sector 3 downlink, between orbits 13->14
+(1394.00000, 1396.60497): sector 3 empirically bad scattered light
+(1406.29246, 1409.38830): sector 3 orbit 14 end
+(1418.53690, 1421.21169): sector 4 instrument anomaly
+(1421.21000, 1424.54897): sector 4 empirically "bad" time, + between orbits 15->16
+
+===============================================================================
+2. Sector and CCD Specific Notes.
+
+The effects of periodic momentum dumps on the raw light curves is more
+noticeable in Sectors 1-3 than Sectors 4-13. Sector 2 seemed to be affected the
+most strongly in our reductions. Cotrending against the standard deviation of
+the quaternion time-series may be helpful when analyzing these sectors.
+
+The reductions for a few CCDs showed stellar variability signals (e.g.,
+eclipsing binaries or stellar pulsation modes) injected across many stars.
+They entered the reduction as we solved for the convolution kernel, using stars
+that had the intrinsic variability that was then injected.  For these CCDs, a
+simple workaround was to switch from the "i/2;d3/2" kernel to "i/0", i.e.,
+omitting the convolution step entirely (kernel notation is as in
+<https://fitsh.net/wiki/man/ficonv>).  The affected cameras and CCDs were as
+follows.
+
+* sector1 cam1 ccd2 (internal projid 1651)[*]
+* sector1 cam2 ccd4 (internal projid 1657)
+* sector1 cam4 ccd3 (internal projid 1664)
+
+* sector2 cam2 ccd2 (internal projid 1671)
+* sector2 cam2 ccd3 (internal projid 1672)[*]
+* sector2 cam3 ccd3 (internal projid 1676)[*]
+* sector2 cam3 ccd4 (internal projid 1677)
+* sector2 cam4 ccd3 (internal projid 1680)
+* sector2 cam4 ccd4 (internal projid 1681)[*]
+
+* sector3 cam1 ccd3 (internal projid 1684)
+* sector3 cam2 ccd2 (internal projid 1687)
+* sector3 cam3 ccd4 (internal projid 1693)
+* sector3 cam4 ccd1 (internal projid 1694)
+
+* sector4 cam3 ccd4 (internal projid 1709)[*]
+* sector4 cam4 ccd4 (internal projid 1713)
+
+* sector5 cam2 ccd3 (internal projid 1720)[*]
+* sector5 cam2 ccd4 (internal projid 1721)
+
+For CCDs marked as [*], the raw light-curves retained noticeable systematics
+despite our omission of the convolution step. For Sector 2, many of these seem
+to be correlated with momentum dumps.  For analysis purposes, we recommend the
+use of the PCA or TFA lightcurves for these sector/camera/ccd combinations, or
+else performing other object-specific detrending.

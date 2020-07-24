@@ -4,12 +4,12 @@ import pandas as pd, numpy as np
 from functools import reduce
 
 def main():
-    isfull = 0
+    isfull = 1
     iscollabsubclass = 0
-    organize_PCs = 1
+    organize_PCs = 0
 
-    sector = 13
-    today = '20200320'
+    sector = 1
+    today = '20200613'
 
     if isfull:
         given_full_classifications_organize(sector=sector, today=today)
@@ -230,7 +230,7 @@ def given_merged_organize_PCs(sector=None):
         )
         assert len(srcdir) == 1
         srcdir = srcdir[0]
-    elif sector in [12,13]:
+    elif sector in [1,2,3,4,5,12,13]:
         srcdir = glob(
             '../results/vetting_classifications/2020????_sector-{}_PC_cut'.
             format(sector)
@@ -275,7 +275,7 @@ def given_merged_organize_PCs(sector=None):
         )
         assert len(srcdir) == 1
         srcdir = srcdir[0]
-    elif sector in [12,13]:
+    elif sector in [1,2,3,4,5,12,13]:
         srcdir = glob(
             '../results/vetting_classifications/2020????_sector-{}_PC_cut'.
             format(sector)
