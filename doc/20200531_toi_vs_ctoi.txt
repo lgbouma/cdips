@@ -31,7 +31,9 @@ SP1
 Questions:
 
 TIC 268 isn't included (interesting).
-Why not?
+Q: Why not?
+
+A: 20200728 -- was because they did a oopsie. Was boosted as TOI 1937.
 
 TIC 268 I wonder...
 
