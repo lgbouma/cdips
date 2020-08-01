@@ -1902,7 +1902,7 @@ def plot_group_neighborhood(
     ylim = ax.get_ylim()
     ax.set_ylim((max(ylim),min(ylim)))
     xlim = ax.get_xlim()
-    ax.set_ylim((min(xlim),max(xlim)))
+    ax.set_xlim((min(xlim),max(xlim)))
 
     ##############
     # HR diagram #
