@@ -87,7 +87,8 @@ def get_neighborhood_information(
                  'phot_g_mean_mag', 'phot_bp_mean_mag', 'phot_rp_mean_mag',
                  'l','b', 'parallax, parallax_error', 'pmra','pmra_error',
                  'pmdec','pmdec_error', 'radial_velocity'),
-        forcefetch=True
+        forcefetch=True,
+        gaia_mirror='vizier'
     )
     target_df = pd.read_csv(target_d['result'])
     assert len(target_df) == 1
@@ -352,7 +353,8 @@ def get_group_and_neighborhood_information(
                  'phot_bp_mean_mag', 'phot_rp_mean_mag', 'l','b',
                  'parallax, parallax_error', 'pmra','pmra_error',
                  'pmdec','pmdec_error', 'radial_velocity'),
-        forcefetch=True
+        forcefetch=True,
+        gaia_mirror='vizier'
     )
     target_df = pd.read_csv(target_d['result'])
     assert len(target_df) == 1
