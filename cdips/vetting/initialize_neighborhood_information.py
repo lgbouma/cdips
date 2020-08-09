@@ -239,7 +239,7 @@ def get_group_and_neighborhood_information(
         group_in_kc19 = True
         groupname = clusters[np.in1d(references, 'Kounkel_2019')][0]
 
-    elif 'Kharchenko2013' in references:
+    elif 'Kharchenko2013' in references and isinstance(mmbr_dict, dict):
         group_in_k13 = True
         groupname = clusters[np.in1d(references, 'Kharchenko2013')][0]
         mwscid = mmbr_dict['mwscid']
