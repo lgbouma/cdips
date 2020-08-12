@@ -1,17 +1,17 @@
 """
-given a list of all the light-curves, make a dataframe matching light-curve to metadata
+Given a list of all the light-curves, make a dataframe matching light-curve to
+metadata.
 
-to make the list, something like
-
-echo sector-?/cam?_ccd?/*.fits | xargs ls > foo.txt
-
-is needed, with a merge for the two-digit cases.
+To make the list of all LC paths, use
+    /nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/get_lc_list.sh
 """
 
-from cdips.utils.catalogs import get_cdips_catalog
+import os
 import pandas as pd
+from cdips.utils.catalogs import get_cdips_catalog
+from cdips.utils import today_YYYYMMDD
 
-lclistpath = '/nfs/phtess1/ar1/TESS/PROJ/lbouma/full_lc_list_20200120.txt'
+lclistpath = f'/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/lc_list_{today_YYYYMMDD()}.txt'
 
 with open(lclistpath, 'r') as f:
     lines = f.readlines()
@@ -29,4 +29,9 @@ df.source_id = df.source_id.astype(str)
 
 mdf = lcdf.merge(df, on='source_id', how='left')
 
-mdf.to_csv('/nfs/phtess1/ar1/TESS/PROJ/lbouma/source_ids_to_cluster_merge_20200120.csv', index=False, sep=';')
+outdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/lc_metadata'
+outpath = os.path.join(
+    outdir, f'source_ids_to_cluster_merge_{today_YYYYMMDD()}.csv'
+)
+mdf.to_csv(outpath, index=False, sep=';')
+print(f'made {outpath}')
