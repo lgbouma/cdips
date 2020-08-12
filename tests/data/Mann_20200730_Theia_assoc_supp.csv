@@ -1,0 +1,48 @@
+TOI,TIC,exofopcomment,GAIA,Theia,Name,ID,Age(Myr),N(stars),RA,Dec,lb_comment
+1990.01,457939414,Crowded field,5254512781523942912,92,IC_2602,(92),35,1342,158.670624,-59.748478000000006,TODO
+1981.01,378613125,Need SG1 to check TIC 378613125,5252117594185420928,149,BH_34,(149),57,726,155.59061100000002,-63.654616000000004,TODO
+1937.01,268301217,V-shaped; check neighbors; CTOI from Luke Bouma,5489726768531119616,613,NGC_2516,(613),251,3003,116.370719,-52.383254,"We have a good amount of followup on this one, and I think it’s a real HJ (5 or 6 transits + PFS RVs showing the orbit at ~4-5 sigma, plus a linear trend). This one is how I learned that the “fuzz” around NGC2516 is real. I don’t think its actually a member, though. Long story. The fuzz is real because it has a narrow Prot vs Teff sequence, coeval with Pleiades. Also, the isochronal sequence is much more clustered than randomly chosen field stars. However TOI 1937 is one of a few outliers above the narrow Prot vs Teff sequence (Prot of ~7days, for Teff 5700 K). Prot should be like 4 days. Also, the star does not lithium, when it really should."
+1924.01,371443216,,5245968236116294016,1091,Theia,1091,848,148,147.577958,-66.114773,
+1918.01,308425348,,5339389268061191040,720,NGC_3532,(720),353,2701,167.582807,-58.982981,"CDIPS vetting report shows its probably off-target. Not sure why the MIT team boosted this to TOI status, when I told them this."
+1882.01,396368313,Some depth-aperture correlation; crowded field; CTOI from Luke Bouma,5790098845432414464,264,Theia,264,86,84,212.839177,-75.833201,Cand HJ; hot star; Theia 264 (90 Myr claimed; KC19; existence questionable). 20200219 Phil Evans 1 on-target and VPC in i-band. Boosted to TOI postCDIPS.
+1881.01,59859387,V-shaped; some odd-even; crowded field; CTOI from Luke Bouma,5510676828723793920,1011,Alessi_3,(1011),637,269,110.36967299999999,-45.567733000000004,"Group membership is good from kinematics. We have a decent amount of FU on this one. Needs a blend analysis, and potentially more PFS observations."
+1888.01,459997997,Poor detrending; some depth-aperture correlation; CTOI from Luke Bouma,5254794943702272640,1141,Theia,1141,869,169,156.250024,-60.575137,NEB from SG1 FU. Group existence weak.
+1660.01,311121985,,214093365109009920,1532,Theia,1532,2597,359,85.581276,49.513456,
+1615.01,317507345,ExoFOP FP; Retired as SB1	,2281733502355390208,226,Theia,226,98,49,351.17469900000003,77.62710899999999,TODO
+1535.01,420288086,Could be twice the period,427614644875238528,747,NGC_225,(747),374,322,10.962703999999999,61.835623999999996,
+1518.01,427761355,,2210596444367488384,685,Theia,685,355,663,352.26750899999996,67.034802,
+1497.01,371673488,Variable star; slight depth-aperture correlation,2014335027560174976,57,ASCC_127,(57),21,1982,343.233208,59.850947,TODO
+1479.01,421308357,V-shaped. Highly likely EB. Rp>40Re,2142856422034574592,520,UBC_1,(520),246,397,288.818097,57.760565,
+1376.01,190743990,,1974178629540271744,822,Theia,822,404,699,325.787106,45.646801,
+1395.01,468472950,,1965538667157977472,1278,Theia,1278,1311,59,321.28321600000004,40.887816,
+1387.01,343442463,,2003624341205485056,136,Theia,136,50,169,341.51871,55.16293,TODO
+1386.01,343019899,single transit,2005028761147595648,1275,Theia,1275,1502,207,334.504096,54.319041000000006,
+1358.01,275501623,Rs 2.45 from TIC8; Rp ~5; 4.5 sigma odd-even,2192733400508791552,96,RSG_5,(96),35,1272,320.116109,61.120245,"Membership from nbhd plot seems questionable. Weird 3-part string. Off in HR diagram too (too bright). PMs and plx seem fine-enough. Just might be a random A-star, and not a CM."
+1372.01,164150539,Minor depth-aperture correlation,1894826016359425792,312,Theia,312,100,103,335.75356400000004,30.572722,TODO
+1188.01,15247229,Could be on neighbor,2067161441672227968,165,Roslund_5,(165),71,1830,306.73084900000003,38.932265,TODO
+1149.01,117789567,,1835201042675810688,197,Gulliver_60,(197),74,397,300.774012,26.892020000000002,"KC19, needs check. (Interesting cluster). FIES (Buchave) showed vrot 200km/s. Bp-Rp=0 would imply Teff 9000K, not 13000. 2mmag dip. Would make it A2V, Rstar = 2-3Rsun depending on Teff. 0.2% would imply Rp~=Rjup. Worth DT, in that case! Nbhd analysis shows star is on outskirts of cluster. It’s not a CG18 member. Membership claim seems likely to be spurious. (just based on how far off it is in ra/dec space, and in the HR diagram)."
+1151.01,69679391,KELT 20b,2033123654092592384,427,Theia,427,188,107,294.661409,31.219195000000003,
+1191.01,237185205,Likely 3 x period,2094015466995434624,73,Stephenson_1,(73),26,3071,283.526694,37.720009999999995,TODO
+1227.01,360156606,Likely a small star indicates a large candidate,5842480953772012928,64,Theia,64,26,96,186.767346,-72.451847,Good Kounkel group (near Eps Cha). Mann observed odd SOAR transit.
+1228.01,300038935,,5268547016621360768,797,Theia,797,419,41,107.843686,-68.833336,
+1073.01,158297421,,6658373007402886400,1098,Theia,1098,947,185,287.484395,-49.664947,HATS-47. Theia 1098 (KC19); cluster existence dubious.
+1097.01,360630575,bright potential L1 candidate,5838450865699668736,64,Theia,64,26,96,189.77584,-74.57401800000001,"Theia assoc definitely real, and probably <100 Myr. Mann suggested secondary eclipse. Small planet candidate."
+1034.01,400595342,need SG1 to check 400595381; likely BEB,5325454783543157760,237,Theia,237,79,133,134.441747,-49.000572999999996,Group not convincing
+1025.01,297967252,probably an EB,5312912791851427840,92,IC_2602,(92),35,1342,142.521153,-51.517109000000005,TODO (CG18 different).
+1048.01,384549882,probably EB,5310970160975211008,99,ESO_165-09,(99),32,701,136.527697,-54.903918000000004,TODO (CG18 different).
+1014.01,96246348,Might be diluted; SG1 to check,None,95,Platais_5,(95),33,1123,103.5616,-34.222815999999995,"Star is A1-IV subgiant. No shot at mass. Transit depth 3 mmag. From KC19 members, PM and parallax plausible for it being a member of the stream. Need gamma velocity to check."
+1000.01,50365310,,3033676761434888320,320,NGC_2422,(320),105,932,112.357704,-12.695955,
+992.01,108835813,3 stars in central pixel,5613309916998205696,1147,Theia,1147,894,112,112.6167,-26.080678,
+861.01,372913430,crowded field,5290721997195236480,613,NGC_2516,(613),251,3003,119.533515,-60.780494,"""Crowded field"". TIC 372913430. 0.5% dip, P=13.5 days warm jupiter, Teff=9100K. RA/dec in center of cluster, parallax good as well. PMs are 2mas/yr from PM of cluster center.  “QLP reanalysis suggests an NEB (dpeth-aperture correlation)”. SG2 retires as NEB."
+837.01,460205581,,5251470948229949568,92,IC_2602,(92),35,1342,157.037272,-64.505206,My validation paper on this is being submitted ~next week
+755.01,73228647,low SNR,6133384959942131968,908,Theia,908,611,540,190.036555,-44.312075,
+681.01,410450228,V-shaped; possible odd/even,5290968085934209152,613,NGC_2516,(613),251,3003,117.894944,-60.412385,"BD, writeup is being led by Nolan Grieves (Geneva). I contributed the kinematic check to that study."
+630.01,123898871,Fifth transit event is on the edge with bad detrending; has 3,2942380703200115200,95,Platais_5,(95),33,1123,90.916007,-19.040836,TODO
+626.01,65412605,,5617241426979996800,449,Theia,449,162,1457,108.12311100000001,-24.953556,
+612.01,284738182,large planet; possibly grazing; need SG1 to check 284738170,5586098717888374016,118,NGC_2451A,(118),50,1858,110.88183799999999,-37.835464,"TODO   (clearly different from CG18, what about Kounkel?)."
+610.01,80275202,need to check 80275180,5520741826895416704,22,Vela_OB2,(22),12,2563,121.52621599999999,-44.37508,TODO
+580.01,81419525,3 GAIA stars within 5,5519619186857962112,22,Vela_OB2,(22),12,2563,123.10826999999999,-46.109134999999995,Membership is good. SG1 says PNEB. 
+588.01,130415266,Period is double or four times larger; T0=1481,5557593814516968960,301,AB_Dor,(301),106,1314,104.74985799999999,-47.023362,"Gaia kinematics not obvious. P=40d, T=7.6, Teff 9600K. Hard to confirm."
+517.01,308307606,9.9 day eccentric system with separations between events of ~4.72; 5.16; 4.72; 5.16 days,5290752787819629056,613,NGC_2516,(613),251,3003,120.19990800000001,-60.865628,
+520.01,148479278,possible NEB,5576476552334683520,95,Platais_5,(95),33,1123,102.657974,-37.960190999999995,"Gaia kinematics look good. KC19 group HRD looks good. 2Re, 0.52 day USP. Teff 7500K, T=9.4. Hard to confirm. Maybe worth validating."
+496.01,88977253,V-shaped; Large planet; but could be close to 2 R_Jup.,3064530810048196352,870,NGC_2548,(870),400,654,123.09766299999998,-5.768654,WASP FU showed low mass EB
