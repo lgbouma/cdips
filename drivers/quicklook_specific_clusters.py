@@ -43,16 +43,17 @@ def _get_viable_cluster_lcs(df):
 
 def _apply_cluster_selection_function(sdf, clusterkey):
 
-    allowedkeys = [
+    allowed_keys = [
         "IC_2602",
         "NGC_2516",
         "CrA",
         "kc19group_113",
         "Hyades",
         "VelaOB2",
-        "ScoOB2"
+        "ScoOB2",
+        "Orion"
     ]
-    if clusterkey not in allowedkeys:
+    if clusterkey not in allowed_keys:
         raise NotImplementedError
 
     if clusterkey in ["IC_2602", "NGC_2516"]:
@@ -93,7 +94,7 @@ def _apply_cluster_selection_function(sdf, clusterkey):
 
     elif clusterkey == 'VelaOB2':
 
-        sel = sdf.cluster.contains('cg19velaOB2')
+        sel = sdf.cluster.str.contains('cg19velaOB2')
 
     elif clusterkey == 'ScoOB2':
 
@@ -234,7 +235,8 @@ def run_quicklook(k, parallel=1):
 def main():
 
     allowed_keys = [
-        "IC_2602", "NGC_2516", "CrA", "kc19group_113", "Hyades", "VelaOB2", "ScoOB2"
+        "IC_2602", "NGC_2516", "CrA", "kc19group_113", "Hyades",
+        "VelaOB2", "ScoOB2", "Orion"
     ]
 
     for k in allowed_keys:
