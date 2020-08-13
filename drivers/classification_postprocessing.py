@@ -4,12 +4,12 @@ import pandas as pd, numpy as np
 from functools import reduce
 
 def main():
-    isfull = 1
-    iscollabsubclass = 0
+    isfull = 0
+    iscollabsubclass = 1
     organize_PCs = 0
 
-    sector = 1
-    today = '20200613'
+    sector = 2
+    today = '20200612'
 
     if isfull:
         given_full_classifications_organize(sector=sector, today=today)
@@ -57,7 +57,19 @@ def given_collab_subclassifications_merge(sector=6):
         os.path.expanduser('~'),
         'Dropbox/proj/cdips/results/vetting_classifications/'
     )
-    if sector==6:
+    if sector==2:
+        classfiles = [
+            os.path.join(datadir, '20200612_sector-2_PCs_LGB_class.txt'),
+            os.path.join(datadir, '20200612_sector-2_PCs_JH_class.txt'),
+            os.path.join(datadir, '20200612_sector-2_PCs_JNW_class.txt')
+        ]
+    elif sector==5:
+        classfiles = [
+            os.path.join(datadir, '20200604_sector-5_PCs_LGB_class.txt'),
+            os.path.join(datadir, '20200604_sector-5_PCs_JH_class.txt'),
+            os.path.join(datadir, '20200604_sector-5_PCs_JNW_class.txt')
+        ]
+    elif sector==6:
         classfiles = [
             os.path.join(datadir, '20190621_sector-6_PCs_LGB_class.txt'),
             os.path.join(datadir, '20190621_sector-6_PCs_JH_class.txt'),
