@@ -62,6 +62,12 @@ def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.4,
 
         info = ini.get_neighborhood_information(source_id, overwrite=0)
 
+        if DEBUG:
+            picklepath = 'nbhd_info_{}.pkl'.format(source_id)
+            with open(picklepath , 'wb') as f:
+                pickle.dump(info, f)
+                print('made {}'.format(picklepath))
+
         (targetname, groupname, target_df, nbhd_df, pmdec_min, pmdec_max,
          pmra_min, pmra_max) = info
 
