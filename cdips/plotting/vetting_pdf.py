@@ -730,8 +730,8 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
 
     txt = (
     """
-    P = {period:.3f} day
-    $t_0$ = {t0:.3f} BJD
+    P = {period:.6f} day
+    $t_0$ = {t0:.6f} BJD
     $R_p$ = {rp:s} $R_\oplus$ (TICCONT {ticcont:s} not needed)
     $R_p/R_\star$ = {rp_rs:.3f}
     $T_{{14}}/P$ = {tdur_by_period:.3f}
