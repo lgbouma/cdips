@@ -79,6 +79,9 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
     # if residual stellar variability was found after TFA detrending, then,
     # this is defined as the RAW LC + penalized spline detrending.
 
+    # NOTE: a possible hack to force detrending from the raw LC can be set
+    # below. By default, it's not.
+    # pfrow['pspline_detrended'].iloc[0] = True
     is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
 
     # Create the PdfPages object to which we will save the pages...
