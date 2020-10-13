@@ -1,3 +1,11 @@
+"""
+Contents:
+    detrend_flux: a wrapper to wotan pspline or biweight detrending.
+    compute_scores: factor analysis and cross-validation PCA score helper.
+    insert_nans_given_rstfc: NaN insertion for PCA prep.
+    prepare_pca: given TFA template stars, calculates PCA eigenvectors, and the
+        "optimal" number to use according to a particular heuristic.
+"""
 import matplotlib
 matplotlib.use("AGG")
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
@@ -184,8 +192,8 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
 
         (eigveclist, optimal_n_comp_df):
 
-            eigveclist = [eigenvecs_ap1, eigenvecs_ap2, eigenvecs_ap3] where is
-            a np.ndarray.
+            eigveclist = [eigenvecs_ap1, eigenvecs_ap2, eigenvecs_ap3] where
+            each element is a np.ndarray.
 
             optimal_n_comp_df: dataframe.
 
