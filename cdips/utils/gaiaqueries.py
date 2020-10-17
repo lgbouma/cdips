@@ -1,3 +1,10 @@
+"""
+Contents:
+    make_votable_given_source_ids
+    given_votable_get_df
+    given_source_ids_get_gaia_data
+    query_neighborhood
+"""
 ###########
 # imports #
 ###########
@@ -161,7 +168,8 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
 
 def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
                        is_cg18_group=False, is_kc19_group=False,
-                       is_k13_group=False, is_k18_group=False):
+                       is_k13_group=False, is_k18_group=False,
+                       manual_gmag_limit=None):
     """
     Given the bounds in position and parallx corresponding to some group (e.g.,
     from Cantat-Gaudin+2018, Kounkel & Covey 2019, Kharchenko+13, Kounkel et al
@@ -202,6 +210,9 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
     else:
         g_mag_limit=16
         mstr = ''
+
+    if manual_gmag_limit is not None:
+        g_mag_limit = manual_gmag_limit
 
     dlpath = os.path.join(
         gaiadir,'nbhd_group{}_matches{}.xml.gz'.format(groupname, mstr)
