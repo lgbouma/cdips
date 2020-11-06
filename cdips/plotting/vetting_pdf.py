@@ -34,7 +34,10 @@ DEBUG = False
 import multiprocessing as mp
 nworkers = mp.cpu_count()
 
-from cdips.utils.lcutils import _given_mag_get_flux
+def _given_mag_get_flux(mag, err_mag=None):
+    # wrapper to avoid breaking dependencies
+    from cdips.utils.lcutils import _given_mag_get_flux
+    return _given_mag_get_flux(mag, err_mag=err_mag)
 
 def _insert_newlines(string, every=64):
     lines = []
