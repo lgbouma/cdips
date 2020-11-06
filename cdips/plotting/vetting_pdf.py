@@ -34,28 +34,7 @@ DEBUG = False
 import multiprocessing as mp
 nworkers = mp.cpu_count()
 
-def _given_mag_get_flux(mag, err_mag=None):
-
-    mag_0, f_0 = 12, 1e4
-    flux = f_0 * 10**( -0.4 * (mag - mag_0) )
-    fluxmedian = np.nanmedian(flux)
-    flux /= fluxmedian
-
-    if err_mag is None:
-        return flux
-
-    else:
-
-        #
-        # sigma_flux = dg/d(mag) * sigma_mag, for g=f0 * 10**(-0.4*(mag-mag0)).
-        #
-        err_flux = np.abs(
-            -0.4 * np.log(10) * f_0 * 10**(-0.4*(mag-mag_0)) * err_mag
-        )
-        err_flux /= fluxmedian
-
-        return flux, err_flux
-
+from cdips.utils.lcutils import _given_mag_get_flux
 
 def _insert_newlines(string, every=64):
     lines = []
