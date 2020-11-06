@@ -3,6 +3,7 @@ Contents:
     get_lc_data
     _given_mag_get_flux
 """
+import numpy as np
 from astropy.io import fits
 
 def get_lc_data(lcpath, mag_aperture='TFA2', tfa_aperture='TFA2'):
