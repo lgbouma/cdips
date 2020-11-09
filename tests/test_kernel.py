@@ -76,7 +76,7 @@ def _make_kernel_plot(_kernel, kernelsize, order):
 
     fig.tight_layout(h_pad=0, w_pad=-14, pad=0)
 
-    outpath = 'kernel_{}.png'.format(order)
+    outpath = 'test_kernel_plots/kernel_{}.png'.format(order)
     fig.savefig(outpath, bbox_inches='tight', dpi=400)
     print('{}: made {}'.format(datetime.utcnow().isoformat(), outpath))
 

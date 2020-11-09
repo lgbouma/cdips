@@ -41,7 +41,7 @@ def test_wotan_fake_data(t0):
     ax[0].plot(time, trend_lc, color='red', lw=1, zorder=3)
 
     ax[1].scatter(time, flatten_lc, s=1, color='black')
-    f.savefig('test_wotan_fake_data_t0_{}.png'.format(t0), bbox_inches='tight')
+    f.savefig('test_wotan_plots/test_wotan_fake_data_t0_{}.png'.format(t0), bbox_inches='tight')
 
 
 if __name__ == "__main__":

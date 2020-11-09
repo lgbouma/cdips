@@ -25,6 +25,7 @@ astrocut*zip
 *SECRET*
 *doc_data.txt*
 tests/*png
+tests/test_*_plots
 *review*
 *xlsx
 *s6_s7_curl_script.sh*
