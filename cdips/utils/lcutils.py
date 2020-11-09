@@ -1,10 +1,59 @@
 """
 Contents:
-    get_lc_data
     _given_mag_get_flux
+    find_cdips_lc_paths: given a source_id, return the paths
+    get_lc_data: given a path, return selected vectors.
 """
+from glob import glob
+import os
 import numpy as np
 from astropy.io import fits
+
+def find_cdips_lc_paths(
+    source_id,
+    LCDIR='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS'
+    try_mast=False,
+):
+    """
+    Given a Gaia source ID, return all available CDIPS light curves (i.e.,
+    their paths) for that star.
+
+    kwargs:
+
+        LCDIR (str): local directory, containing light curves of interest (in
+        arbitrarily many subdirectories), and a metadata file with their paths
+        (in the lc_list_YYYYMMDD.txt format).
+
+        try_mast (bool): default False. If True, will run an astroquery search
+        through the MAST portal, and will download any available CDIPS light
+        curves.  Recommended to keep this as False; the MAST portal seems to
+        time out a lot, and downloading from it is slow. Better to just have
+        the paths already on disk.
+    """
+
+    if try_mast:
+        errmsg = (
+            'Could wrap the CDIPS light curve getter from astrobase...'
+            'but currently no need for this'
+        )
+        raise NotImplementedError(errmsg)
+
+    # default approach: use the latest "lc_list" metadata.
+    if not os.path.exists(LCDIR):
+        errmsg = (
+            f'Expected to find {LCDIR}'
+        )
+        raise ValueError(errmsg)
+
+    METADATAPATHS = glob(os.path.join(LCDIR, 'lc_list_*.txt'))
+
+    import IPython; IPython.embed()
+
+    assert 0
+
+    return lcpaths
+
+
 
 def get_lc_data(lcpath, mag_aperture='TFA2', tfa_aperture='TFA2'):
     """
