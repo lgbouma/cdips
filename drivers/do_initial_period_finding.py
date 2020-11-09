@@ -74,10 +74,10 @@ def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
         is 50, which for TESS data (total time ~=25 days) is commensurate with
         0.5 day periodic signal.
 
-        In injection-recovery tests (/tests/detrend_checks.py),  the result was
-        that the additional trending was only helpful in detecting planets
-        whenever substantial non-gaussian variability existed in the TFA light
-        curve.
+        In injection-recovery tests (/tests/test_injrecov_with_detrending.py),
+        the result was that the additional trending was only helpful in
+        detecting planets whenever substantial non-gaussian variability existed
+        in the TFA light curve.
     """
     #
     # Lomb scargle w/ uniformly weighted points.

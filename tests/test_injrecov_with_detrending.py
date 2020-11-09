@@ -1,5 +1,7 @@
 """
 [environment: phtess2]
+[date: June 10, 2019]
+[author: Luke Bouma bouma.luke@gmail.com]
 
 Randomly select N=100 (or 1000) TFA CDIPS light curves.
 (Optionally select them to be only the LCs with strong LS FAPs already?)
@@ -13,7 +15,7 @@ also the sliding biweight (w = 0.25 d). For a sliding biweight, if w/T14 > 2.2,
 most (> 98%) of the flux integral is preserved. So anything between w=0.25 days
 to w=0.5 days should be good...
 
-usage: $ python -u detrend_checks.py &> dtr.log &
+usage: $ python -u test_injrecov_with_detrending.py &> dtr.log &
        $ tail -f dtr.log | grep 'inj_'
 """
 
@@ -43,7 +45,7 @@ lcdirectory = (
     format(SECTORNUM)
 )
 resultsdirectory = (
-    '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/detrend_checks'
+    '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/test_injrecov_with_detrending'
 )
 
 
