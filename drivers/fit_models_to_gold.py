@@ -434,9 +434,6 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
     # if not converged:
     #   print a warning.
     #
-
-    # TODO: update for PyMC3 compatability. check that the error bars start
-    # making more sense!
     if identifier in KNOWN_MCMC_FAILS:
         print('WRN! identifier {} requires manual fixing.'.
               format(identifier))
