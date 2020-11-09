@@ -1,0 +1,75 @@
+Tue Oct 13 15:05:03 2020
+
+I finally took a day or so to think through ensemble detrending a bit more.
+
+Specifically, I looked into how to incorporate a regularization term into the
+linear model part of the PCA fit in the CDIPS light curves.
+
+See e.g.,
+
+https://scikit-learn.org/stable/modules/linear_model.html#ridge-regression-and-classification
+
+The general idea is that maybe part of the "overfitting" of astrophysical
+rotation signatures comes from using too many components (despite the factor
+analysis that I did back in the day to prevent this).
+
+----------
+
+Using the sklearn RidgeCV method, the differences honestly seem pretty minimal.
+Sometimes ordinary least squares does a bit better; sometimes RidgeCV does a
+bit better.
+
+----------
+
+I also looked into incorporating additional "supplemental" vecotrs like the CCD
+temperature, the background value, XIC, YIC, etc.
+
+For the s9c2c3 data I looked at, it looks like XIC and YIC might honestly
+introduce extra noise.
+
+This kind of leads to an obvious and hilarious idea: what about literally ONLY
+regressing against BKGV and CCDTEMP?
+
+For stellar rotation and similar signals, this might be just about right.
+
+----------
+
+Actually implementing it: by eye, it looks like there could be a few issues.
+
+In particular, the model doesn't have any way of being CONSTANT. can change
+this by adding a zero vector.
+
+----------
+
+The more I look at this, the more I'm worried it's a scaling problem.
+These ML methods ASSUME that your data have zero mean and unit VARIANCE. I
+never scaled the variance... if the detrending vectors are garbage, only so
+much you can do...
+
+------------------------------------------
+
+Another (hacky?) way of doing it would be to just limit the number of PCA
+vectors. Of course, the entire idea of the factor analysis was to work around
+this. 
+
+------------------------------------------
+Tue Oct 13 16:41:13 2020
+
+OK. End of the day. Got to the point where the next step is:
+
+* try to sklearn.preprocessing.scale the TREND STARS, to get a different set of
+  EIGENVECTORS to decorralate against.
+  this is in 
+    /home/lbouma/proj/cdips/tests/test_pca.py
+  and
+    /home/lbouma/proj/cdips/lcproc/detrend.py
+
+* and set a maximum number of CBVs during prediction: like say 10 - 15.
+
+  * or better yet: set the n_components DURING THE INITIAL PCA CALCULATION. because
+    if you do it via truncation AFTERWARDS, I think this spreads out what the
+    PCA eigenvecotrs are "allowed to explore"
+
+* alternatively, try something other than PCA to get the trend "eigenvectors"
+  that you take as the vectors for the linear regression part.
+  e.g., KernelPCA, SparsePCA, TruncatedSVD. all in sklearn.decomposition

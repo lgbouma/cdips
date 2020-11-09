@@ -1,0 +1,66 @@
+------------------------------------------
+Title: cdips_lc_metadata_20200812_S1_thru_S13.csv
+
+Date: 12 Aug 2020
+
+Author: L. Bouma et al.
+
+Contents: This ';'-separated CSV file is a list of CDIPS light curves produced
+from the TESS FFIs from Sectors 1 through 13.  See Bouma et al., 2019 for a
+description of how these light curves were made.
+
+Purpose: This file can be used to select light curves for a specific cluster,
+as reported by specific authors in the literature. For example, to select all
+the CDIPS light curves for members of NGC 2516 reported by Cantat-Gaudin et
+al., 2018, one could do the following in python:
+
+```
+import pandas as pd
+df = pd.read_csv('cdips_lc_metadata_20200812_S1_thru_S13.csv', sep=';')
+sel = (
+  df.reference.str.contains('CantatGaudin_2018') &
+  df.cluster.str.contains('NGC_2516')
+)
+df_ngc2516 = df[sel]
+```
+
+This yields 4992 light curves for 876 unique stars observed over the first year
+of TESS, with an average of ~5 sectors per star. Given the list of source_ids,
+MAST can then be queried for the light curves (for example, using astroquery).
+
+------------------------------------------
+COLUMN DESCRIPTION
+
+path: String containing sector, camera, ccd, and source_id for star with CDIPS
+light curve.
+
+source_id: Star's Gaia DR2 source identifier.
+
+ra: Stellar decimal right ascension, unit degree.
+
+dec: Stellar decimal declination, unit degree.
+
+pmra: Stellar proper motion in RA* direction, units mas/yr, source Gaia DR2.
+
+pmdec: Stellar proper motion in DEC direction, units mas/yr, source Gaia DR2.
+
+parallax: Stellar parallax, units mas, source Gaia DR2.
+
+phot_g_mean_mag: Stellar Gaia G magnitude, source Gaia DR2.
+
+phot_bp_mean_mag: Stellar Gaia Bp magnitude, source Gaia DR2.
+
+phot_rp_mean_mag: Stellar Gaia Rp magnitude, source Gaia DR2.
+
+cluster: ','-separated string of cluster names for which this star has been
+reported to be a member
+
+reference: ','-separated string of literature references that reported the
+star's clsuter membership.
+
+ext_catalog_name: ','-separated name that was used by the external catalog for
+this star.
+
+dist: ','-separated string of crossmatch distances, if applicable. Non-zero for
+cases in which the original reference claiming cluster membership was not using
+Gaia data.  Units: arcseconds.
