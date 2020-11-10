@@ -1,9 +1,9 @@
 """
 testing.py - Luke Bouma (bouma.luke@gmail) - Nov 2020
 
-Assertion statements to impose results from light curves. These are useful for
-instance when testing different detrending methods, and during injection
-recovery analyses.
+Assertion statements to require that features extraction from light curves
+equal particular values. These are useful for instance when testing different
+detrending methods, and during injection recovery analyses.
 
 Contents:
     assert_lsperiod_is_approx
