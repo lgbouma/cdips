@@ -1,5 +1,5 @@
 from datetime import datetime
-import tarfile, os
+import tarfile, os, subprocess
 
 def today_YYYYMMDD():
     txt = '{}{}{}'.format(str(datetime.today().year),
@@ -33,3 +33,25 @@ def make_tarfile_from_fpaths(output_filename, paths_to_ball_together):
         tar.add(name)
 
     tar.close()
+
+
+def bash_grep(pattern, filename):
+    """
+    Grep a text file for a pattern. Literally executes grep, but just from
+    python's subprocess module.
+
+    Returns a list of matching lines if any are found, else returns None.
+    """
+
+    cmd = f'grep "{pattern}" {filename}'
+
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
+    grep_stdout = process.communicate()[0]
+
+    output = grep_stdout.decode('utf-8').split()
+
+    if len(output) == 0:
+        return None
+    else:
+        return output
