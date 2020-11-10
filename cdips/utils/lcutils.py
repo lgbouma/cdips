@@ -1,18 +1,31 @@
 """
 Contents:
-    _given_mag_get_flux
+
+    _given_mag_get_flux: self-descriptive.
+
     find_cdips_lc_paths: given a source_id, return the paths
+
     get_lc_data: given a path, return selected vectors.
+
+    get_best_ap_number_given_lcpath: self-descriptive.
 """
+
 from glob import glob
 import os
 import numpy as np
+
 from astropy.io import fits
+from astropy.time import Time
+from cdips.utils import bash_grep
+
+from astrobase.imageutils import get_header_keyword
+from cdips.utils.tess_noise_model import N_pixels_in_aperture_Sullivan
 
 def find_cdips_lc_paths(
     source_id,
-    LCDIR='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS'
-    try_mast=False,
+    LCDIR='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS',
+    raise_error=True,
+    try_mast=False
 ):
     """
     Given a Gaia source ID, return all available CDIPS light curves (i.e.,
@@ -23,6 +36,8 @@ def find_cdips_lc_paths(
         LCDIR (str): local directory, containing light curves of interest (in
         arbitrarily many subdirectories), and a metadata file with their paths
         (in the lc_list_YYYYMMDD.txt format).
+
+        raise_error (bool): will raise an error if no light curves are found.
 
         try_mast (bool): default False. If True, will run an astroquery search
         through the MAST portal, and will download any available CDIPS light
@@ -38,7 +53,9 @@ def find_cdips_lc_paths(
         )
         raise NotImplementedError(errmsg)
 
-    # default approach: use the latest "lc_list" metadata.
+    #
+    # get and use the latest "lc_list_{YYYYMMDD}" metadata.
+    #
     if not os.path.exists(LCDIR):
         errmsg = (
             f'Expected to find {LCDIR}'
@@ -46,12 +63,44 @@ def find_cdips_lc_paths(
         raise ValueError(errmsg)
 
     METADATAPATHS = glob(os.path.join(LCDIR, 'lc_list_*.txt'))
+    assert len(METADATAPATHS) >= 1
 
-    import IPython; IPython.embed()
+    def _compose(f1, f2):
+        return lambda x: f1(f2(x))
 
-    assert 0
+    get_yyyymmdd = lambda x: os.path.basename(x).split('_')[-1].split('.')[0]
+    get_timejd = lambda x: Time(x[:4] + '-' + x[4:6] + '-' + x[6:]).jd
+    get_jds = _compose(get_timejd, get_yyyymmdd)
 
-    return lcpaths
+    timejds = list(map(get_jds, METADATAPATHS))
+
+    latest_lclist_path = METADATAPATHS[np.argmax(timejds)]
+
+    #
+    # now read it to get the light curve paths
+    #
+
+    pattern = f'{source_id}'
+    grep_output = bash_grep(pattern, latest_lclist_path)
+
+    if grep_output is None:
+
+        errmsg = (
+            f'Expected to find light curve for {source_id}, '
+            'and did not!'
+        )
+        if raise_error:
+            raise ValueError(errmsg)
+        else:
+            print('WRN!' + errmsg)
+
+        return None
+
+    else:
+
+        lcpaths = [os.path.join(LCDIR, g) for g in grep_output]
+
+        return lcpaths
 
 
 
@@ -104,3 +153,23 @@ def _given_mag_get_flux(mag, err_mag=None):
         err_flux /= fluxmedian
 
         return flux, err_flux
+
+
+def get_best_ap_number_given_lcpath(lcpath):
+    """
+    Given a CDIPS LC, figure out which aperture is "optimal" given the
+    brightness of the star, assuming Sullivan+2015's defintion of "optimal".
+    """
+
+    tess_mag = get_header_keyword(lcpath, 'TESSMAG')
+
+    optimal_N_pixels = N_pixels_in_aperture_Sullivan(float(tess_mag))
+
+    available_N_pixels = 3.14*np.array([1, 1.5, 2.25])**2
+
+    best_idx = np.argmin(np.abs(available_N_pixels - optimal_N_pixels))
+
+    ap_number = best_idx + 1
+
+    return ap_number
+
