@@ -32,14 +32,16 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
     if sector == 8:
         ids_to_test = [
-            '5423913124931271424', # EB w/ rot + dips
+            '5514749866474194816'
+            # '5423913124931271424', # EB w/ rot + dips
             # '5290781443841554432',
             #'5510676828723793920' # PC
         ]
 
     if sector == 9:
         ids_to_test = [
-            '5246508676134913024',
+            '5514749866474194816'
+            # '5246508676134913024',
             # '5489726768531119616', # TIC 268
             # '5326491313765089792' # detrending debugger
             # '5256717749007641344', # PC near TOI 684
@@ -107,4 +109,4 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
 
 if __name__ == "__main__":
-    test_vetting_report(sector=12, cdips_cat_vnum=0.4)
+    test_vetting_report(sector=8, cdips_cat_vnum=0.4)
