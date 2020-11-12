@@ -34,6 +34,44 @@ from cdips.utils.lcutils import (
     find_cdips_lc_paths
 )
 
+def explore_ic2602():
+    """
+    Run some (manual, plot-level) checks on IC 2602.
+    """
+
+    testname = 'ic2602_examples'
+
+    source_path = (
+        f'/home/lbouma/proj/cdips/tests/data/test_pca_{testname}.csv'
+    )
+    df = pd.read_csv(source_path, comment='#', names=['source_id'])
+
+    outdir = os.path.join(
+        '/home/lbouma/proj/cdips/tests/test_pca_plots', f'{testname}'
+    )
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    global OUTDIR
+    OUTDIR = outdir
+
+    for source_id in list(df.source_id):
+
+        lcpaths = find_cdips_lc_paths(source_id)
+
+        for lcpath in lcpaths:
+
+            hdrlist = ['CAMERA', 'CCD', 'SECTOR', 'PROJID']
+            _d = iu.get_header_keyword_list(lcpath, hdrlist)
+            for k,v in _d.items():
+                _d[k] = int(v)
+
+            eigveclist, n_comp_df = dtr.prepare_pca(
+                _d['CAMERA'], _d['CCD'], _d['SECTOR'], _d['PROJID']
+            )
+
+            run_explore_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=True)
+
+
 def explore_pca(
     sector=9,
     cam=2,
@@ -178,44 +216,6 @@ def run_explore_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=False,
     )
     fig.savefig(outpath, dpi=200, tight_layout=True)
     print(f'made {outpath}')
-
-
-def explore_ic2602():
-    """
-    Run some (manual, plot-level) checks on IC 2602.
-    """
-
-    testname = 'ic2602_examples'
-
-    source_path = (
-        f'/home/lbouma/proj/cdips/tests/data/test_pca_{testname}.csv'
-    )
-    df = pd.read_csv(source_path, comment='#', names=['source_id'])
-
-    outdir = os.path.join(
-        '/home/lbouma/proj/cdips/tests/test_pca_plots', f'{testname}'
-    )
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-    global OUTDIR
-    OUTDIR = outdir
-
-    for source_id in list(df.source_id):
-
-        lcpaths = find_cdips_lc_paths(source_id)
-
-        for lcpath in lcpaths:
-
-            hdrlist = ['CAMERA', 'CCD', 'SECTOR', 'PROJID']
-            _d = iu.get_header_keyword_list(lcpath, hdrlist)
-            for k,v in _d.items():
-                _d[k] = int(v)
-
-            eigveclist, n_comp_df = dtr.prepare_pca(
-                _d['CAMERA'], _d['CCD'], _d['SECTOR'], _d['PROJID']
-            )
-
-            run_explore_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=True)
 
 
 if __name__ == "__main__":
