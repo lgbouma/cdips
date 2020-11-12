@@ -138,6 +138,14 @@ def _map_timeseries_key_to_unit(k):
 
 def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
                      eigveclist=None, n_comp_df=None):
+
+    ##########################################
+    raise NotImplementedError
+    # TODO: replace this entire PCA routine with a call to
+    # dtr.calculate_linear_model_mag, as in tests.test_pca. The routine below
+    # was good for S1-S13; we will update it in upcoming reductions.
+    ##########################################
+
     # eigveclist: length 3, each with a np.ndarray of eigenvectors given by
     # dtr.prepare_pca
 
