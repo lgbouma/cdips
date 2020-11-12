@@ -1,5 +1,20 @@
 """
-Test a few PCA ensemble detrending variants.
+test_pca.py - Luke Bouma (bouma.luke@gmail) - Nov 2020
+
+Exploration used to check different PCA variants (ridge regression vs ordinary
+least squares; to smooth or not smooth the eigenvectors; what supplementary
+"systematic" vectors to include).  The outcomes of these tests are documented
+at /doc/20201109_injectionrecovery_completeness_goldenvariability.txt
+
+Wrapper level:
+
+    explore_pca(sector=9, cam=2, ccd=3)
+
+    explore_ic2602()
+
+Plot level:
+
+    run_explore_pca(lcpath, eigveclist, n_comp_df):
 """
 
 import os
@@ -8,28 +23,50 @@ import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from astropy.io import fits
 
 from sklearn.linear_model import LinearRegression, RidgeCV
-from sklearn import preprocessing
+from sklearn.preprocessing import MinMaxScaler
 
-from cdips.lcproc import reformat_lcs_for_mast as rlm
-from cdips.lcproc import mask_orbit_edges as moe
-from cdips.lcproc import detrend as dtr
+from wotan import flatten, version
 
-import imageutils as iu
+from cdips.lcproc import (
+    reformat_lcs_for_mast as rlm,
+    mask_orbit_edges as moe,
+    detrend as dtr
+)
+from cdips.utils.lcutils import (
+    find_cdips_lc_paths, get_lc_data, get_best_ap_number_given_lcpath
+)
+
+import astrobase.imageutils as iu
 from astrobase.lcmath import find_lc_timegroups
 
-def test_pca(
+def rescale_ipr(vec, target_ipr):
+    current_ipr = np.nanpercentile(vec, 95) - np.nanpercentile(vec, 5)
+    factor = target_ipr / current_ipr
+    return vec*factor
+
+def scale_to_unitvariance(vec):
+    return vec/np.nanstd(vec)
+
+def center_and_unitvariance(vec):
+    return (vec-np.nanmean(vec))/(np.nanstd(vec))
+
+
+def explore_pca(
     sector=9,
     cam=2,
     ccd=3,
     symlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS/',
-    outdir='/home/lbouma/proj/cdips/tests/test_pca/',
+    outdir='/home/lbouma/proj/cdips/tests/test_pca_plots/',
     OC_MG_CAT_ver=0.4,
-    cdipsvnum=1
+    cdipsvnum=1,
+    max_n_test_lcs=100
 ):
 
     lcpaths = glob(os.path.join(
         symlinkdir, f'sector-{sector}', f'cam{cam}_ccd{ccd}', '*_llc.fits')
     )
+    np.random.seed(42)
+    lcpaths = np.random.choice(lcpaths, max_n_test_lcs, replace=False)
 
     projid = iu.get_header_keyword(lcpaths[0], 'PROJID')
 
@@ -43,7 +80,7 @@ def test_pca(
     OUTDIR = outdir
 
     for lcpath in lcpaths:
-        run_test_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=True)
+        run_explore_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=True)
 
 
 def calculate_pca_model_mag(y, eigenvecs, n_components,
@@ -162,33 +199,44 @@ def calculate_pca_model_mag(y, eigenvecs, n_components,
     return out_mag, n_comp
 
 
-def rescale(vec, target_iqr):
-
-    current_iqr = np.nanpercentile(vec, 75) - np.nanpercentile(vec, 25)
-
-    vec -= np.nanmean(vec)
-
-    factor = target_iqr / current_iqr
-
-    return vec*factor
-
+def smooth_fn(time, eigenvec):
+    _, smoothed = flatten(
+        time-np.nanmin(time), 1+eigenvec,
+        break_tolerance=0.5,
+        method='biweight', window_length=1, cval=6, edge_cutoff=0,
+        return_trend=True
+    )
+    return smoothed
 
 
-
-def run_test_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=False):
+def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
+                use_smootheigvecs=True):
     """
-    use_sysvecs:
-        whether or not to include extra vectors in the regression.
-    """
+    Given a CDIPS light curve file, and the PCA eigenvectors for this
+    sector/cam/ccd, get the vectors to detrend against.
 
-    # eigveclist: length 3, each with a np.ndarray of eigenvectors given by
-    # dtr.prepare_pca
+    Args:
+        lcpath: CDIPS light curve file
+
+        eigveclist: list of np.ndarray PCA eigenvectors, length 3, calculated
+        by a call to cdips.lcutils.detrend.prepare_pca.
+
+        sysvecnames: list of vector names to also be decorrelated against.
+        E.g., ['BGV', 'CCDTEMP', 'XIC', 'YIC']. Default is just ['BGV'].
+
+        use_smootheigvecs: whether or not to smooth the PCA eigenvectors.
+
+    Returns:
+        dtrvecs
+    """
 
     hdul = fits.open(lcpath)
     primaryhdr, hdr, data = (
         hdul[0].header, hdul[1].header, hdul[1].data
     )
     hdul.close()
+    source_id = primaryhdr['OBJECT']
+    ap = min([get_best_ap_number_given_lcpath(lcpath), 2])
 
     ##########################################
     # begin PCA.
@@ -209,107 +257,209 @@ def run_test_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=False):
     pca_mags = {}
     scales = {}
 
-    for ix, eigenvecs in enumerate(eigveclist):
+    eigenvecs = eigveclist[ap-1]
 
-        if np.any(pd.isnull(eigenvecs)):
-            raise ValueError('got nans in eigvecs. bad!')
+    if use_smootheigvecs:
+        smooth_eigenvecs = []
+        for e in eigenvecs:
+            smooth_eigenvec = smooth_fn(data['TMID_BJD'], e)
+            smooth_eigenvecs.append(smooth_eigenvec-1)
+        smooth_eigenvecs = np.array(smooth_eigenvecs)
+        assert not np.any(pd.isnull(smooth_eigenvecs))
 
-        ap = ix+1
+    if np.any(pd.isnull(eigenvecs)):
+        raise ValueError('got nans in eigvecs. bad!')
 
-        y = data[f'IRM{ap}']
-        target_iqr = np.nanpercentile(y, 75) - np.nanpercentile(y, 25)
-        scales[ap] = target_iqr
+    y = data[f'IRM{ap}']
 
-        if use_sysvecs:
-            # nb. found XIC and YIC probably introduce extra noise.
-            # sysvecnames = ['BGV', 'CCDTEMP', 'XIC', 'YIC']
-            #sysvecnames = ['BGV', 'CCDTEMP']
-            sysvecnames = ['CCDTEMP']
+    use_sysvecs = True if isinstance(sysvecnames, list) else False
 
-            sysvecs = np.vstack(
-                [rescale(data[s], target_iqr) for s in sysvecnames]
-            )
+    if use_sysvecs:
 
-            sysvecs = np.vstack(
-                [np.zeros(len(data[sysvecnames[0]])), sysvecs]
-            )
+        # Use the (0-1 scaled) systematic vectors directly. Don't smooth.
+        sysvecs = np.vstack(
+            [
+                MinMaxScaler().fit_transform(
+                    data[s][:,None].astype(np.float64)
+                ).flatten()
+                for s in sysvecnames
+            ]
+        )
 
+        if use_smootheigvecs:
+            dtrvecs = np.vstack([sysvecs, smooth_eigenvecs])
+        else:
             dtrvecs = np.vstack([sysvecs, eigenvecs])
 
+    else:
+
+        if use_smootheigvecs:
+            dtrvecs = smooth_eigenvecs
         else:
             dtrvecs = eigenvecs
 
-        ##########################################
-        # NOTE: below will be ported
-        n_components = max([int(n_comp_df[f'fa_cv_ap{ap}']), 5])
-        if use_sysvecs:
-            n_components += ( len(sysvecnames) + 1 )
-        model_mag, n_comp = calculate_pca_model_mag(
-            y, dtrvecs, n_components, method='LinearRegression'
+    return dtrvecs, y, ap, data['TMID_BJD'], data, eigenvecs, smooth_eigenvecs
+
+
+
+def run_explore_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=False,
+                    use_smootheigvecs=True):
+    """
+    use_sysvecs:
+        whether or not to include extra vectors in the regression.
+    """
+
+    sysvecnames = ['BGV']
+    dtrvecs, y, ap, time, data, eigenvecs, smooth_eigenvecs = (
+        get_dtrvecs(lcpath, eigveclist, sysvecnames=sysvecnames)
+    )
+
+    ##########################################
+    # NOTE: below will be ported
+    n_components = min([int(n_comp_df[f'fa_cv_ap{ap}']), 5])
+    if use_sysvecs:
+        n_components += len(sysvecnames)
+    model_mag, n_comp = calculate_pca_model_mag(
+        y, dtrvecs, n_components, method='LinearRegression'
+    )
+
+    pca_mags[f'PCA{ap}'] = model_mag
+    primaryhdr[f'PCA{ap}NCMP'] = (
+        n_comp,
+        f'N principal components PCA{ap}'
+    )
+    # TODO: once the above is tested, port it to
+    #lcproc.reformat_lcs_for_mast, because it's much cleaner
+    ##########################################
+
+    model_mag_ridge, _ = calculate_pca_model_mag(
+        y, dtrvecs, n_components, method='RidgeCV',
+        verbose=True
+    )
+
+    model_mag_sys, _ = calculate_pca_model_mag(
+        y, sysvecs, len(sysvecs), method='RidgeCV',
+        verbose=True
+    )
+
+    pca_mags[f'SYS{ap}'] = model_mag_sys
+    pca_mags[f'OLS{ap}'] = model_mag
+    pca_mags[f'RR{ap}'] = model_mag_ridge
+    pca_mags[f'IRM{ap}'] = y
+
+    vecnames = [f'IRM{ap}', f'SYS{ap}', f'OLS{ap}', f'RR{ap}',
+                f'BGV', 'CCDTEMP']
+
+    #
+    # make the plot
+    #
+
+    plt.close('all')
+    fig, axs = plt.subplots(nrows=len(vecnames), ncols=2,
+                            figsize=(10,len(vecnames)*1.1), sharex=True)
+
+    for ix, vecname in enumerate(vecnames):
+
+        if ix <= 3:
+            axs[ix,0].scatter(time, pca_mags[vecname], c='black',
+                              alpha=0.9, zorder=2, s=3, rasterized=True,
+                              linewidths=0)
+            axs[ix,0].set_ylim(axs[ix,0].get_ylim()[::-1])
+
+        else:
+            axs[ix,0].scatter(
+                time,
+                MinMaxScaler().fit_transform(
+                    data[vecname][:,None].astype(np.float64)
+                ).flatten(),
+                c='black', alpha=0.9, zorder=2, s=3, rasterized=True,
+                linewidths=0)
+
+            if use_smootheigvecs and vecname == 'BGV':
+                # display smooth BGV just to see it
+                axs[ix,0].scatter(
+                    time,
+                    smooth_fn(
+                        time,
+                        MinMaxScaler().fit_transform(
+                            data[vecname][:,None].astype(np.float64)
+                        ).flatten()
+                    )-1,
+                    c='C0', alpha=0.9, zorder=3, s=2, rasterized=True,
+                    linewidths=0)
+
+        axs[ix,0].set_ylabel(vecname)
+
+    for ix in range(len(vecnames)):
+        axs[ix,1].scatter(
+            time, eigenvecs[ix, :], c='black', alpha=0.9, zorder=2, s=3,
+            rasterized=True, linewidths=0
         )
+        if use_smootheigvecs:
+            axs[ix,1].scatter(
+                time, smooth_eigenvecs[ix, :], c='C0', alpha=0.9, zorder=3,
+                s=2, rasterized=True, linewidths=0
+            )
 
-        pca_mags[f'PCA{ap}'] = model_mag
-        primaryhdr[f'PCA{ap}NCMP'] = (
-            n_comp,
-            f'N principal components PCA{ap}'
-        )
-        # TODO: once the above is tested, port it to
-        #lcproc.reformat_lcs_for_mast, because it's much cleaner
-        ##########################################
+    axs[-1, 0].set_xlabel('time')
+    axs[-1, 1].set_xlabel('time')
+    fig.suptitle(
+        f"Rp={primaryhdr['phot_rp_mean_mag']:.1f}, GDR2 {source_id}"
+    )
 
-        model_mag_ridge, _ = calculate_pca_model_mag(
-            y, dtrvecs, n_components, method='RidgeCV',
-            verbose=True
-        )
-
-        model_mag_sys, _ = calculate_pca_model_mag(
-            y, sysvecs, len(sysvecs), method='RidgeCV',
-            verbose=True
-        )
-
-        pca_mags[f'SYS{ap}'] = model_mag_sys
-        pca_mags[f'OLS{ap}'] = model_mag
-        pca_mags[f'RR{ap}'] = model_mag_ridge
-        pca_mags[f'OLS-RR{ap}'] = model_mag - model_mag_ridge
-        pca_mags[f'IRM{ap}'] = y
-
-    time = data['TMID_BJD']
-
-    for ap in [1,2]:
-
-        vecnames = [f'IRM{ap}', f'SYS{ap}', f'OLS{ap}', f'RR{ap}',
-                    f'OLS-RR{ap}', 'CCDTEMP']
-
-        plt.close('all')
-        f, axs = plt.subplots(nrows=len(vecnames), ncols=2,
-                              figsize=(10,len(vecnames)*1.1), sharex=True)
-
-        for ix, vecname in enumerate(vecnames):
-            if ix <= 4:
-                axs[ix,0].scatter(time, pca_mags[vecname], c='black', alpha=0.9,
-                                zorder=2, s=3, rasterized=True, linewidths=0)
-            else:
-                axs[ix,0].scatter(time, rescale(data[vecname], scales[ap]),
-                                c='black', alpha=0.9, zorder=2, s=3,
-                                rasterized=True, linewidths=0)
-
-            axs[ix,0].set_ylabel(vecname)
-
-        for ix in range(len(vecnames)):
-            axs[ix,1].scatter(time, eigenvecs[ix, :], c='black', alpha=0.9,
-                              zorder=2, s=3, rasterized=True, linewidths=0)
+    outpath = os.path.join(
+        OUTDIR,
+        os.path.basename(lcpath).replace('.fits', f'_ap{ap}_pca-compare.png')
+    )
+    f.savefig(outpath, dpi=200, tight_layout=True)
+    print(f'made {outpath}')
 
 
-        axs[-1, 0].set_xlabel('time')
-        axs[0, 0].set_title(f"Rp={primaryhdr['phot_rp_mean_mag']:.1f}")
+def explore_ic2602():
+    """
+    Run some (manual, plot-level) checks on IC 2602.
+    """
 
-        outpath = os.path.join(
-            OUTDIR,
-            os.path.basename(lcpath).replace('.fits', f'_ap{ap}_pca-compare.png')
-        )
-        f.savefig(outpath, dpi=200, tight_layout=True)
-        print(f'made {outpath}')
+    testname = 'ic2602_examples'
+
+    source_path = (
+        f'/home/lbouma/proj/cdips/tests/data/test_pca_{testname}.csv'
+    )
+    df = pd.read_csv(source_path, comment='#', names=['source_id'])
+
+    outdir = os.path.join(
+        '/home/lbouma/proj/cdips/tests/test_pca_plots', f'{testname}'
+    )
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    global OUTDIR
+    OUTDIR = outdir
+
+    for source_id in list(df.source_id):
+
+        lcpaths = find_cdips_lc_paths(source_id)
+
+        for lcpath in lcpaths:
+
+            hdrlist = ['CAMERA', 'CCD', 'SECTOR', 'PROJID']
+            _d = iu.get_header_keyword_list(lcpath, hdrlist)
+            for k,v in _d.items():
+                _d[k] = int(v)
+
+            eigveclist, n_comp_df = dtr.prepare_pca(
+                _d['CAMERA'], _d['CCD'], _d['SECTOR'], _d['PROJID']
+            )
+
+            run_explore_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=True)
 
 
 if __name__ == "__main__":
-    test_pca()
+
+    run_explore_ccd = 0
+    run_explore_ic2602 = 1
+
+    if run_explore_ic2602:
+        explore_ic2602()
+
+    if run_explore_ccd:
+        explore_pca(sector=9, cam=2, ccd=3)
