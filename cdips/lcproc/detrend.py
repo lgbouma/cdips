@@ -5,9 +5,13 @@ Contents:
 
 Very useful:
 
-    detrend_flux: a wrapper to wotan pspline or biweight detrending.
+    detrend_flux: a wrapper to wotan pspline or biweight detrending (given
+        vectors of time and flux).
 
 PCA / "shared systematic trend" detrending:
+
+    detrend_systematics: removes systematic trends, by wrapping prepare_pca,
+        get_dtrvecs, and calculate_linear_model_mag.
 
     prepare_pca: given TFA template stars, calculates PCA eigenvectors, and the
         "optimal" number to use according to a particular heuristic.
@@ -116,6 +120,50 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
             raise NotImplementedError
 
     return flat_flux, trend_flux
+
+
+def detrend_systematics(lcpath, max_n_comp=5):
+    """
+    Wraps functions in lcproc.detrend for all-in-one systematics removal, using
+    a tuned variant of PCA.
+
+    See doc/20201109_injectionrecovery_completeness_goldenvariability.txt for a
+    verbose explanation of the options that were explored, and the assumptions
+    that were ultimately made for this "tuned variant".
+
+    Returns:
+        Tuple of primaryhdr, data, ap, dtrvecs, eigenvecs, smooth_eigenvecs
+    """
+
+    from cdips.utils import given_lcpath_get_infodict
+    infodict = given_lcpath_get_infodict(lcpath)
+
+    eigveclist, n_comp_df = prepare_pca(
+        infodict['CAMERA'], infodict['CCD'],
+        infodict['SECTOR'], infodict['PROJID']
+    )
+
+    sysvecnames = ['BGV']
+    dtrvecs, sysvecs, ap, primaryhdr, data, eigenvecs, smooth_eigenvecs = (
+        get_dtrvecs(lcpath, eigveclist, sysvecnames=sysvecnames)
+    )
+    time, y = data['TMID_BJD'], data[f'IRM{ap}']
+    source_id = primaryhdr['OBJECT']
+
+    n_components = min([int(n_comp_df[f'fa_cv_ap{ap}']), max_n_comp])
+    n_components += len(sysvecnames)
+
+    model_mag, n_comp = calculate_linear_model_mag(
+        y, dtrvecs, n_components, method='LinearRegression'
+    )
+
+    data[f'PCA{ap}'] = model_mag
+    primaryhdr[f'PCA{ap}NCMP'] = (
+        n_comp,
+        f'N principal components PCA{ap}'
+    )
+
+    return primaryhdr, data, ap, dtrvecs, eigenvecs, smooth_eigenvecs
 
 
 def compute_scores(X, n_components):
