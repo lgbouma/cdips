@@ -8,6 +8,8 @@ Contents:
     get_lc_data: given a path, return selected vectors.
 
     get_best_ap_number_given_lcpath: self-descriptive.
+
+    stitch_light_curves: stitch lists of light curves across sectors.
 """
 
 from glob import glob
@@ -172,4 +174,35 @@ def get_best_ap_number_given_lcpath(lcpath):
     ap_number = best_idx + 1
 
     return ap_number
+
+
+def stitch_light_curves(
+    timelist,
+    maglist,
+    magerrlist
+):
+    """
+    Given lists of times, magnitudes, and mag errors (where each index is
+    presumably a TESS sector), returning stitched times, fluxes, and flux
+    errors.
+    """
+    for l in [timelist, maglist, magerrlist]:
+        assert isinstance(l, list)
+
+    # get median-normalized fluxes across each sector
+    fluxlist, fluxerrlist = [], []
+    for t, m, e in zip(timelist, maglist, magerrlist):
+        f, f_e = _given_mag_get_flux(m, e)
+        fluxlist.append(f)
+        fluxerrlist.append(f_e)
+
+    starttimes = [t[0] for t in timelist]
+    if not np.all(np.diff(starttimes) > 0):
+        raise ValueError('expected timelist to already be sorted')
+
+    time = np.hstack(timelist)
+    flux = np.hstack(fluxlist)
+    fluxerr = np.hstack(fluxerrlist)
+
+    return time, flux, fluxerr
 
