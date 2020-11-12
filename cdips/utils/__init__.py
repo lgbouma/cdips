@@ -1,3 +1,19 @@
+"""
+Reusable small functions.
+
+CDIPS-specific:
+    given_lcpath_get_infodict
+
+General:
+    today_YYYYMMDD: gives today's date in YYYYMMDD format.
+    str2bool
+
+UNIX-esque tools:
+    bash_grep
+    make_gztarfile_directory
+    make_tarfile_directory
+    make_tarfile_from_fpaths
+"""
 from datetime import datetime
 import tarfile, os, subprocess
 
@@ -55,3 +71,16 @@ def bash_grep(pattern, filename):
         return None
     else:
         return output
+
+
+def given_lcpath_get_infodict(
+    lcpath, hdrlist=['CAMERA', 'CCD', 'SECTOR', 'PROJID']
+):
+
+    from astrobase import imageutils as iu
+
+    infodict = iu.get_header_keyword_list(lcpath, hdrlist)
+    for k,v in infodict.items():
+        infodict[k] = int(v)
+
+    return infodict
