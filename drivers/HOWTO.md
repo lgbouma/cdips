@@ -9,7 +9,7 @@ The `/drivers/` are not used. Instead, the process is:
 2. Use `/cdips/catalogbuild/construct_unique_cluster_name_column.py` to do what
    is advertized.
 
-TO PRODUCE CANDIDATES FROM CDIPS LCS
+TO PRODUCE PLANET CANDIDATES FROM CDIPS LCS
 ----------
 
 1. make lightcurves using cdips-pipeline.
@@ -49,6 +49,20 @@ TO PRODUCE CANDIDATES FROM CDIPS LCS
     `python -u make_all_vetting_reports.py &> logs/s#_vetting_report_check.log &`
     `verify_vetting_reports.sh`
 
+
+TO PRODUCE PERIODOGRAM CLASSIFICATION (ALL VARIABILITY, NOT ONLY PLANETS)
+----------
+
+1. Make lightcurves using cdips-pipeline. (Update the "lc_list_YYYYMMDD.txt"
+   metadata file to ensure that they are findable).
+
+2. Select the stars you wish to do the analysis for. For instance, this could
+   be a set of stars in a particular open cluster.
+
+3. Run `do_allvariable_period_finding.py`: period-finds with LS, SPDM, and TLS.
+
+4. `make_all_vetting_reports`: make a multipage PDF with the information needed
+   to make classifications for periodogram/classification vetting.
 
 
 TO CHECK STAR CATALOGS AGAINST TOIS
