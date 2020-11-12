@@ -19,7 +19,6 @@ from glob import glob
 
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.lcproc import reformat_lcs_for_mast as rlm
-from cdips.lcproc import mask_orbit_edges as moe
 from cdips.lcproc import detrend as dtr
 
 import imageutils as iu
