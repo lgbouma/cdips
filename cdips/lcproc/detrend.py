@@ -1,10 +1,32 @@
 """
+detrend.py - Luke Bouma (bouma.luke@gmail) - Jul 2019, Nov 2020
+
 Contents:
+
+Very useful:
+
     detrend_flux: a wrapper to wotan pspline or biweight detrending.
-    compute_scores: factor analysis and cross-validation PCA score helper.
-    insert_nans_given_rstfc: NaN insertion for PCA prep.
+
+PCA / "shared systematic trend" detrending:
+
     prepare_pca: given TFA template stars, calculates PCA eigenvectors, and the
         "optimal" number to use according to a particular heuristic.
+
+    get_dtrvecs: given PCA eigenvectors and a lightcurve, construct the vectors
+        that will actually be used in decorrelation.
+
+    calculate_linear_model_mag:  given a set of basis vectors in a linear model
+        for a target light curve (y), calculate the coefficients and apply the
+        linear model prediction.
+
+Helper functions for the above:
+
+    eigvec_smooth_fn: a wrapper to wotan biweight detrending, with hard tuning
+        for eigenvector smoothing in PCA detrending.
+
+    insert_nans_given_rstfc: NaN insertion for PCA prep.
+
+    compute_scores: factor analysis and cross-validation PCA score helper.
 """
 import matplotlib
 matplotlib.use("AGG")
@@ -21,8 +43,9 @@ from astrobase import imageutils as iu
 from astrobase.lcmath import find_lc_timegroups
 
 from sklearn.decomposition import PCA, FactorAnalysis
-from sklearn.linear_model import LinearRegression, BayesianRidge
+from sklearn.linear_model import LinearRegression, BayesianRidge, RidgeCV
 from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import MinMaxScaler
 
 from wotan import flatten, version
 wotanversion = version.WOTAN_VERSIONING
@@ -454,3 +477,223 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
     print('made {}'.format(csvpath))
 
     return eigveclist, optimal_n_comp_df
+
+
+def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
+                use_smootheigvecs=True):
+    """
+    Given a CDIPS light curve file, and the PCA eigenvectors for this
+    sector/cam/ccd, construct the vectors to "detrend" or "decorrelate" against
+    (presumably via a linear model).
+
+    Args:
+        lcpath: CDIPS light curve file
+
+        eigveclist: list of np.ndarray PCA eigenvectors, length 3, calculated
+        by a call to cdips.lcutils.detrend.prepare_pca.
+
+        sysvecnames: list of vector names to also be decorrelated against.
+        E.g., ['BGV', 'CCDTEMP', 'XIC', 'YIC']. Default is just ['BGV'].
+
+        use_smootheigvecs: whether or not to smooth the PCA eigenvectors, using
+        a windowed biweight filter.
+
+    Returns:
+        tuple containing:
+        dtrvecs (np.ndarray), sysvecs (np.ndarray), ap (the optimal aperture),
+        data (the entire lcpath data table), eigenvecs (np.ndarray chosen from
+        eigveclist given the optimal aperture), smooth_eigenvecs (np.ndarray).
+    """
+
+    from cdips.utils.lcutils import get_best_ap_number_given_lcpath
+
+    hdul = fits.open(lcpath)
+    primaryhdr, hdr, data = (
+        hdul[0].header, hdul[1].header, hdul[1].data
+    )
+    hdul.close()
+    ap = min([get_best_ap_number_given_lcpath(lcpath), 2])
+
+    ##########################################
+    # begin PCA.
+    #
+    # eigenvecs shape: N_templates x N_times
+    #
+    # model: 
+    # y(w, x) = w_0 + w_1 x_1 + ... + w_p x_p.
+    #
+    # X is matrix of (n_samples, n_features), so each template is a "sample",
+    # and each time is a "feature". Analogous to e.g., doing PCA to reconstruct
+    # a spectrum, and you want each wavelength bin to be a feature.
+    ##########################################
+    eigenvecs = eigveclist[ap-1]
+
+    if np.any(pd.isnull(eigenvecs)):
+        raise ValueError('got nans in eigvecs. bad!')
+
+    if use_smootheigvecs:
+        smooth_eigenvecs = []
+        for e in eigenvecs:
+            smooth_eigenvec = eigvec_smooth_fn(data['TMID_BJD'], e)
+            smooth_eigenvecs.append(smooth_eigenvec-1)
+        smooth_eigenvecs = np.array(smooth_eigenvecs)
+        assert not np.any(pd.isnull(smooth_eigenvecs))
+    else:
+        smooth_eigenvecs = None
+
+    use_sysvecs = True if isinstance(sysvecnames, list) else False
+
+    if use_sysvecs:
+
+        # Use the (0-1 scaled) systematic vectors directly. Don't smooth.
+        sysvecs = np.vstack(
+            [
+                MinMaxScaler().fit_transform(
+                    data[s][:,None].astype(np.float64)
+                ).flatten()
+                for s in sysvecnames
+            ]
+        )
+
+        if use_smootheigvecs:
+            dtrvecs = np.vstack([sysvecs, smooth_eigenvecs])
+        else:
+            dtrvecs = np.vstack([sysvecs, eigenvecs])
+
+    else:
+
+        sysvecs = None
+
+        if use_smootheigvecs:
+            dtrvecs = smooth_eigenvecs
+        else:
+            dtrvecs = eigenvecs
+
+    return dtrvecs, sysvecs, ap, primaryhdr, data, eigenvecs, smooth_eigenvecs
+
+
+def eigvec_smooth_fn(time, eigenvec):
+
+    _, smoothed = flatten(
+        time-np.nanmin(time), 1+eigenvec,
+        break_tolerance=0.5,
+        method='biweight', window_length=1, cval=6, edge_cutoff=0,
+        return_trend=True
+    )
+
+    return smoothed
+
+
+def calculate_linear_model_mag(y, basisvecs, n_components,
+                               method='LinearRegression', verbose=False):
+    """
+    Given a set of basis vectors in a linear model for a target light curve
+    (y), calculate the coefficients and apply the linear model prediction.
+
+    Allow methods:
+
+        'LinearRegression': ordinary least squares.
+
+        'RidgeCV': ridge regression, which is ordinary least squares, plus an
+        L2 norm with a regularization coefficient. The regularization is solved
+        for via a cross-validation grid search.
+
+    Returns:
+        out_mag, n_comp: the model light curve (supposedly with instrumental
+        systematic removed), and the number of PCA components used during the
+        regression.
+    """
+
+    if method == 'LinearRegression':
+        reg = LinearRegression(fit_intercept=True)
+    elif method == 'RidgeCV':
+        reg = RidgeCV(alphas=np.logspace(-10, 10, 210), fit_intercept=True)
+
+    if np.all(pd.isnull(y)):
+        # if all nan, job is easy
+        out_mag = y
+        n_comp = 'nan'
+
+    elif np.any(pd.isnull(y)):
+
+        #
+        # if some nan in target light curve, tricky. strategy: impose the
+        # same nans onto the eigenvectors. then fit without nans. then put
+        # nans back in.
+        #
+        mean_mag = np.nanmean(y)
+        std_mag = np.nanstd(y)
+        norm_mag = (y[~pd.isnull(y)] - mean_mag)/std_mag
+
+        _X = basisvecs[:n_components, :]
+
+        _X = _X[:, ~pd.isnull(y)]
+
+        reg.fit(_X.T, norm_mag)
+
+        # see note below in the else statement about how the prediction step
+        # works.
+        model_mag = mean_mag + std_mag*reg.predict(_X.T)
+
+        #
+        # now insert nans where they were in original target light curve.
+        # typically nans occur in groups. insert by groups. this is a
+        # tricky procedure, so test after to ensure nan indice in the model
+        # and target light curves are the same.
+        #
+        naninds = np.argwhere(pd.isnull(y)).flatten()
+
+        ngroups, groups = find_lc_timegroups(naninds, mingap=1)
+
+        for group in groups:
+
+            thisgroupnaninds = naninds[group]
+
+            model_mag = np.insert(model_mag,
+                                  np.min(thisgroupnaninds),
+                                  [np.nan]*len(thisgroupnaninds))
+
+        np.testing.assert_(
+            model_mag.shape == y.shape
+        )
+        np.testing.assert_(
+            (len((model_mag-y)[pd.isnull(model_mag-y)])
+             ==
+             len(y[pd.isnull(y)])
+            ),
+            'got different nan indices in model mag than target mag'
+        )
+
+        #
+        # save result as IRM mag - PCA model mag + mean IRM mag
+        #
+        out_mag = y - model_mag + mean_mag
+        n_comp = n_components
+
+    else:
+        # otherwise, just directly fit the principal components
+        mean_mag = np.nanmean(y)
+        std_mag = np.nanstd(y)
+        norm_mag = (y - mean_mag)/std_mag
+
+        _X = basisvecs[:n_components, :]
+
+        reg.fit(_X.T, norm_mag)
+
+        # NOTE: in ordinary least squares, the line below is the same as
+        # `model_mag = reg.intercept_ + (reg.coef_ @ _X)`. But the sklearn
+        # interface is sick, and using reg.predict is easier than doing the
+        # extra terms for other regressors.
+        model_mag = mean_mag + std_mag * reg.predict(_X.T)
+
+        out_mag = y - model_mag + mean_mag
+        n_comp = n_components
+
+    if verbose:
+        if method == 'RidgeCV':
+            try:
+                print(f'RidgeCV alpha: {reg.alpha_:.2e}')
+            except AttributeError:
+                pass
+
+    return out_mag, n_comp
