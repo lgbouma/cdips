@@ -30,8 +30,8 @@ wotanversiontuple = tuple(wotanversion.split('.'))
 assert int(wotanversiontuple[0]) >= 1
 assert int(wotanversiontuple[1]) >= 4
 
-
-def detrend_flux(time, flux, break_tolerance=0.5, method='pspline'):
+def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
+                 window_length=None):
 
     # Initial pre-processing: verify that under break_tolerance, time and flux
     # do not have any sections with <=6 points. Spline detrending routines do
@@ -56,8 +56,8 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline'):
                                             method='biweight',
                                             return_trend=True,
                                             break_tolerance=break_tolerance,
-                                            window_length=0.3,
-                                            cval=6)
+                                            window_length=window_length,
+                                            cval=cval)
         else:
             raise NotImplementedError
 
@@ -86,9 +86,9 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline'):
             flat_flux, trend_flux = flatten(time, flux,
                                             method='biweight',
                                             return_trend=True,
-                                            break_tolerance=0.5,
-                                            window_length=0.3,
-                                            cval=6)
+                                            break_tolerance=break_tolerance,
+                                            window_length=window_length,
+                                            cval=cval)
         else:
             raise NotImplementedError
 
