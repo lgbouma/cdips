@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from cdips.plotting import vetting_pdf as vp
-from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.vetting import (
     centroid_analysis as cdva,
     initialize_neighborhood_information as ini
