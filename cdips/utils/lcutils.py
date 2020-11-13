@@ -179,12 +179,22 @@ def get_best_ap_number_given_lcpath(lcpath):
 def stitch_light_curves(
     timelist,
     maglist,
-    magerrlist
+    magerrlist,
+    extravecdict=None
 ):
     """
     Given lists of times, magnitudes, and mag errors (where each index is
     presumably a TESS sector), returning stitched times, fluxes, and flux
     errors.
+
+    Kwargs:
+
+        extraveclists: list of lists of supplemental vectors. For instance,
+        with two sectors, if you wanted to stitch BGV vectors as well, would
+        be:
+            {'BGV':[bgvlistsec0, bgvlistsec1],
+             'XCC':[xcclistsec0, xcclistsec1]}
+
     """
     for l in [timelist, maglist, magerrlist]:
         assert isinstance(l, list)
@@ -204,5 +214,13 @@ def stitch_light_curves(
     flux = np.hstack(fluxlist)
     fluxerr = np.hstack(fluxerrlist)
 
-    return time, flux, fluxerr
+    if extravecdict is None:
+        return time, flux, fluxerr
 
+    else:
+
+        extravecs = {}
+        for k,v in extravecdict.items():
+            extravecs[k] = np.hstack(v)
+
+        return time, flux, fluxerr, extravecs
