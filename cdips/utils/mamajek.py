@@ -6,6 +6,7 @@ Contents:
     get_interp_mass_from_rstar
     get_interp_rstar_from_teff
     get_interp_BmV_from_Teff
+    get_interp_BpmRp_from_Teff
 """
 import os
 import numpy as np, pandas as pd
@@ -146,3 +147,33 @@ def get_interp_BmV_from_Teff(teff):
                               fill_value='extrapolate')
 
     return fn_teff_to_BmV(teff)
+
+
+def get_interp_BpmRp_from_Teff(teff):
+    """
+    Given an effective temperature (or an array of them), get interpolated
+    Bp-Rp color.
+    """
+
+    mamadf = pd.read_csv(
+        os.path.join(datadir, 'Mamajek_Rstar_Mstar_Teff_SpT.txt'),
+        delim_whitespace=True
+    )
+    mamadf = mamadf[22:-6] # finite, monotonic BpmRp
+
+    mamarstar, mamamstar, mamateff, mamaBpmRp = (
+        nparr(mamadf['Rsun'])[::-1],
+        nparr(mamadf['Msun'])[::-1],
+        nparr(mamadf['Teff'])[::-1],
+        nparr(mamadf['BpmRp'])[::-1].astype(float)
+    )
+
+    # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
+    # BmVs. so remove anything where diff not strictly greater than...
+    isbad = np.insert(np.diff(mamaBpmRp) == 0, False, 0)
+
+    fn_teff_to_BpmRp = interp1d(mamateff[~isbad], mamaBpmRp[~isbad],
+                                kind='quadratic', bounds_error=False,
+                                fill_value='extrapolate')
+
+    return fn_teff_to_BpmRp(teff)
