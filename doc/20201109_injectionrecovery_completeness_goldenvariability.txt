@@ -40,3 +40,86 @@ Approach:
   * For other variability:
 
     * Standard periodogram search.
+
+------------------------------------------
+Wed Nov 11 14:38:35 2020
+
+Outcome (for IC2602 experiments; quotable in some future paper)
+
+"""
+In ``detrending'' for our general variability search, our goal was to preserve
+astrophysical variability, while removing systematic variability.
+
+We therefore turned to the principal components (i.e., the eigenvectors)
+calculated following the procedure described by Bouma et al 2019. In brief,
+these vectors are computed using a set of ``trend stars'' selected from across
+each CCD according to ad-hoc heuristics that (hopefully) lead them to be
+dominated by {\it systematic} variability.
+
+The principal component vectors, also referred to as the eigenvectors, are
+rank-ordered by the degree of variance that they predict in the training set
+(of ``trend stars'').
+
+We then posit that any given target star's light curve is described as a linear
+combination of the eigenvectors.  Optionally, we also considered the inclusion
+of additional systematic vectors that could affect the light curve, such as the
+CCD temperature, the flux level measured in the background annulus, and the
+centroid positions of the stars on the CCDs.  These can be treated as
+additional ``features'' in the linear model.
+
+There are many methods for determining the coefficients of the linear model,
+after the full set of eigenvectors (plus optionally ``sytematic'' vectors) has
+been asssembled.
+
+We explored two: ordinary least squares, and ridge regression. Ridge regression
+is OLS, plus an L2 norm with a regularization coefficient. The regularization
+coefficient that best applied for any given target light curve was solved for
+using a cross-validation grid search, using `sklearn.linear_modelRidgeCV`. 
+
+Each target light curve was mean-subtracted and normalized by its standard
+deviation, as were the eigenvectors. The linear problem was then solved, and
+the light curve was reconstructed by re-adding the original mean, and
+re-multiplying by the standard deviation to ensure that the variance of the
+light curve did not change.
+
+We found, somewhat to our surprise, that the choice of using OLS vs
+RidgeRegression did not seem to significantly affect the resulting light
+curves. In other words, the inclusion (or lack thereof) of a regularization did
+not strongly alter the best-fitting coefficients.
+
+A few other choices seemed to be more important:
+
+* To smooth, or to not smooth the eigenvectors.
+  Ideally, the eigenvectors should be smooth (and not contain residuals from
+  e.g., eclipsing binaries). However this does not always apply. Sometimes,
+  they are also noisy, which leads them to induce extra variability into the PCA
+  "detrended" light curves.
+  To address this problem, we opted to smooth the eigenvectors using a windowed
+  filter (with a "biweight" weight scheme, implemented in Wotan by Hippke+2019;
+  window length 1 day, cval 6).
+
+  One issue with this is that systematic sharp features (captured e.g., in
+  "spike vectors") no longer are captured, so they end up in the "PCA
+  detrended" light curves. They can be filtered out relatively easily though
+  (using rolling outlier rejection), and we prefer this approach to having
+  systematic features {\it injected by} the PCA detrending.
+
+* How many eigenvectors to use.
+
+  A larger number always leads to greater whitening.  In Bouma et al 2019, we
+  performed a Factor Analysis cross-validation to determine the number of
+  eigenvectors to use. The typical number adopted based on this analysis was
+  10--15.  Even though this approach was chosen to prevent over-fitting, in our
+  experience, for stellar rotation it still often lead to overfitting, especially
+  for rotation signals with periodicities of a few days.  (Shorter signals
+  typically are not distorted, since the eigenvectors generally do not contain
+  the high-frequency content that leads to the distortions).  For this analysis,
+  we therefore impose the maximum number of eigenvectors to be 5.
+
+  In addition, while we considered using BGV, CCDTEMP, XIC, and YIC, we found
+  that BGV tended to produce the best independent information from the PCA
+  eigenvectors, and so we adopted it as our only ``supplementary'' trend vector.
+  We opted to not smooth it (in hopes that it would provide direct complement to
+  the smoothed PCA vectors; 1 sharp vector containing literally the background
+  information, plus 5 smooth vectors).
+"""
