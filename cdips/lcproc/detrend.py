@@ -602,8 +602,7 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
                 -
                 np.nanmedian(MinMaxScaler().fit_transform(
                     data[s][:,None].astype(np.float64)
-                ).flatten()
-                )
+                ).flatten())
                 for s in sysvecnames
             ]
         )

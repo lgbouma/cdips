@@ -174,7 +174,12 @@ def run_explore_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=False,
                 time,
                 MinMaxScaler().fit_transform(
                     data[vecname][:,None].astype(np.float64)
-                ).flatten(),
+                ).flatten()
+                -
+                np.nanmedian(MinMaxScaler().fit_transform(
+                    data[vecname][:,None].astype(np.float64)
+                ).flatten())
+                ,
                 c='black', alpha=0.9, zorder=2, s=3, rasterized=True,
                 linewidths=0)
 
@@ -187,6 +192,10 @@ def run_explore_pca(lcpath, eigveclist, n_comp_df, use_sysvecs=False,
                         MinMaxScaler().fit_transform(
                             data[vecname][:,None].astype(np.float64)
                         ).flatten()
+                        -
+                        np.nanmedian(MinMaxScaler().fit_transform(
+                            data[vecname][:,None].astype(np.float64)
+                        ).flatten())
                     )-1,
                     c='C0', alpha=0.9, zorder=3, s=2, rasterized=True,
                     linewidths=0)
