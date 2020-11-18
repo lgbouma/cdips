@@ -4,29 +4,95 @@ import os, pickle, shutil, multiprocessing
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-from cdips.plotting import vetting_pdf as vp
-
-from cdips.vetting import (
-    centroid_analysis as cdva,
-    initialize_neighborhood_information as ini
-)
-
 from numpy import array as nparr
 from datetime import datetime
 
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astroquery.vizier import Vizier
-
-nworkers = multiprocessing.cpu_count()
+from astropy.wcs import WCS
 
 from astrobase import periodbase, checkplot
+from astrobase.plotbase import skyview_stamp
+
+from cdips.plotting import vetting_pdf as vp
+from cdips.paths import DATADIR
+
+from cdips.vetting import (
+    centroid_analysis as cdva,
+    initialize_neighborhood_information as ini
+)
+
+nworkers = multiprocessing.cpu_count()
 
 APSIZEDICT = {
     1: 1,
     2: 1.5,
     3: 2.25
 }
+
+
+def make_allvar_report(allvardict, plotdir):
+    """
+        allvardict = {
+            'source_id': source_id,
+            'ap': ap,
+            'TMID_BJD': time,
+            f'PCA{ap}': flux,
+            f'IRE{ap}': fluxerr,
+            'STIME': s_time,
+            f'SPCA{ap}': s_flux
+            f'SPCAE{ap}': s_flux
+            'dtr_infos': dtr_infos
+        }
+
+    Each dtr_infos tuple entry contains
+        primaryhdr, data, ap, dtrvecs, eigenvecs, smooth_eigenvecs
+    """
+
+    source_id = allvardict['source_id']
+    outpath = os.path.join(plotdir, f'{source_id}_allvar_report.pdf')
+
+    with PdfPages(outpath) as pdf:
+
+        ##########
+        # page 1
+        ##########
+        fig, lsp, spdm, objectinfo = allvar_periodogram_checkplot(
+            allvardict
+        )
+
+        pdf.savefig(fig, bbox_inches='tight')
+        plt.close()
+        if pd.isnull(lsp):
+            return
+
+        ##########
+        # page 2
+        ##########
+        fig = allvar_plot_timeseries_vecs(
+            allvardict
+        )
+        pdf.savefig(fig, bbox_inches='tight')
+        plt.close()
+
+        ##########
+        # page 3
+        ##########
+        fig = plot_rotationcheck(
+            allvardict, lsp, objectinfo
+        )
+        pdf.savefig(fig, bbox_inches='tight')
+        plt.close()
+
+        outd = {
+            'lsp': lsp,
+            'spdm': spdm,
+            'objectinfo': objectinfo
+        }
+
+    return outd
+
 
 def allvar_periodogram_checkplot(a):
 
@@ -77,7 +143,174 @@ def allvar_periodogram_checkplot(a):
         ax.get_xaxis().set_tick_params(which='both', direction='in',
                                        labelsize='xx-large')
 
-    return fig, lsp, spdm
+    return fig, lsp, spdm, objectinfo
+
+
+def plot_rotationcheck(a, lsp, objectinfo):
+
+    ap = int(a['ap'])
+    APSIZE = APSIZEDICT[ap]
+    phdr = a['dtr_infos'][0][0]
+
+    time, flux, err = a['STIME'], a[f'SPCA{ap}'], a[f'SPCAE{ap}']
+    rawtime, rawmag = a['TMID_BJD'], a['vec_dict'][f'IRM{ap}']
+
+    ra, dec = phdr['RA_OBJ'], phdr['DEC_OBJ']
+    dss, dss_hdr, sizepix = _get_dss(ra, dec)
+
+    #
+    # make the plot!
+    #
+
+    figsize=(30,10)
+    plt.close('all')
+
+    fig = plt.figure(figsize=figsize)
+    ax0 = plt.subplot2grid((1, 3), (0, 0))
+    ax1 = plt.subplot2grid((1, 3), (0, 1))
+    ax2 = plt.subplot2grid((1, 3), (0, 2), projection=WCS(dss_hdr))
+    # fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
+
+    #
+    # First: periodogram
+    #
+    ls_period_0 = lsp['bestperiod']
+    period = lsp['periods']
+    power = lsp['lspvals']
+
+    ax0.plot(period, power)
+    ax0.axvline(ls_period_0, alpha=0.4, lw=1, color='C0', ls='-')
+    ax0.axvline(2*ls_period_0, alpha=0.4, lw=1, color='C0', ls='--')
+    ax0.axvline(0.5*ls_period_0, alpha=0.4, lw=1, color='C0', ls='--')
+    ax0.set_title(f'P = {ls_period_0:.3f} d')
+    ax0.set_ylabel('LS Power')
+    ax0.set_xlabel('Period [days]')
+    ax0.set_xscale('log')
+
+    #
+    # Next: Prot vs (extinction corrected) Bp-Rp color.
+    #
+    E_BpmRp = a['E_BpmRp']
+    if E_BpmRp is None:
+        include_extinction = False
+    else:
+        include_extinction = True
+
+    BpmRp = phdr['phot_bp_mean_mag'] - phdr['phot_rp_mean_mag']
+    if include_extinction:
+        BpmRp -= E_BpmRp
+
+    rotdir = os.path.join(DATADIR)
+
+    classes = ['pleiades', 'praesepe']
+    colors = ['k', 'gray']
+    zorders = [3, 2]
+    markers = ['o', 'x']
+    lws = [0, 0.]
+    mews= [0.5, 0.5]
+    ss = [3.0, 6]
+    labels = ['Pleaides', 'Praesepe']
+
+    xlim_sel = (0.5, 1.5)
+
+    for _cls, _col, z, m, l, lw, s, mew in zip(
+        classes, colors, zorders, markers, labels, lws, ss, mews
+    ):
+        df = pd.read_csv(os.path.join(rotdir, f'curtis19_{_cls}_BpmRpinterp.csv'))
+
+        xval = df['BpmRp_interp']
+        sel = (xval > xlim_sel[0]) & (xval < xlim_sel[1])
+
+        ax1.plot(
+            xval[sel], df['prot'][sel], c=_col, alpha=1, zorder=z,
+            markersize=s, rasterized=False, lw=lw, label=l, marker=m, mew=mew,
+            mfc=_col
+        )
+
+    ax1.plot(
+        BpmRp, ls_period_0,
+        alpha=1, mew=0.5, zorder=8, label='Target', markerfacecolor='yellow',
+        markersize=18, marker='*', color='black', lw=0
+    )
+
+    ax1.legend(loc='best', handletextpad=0.1, framealpha=0.7)
+    ax1.set_ylabel('Rotation Period [days]')
+    ax1.set_xlabel('(Bp-Rp)$_0$ [mag]')
+    ax1.set_ylim((0,14))
+
+    #
+    # Finally: blending check. DSS finder.
+    #
+
+    # standard tick formatting fails for these images.
+    import matplotlib as mpl
+    mpl.rcParams['xtick.direction'] = 'in'
+    mpl.rcParams['ytick.direction'] = 'in'
+
+    cset2 = ax2.imshow(dss, origin='lower', cmap=plt.cm.gray_r)
+
+    ax2.grid(ls='--', alpha=0.5)
+    ax2.set_title('DSS2 Red', fontsize='xx-large')
+    showcolorbar = False
+    if showcolorbar:
+        cb = fig.colorbar(cset2, ax=ax2, extend='neither', fraction=0.046,
+                          pad=0.04)
+
+    # DSS is ~1 arcsecond per pixel. overplot aperture that was used.
+    px_to_arcsec = 21
+    circle = plt.Circle((sizepix/2, sizepix/2), APSIZE*px_to_arcsec, color=f'C0',
+                        fill=False, zorder=5)
+    ax2.add_artist(circle)
+
+    ax2.set_xlabel(r'$\alpha_{2000}$')
+    ax2.set_ylabel(r'$\delta_{2000}$')
+
+    #
+    # clean figure
+    #
+
+    for ax in [ax0, ax1, ax2]:
+        ax.get_yaxis().set_tick_params(which='both', direction='in',
+                                       labelsize='xx-large')
+        ax.get_xaxis().set_tick_params(which='both', direction='in',
+                                       labelsize='xx-large')
+
+    fig.tight_layout(w_pad=0.5, h_pad=0.5)
+
+    return fig
+
+
+def _get_dss(ra, dec):
+
+    ###########
+    # get DSS #
+    ###########
+    sizepix = 220
+    try:
+        dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
+                                     scaling='Linear', convolvewith=None,
+                                     sizepix=sizepix, flip=False,
+                                     cachedir='~/.astrobase/stamp-cache',
+                                     verbose=True, savewcsheader=True)
+    except (OSError, IndexError, TypeError) as e:
+        print('downloaded FITS appears to be corrupt, retrying...')
+        try:
+            dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
+                                         scaling='Linear', convolvewith=None,
+                                         sizepix=sizepix, flip=False,
+                                         cachedir='~/.astrobase/stamp-cache',
+                                         verbose=True, savewcsheader=True,
+                                         forcefetch=True)
+
+        except Exception as e:
+            print('failed to get DSS stamp ra {} dec {}, error was {}'.
+                  format(ra, dec, repr(e)))
+            return None, None, None
+
+    return dss, dss_hdr, sizepix
+
+
+
 
 
 def allvar_plot_timeseries_vecs(a):
@@ -123,51 +356,4 @@ def allvar_plot_timeseries_vecs(a):
     axs[2].set_ylabel(f'CBVs', fontsize='xx-large')
 
     return fig
-
-
-def make_allvar_report(allvardict, plotdir):
-    """
-        allvardict = {
-            'source_id': source_id,
-            'ap': ap,
-            'TMID_BJD': time,
-            f'PCA{ap}': flux,
-            f'IRE{ap}': fluxerr,
-            'STIME': s_time,
-            f'SPCA{ap}': s_flux
-            f'SPCAE{ap}': s_flux
-            'dtr_infos': dtr_infos
-        }
-
-    Each dtr_infos tuple entry contains
-        primaryhdr, data, ap, dtrvecs, eigenvecs, smooth_eigenvecs
-    """
-
-    source_id = allvardict['source_id']
-    outpath = os.path.join(plotdir, f'{source_id}_allvar_report.pdf')
-
-    with PdfPages(outpath) as pdf:
-
-        ##########
-        # page 1
-        ##########
-        fig, lsp, spdm = allvar_periodogram_checkplot(
-            allvardict
-        )
-
-        pdf.savefig(fig)
-        plt.close()
-        if pd.isnull(lsp):
-            return
-
-        ##########
-        # page 2
-        ##########
-
-        fig = allvar_plot_timeseries_vecs(
-            allvardict
-        )
-        pdf.savefig(fig)
-        plt.close()
-
 
