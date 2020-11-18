@@ -100,13 +100,13 @@ def allvar_periodogram_checkplot(a):
     time, flux, err = a['STIME'], a[f'SPCA{ap}'], a[f'SPCAE{ap}']
 
     spdm = periodbase.stellingwerf_pdm(
-        time, flux, err, magsarefluxes=True, startp=0.05, endp=19,
-        sigclip=10.0, nworkers=nworkers
+        time, flux, err, magsarefluxes=True, startp=0.05, endp=30,
+        sigclip=5.0, nworkers=nworkers
     )
 
     lsp = periodbase.pgen_lsp(
-        time, flux, err, magsarefluxes=True, startp=0.05, endp=19,
-        autofreq=True, sigclip=10.0, nworkers=nworkers
+        time, flux, err, magsarefluxes=True, startp=0.05, endp=30,
+        autofreq=True, sigclip=5.0, nworkers=nworkers
     )
 
     objectinfo = {}
@@ -132,7 +132,7 @@ def allvar_periodogram_checkplot(a):
         lsp, spdm, time, flux, err, magsarefluxes=True, objectinfo=objectinfo,
         varepoch='min', sigclip=None, plotdpi=100, phasebin=3e-2, phasems=6.0,
         phasebinms=14.0, unphasedms=6.0, figsize=(30,24), returnfigure=True,
-        circleoverlay=APSIZEDICT[ap]*21, yticksize=20
+        circleoverlay=APSIZEDICT[ap]*21, yticksize=20, trimylim=True
     )
 
     axs = fig.get_axes()
@@ -328,10 +328,10 @@ def allvar_plot_timeseries_vecs(a):
     nrows = 3
     fig, axs = plt.subplots(nrows=nrows, ncols=1, sharex=True, figsize=figsize)
 
-    axs[0].scatter(rawtime, rawmag, c='black', alpha=0.9, zorder=2, s=50,
+    axs[0].scatter(rawtime, rawmag, c='black', alpha=0.9, zorder=2, s=20,
                    rasterized=True, linewidths=0)
 
-    axs[1].scatter(time, flux, c='black', alpha=0.9, zorder=2, s=50,
+    axs[1].scatter(time, flux, c='black', alpha=0.9, zorder=2, s=20,
                    rasterized=True, linewidths=0)
 
     for i in range(0,7):

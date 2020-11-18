@@ -23,12 +23,17 @@ from wotan.slide_clipper import slide_clip
 
 def main():
 
-    runid = 'NGC2516_demo' # CG18 trimmed to first 15
+    runid = 'NGC2516_core_plus_halo' # CG18+KC19, sorted by color
     E_BpmRp = 0.1343 # apply extinction in summary plots
-
     sourcelist_path = (
-        f'/home/lbouma/proj/cdips/data/cluster_data/{runid}_source_ids.csv'
+        f'/home/lbouma/proj/cdips/data/cluster_data/{runid}.csv'
     )
+
+    # runid = 'NGC2516_demo' # CG18 trimmed to first 15
+    # E_BpmRp = 0.1343 # apply extinction in summary plots
+    # sourcelist_path = (
+    #     f'/home/lbouma/proj/cdips/data/cluster_data/{runid}_source_ids.csv'
+    # )
 
     # runid = 'ic2602_examples'
     # sourcelist_path = (
@@ -58,6 +63,8 @@ def main():
 def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
                                  apply_extinction=None):
 
+    print(42*'=')
+
     picklepath = os.path.join(outdir, 'data', f'{source_id}_allvar.pkl')
     statuspath = os.path.join(outdir, 'logs', f'{source_id}_status.log')
 
@@ -70,13 +77,22 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
                        'nbestperiods': None}
         ppu.save_status(statuspath, 'report_info', report_info)
 
+    s = ppu.load_status(statuspath)
+    if not overwrite:
+        if str2bool(s['report_info']['report_completed']):
+            print(f'Found {source_id} report_completed')
+            return 0
+        if s['lc_info']['n_sectors'] == '0':
+            print(f'Found {source_id} n_sectors = 0')
+            return 0
+        if s['lc_info']['detrending_completed'] == 'False':
+            print(f'Found {source_id} not detrending_completed')
+            return 0
 
+    # get the data needed to make the report if it hasn't already been made.
     if not os.path.exists(picklepath):
 
-        if os.path.exists(statuspath) and not overwrite:
-            s = ppu.load_status(statuspath)
-            if s['lc_info']['n_sectors'] == '0':
-                return 0
+        print(f'Beginning {source_id} allvariable report.')
 
         #
         # get the light curves
@@ -129,7 +145,7 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
         # remove outliers with windowed stdevn removal
         #
         window_length = 1.5 # days
-        s_flux = slide_clip(s_time, s_flux, window_length, low=3, high=3,
+        s_flux = slide_clip(s_time, s_flux, window_length, low=3, high=2,
                             method='mad', center='median')
 
         ap = dtr_infos[0][2]
@@ -150,6 +166,19 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
         with open(picklepath , 'wb') as f:
             pickle.dump(allvardict, f)
 
+        #
+        # sanity check that PCA / detrending worked
+        #
+        limit_fraction = 0.75
+        if len(flux[pd.isnull(flux)])/len(flux) > limit_fraction:
+            lc_info = {'n_sectors': len(lcpaths), 'lcpaths': lcpaths,
+                       'detrending_completed': False}
+            ppu.save_status(statuspath, 'lc_info', lc_info)
+            return 0
+
+        #
+        # update status that detrending worked.
+        #
         lc_info = {'n_sectors': len(lcpaths), 'lcpaths': lcpaths,
                    'detrending_completed': True}
         ppu.save_status(statuspath, 'lc_info', lc_info)
