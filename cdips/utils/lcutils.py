@@ -30,8 +30,8 @@ def find_cdips_lc_paths(
     try_mast=False
 ):
     """
-    Given a Gaia source ID, return all available CDIPS light curves (i.e.,
-    their paths) for that star.
+    Given a Gaia source ID, return list of all available CDIPS light curves
+    (i.e., their paths) for that star. If none found, return None.
 
     kwargs:
 
@@ -94,7 +94,7 @@ def find_cdips_lc_paths(
         if raise_error:
             raise ValueError(errmsg)
         else:
-            print('WRN!' + errmsg)
+            print('WRN! ' + errmsg)
 
         return None
 
