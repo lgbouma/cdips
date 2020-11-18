@@ -13,50 +13,85 @@ import pickle, os
 import numpy as np, pandas as pd
 
 import cdips.utils.lcutils as lcu
+import cdips.utils.pipelineutils as ppu
 import cdips.lcproc.detrend as dtr
 import cdips.lcproc.mask_orbit_edges as moe
 from cdips.plotting.allvar_report import make_allvar_report
+from cdips.utils import str2bool
 
 from wotan.slide_clipper import slide_clip
 
 def main():
 
-    runid = 'ic2602_examples'
+    runid = 'NGC2516_demo' # CG18 trimmed to first 15
+    E_BpmRp = 0.1343 # apply extinction in summary plots
+
     sourcelist_path = (
-        f'/home/lbouma/proj/cdips/tests/data/test_pca_{runid}.csv'
+        f'/home/lbouma/proj/cdips/data/cluster_data/{runid}_source_ids.csv'
     )
+
+    # runid = 'ic2602_examples'
+    # sourcelist_path = (
+    #     f'/home/lbouma/proj/cdips/tests/data/test_pca_{runid}.csv'
+    # )
+    # df = pd.read_csv(sourcelist_path, comment='#', names=['source_id'])
 
     # the plot and linked pickles go here
     outdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/allvariability_reports'
     outdir = os.path.join(outdir, runid)
     for d in [outdir,
               os.path.join(outdir, 'data'),
-              os.path.join(outdir, 'reports')
+              os.path.join(outdir, 'reports'),
+              os.path.join(outdir, 'logs')
     ]:
         if not os.path.exists(d):
             os.mkdir(d)
 
-    df = pd.read_csv(sourcelist_path, comment='#', names=['source_id'])
+    df = pd.read_csv(sourcelist_path)
 
     for s in list(df.source_id):
 
-        try:
-            do_allvariable_report_making(s, outdir=outdir)
-        except Exception as e:
-            print(f'ERROR! {e}')
-            pass
+        do_allvariable_report_making(s, outdir=outdir,
+                                     apply_extinction=E_BpmRp)
 
 
-def do_allvariable_report_making(source_id, outdir=None):
+def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
+                                 apply_extinction=None):
 
     picklepath = os.path.join(outdir, 'data', f'{source_id}_allvar.pkl')
+    statuspath = os.path.join(outdir, 'logs', f'{source_id}_status.log')
+
+    if not os.path.exists(statuspath):
+        # initialize status file
+        lc_info = {'n_sectors': None, 'lcpaths': None,
+                   'detrending_completed': None }
+        ppu.save_status(statuspath, 'lc_info', lc_info)
+        report_info = {'report_completed': None, 'ls_period': None,
+                       'nbestperiods': None}
+        ppu.save_status(statuspath, 'report_info', report_info)
+
 
     if not os.path.exists(picklepath):
 
-        lcpaths = lcu.find_cdips_lc_paths(source_id)
+        if os.path.exists(statuspath) and not overwrite:
+            s = ppu.load_status(statuspath)
+            if s['lc_info']['n_sectors'] == '0':
+                return 0
 
         #
-        # detrend systematics. each light  curve yields tuples of:
+        # get the light curves
+        #
+
+        lcpaths = lcu.find_cdips_lc_paths(source_id, raise_error=False)
+
+        if lcpaths is None:
+            lc_info = {'n_sectors': 0, 'lcpaths': None,
+                       'detrending_completed': False}
+            ppu.save_status(statuspath, 'lc_info', lc_info)
+            return 0
+
+        #
+        # detrend systematics. each light curve yields tuples of:
         #   primaryhdr, data, ap, dtrvecs, eigenvecs, smooth_eigenvecs
         #
         dtr_infos = []
@@ -100,6 +135,7 @@ def do_allvariable_report_making(source_id, outdir=None):
         ap = dtr_infos[0][2]
         allvardict = {
             'source_id': source_id,
+            'E_BpmRp': apply_extinction,
             'ap': ap,
             'TMID_BJD': time,
             f'PCA{ap}': flux,
@@ -114,14 +150,35 @@ def do_allvariable_report_making(source_id, outdir=None):
         with open(picklepath , 'wb') as f:
             pickle.dump(allvardict, f)
 
-    with open(picklepath, 'rb') as f:
-        allvardict = pickle.load(f)
+        lc_info = {'n_sectors': len(lcpaths), 'lcpaths': lcpaths,
+                   'detrending_completed': True}
+        ppu.save_status(statuspath, 'lc_info', lc_info)
+
+    s = ppu.load_status(statuspath)
+    if str2bool(s['lc_info']['detrending_completed']):
+        with open(picklepath, 'rb') as f:
+            allvardict = pickle.load(f)
+    else:
+        return 0
 
     #
     # make summary plots.
     #
-    plotdir = os.path.join(outdir, 'reports')
-    make_allvar_report(allvardict, plotdir)
+
+    if not str2bool(s['report_info']['report_completed']):
+        plotdir = os.path.join(outdir, 'reports')
+        outd = make_allvar_report(allvardict, plotdir)
+
+    #
+    # save their output (most crucially, including the bestperiods)
+    #
+    outpicklepath = os.path.join(outdir, 'data', f'{source_id}_reportinfo.pkl')
+    with open(outpicklepath , 'wb') as f:
+        pickle.dump(outd, f)
+
+    report_info = {'report_completed':True, 'ls_period': outd['lsp']['bestperiod'],
+                   'nbestperiods': outd['lsp']['nbestperiods']}
+    ppu.save_status(statuspath, 'report_info', report_info)
 
 
 if __name__ == "__main__":
