@@ -5,12 +5,18 @@ Given a list of Gaia source_ids, make systematics-corrected multi-sector light
 curves, run periodograms for general variability classification (not just
 planet-finding), and make an associated report.
 
-Usage:
+Debugging:
 $ python -u do_allvariable_report_making.py &> logs/ic2602_allvariable.log &
+
+Run-time:
+    Use the run_allvar_driver.sh script. (Because my implementation has a
+    memory leak)
 """
 
-import pickle, os
+import pickle, os, gc
 import numpy as np, pandas as pd
+from glob import glob
+from datetime import datetime
 
 import cdips.utils.lcutils as lcu
 import cdips.utils.pipelineutils as ppu
@@ -54,10 +60,36 @@ def main():
 
     df = pd.read_csv(sourcelist_path)
 
-    for s in list(df.source_id):
+    n_sources = len(df)
+    n_logs = len(glob(os.path.join(outdir, 'logs', '*_status.log')))
 
-        do_allvariable_report_making(s, outdir=outdir,
-                                     apply_extinction=E_BpmRp)
+    if n_logs < n_sources:
+
+        max_per_run = 10
+
+        cnt = 0
+        for s in list(df.source_id):
+            print('-'*42)
+            print(cnt)
+            res = do_allvariable_report_making(
+                s, outdir=outdir, apply_extinction=E_BpmRp
+            )
+            cnt += res
+
+            if cnt >= max_per_run:
+                break
+
+    else:
+        print('-'*42)
+        print('Found all logs! Taking a week-long break to avoid log-flooding.')
+        print('Escape through a manual `killall python`.')
+        print('-'*42)
+        import time
+        time.sleep(60*60*24*7)
+
+
+
+
 
 
 def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
@@ -92,7 +124,8 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
     # get the data needed to make the report if it hasn't already been made.
     if not os.path.exists(picklepath):
 
-        print(f'Beginning {source_id} allvariable report.')
+        thetime = datetime.utcnow().isoformat()
+        print(f'{thetime}: Beginning {source_id} detrending.')
 
         #
         # get the light curves
@@ -195,6 +228,10 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
     #
 
     if not str2bool(s['report_info']['report_completed']):
+
+        thetime = datetime.utcnow().isoformat()
+        print(f'{thetime}: Beginning {source_id} allvar report.')
+
         plotdir = os.path.join(outdir, 'reports')
         outd = make_allvar_report(allvardict, plotdir)
 
@@ -208,6 +245,8 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
     report_info = {'report_completed':True, 'ls_period': outd['lsp']['bestperiod'],
                    'nbestperiods': outd['lsp']['nbestperiods']}
     ppu.save_status(statuspath, 'report_info', report_info)
+
+    return 1
 
 
 if __name__ == "__main__":
