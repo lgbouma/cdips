@@ -161,9 +161,16 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
         for i in range(0,7):
             extravecdict[f'CBV{i}'] = [d[3][i, :] for d in dtr_infos]
 
-        time, flux, fluxerr, vec_dict = lcu.stitch_light_curves(
-            timelist, maglist, magerrlist, extravecdict
-        )
+        try:
+            time, flux, fluxerr, vec_dict = lcu.stitch_light_curves(
+                timelist, maglist, magerrlist, extravecdict
+            )
+        except ValueError:
+            lc_info = {'n_sectors': len(lcpaths), 'lcpaths': lcpaths,
+                       'detrending_completed': False}
+            ppu.save_status(statuspath, 'lc_info', lc_info)
+            return 0
+
 
         #
         # mask orbit edges
