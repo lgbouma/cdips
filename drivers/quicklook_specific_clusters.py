@@ -9,7 +9,8 @@ from os.path import join
 from astropy.io import fits
 
 from cdips.utils.lcutils import get_lc_data
-from cdips.paths import RESULTSDIR
+from cdips.utils.catalogs import get_cdips_pub_catalog
+from cdips.paths import RESULTSDIR, DATADIR
 
 def _get_viable_cluster_lcs(df):
 
@@ -184,6 +185,26 @@ def make_quicklook(task):
     print(f'Made {outpath}')
 
 
+def make_source_list(k, ver=0.4):
+
+    clusterkey = k
+
+    outdir = join(DATADIR, 'cluster_data', 'cdips_catalog_split')
+    outname = f'OC_MG_FINAL_v{ver}_publishable_CUT_{k}.csv'
+    outpath = os.path.join(outdir, outname)
+
+    if not os.path.exists(outpath):
+        df = get_cdips_pub_catalog(ver=ver)
+        sdf = _get_viable_cluster_lcs(df)
+        cdf = _apply_cluster_selection_function(sdf, clusterkey)
+        cdf.to_csv(outpath, index=False)
+        print(f'Made {outpath}')
+    else:
+        print(f'Found {outpath}')
+
+
+
+
 def run_quicklook(k, parallel=1):
 
     clusterkey = k
@@ -234,13 +255,25 @@ def run_quicklook(k, parallel=1):
 
 def main():
 
-    allowed_keys = [
-        "IC_2602", "NGC_2516", "CrA", "kc19group_113", "Hyades",
-        "VelaOB2", "ScoOB2", "Orion"
-    ]
+    DO_QUICKLOOK = 0 # run for the Online TESS Science Meeting in Aug 2020
+    DO_SOURCES_ONLY = 1 # for individual clusters
 
-    for k in allowed_keys:
-        run_quicklook(k, parallel=1)
+    if DO_SOURCES_ONLY:
+        allowed_keys = [
+            "IC_2602", "CrA", "kc19group_113", "Hyades", "VelaOB2", "ScoOB2",
+            "Orion", "NGC_2516"
+        ]
+        for k in allowed_keys:
+            make_source_list(k)
+
+
+    if DO_QUICKLOOK:
+        allowed_keys = [
+            "IC_2602", "NGC_2516", "CrA", "kc19group_113", "Hyades",
+            "VelaOB2", "ScoOB2", "Orion"
+        ]
+        for k in allowed_keys:
+            run_quicklook(k, parallel=1)
 
 
 if __name__ == "__main__":
