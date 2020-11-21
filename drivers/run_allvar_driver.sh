@@ -6,6 +6,6 @@
 # the manual ID) is needed afterward.
 while true;
 do
-  echo 'NEW LOOP BEGINS' `date` >> logs/ngc2516_core_plus_halo.log
-  python -u do_allvariable_report_making.py &>> logs/ngc2516_core_plus_halo.log ; wait
+  echo 'NEW LOOP BEGINS' `date` >> logs/IC2602_20201121.log
+  python -u do_allvariable_report_making.py &>> logs/IC2602_20201121.log ; wait
 done

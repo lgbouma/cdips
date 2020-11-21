@@ -29,11 +29,17 @@ from wotan.slide_clipper import slide_clip
 
 def main():
 
-    runid = 'NGC2516_core_plus_halo' # CG18+KC19, sorted by color
-    E_BpmRp = 0.1343 # apply extinction in summary plots
+    runid = 'IC_2602' # CG18+KC19, sorted by color
+    E_BpmRp = 0.0799 # avg E(B-V) from Randich+18, *1.31 per Stassun+2019
     sourcelist_path = (
-        f'/home/lbouma/proj/cdips/data/cluster_data/{runid}.csv'
+        f'/home/lbouma/proj/cdips/data/cluster_data/cdips_catalog_split/OC_MG_FINAL_v0.4_publishable_CUT_{runid}.csv'
     )
+
+    # runid = 'NGC2516_core_plus_halo' # CG18+KC19, sorted by color
+    # E_BpmRp = 0.1343 # apply extinction in summary plots
+    # sourcelist_path = (
+    #     f'/home/lbouma/proj/cdips/data/cluster_data/{runid}.csv'
+    # )
 
     # runid = 'NGC2516_demo' # CG18 trimmed to first 15
     # E_BpmRp = 0.1343 # apply extinction in summary plots
@@ -105,8 +111,14 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
         lc_info = {'n_sectors': None, 'lcpaths': None,
                    'detrending_completed': None }
         ppu.save_status(statuspath, 'lc_info', lc_info)
-        report_info = {'report_completed': None, 'ls_period': None,
-                       'nbestperiods': None}
+        report_info = {
+            'report_completed': None,
+            'ls_period': None,
+            'bestlspval': None,
+            'nbestperiods': None,
+            'nbestlspvals': None,
+            'n_dict': None
+        }
         ppu.save_status(statuspath, 'report_info', report_info)
 
     s = ppu.load_status(statuspath)
@@ -188,6 +200,11 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
         s_flux = slide_clip(s_time, s_flux, window_length, low=3, high=2,
                             method='mad', center='median')
 
+        #
+        # fix any "zero" values in s_flux to be NaN
+        #
+        s_flux[s_flux == 0] = np.nan
+
         ap = dtr_infos[0][2]
         allvardict = {
             'source_id': source_id,
@@ -249,8 +266,14 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
     with open(outpicklepath , 'wb') as f:
         pickle.dump(outd, f)
 
-    report_info = {'report_completed':True, 'ls_period': outd['lsp']['bestperiod'],
-                   'nbestperiods': outd['lsp']['nbestperiods']}
+    report_info = {
+        'report_completed': True,
+        'ls_period': outd['lsp']['bestperiod'],
+        'bestlspval': outd['lsp']['bestlspval'],
+        'nbestperiods': outd['lsp']['nbestperiods'],
+        'nbestlspvals': outd['lsp']['nbestlspvals'],
+        'n_dict': outd['n_dict']
+    }
     ppu.save_status(statuspath, 'report_info', report_info)
 
     return 1

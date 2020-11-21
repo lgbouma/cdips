@@ -9,8 +9,10 @@ from datetime import datetime
 
 from astropy.coordinates import SkyCoord
 from astropy import units as u
-from astroquery.vizier import Vizier
 from astropy.wcs import WCS
+
+from astroquery.vizier import Vizier
+from astroquery.mast import Catalogs
 
 from astrobase import periodbase, checkplot
 from astrobase.plotbase import skyview_stamp
@@ -79,7 +81,7 @@ def make_allvar_report(allvardict, plotdir):
         ##########
         # page 3
         ##########
-        fig = plot_rotationcheck(
+        fig, n_dict = plot_rotationcheck(
             allvardict, lsp, objectinfo
         )
         pdf.savefig(fig, bbox_inches='tight')
@@ -88,7 +90,8 @@ def make_allvar_report(allvardict, plotdir):
         outd = {
             'lsp': lsp,
             'spdm': spdm,
-            'objectinfo': objectinfo
+            'objectinfo': objectinfo,
+            'n_dict': n_dict
         }
 
     return outd
@@ -151,12 +154,30 @@ def plot_rotationcheck(a, lsp, objectinfo):
     ap = int(a['ap'])
     APSIZE = APSIZEDICT[ap]
     phdr = a['dtr_infos'][0][0]
+    TESSMAG = phdr['TESSMAG']
 
     time, flux, err = a['STIME'], a[f'SPCA{ap}'], a[f'SPCAE{ap}']
     rawtime, rawmag = a['TMID_BJD'], a['vec_dict'][f'IRM{ap}']
 
     ra, dec = phdr['RA_OBJ'], phdr['DEC_OBJ']
     dss, dss_hdr, sizepix = _get_dss(ra, dec)
+
+    # Count how many stars inside the aperture are brighter.
+    radius = APSIZE*21.0*u.arcsec
+    nbhr_stars = Catalogs.query_region(
+        "{} {}".format(float(ra), float(dec)),
+        catalog="TIC",
+        radius=radius
+    )
+    n_in_ap_equal = len(nbhr_stars[nbhr_stars['Tmag'] < TESSMAG])
+    n_in_ap_close = len(nbhr_stars[nbhr_stars['Tmag'] < (TESSMAG+1.25)])
+    n_in_ap_faint = len(nbhr_stars[nbhr_stars['Tmag'] < (TESSMAG+2.5)])
+    n_dict = {
+        'equal': n_in_ap_equal,
+        'close': n_in_ap_close,
+        'faint': n_in_ap_faint
+    }
+
 
     #
     # make the plot!
@@ -277,7 +298,7 @@ def plot_rotationcheck(a, lsp, objectinfo):
 
     fig.tight_layout(w_pad=0.5, h_pad=0.5)
 
-    return fig
+    return fig, n_dict
 
 
 def _get_dss(ra, dec):
