@@ -27,10 +27,23 @@ from cdips.utils import str2bool
 
 from wotan.slide_clipper import slide_clip
 
+RUNID_EXTINCTION_DICT = {
+    'IC_2602': 0.0799,  # avg E(B-V) from Randich+18, *1.31 per Stassun+2019
+    'NGC_2516': 0.1343, # 0.25 for KC19
+    'CrA': 0.06389, # KC19 ratio used
+    'kc19group_113': 0.1386, # 0.258 from KC19 -- take ratio
+    'Orion': 0.1074, # again KC19 ratio used
+    'VelaOB2': 0.2686, # KC19 ratio
+    'ScoOB2': 0.161, # KC19 ratio
+}
+
 def main():
 
-    runid = 'IC_2602' # CG18+KC19, sorted by color
-    E_BpmRp = 0.0799 # avg E(B-V) from Randich+18, *1.31 per Stassun+2019
+    runid = 'kc19group_113' # CG18+KC19, sorted by color
+    # runid = 'CrA' # CG18+KC19, sorted by color
+    # runid = 'IC_2602' # CG18+KC19, sorted by color
+
+    E_BpmRp = RUNID_EXTINCTION_DICT[runid]
     sourcelist_path = (
         f'/home/lbouma/proj/cdips/data/cluster_data/cdips_catalog_split/OC_MG_FINAL_v0.4_publishable_CUT_{runid}.csv'
     )
@@ -52,6 +65,8 @@ def main():
     #     f'/home/lbouma/proj/cdips/tests/data/test_pca_{runid}.csv'
     # )
     # df = pd.read_csv(sourcelist_path, comment='#', names=['source_id'])
+
+    ##########################################
 
     # the plot and linked pickles go here
     outdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/allvariability_reports'
