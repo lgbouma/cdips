@@ -230,7 +230,7 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
             f'IRE{ap}': fluxerr,
             'STIME': s_time,
             f'SPCA{ap}': s_flux,
-            f'SPCAE{ap}': s_flux,
+            f'SPCAE{ap}': s_fluxerr,
             'dtr_infos': dtr_infos,
             'vec_dict': vec_dict
         }

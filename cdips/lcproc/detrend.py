@@ -42,6 +42,7 @@ import os, shutil
 from glob import glob
 
 from numpy import array as nparr, all as npall, isfinite as npisfinite
+import numpy.lib.recfunctions as rfn
 
 from astrobase import imageutils as iu
 from astrobase.lcmath import find_lc_timegroups
@@ -122,7 +123,7 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
     return flat_flux, trend_flux
 
 
-def detrend_systematics(lcpath, max_n_comp=5):
+def detrend_systematics(lcpath, max_n_comp=5, infodict=None):
     """
     Wraps functions in lcproc.detrend for all-in-one systematics removal, using
     a tuned variant of PCA.
@@ -135,8 +136,9 @@ def detrend_systematics(lcpath, max_n_comp=5):
         Tuple of primaryhdr, data, ap, dtrvecs, eigenvecs, smooth_eigenvecs
     """
 
-    from cdips.utils import given_lcpath_get_infodict
-    infodict = given_lcpath_get_infodict(lcpath)
+    if infodict is None:
+        from cdips.utils import given_lcpath_get_infodict
+        infodict = given_lcpath_get_infodict(lcpath)
 
     eigveclist, n_comp_df = prepare_pca(
         infodict['CAMERA'], infodict['CCD'],
@@ -148,7 +150,6 @@ def detrend_systematics(lcpath, max_n_comp=5):
         get_dtrvecs(lcpath, eigveclist, sysvecnames=sysvecnames)
     )
     time, y = data['TMID_BJD'], data[f'IRM{ap}']
-    source_id = primaryhdr['OBJECT']
 
     n_components = min([int(n_comp_df[f'fa_cv_ap{ap}']), max_n_comp])
     n_components += len(sysvecnames)
@@ -157,7 +158,13 @@ def detrend_systematics(lcpath, max_n_comp=5):
         y, dtrvecs, n_components, method='LinearRegression'
     )
 
-    data[f'PCA{ap}'] = model_mag
+    try:
+        data[f'PCA{ap}'] = model_mag
+    except KeyError:
+        data = np.array(data)
+        _d = rfn.append_fields(data, f'PCA{ap}', model_mag, dtypes='>f8')
+        data = _d.data
+
     primaryhdr[f'PCA{ap}NCMP'] = (
         n_comp,
         f'N principal components PCA{ap}'
@@ -560,7 +567,11 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
         hdul[0].header, hdul[1].header, hdul[1].data
     )
     hdul.close()
-    ap = min([get_best_ap_number_given_lcpath(lcpath), 2])
+    try:
+        best_ap = get_best_ap_number_given_lcpath(lcpath)
+    except TypeError:
+        best_ap = 2
+    ap = np.nanmin([best_ap, 2])
 
     ##########################################
     # begin PCA.
