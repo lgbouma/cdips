@@ -245,7 +245,7 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
         and
             g.ra < {ra_upper:.2f}
         and
-            g.phot_g_mean_mag < {g_mag_limit:d}
+            g.phot_g_mean_mag < {g_mag_limit:.1f}
         order by
             random_index
         """
