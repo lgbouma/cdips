@@ -66,7 +66,8 @@ def given_votable_get_df(votablepath, assert_equal='source_id'):
 def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
                                    overwrite=True,
                                    enforce_all_sourceids_viable=True,
-                                   savstr=''):
+                                   savstr='',
+                                   gaia_datarelease='gaiadr2'):
     """
     Args:
 
@@ -83,6 +84,8 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
 
         savstr (str); optional string that will be included in the path to
         the downloaded vizier table.
+
+        gaia_datarelease (str): 'gaiadr2' or 'gaiaedr3'. Default is Gaia DR2.
 
     Returns:
 
@@ -122,11 +125,12 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         jobstr = (
         '''
         SELECT top {n_max:d} *
-        FROM tap_upload.foobar as u, gaiadr2.gaia_source AS g
+        FROM tap_upload.foobar as u, {gaia_datarelease:s}.gaia_source AS g
         WHERE u.source_id=g.source_id
         '''
         ).format(
-            n_max=n_max
+            n_max=n_max,
+            gaia_datarelease=gaia_datarelease
         )
         query = jobstr
 
