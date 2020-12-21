@@ -4,6 +4,7 @@ Contents:
     given_votable_get_df
     given_source_ids_get_gaia_data
     query_neighborhood
+    given_dr2_sourceids_get_edr3_xmatch
 """
 ###########
 # imports #
@@ -157,7 +158,6 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
                 format(len(df), len(source_ids))
             )
             print(errmsg)
-            import IPython; IPython.embed()
             raise AssertionError(errmsg)
 
     if len(df) != len(source_ids) and not enforce_all_sourceids_viable:
@@ -329,3 +329,124 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
     df = given_votable_get_df(dlpath, assert_equal='source_id')
 
     return df
+
+
+def given_dr2_sourceids_get_edr3_xmatch(dr2_source_ids, runid, overwrite=True,
+                                        enforce_all_sourceids_viable=True):
+    """
+    Use the dr2_neighborhood table to look up the EDR3 source_ids given DR2
+    source_ids.
+
+    "The only safe way to compare source records between different Data
+    Releases in general is to check the records of proximal source(s) in the
+    same small part of the sky. This table provides the means to do this via a
+    precomputed crossmatch of such sources, taking into account the proper
+    motions available at E/DR3."
+
+    "Within the neighbourhood of a given E/DR3 source there may be none, one or
+    (rarely) several possible counterparts in DR2 indicated by rows in this
+    table. This occasional source confusion is an inevitable consequence of the
+    merging, splitting and deletion of identifiers introduced in previous
+    releases during the DR3 processing and results in no guaranteed one–to–one
+    correspondence in source identifiers between the releases."
+
+    See:
+    https://gea.esac.esa.int/archive/documentation/GEDR3/Gaia_archive/chap_datamodel/sec_dm_auxiliary_tables/ssec_dm_dr2_neighbourhood.html
+
+    Args:
+
+        dr2_source_ids (np.ndarray) of np.int64 Gaia DR2 source_ids
+
+        runid (str): identifier used to identify and cache jobs.
+
+        overwrite: if True, and finds that this crossmatch has already run,
+        deletes previous cached output and reruns anyway.
+
+        enforce_all_sourceids_viable: if True, will raise an assertion error if
+        every source id does not return a result. (Unless the query returns
+        n_max entries, in which case only a warning will be raised).
+
+    Returns:
+
+        dr2_x_edr3_df (pd.DataFrame), containing:
+            ['source_id', 'dr2_source_id', 'dr3_source_id', 'angular_distance',
+            'magnitude_difference', 'proper_motion_propagation']
+
+        where "source_id" is the requested source_id, and the remaining columns
+        are matches from the dr2_neighborhood table.
+
+        This DataFrame should then be used to ensure e.g., that every REQUESTED
+        source_id provides only one MATCHED star.
+    """
+
+    if type(dr2_source_ids) != np.ndarray:
+        raise TypeError(
+            'source_ids must be np.ndarray of np.int64 Gaia DR2 source_ids'
+        )
+    if type(dr2_source_ids[0]) != np.int64:
+        raise TypeError(
+            'source_ids must be np.ndarray of np.int64 Gaia DR2 source_ids'
+        )
+    if not isinstance(runid, str):
+        raise TypeError(
+            'Expect runid to be a (preferentially unique among jobs) string.'
+        )
+
+    xmltouploadpath = os.path.join(
+        gaiadir, f'toupload_{runid}.xml'
+    )
+    dlpath = os.path.join(
+        gaiadir,f'{runid}_matches.xml.gz'
+    )
+
+    if overwrite:
+        if os.path.exists(xmltouploadpath):
+            os.remove(xmltouploadpath)
+
+    if not os.path.exists(xmltouploadpath):
+        make_votable_given_source_ids(dr2_source_ids, outpath=xmltouploadpath)
+
+    if os.path.exists(dlpath) and overwrite:
+        os.remove(dlpath)
+
+    if not os.path.exists(dlpath):
+
+        Gaia.login(credentials_file=credentials_file)
+
+        jobstr = (
+        '''
+        SELECT *
+        FROM tap_upload.foobar as u, gaiaedr3.dr2_neighbourhood AS g
+        WHERE u.source_id=g.dr2_source_id
+        '''
+        ).format(
+        )
+        query = jobstr
+
+        # might do async if this times out. but it doesn't.
+        j = Gaia.launch_job(query=query,
+                            upload_resource=xmltouploadpath,
+                            upload_table_name="foobar", verbose=True,
+                            dump_to_file=True, output_file=dlpath)
+
+        Gaia.logout()
+
+    df = given_votable_get_df(dlpath, assert_equal=None)
+
+    if len(df) > len(dr2_source_ids):
+        wrnmsg = (
+            'WRN! got {} matches vs {} source id queries. Fix via angular_distance or magnitude_difference'.
+            format(len(df), len(dr2_source_ids))
+        )
+        print(wrnmsg)
+
+    if len(df) < len(dr2_source_ids) and enforce_all_sourceids_viable:
+        errmsg = (
+            'ERROR! got {} matches vs {} dr2 source id queries'.
+            format(len(df), len(dr2_source_ids))
+        )
+        print(errmsg)
+        raise AssertionError(errmsg)
+
+    return df
+
