@@ -72,7 +72,8 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
     """
     Args:
 
-        source_ids (np.ndarray) of np.int64 Gaia DR2 source_ids
+        source_ids (np.ndarray) of np.int64 Gaia DR2/EDR3 source_ids. (If EDR3,
+        be sure to use the correct `gaia_datarelease` kwarg)
 
         groupname (str)
 
@@ -411,15 +412,19 @@ def given_dr2_sourceids_get_edr3_xmatch(dr2_source_ids, runid, overwrite=True,
 
     if not os.path.exists(dlpath):
 
+        n_max = 2*len(dr2_source_ids)
+        print(f"Setting n_max = 2 * (number of dr2_source_ids) = {n_max}")
+
         Gaia.login(credentials_file=credentials_file)
 
         jobstr = (
         '''
-        SELECT *
+        SELECT top {n_max:d} *
         FROM tap_upload.foobar as u, gaiaedr3.dr2_neighbourhood AS g
         WHERE u.source_id=g.dr2_source_id
         '''
         ).format(
+            n_max=n_max
         )
         query = jobstr
 
@@ -449,4 +454,3 @@ def given_dr2_sourceids_get_edr3_xmatch(dr2_source_ids, runid, overwrite=True,
         raise AssertionError(errmsg)
 
     return df
-
