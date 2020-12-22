@@ -6,6 +6,7 @@ CDIPS-specific:
 
 General:
     today_YYYYMMDD: gives today's date in YYYYMMDD format.
+    astropytime_to_YYYYMMDD: kind of a standard string formatter.
     str2bool
 
 UNIX-esque tools:
@@ -21,6 +22,18 @@ def today_YYYYMMDD():
     txt = '{}{}{}'.format(str(datetime.today().year),
                           str(datetime.today().month).zfill(2),
                           str(datetime.today().day).zfill(2))
+    return txt
+
+
+def astropytime_to_YYYYMMDD(time, sep=''):
+    """
+    Input: astropy.Time object
+    Returns: string of YYYYMMDD, with optional arbitrary separator
+    """
+    txt = ''
+    txt += str(time.datetime.year) + sep
+    txt += str(time.datetime.month).zfill(2) + sep
+    txt += str(time.datetime.day).zfill(2)
     return txt
 
 
