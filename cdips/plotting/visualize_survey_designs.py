@@ -37,7 +37,8 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
              title='Mollweide projection', projection='mollweide', savdir='../results/',
              savname='mwd_0.pdf', overplot_galactic_plane=True, is_tess=False,
              coordsys=None, cbarbounds=None, for_proposal=False,
-             overplot_k2_fields=False, overplot_cdips=False, plot_tess=True):
+             overplot_k2_fields=False, overplot_cdips=False, plot_tess=True,
+             primary_plus_extended=False):
 
     '''
     args, kwargs:
@@ -101,6 +102,9 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
                           "#757575", "#757575", "#757575", "#757575",
                           "#363636", "#363636"] # N=12,13 saturated gray
 
+                if primary_plus_extended:
+                    colors += ["#1d1d1d"] # for extend colorbar
+
             cmap = LinearSegmentedColormap.from_list(
                 'my_cmap', colors, N=len(colors))
         else:
@@ -143,12 +147,20 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
         ticks = (np.arange(-1,13)+1)
         ylabels = list(map(str,np.round((np.arange(0,14)),1)))
 
+        if primary_plus_extended:
+            extend = 'max'
+            ticks = (np.arange(-1,14)+1)
+            ylabels = list(map(str,np.round((np.arange(0,13)),1)))
+            ylabels += ['$\geq$13']
+        else:
+            extend = 'neither'
+
         cbar = fig.colorbar(cax, cmap=cmap, norm=norm, boundaries=bounds,
                             fraction=0.025, pad=0.03,
                             ticks=ticks,
-                            orientation='vertical')
+                            orientation='vertical', extend=extend)
 
-        cbar.ax.set_yticklabels(ylabels, fontsize='x-small')
+        # cbar.ax.set_yticklabels(ylabels, fontsize='x-small')
         cbar.set_label('Lunar months observed', rotation=270, labelpad=10)
         cbar.ax.tick_params(direction='in')
 
@@ -472,9 +484,9 @@ def get_n_observations(dirnfile, outpath, n_stars, merged=False,
     print('saved {}'.format(outpath))
 
 
-def only_extended_only_primary(overplot_galactic_plane=True, for_proposal=False,
-                               overplot_k2_fields=False,
-                               plot_tess=True, overplot_cdips=False):
+def plot_tess_skymap(overplot_galactic_plane=True, for_proposal=False,
+                     overplot_k2_fields=False, plot_tess=True,
+                     overplot_cdips=False, primary_plus_extended=False):
     """
     make plots the primary mission.
     (no merging)
@@ -485,13 +497,16 @@ def only_extended_only_primary(overplot_galactic_plane=True, for_proposal=False,
     orbit_duration_days = 1/2 #27.32 / 2
 
     # things to change
-    filenames = [ 'primary_mission_truenorth.csv' ]
 
-    eclsavnames = [ 'primary_mission_truenorth_eclmap.png' ]
+    namestr = 'idea_15_final_truenorth' # could be e.g., 'primary_mission_truenorth'
 
-    icrssavnames = [ 'primary_mission_truenorth_icrsmap.png' ]
+    filenames = [ f'{namestr}.csv' ]
 
-    titles = [ 'primary mission' ]
+    eclsavnames = [ f'{namestr}_eclmap.png' ]
+
+    icrssavnames = [ f'{namestr}_icrsmap.png' ]
+
+    titles = [ '' ]
 
     dirnfiles = [ os.path.join(datadir,fname) for fname in filenames]
 
@@ -500,6 +515,8 @@ def only_extended_only_primary(overplot_galactic_plane=True, for_proposal=False,
 
         size=0.8
 
+        if primary_plus_extended:
+            eclsavname = eclsavname.replace('.png','_merged.png')
         if for_proposal:
             eclsavname = eclsavname.replace('.png','_forproposal.png')
             size=0.5
@@ -512,9 +529,12 @@ def only_extended_only_primary(overplot_galactic_plane=True, for_proposal=False,
         icrssavname = eclsavname.replace('eclmap','icrsmap')
         galsavname = eclsavname.replace('eclmap','galacticmap')
 
-        obsdstr = '' if not for_proposal else '_forproposal'
-        obsdpath = dirnfile.replace(
-            '.csv', '_coords_observed{}.csv'.format(obsdstr))
+        obsdstr = ''
+        if primary_plus_extended:
+            obsdstr += '_merged'
+        if for_proposal:
+            obsdstr += '_forproposal'
+        obsdpath = dirnfile.replace('.csv', f'_coords_observed{obsdstr}.csv')
 
         if not os.path.exists(obsdpath):
             # takes about 1 minute per strategy
@@ -533,6 +553,8 @@ def only_extended_only_primary(overplot_galactic_plane=True, for_proposal=False,
         df['glat'] = c.galactic.b.value
 
         cbarbounds = np.arange(-1/2, 14, 1)
+        if primary_plus_extended:
+            cbarbounds = np.arange(-1/2, 15, 1)
         sel_durn = (nparr(df['obs_duration']) >= 0)
 
         coordsyss = ['galactic','ecliptic','icrs']
@@ -552,7 +574,8 @@ def only_extended_only_primary(overplot_galactic_plane=True, for_proposal=False,
                      is_tess=True, coordsys=c, cbarbounds=cbarbounds,
                      for_proposal=for_proposal,
                      overplot_k2_fields=overplot_k2_fields,
-                     overplot_cdips=overplot_cdips, plot_tess=plot_tess)
+                     overplot_cdips=overplot_cdips, plot_tess=plot_tess,
+                     primary_plus_extended=primary_plus_extended)
 
 
 if __name__=="__main__":
@@ -565,12 +588,13 @@ if __name__=="__main__":
     overplot_cdips=1           # true to overplot CDIPS target stars
     overplot_sfr_labels=0      # TODO true to overplot names of nearby star forming regions
     overplot_galactic_plane=0  # ...
+    primary_plus_extended = 1  # whether to use "merged" coordinates
 
     # END OPTIONS
 
     for overplot_cdips in [0,1]:
-        only_extended_only_primary(overplot_galactic_plane=overplot_galactic_plane,
-                                   for_proposal=for_proposal,
-                                   overplot_k2_fields=overplot_k2_fields,
-                                   plot_tess=plot_tess,
-                                   overplot_cdips=overplot_cdips)
+        plot_tess_skymap(overplot_galactic_plane=overplot_galactic_plane,
+                         for_proposal=for_proposal,
+                         overplot_k2_fields=overplot_k2_fields,
+                         plot_tess=plot_tess, overplot_cdips=overplot_cdips,
+                         primary_plus_extended=primary_plus_extended)
