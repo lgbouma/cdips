@@ -43,10 +43,13 @@ def compass(ax, x, y, size, invert_x=False, invert_y=False):
 
 
 def rainbow_text(x, y, strings, colors, orientation='horizontal',
-                 ax=None, **kwargs):
+                 prefactor=0.75, ax=None, **kwargs):
     """
     Take a list of *strings* and *colors* and place them next to each
     other, with text strings[i] being shown in colors[i].
+
+    NOTE: `prefactor` is set for .pdf output. It renders differently for .png
+    output, for insane reasons.
 
     Example call:
         ```
@@ -75,10 +78,10 @@ def rainbow_text(x, y, strings, colors, orientation='horizontal',
     t = ax.transAxes
     canvas = ax.figure.canvas
 
-    props = dict(boxstyle='square', facecolor='white', alpha=1, pad=0.05,
+    props = dict(boxstyle='square', facecolor='white', alpha=1, pad=0.08,
                  linewidth=0)
 
-    kwargs.update(rotation=0, va='bottom', ha='right')
+    kwargs.update(rotation=0, va='center', ha='center')
 
     for s, c in zip(strings, colors):
         text = ax.text(x, y, s + " ", color=c, transform=t, bbox=props,
@@ -88,6 +91,6 @@ def rainbow_text(x, y, strings, colors, orientation='horizontal',
         text.draw(canvas.get_renderer())
         ex = text.get_window_extent()
         t = transforms.offset_copy(
-            text.get_transform(), y=0.75*ex.height, units='dots'
+            text.get_transform(), y=prefactor*ex.height, units='dots'
         )
 
