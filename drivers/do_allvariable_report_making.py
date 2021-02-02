@@ -39,7 +39,11 @@ RUNID_EXTINCTION_DICT = {
 
 def main():
 
-    runid = 'kc19group_113' # CG18+KC19, sorted by color
+    runid = 'ScoOB2' # CG18+KC19, sorted by color
+    #runid = 'NGC_2516' # CG18+KC19, sorted by color
+    #runid = 'VelaOB2' # CG18+KC19, sorted by color
+    #runid = 'Orion' # CG18+KC19, sorted by color
+    # runid = 'kc19group_113' # CG18+KC19, sorted by color
     # runid = 'CrA' # CG18+KC19, sorted by color
     # runid = 'IC_2602' # CG18+KC19, sorted by color
 
