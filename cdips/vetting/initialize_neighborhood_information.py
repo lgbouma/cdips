@@ -51,7 +51,8 @@ K18_PATH = k18_path_d[socket.gethostname()]
 def get_neighborhood_information(
     source_id,
     overwrite=0,
-    min_n_nbhrs=1000
+    min_n_nbhrs=1000,
+    manual_gmag_limit=None
     ):
     """
     Given a source_id for a star (potentially a field star), acquire
@@ -62,6 +63,8 @@ def get_neighborhood_information(
         source_id: Gaia DR2 source_id
 
         overwrite: Whether the Gaia cache gets overwritten.
+
+        manual_gmag_limit: G < manual_gmag_limit for the neighborhood
     """
 
     #
@@ -140,10 +143,12 @@ def get_neighborhood_information(
         # only force overwrite if iterating
         if n_nbhrs == 0:
             nbhd_df = query_neighborhood(bounds, groupname, n_max=n_max,
-                                         overwrite=overwrite)
+                                         overwrite=overwrite,
+                                         manual_gmag_limit=manual_gmag_limit)
         else:
             nbhd_df = query_neighborhood(bounds, groupname, n_max=n_max,
-                                         overwrite=True)
+                                         overwrite=True,
+                                         manual_gmag_limit=manual_gmag_limit)
 
         n_nbhrs = len(nbhd_df)
         print(42*'=')
