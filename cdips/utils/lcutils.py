@@ -1,9 +1,24 @@
 """
 Contents:
 
-    _given_mag_get_flux: self-descriptive.
+Light curve retrieval:
 
     find_cdips_lc_paths: given a source_id, return the paths
+
+    find_calibration_lc_paths: given a source_id, return paths to the
+    CALIBRATION light curves ({source_id}_llc.fits)
+
+    make_calibration_list: make a metadata file consisting of the G_Rp<13
+    calibration light curve paths, PLUS the G_Rp<16 cluster light curve paths.
+
+    make_lc_list: make a metadata file consisting of the G_Rp<16 cluster light
+    curves paths.
+        Not Implemented!!
+        "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/get_lc_list.sh but pythonized"
+
+Light curve miscellanea:
+
+    _given_mag_get_flux: self-descriptive.
 
     get_lc_data: given a path, return selected vectors.
 
@@ -224,3 +239,61 @@ def stitch_light_curves(
             extravecs[k] = np.hstack(v)
 
         return time, flux, fluxerr, extravecs
+
+
+def make_calibration_list(
+    OUTDIR='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS'
+    ):
+    """
+    Make a metadata file consisting of [all of!] the G_Rp<13 calibration light
+    curve paths, plus the G_Rp<16 target light curve paths.  In other words,
+    paths to all the light curves that have been made. Writes it to
+    OUTDIR/calibration_list_YYYYMMDD.txt.  Also writes count logs to
+    OUTDIR/counts/calibration_sector_{ix}.count
+    """
+
+    from cdips.utils import today_YYYYMMDD
+    todaystr = today_YYYYMMDD()
+
+    outpath = os.path.join(OUTDIR, f'calibration_list_{todaystr}.txt')
+
+    countdir = os.path.join(OUTDIR, 'counts')
+    if not os.path.exists(countdir):
+        os.mkdir(countdir)
+
+    CALIBDIR = '/nfs/phtess2/ar0/TESS/FFI/LC/FULL'
+
+    for i in range(1, 14):
+
+        # e.g., /nfs/phtess2/ar0/TESS/FFI/LC/FULL/s0012/*/*.fits
+        calibglob = os.path.join(CALIBDIR, f's{str(i).zfill(4)}', '*', '*_llc.fits')
+
+        countpath = os.path.join(countdir, f'calibration_sector_{i}.count')
+
+        print(f'Sector {i}...')
+
+        countcmd = (
+            f'echo {calibglob} | xargs ls | wc -l > {countpath}'
+        )
+        returncode = os.system(countcmd)
+        print(f'ran {countcmd}')
+        if returncode != 0:
+            raise AssertionError('count cmd failed!!')
+
+        appendcmd = (
+            f'echo {calibglob} | xargs ls >> {outpath}'
+        )
+        returncode = os.system(appendcmd)
+        print(f'ran {appendcmd}')
+        if returncode != 0:
+            raise AssertionError('append cmd failed!!')
+
+
+def make_lc_list():
+    """
+    make a metadata file consisting of the G_Rp<16 cluster light
+    curves paths.
+        "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/get_lc_list.sh but pythonized"
+    """
+
+    raise NotImplementedError
