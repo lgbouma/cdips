@@ -178,7 +178,7 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
     """
     Given the bounds in position and parallx corresponding to some group (e.g.,
     from Cantat-Gaudin+2018, Kounkel & Covey 2019, Kharchenko+13, Kounkel et al
-    2018 APOGEE), get the DR2 stars from the group's neighborhood.
+    2018 APOGEE, etc), get the DR2 stars from the group's neighborhood.
 
     The bounds are lower and upper in ra, dec, parallax, and there is a
     limiting G magnitude. A maximum number of stars, `n_max`, are selected from
