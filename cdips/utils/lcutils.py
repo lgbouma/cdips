@@ -42,11 +42,14 @@ def find_cdips_lc_paths(
     source_id,
     LCDIR='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS',
     raise_error=True,
+    use_calib=False,
     try_mast=False
 ):
     """
     Given a Gaia source ID, return list of all available CDIPS light curves
-    (i.e., their paths) for that star. If none found, return None.
+    (i.e., their paths) for that star. For this to be useful, the
+    paths need to be on disk. However this function works by searching
+    a metadata file.  If no matches are found, returns None.
 
     kwargs:
 
@@ -55,6 +58,10 @@ def find_cdips_lc_paths(
         (in the lc_list_YYYYMMDD.txt format).
 
         raise_error (bool): will raise an error if no light curves are found.
+
+        use_calib (bool): if this is True, searches for "calibration"
+        light curves instead (the Rp<13 sample, PLUS the Rp<16 cluster
+        sample).
 
         try_mast (bool): default False. If True, will run an astroquery search
         through the MAST portal, and will download any available CDIPS light
@@ -79,7 +86,10 @@ def find_cdips_lc_paths(
         )
         raise ValueError(errmsg)
 
-    METADATAPATHS = glob(os.path.join(LCDIR, 'lc_list_*.txt'))
+    if not use_calib:
+        METADATAPATHS = glob(os.path.join(LCDIR, 'lc_list_*.txt'))
+    else:
+        METADATAPATHS = glob(os.path.join(LCDIR, 'calibration_list_*.txt'))
     assert len(METADATAPATHS) >= 1
 
     def _compose(f1, f2):
@@ -115,7 +125,12 @@ def find_cdips_lc_paths(
 
     else:
 
-        lcpaths = [os.path.join(LCDIR, g) for g in grep_output]
+        if not use_calib:
+            lcpaths = [os.path.join(LCDIR, g) for g in grep_output]
+        else:
+            import IPython; IPython.embed()
+            lcpaths = [g for g in grep_output]
+            assert 0 #FIXME does this work?
 
         return lcpaths
 

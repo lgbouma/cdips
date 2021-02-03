@@ -29,6 +29,7 @@ from wotan.slide_clipper import slide_clip
 
 RUNID_EXTINCTION_DICT = {
     'IC_2602': 0.0799,  # avg E(B-V) from Randich+18, *1.31 per Stassun+2019
+    'compstar_NGC_2516': 0.1343, # same as for NGC_2516
     'NGC_2516': 0.1343, # 0.25 for KC19
     'CrA': 0.06389, # KC19 ratio used
     'kc19group_113': 0.1386, # 0.258 from KC19 -- take ratio
@@ -39,18 +40,27 @@ RUNID_EXTINCTION_DICT = {
 
 def main():
 
-    runid = 'ScoOB2' # CG18+KC19, sorted by color
-    #runid = 'NGC_2516' # CG18+KC19, sorted by color
-    #runid = 'VelaOB2' # CG18+KC19, sorted by color
-    #runid = 'Orion' # CG18+KC19, sorted by color
+    runid = 'compstar_NGC_2516'
+
+    # runid = 'ScoOB2' # CG18+KC19, sorted by color
+    # runid = 'NGC_2516' # CG18+KC19, sorted by color
+    # runid = 'VelaOB2' # CG18+KC19, sorted by color
+    # runid = 'Orion' # CG18+KC19, sorted by color
     # runid = 'kc19group_113' # CG18+KC19, sorted by color
     # runid = 'CrA' # CG18+KC19, sorted by color
     # runid = 'IC_2602' # CG18+KC19, sorted by color
 
     E_BpmRp = RUNID_EXTINCTION_DICT[runid]
-    sourcelist_path = (
-        f'/home/lbouma/proj/cdips/data/cluster_data/cdips_catalog_split/OC_MG_FINAL_v0.4_publishable_CUT_{runid}.csv'
-    )
+    use_calib = True if 'compstar' in runid else False
+
+    if 'compstar' not in runid:
+        sourcelist_path = (
+            f'/home/lbouma/proj/cdips/data/cluster_data/cdips_catalog_split/OC_MG_FINAL_v0.4_publishable_CUT_{runid}.csv'
+        )
+    else:
+        sourcelist_path = (
+            f'/home/lbouma/proj/cdips/data/compstar_data/{runid}_sourcelist.csv'
+        )
 
     # runid = 'NGC2516_core_plus_halo' # CG18+KC19, sorted by color
     # E_BpmRp = 0.1343 # apply extinction in summary plots
@@ -97,7 +107,8 @@ def main():
             print('-'*42)
             print(cnt)
             res = do_allvariable_report_making(
-                s, outdir=outdir, apply_extinction=E_BpmRp
+                s, outdir=outdir, apply_extinction=E_BpmRp,
+                use_calib=use_calib
             )
             cnt += res
 
@@ -113,12 +124,16 @@ def main():
         time.sleep(60*60*24*7)
 
 
-
-
-
-
-def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
-                                 apply_extinction=None):
+def do_allvariable_report_making(source_id, outdir=None,
+                                 overwrite=False,
+                                 apply_extinction=None,
+                                 use_calib=False):
+    """
+    source_id (np.int64): Gaia DR2 source identifier
+    apply_extinction (float): E(Bp-Rp) applied to plotted colors.
+    use_calib (bool): if True, searches for _calibration_ light
+    curves, not just _cluster_ light curves.
+    """
 
     print(42*'=')
 
@@ -162,7 +177,9 @@ def do_allvariable_report_making(source_id, outdir=None, overwrite=False,
         # get the light curves
         #
 
-        lcpaths = lcu.find_cdips_lc_paths(source_id, raise_error=False)
+        lcpaths = lcu.find_cdips_lc_paths(
+            source_id, raise_error=False, use_calib=use_calib
+        )
 
         if lcpaths is None:
             lc_info = {'n_sectors': 0, 'lcpaths': None,
