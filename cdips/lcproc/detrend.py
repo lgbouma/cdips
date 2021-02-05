@@ -123,7 +123,8 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
     return flat_flux, trend_flux
 
 
-def detrend_systematics(lcpath, max_n_comp=5, infodict=None):
+def detrend_systematics(lcpath, max_n_comp=5, infodict=None,
+                        enforce_hdrfmt=True):
     """
     Wraps functions in lcproc.detrend for all-in-one systematics removal, using
     a tuned variant of PCA.
@@ -169,6 +170,30 @@ def detrend_systematics(lcpath, max_n_comp=5, infodict=None):
         n_comp,
         f'N principal components PCA{ap}'
     )
+
+    if enforce_hdrfmt and 'TESSMAG' not in primaryhdr:
+        #
+        # Clean up headers on non-HLSP light curves for ease of use downstream.
+        #
+        alreadyhas = ['Gaia-ID', 'phot_g_mean_mag', 'phot_bp_mean_mag',
+                      'phot_rp_mean_mag', 'teff_val', 'PM_RA[mas/yr]',
+                      'PM_Dec[mas/year]']
+        for a in alreadyhas:
+            assert a in primaryhdr
+
+        primaryhdr.set('RA_OBJ', primaryhdr['RA[deg]'])
+        primaryhdr.set('DEC_OBJ', primaryhdr['Dec[deg]'])
+
+        Tmag_pred = (primaryhdr['phot_g_mean_mag']
+                    - 0.00522555 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**3
+                    + 0.0891337 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**2
+                    - 0.633923 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])
+                    + 0.0324473)
+
+        # a bit janky, but better than dealing with a TIC8 crossmatch for speed
+        print('WRN! Forcing TESSMAG to be Tmag_pred')
+        primaryhdr.set('TESSMAG', Tmag_pred)
+
 
     return primaryhdr, data, ap, dtrvecs, eigenvecs, smooth_eigenvecs
 
@@ -428,14 +453,12 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
                 # X is matrix of (n_samples, n_features).
                 #
 
-                #FIXME FIXME. probably have a shape related bug?!?!?!?!?!!?!?!?!?
                 # either linear regression or bayesian ridge regression seems fine
                 reg = LinearRegression(fit_intercept=True)
                 #reg = BayesianRidge(fit_intercept=True)
 
-                #FIXME : you need to simultaneously cast the eigenvectors and
-                # magnitudes to the same shape of nans?!
-
+                # n.b., you need to simultaneously cast the eigenvectors and
+                # magnitudes to the same shape of nans [?!]
                 y = mag
                 _X = eigenvecs[:n_components, :]
 
@@ -445,7 +468,6 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
                     print(e)
                     print(n_components)
                     continue
-                    #import IPython; IPython.embed() #FIXME error is here.
 
                 model_mag = reg.intercept_ + (reg.coef_ @ _X)
 
@@ -542,7 +564,7 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
     (presumably via a linear model).
 
     Args:
-        lcpath: CDIPS light curve file
+        lcpath: CDIPS light curve file ("calibration", or HLSP format)
 
         eigveclist: list of np.ndarray PCA eigenvectors, length 3, calculated
         by a call to cdips.lcutils.detrend.prepare_pca.
@@ -570,7 +592,7 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
     try:
         best_ap = get_best_ap_number_given_lcpath(lcpath)
     except TypeError:
-        best_ap = 2
+        best_ap = 1
     ap = np.nanmin([best_ap, 2])
 
     ##########################################

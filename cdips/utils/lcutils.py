@@ -128,9 +128,7 @@ def find_cdips_lc_paths(
         if not use_calib:
             lcpaths = [os.path.join(LCDIR, g) for g in grep_output]
         else:
-            import IPython; IPython.embed()
-            lcpaths = [g for g in grep_output]
-            assert 0 #FIXME does this work?
+            lcpaths = grep_output
 
         return lcpaths
 

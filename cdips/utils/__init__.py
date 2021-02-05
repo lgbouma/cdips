@@ -89,11 +89,41 @@ def bash_grep(pattern, filename):
 def given_lcpath_get_infodict(
     lcpath, hdrlist=['CAMERA', 'CCD', 'SECTOR', 'PROJID']
 ):
+    """
+    Args:
+        lcpath (str): Path to either formatted HLSP CDIPS light curve, or
+        non-formatted calibration light curve.
 
-    from astrobase import imageutils as iu
+        hdrlist (list): keys to parse from the header. If non-formatted, only
+        the default is allowed.
 
-    infodict = iu.get_header_keyword_list(lcpath, hdrlist)
-    for k,v in infodict.items():
-        infodict[k] = int(v)
+    Returns:
+        infodict (dict): with keys and values corresponding to hdrlist.
+    """
+
+    if os.path.basename(lcpath).startswith('hlsp_cdips'):
+        # Formatted HLSP CDIPS light curves; read direct from header.
+        from astrobase import imageutils as iu
+        infodict = iu.get_header_keyword_list(lcpath, hdrlist)
+        for k,v in infodict.items():
+            infodict[k] = int(v)
+
+    elif '/ISP_' in lcpath:
+        # Non-formatted calibration light curves; read from path.
+        # Less flexibility in what's available.
+        assert hdrlist == ['CAMERA', 'CCD', 'SECTOR', 'PROJID']
+
+        # e.g., "ISP_1-1-1650"
+        isp_str = lcpath.split('/')[-2]
+        camera = int(isp_str[4])
+        ccd = int(isp_str[6])
+        projid = int(isp_str[-4:])
+
+        # e.g., "s0001"
+        snum_str = lcpath.split('/')[-3]
+        sector = int(snum_str[1:].lstrip('0'))
+
+        infodict = {'CAMERA': camera, 'CCD': ccd,
+                    'SECTOR': sector, 'PROJID': projid}
 
     return infodict
