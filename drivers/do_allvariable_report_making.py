@@ -5,8 +5,7 @@ Given a list of Gaia source_ids, make systematics-corrected multi-sector light
 curves, run periodograms for general variability classification (not just
 planet-finding), and make an associated report.
 
-Debugging:
-$ python -u do_allvariable_report_making.py &> logs/ic2602_allvariable.log &
+    $ [DEBUGGING ONLY] python -u do_allvariable_report_making.py &> logs/ic2602_allvariable.log &
 
 Run-time:
     Use the run_allvar_driver.sh script. (Because my implementation has a
@@ -95,7 +94,7 @@ def main():
 
     df = pd.read_csv(sourcelist_path)
 
-    n_sources = len(df)
+    n_sources = len(np.unique(df.source_id))
     n_logs = len(glob(os.path.join(outdir, 'logs', '*_status.log')))
 
     if n_logs < n_sources:
@@ -103,7 +102,7 @@ def main():
         max_per_run = 10
 
         cnt = 0
-        for s in list(df.source_id):
+        for s in list(np.unique(df.source_id)):
             print('-'*42)
             print(cnt)
             res = do_allvariable_report_making(
@@ -192,9 +191,16 @@ def do_allvariable_report_making(source_id, outdir=None,
         #   primaryhdr, data, ap, dtrvecs, eigenvecs, smooth_eigenvecs
         #
         dtr_infos = []
-        for lcpath in lcpaths:
-            dtr_info = dtr.detrend_systematics(lcpath)
-            dtr_infos.append(dtr_info)
+        try:
+            for lcpath in lcpaths:
+                dtr_info = dtr.detrend_systematics(lcpath)
+                dtr_infos.append(dtr_info)
+        except Exception as e:
+            print(f'ERR! {e}')
+            lc_info = {'n_sectors': len(lcpaths), 'lcpaths': lcpaths,
+                       'detrending_completed': False}
+            ppu.save_status(statuspath, 'lc_info', lc_info)
+            return 0
 
         #
         # stitch all available light curves

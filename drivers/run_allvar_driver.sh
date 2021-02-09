@@ -6,6 +6,6 @@
 # the manual ID) is needed afterward.
 while true;
 do
-  echo 'NEW LOOP BEGINS' `date` >> logs/ScoOB2_20201205.log
-  python -u do_allvariable_report_making.py &>> logs/ScoOB2_20201205.log ; wait
+  echo 'NEW LOOP BEGINS' `date` >> logs/compstar_NGC_2516_20210209_v2.log
+  python -u do_allvariable_report_making.py &>> logs/compstar_NGC_2516_20210209_v2.log ; wait
 done
