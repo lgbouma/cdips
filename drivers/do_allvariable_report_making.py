@@ -9,7 +9,7 @@ planet-finding), and make an associated report.
     $ [DEBUGGING ONLY] python -u do_allvariable_report_making.py &> logs/ic2602_allvariable.log &
     $
     $ # Because my implementation has a memory leak
-    $ [RUN-TIME] ./run_allvar_driver.sh
+    $ [RUN-TIME] ./run_allvar_driver.sh &
 """
 
 import pickle, os, gc
