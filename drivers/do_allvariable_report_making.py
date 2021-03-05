@@ -5,11 +5,11 @@ Given a list of Gaia source_ids, make systematics-corrected multi-sector light
 curves, run periodograms for general variability classification (not just
 planet-finding), and make an associated report.
 
+    $
     $ [DEBUGGING ONLY] python -u do_allvariable_report_making.py &> logs/ic2602_allvariable.log &
-
-Run-time:
-    Use the run_allvar_driver.sh script. (Because my implementation has a
-    memory leak)
+    $
+    $ # Because my implementation has a memory leak
+    $ [RUN-TIME] ./run_allvar_driver.sh
 """
 
 import pickle, os, gc
@@ -29,7 +29,7 @@ from wotan.slide_clipper import slide_clip
 RUNID_EXTINCTION_DICT = {
     'IC_2602': 0.0799,  # avg E(B-V) from Randich+18, *1.31 per Stassun+2019
     'compstar_NGC_2516': 0.1343, # same as for NGC_2516
-    'NGC_2516': 0.1343, # 0.25 for KC19
+    'NGC_2516': 0.1343, # based on the S98 average (cf /Users/luke/Dropbox/proj/cdips_followup/results/TIC_268_neighborhood/LGB_extinction)
     'CrA': 0.06389, # KC19 ratio used
     'kc19group_113': 0.1386, # 0.258 from KC19 -- take ratio
     'Orion': 0.1074, # again KC19 ratio used
@@ -39,10 +39,9 @@ RUNID_EXTINCTION_DICT = {
 
 def main():
 
-    runid = 'compstar_NGC_2516'
-
+    # runid = 'compstar_NGC_2516'
+    runid = 'NGC_2516' # 20210305 CG18, KC19, M21 sourcelist.
     # runid = 'ScoOB2' # CG18+KC19, sorted by color
-    # runid = 'NGC_2516' # CG18+KC19, sorted by color
     # runid = 'VelaOB2' # CG18+KC19, sorted by color
     # runid = 'Orion' # CG18+KC19, sorted by color
     # runid = 'kc19group_113' # CG18+KC19, sorted by color
@@ -53,25 +52,19 @@ def main():
     use_calib = True if 'compstar' in runid else False
 
     if 'compstar' not in runid:
-        sourcelist_path = (
-            f'/home/lbouma/proj/cdips/data/cluster_data/cdips_catalog_split/OC_MG_FINAL_v0.4_publishable_CUT_{runid}.csv'
-        )
+        if runid == 'NGC_2516':
+            # CG18, KC19, M21. Made via earhart.drivers.write_NGC2516_sourcelist_table.py
+            sourcelist_path = (
+                f'/home/lbouma/proj/cdips/data/cluster_data/NGC_2516_full_fullfaint_20210305.csv'
+            )
+        else:
+            sourcelist_path = (
+                f'/home/lbouma/proj/cdips/data/cluster_data/cdips_catalog_split/OC_MG_FINAL_v0.4_publishable_CUT_{runid}.csv'
+            )
     else:
         sourcelist_path = (
             f'/home/lbouma/proj/cdips/data/compstar_data/{runid}_sourcelist.csv'
         )
-
-    # runid = 'NGC2516_core_plus_halo' # CG18+KC19, sorted by color
-    # E_BpmRp = 0.1343 # apply extinction in summary plots
-    # sourcelist_path = (
-    #     f'/home/lbouma/proj/cdips/data/cluster_data/{runid}.csv'
-    # )
-
-    # runid = 'NGC2516_demo' # CG18 trimmed to first 15
-    # E_BpmRp = 0.1343 # apply extinction in summary plots
-    # sourcelist_path = (
-    #     f'/home/lbouma/proj/cdips/data/cluster_data/{runid}_source_ids.csv'
-    # )
 
     # runid = 'ic2602_examples'
     # sourcelist_path = (
@@ -128,10 +121,14 @@ def do_allvariable_report_making(source_id, outdir=None,
                                  apply_extinction=None,
                                  use_calib=False):
     """
-    source_id (np.int64): Gaia DR2 source identifier
-    apply_extinction (float): E(Bp-Rp) applied to plotted colors.
-    use_calib (bool): if True, searches for _calibration_ light
-    curves, not just _cluster_ light curves.
+    Args:
+
+        source_id (np.int64): Gaia DR2 source identifier
+
+        apply_extinction (float): E(Bp-Rp) applied to plotted colors.
+
+        use_calib (bool): if True, searches for _calibration_ light curves, not
+        just _cluster_ light curves.
     """
 
     print(42*'=')
