@@ -60,6 +60,23 @@ assert int(wotanversiontuple[1]) >= 4
 
 def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
                  window_length=None):
+    """
+    Args:
+        time, flux (np.ndarray): array of times and fluxes.
+
+        break_tolerance (float): maximum time past which light curve is split
+        into timegroups, each of which is detrended individually.
+
+        method (str): 'pspline' or 'biweight'
+
+        cval (float): the wotan 'biweight' tuning parameter.
+
+        window_length (float): length of the window in days.
+
+    Returns:
+        flat_flux, trend_flux (np.ndarray): flattened array, and the trend
+        vector that was divided out.
+    """
 
     # Initial pre-processing: verify that under break_tolerance, time and flux
     # do not have any sections with <=6 points. Spline detrending routines do
