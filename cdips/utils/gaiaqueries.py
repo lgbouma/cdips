@@ -92,7 +92,7 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
 
     Returns:
 
-        dataframe with Gaia DR2 crossmatch info.
+        dataframe with Gaia DR2 / EDR3 crossmatch info.
     """
 
     if type(source_ids) != np.ndarray:
@@ -105,10 +105,10 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         )
 
     xmltouploadpath = os.path.join(
-        gaiadir, 'toupload_{}{}.xml'.format(groupname, savstr)
+        gaiadir, f'toupload_{groupname}{savstr}_{gaia_datarelease}.xml'
     )
     dlpath = os.path.join(
-        gaiadir,'group{}_matches{}.xml.gz'.format(groupname, savstr)
+        gaiadir, f'group{groupname}_matches{savstr}_{gaia_datarelease}.xml.gz'
     )
 
     if overwrite:
