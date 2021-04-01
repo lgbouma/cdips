@@ -7,6 +7,7 @@ Contents:
     get_interp_rstar_from_teff
     get_interp_BmV_from_Teff
     get_interp_BpmRp_from_Teff
+    get_interp_BmV_from_BpmRp
 """
 import os
 import numpy as np, pandas as pd
@@ -17,6 +18,17 @@ from scipy import optimize
 import cdips as cd
 datadir = os.path.join(os.path.dirname(cd.__path__[0]), 'data')
 
+def load_basetable():
+
+    mamajekpath = os.path.join(datadir, 'EEM_dwarf_UBVIJHK_colors_Teff_20210302.txt')
+    mamadf = pd.read_csv(
+        mamajekpath, comment='#', delim_whitespace=True
+    )
+    mamadf = mamadf[mamadf.Teff < 41000]
+    mamadf = mamadf.reset_index(drop=True)
+
+    return mamadf
+
 def get_interp_mass_from_rstar(rstar):
     """
     Given a stellar radius, use the Pecaut & Mamajek (2013) table from
@@ -25,12 +37,9 @@ def get_interp_mass_from_rstar(rstar):
     true. This should obviously not be trusted to better than 50%.
     """
 
-    mamadf = pd.read_csv(
-        os.path.join(datadir, 'Mamajek_Rstar_Mstar_Teff_SpT.txt'),
-        delim_whitespace=True
-    )
+    mamadf = load_basetable()
     mamarstar, mamamstar = (
-        nparr(mamadf['Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
+        nparr(mamadf['R_Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
     )
 
     #
@@ -75,12 +84,9 @@ def get_interp_rstar_from_teff(teff):
     be true. This should obviously not be trusted to better than 50%.
     """
 
-    mamadf = pd.read_csv(
-        os.path.join(datadir, 'Mamajek_Rstar_Mstar_Teff_SpT.txt'),
-        delim_whitespace=True
-    )
+    mamadf = load_basetable()
     mamarstar, mamamstar, mamateff = (
-        nparr(mamadf['Rsun'])[::-1],
+        nparr(mamadf['R_Rsun'])[::-1],
         nparr(mamadf['Msun'])[::-1],
         nparr(mamadf['Teff'])[::-1]
     )
@@ -125,17 +131,14 @@ def get_interp_BmV_from_Teff(teff):
     color.
     """
 
-    mamadf = pd.read_csv(
-        os.path.join(datadir, 'Mamajek_Rstar_Mstar_Teff_SpT.txt'),
-        delim_whitespace=True
-    )
+    mamadf = load_basetable()
     mamadf = mamadf[3:-6] # finite, monotonic BmV
 
     mamarstar, mamamstar, mamateff, mamaBmV = (
-        nparr(mamadf['Rsun'])[::-1],
+        nparr(mamadf['R_Rsun'])[::-1],
         nparr(mamadf['Msun'])[::-1],
         nparr(mamadf['Teff'])[::-1],
-        nparr(mamadf['BmV'])[::-1].astype(float)
+        nparr(mamadf['B-V'])[::-1].astype(float)
     )
 
     # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
@@ -155,17 +158,14 @@ def get_interp_BpmRp_from_Teff(teff):
     Bp-Rp color.
     """
 
-    mamadf = pd.read_csv(
-        os.path.join(datadir, 'Mamajek_Rstar_Mstar_Teff_SpT.txt'),
-        delim_whitespace=True
-    )
+    mamadf = load_basetable()
     mamadf = mamadf[22:-6] # finite, monotonic BpmRp
 
     mamarstar, mamamstar, mamateff, mamaBpmRp = (
-        nparr(mamadf['Rsun'])[::-1],
+        nparr(mamadf['R_Rsun'])[::-1],
         nparr(mamadf['Msun'])[::-1],
         nparr(mamadf['Teff'])[::-1],
-        nparr(mamadf['BpmRp'])[::-1].astype(float)
+        nparr(mamadf['Bp-Rp'])[::-1].astype(float)
     )
 
     # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
@@ -177,3 +177,33 @@ def get_interp_BpmRp_from_Teff(teff):
                                 fill_value='extrapolate')
 
     return fn_teff_to_BpmRp(teff)
+
+
+def get_interp_BmV_from_BpmRp(BpmRp):
+    """
+    Given a Bp-Rp color, get expected B-V color.
+    """
+
+    mamadf = load_basetable()
+    mamadf = mamadf[22:-6] # finite, monotonic BpmRp
+
+    sel = (
+        (mamadf['B-V'] != '...')
+        &
+        (mamadf['Bp-Rp'] != '...')
+    )
+
+    mamaBmV, mamaBpmRp = (
+        nparr(mamadf['B-V'][sel])[::-1].astype(float),
+        nparr(mamadf['Bp-Rp'][sel])[::-1].astype(float)
+    )
+
+    # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
+    # BmVs. so remove anything where diff not strictly greater than...
+    isbad = np.insert(np.diff(mamaBpmRp) == 0, False, 0)
+
+    fn_BpmRp_to_BmV = interp1d(mamaBpmRp[~isbad], mamaBmV[~isbad],
+                               kind='quadratic', bounds_error=False,
+                               fill_value='extrapolate')
+
+    return fn_BpmRp_to_BmV(BpmRp)
