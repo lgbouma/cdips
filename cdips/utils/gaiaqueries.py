@@ -5,6 +5,7 @@ Contents:
     given_source_ids_get_gaia_data
     query_neighborhood
     given_dr2_sourceids_get_edr3_xmatch
+    edr3_propermotion_to_ICRF
 """
 ###########
 # imports #
@@ -455,3 +456,49 @@ def given_dr2_sourceids_get_edr3_xmatch(dr2_source_ids, runid, overwrite=True,
         raise AssertionError(errmsg)
 
     return df
+
+
+def edr3_propermotion_to_ICRF(pmra, pmdec, ra, dec, G):
+    """
+    Cantat-Gaudin & Brandt 2021 correction of EDR3 to ICRF proper motions.
+    This applies only to bright sources (G<13).  Correction is of order ~0.1
+    mas/yr, depending on the source brightness and on-sky location.
+
+    Input: source position, coordinates, and G magnitude from Gaia EDR3.
+    Output: corrected proper motion.
+    """
+    if G>=13:
+        return pmra, pmdec
+
+    def sind(x):
+        return np.sin(np.radians(x))
+
+    def cosd(x):
+        return np.cos(np.radians(x))
+
+    table1=""" 0.0 9.0 18.4 33.8 -11.3
+               9.0 9.5 14.0 30.7 -19.4
+               9.5 10.0 12.8 31.4 -11.8
+               10.0 10.5 13.6 35.7 -10.5
+               10.5 11.0 16.2 50.0 2.1
+               11.0 11.5 19.4 59.9 0.2
+               11.5 11.75 21.8 64.2 1.0
+               11.75 12.0 17.7 65.6 -1.9
+               12.0 12.25 21.3 74.8 2.1
+               12.25 12.5 25.7 73.6 1.0
+               12.5 12.75 27.3 76.6 0.5
+               12.75 13.0 34.9 68.9 -2.9 """
+    table1 = np.fromstring(table1 ,sep=' ').reshape((12,5)).T
+
+    Gmin = table1[0]
+    Gmax = table1[1]
+
+    #pick the appropriate omegaXYZ for the source's magnitude:
+    omegaX = table1[2][(Gmin <=G)&(Gmax >G)][0]
+    omegaY = table1[3][(Gmin <=G)&(Gmax >G)][0]
+    omegaZ = table1[4][(Gmin <=G)&(Gmax >G)][0]
+
+    pmraCorr = -1*sind(dec)*cosd(ra)*omegaX -sind(dec)*sind(ra)*omegaY + cosd(dec)*omegaZ
+    pmdecCorr = sind(ra)*omegaX -cosd(ra)*omegaY
+
+    return pmra -pmraCorr/1000., pmdec -pmdecCorr /1000.

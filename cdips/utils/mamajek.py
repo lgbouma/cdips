@@ -160,6 +160,7 @@ def get_interp_BpmRp_from_Teff(teff):
 
     mamadf = load_basetable()
     mamadf = mamadf[22:-6] # finite, monotonic BpmRp
+    mamadf = mamadf[(mamadf['Bp-Rp'] != '...')] # finite!
 
     mamarstar, mamamstar, mamateff, mamaBpmRp = (
         nparr(mamadf['R_Rsun'])[::-1],
