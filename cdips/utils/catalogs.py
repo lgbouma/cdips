@@ -127,13 +127,13 @@ def get_toi_catalog(ver=TODAYSTR):
     """
 
     dir_d = {
-        'brik':'/home/luke/Dropbox/proj/cdips/data/toi_catalogs/',
-        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi_catalogs/',
-        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi_catalogs/',
-        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi_catalogs/',
-        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/toi_catalogs/',
-        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi_catalogs/',
-        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi_catalogs/'
+        'brik':'/home/luke/Dropbox/proj/cdips/data/toi-plus_catalogs/',
+        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-plus_catalogs/',
+        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-plus_catalogs/',
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-plus_catalogs/',
+        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/toi-plus_catalogs/',
+        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-plus_catalogs/',
+        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-plus_catalogs/'
     }
 
     toi_stars_dir = dir_d[socket.gethostname()]
@@ -160,13 +160,13 @@ def get_exofop_toi_catalog(ver=TODAYSTR, returnpath=False):
     # https://exofop.ipac.caltech.edu/tess/view_toi.php, with pipe
 
     dir_d = {
-        'brik':'/home/luke/Dropbox/proj/cdips/data/',
-        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/',
-        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/',
-        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/'
+        'brik':'/home/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/',
+        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-exofop_catalogs/',
+        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-exofop_catalogs/',
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-exofop_catalogs/',
+        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/',
+        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/',
+        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/'
     }
 
     toi_stars_dir = dir_d[socket.gethostname()]
@@ -176,6 +176,8 @@ def get_exofop_toi_catalog(ver=TODAYSTR, returnpath=False):
     )
 
     if not os.path.exists(toi_stars_path):
+        if not os.path.exists(toi_stars_dir):
+            os.mkdir(toi_stars_dir)
         df =  pd.read_csv(
             'https://exofop.ipac.caltech.edu/tess/download_toi.php?sort=toi&output=csv'
         )
