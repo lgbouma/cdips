@@ -118,20 +118,22 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.4):
 
 
 def get_toi_catalog(ver=TODAYSTR):
-    # a misnomer: really, the TOI-plus catalog, from MIT. (exported from
-    # https://tev.mit.edu/)
-    # note: this catalog is a bit janky. for example, they give transit epoch
-    # to 5 decimal points in precision and sometimes fewer, which introduces a
-    # minimum error of 300 seconds (5 minutes) after only one year.
+    """
+    Download the TOI-plus catalog, from MIT. (exported from
+    https://tev.mit.edu/) note: this catalog is a bit janky. for example, they
+    give transit epoch to 5 decimal points in precision and sometimes fewer,
+    which introduces a minimum error of 300 seconds (5 minutes) after only one
+    year.
+    """
 
     dir_d = {
-        'brik':'/home/luke/Dropbox/proj/cdips/data/',
-        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/',
-        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/',
-        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/'
+        'brik':'/home/luke/Dropbox/proj/cdips/data/toi_catalogs/',
+        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi_catalogs/',
+        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi_catalogs/',
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi_catalogs/',
+        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/toi_catalogs/',
+        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi_catalogs/',
+        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi_catalogs/'
     }
 
     toi_stars_dir = dir_d[socket.gethostname()]
@@ -141,6 +143,8 @@ def get_toi_catalog(ver=TODAYSTR):
     )
 
     if not os.path.exists(toi_stars_path):
+        if not os.path.exists(toi_stars_dir):
+            os.mkdir(toi_stars_dir)
         df = pd.read_csv('https://tev.mit.edu/data/collection/193/csv/6/',
                          sep=',', comment='#')
         df.to_csv(toi_stars_path, index=False, sep=',')
@@ -202,13 +206,13 @@ def get_exofop_toi_catalog_entry(tic_id):
 def get_exofop_ctoi_catalog(ver=TODAYSTR, returnpath=False):
 
     dir_d = {
-        'brik':'/home/luke/Dropbox/proj/cdips/data/',
-        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/',
-        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/',
-        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/'
+        'brik':'/home/luke/Dropbox/proj/cdips/data/ctoi_catalogs/',
+        'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/ctoi_catalogs/',
+        'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/ctoi_catalogs/',
+        'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/ctoi_catalogs/',
+        'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/ctoi_catalogs/',
+        'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/ctoi_catalogs/',
+        'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/ctoi_catalogs/'
     }
 
     ctoi_dir = dir_d[socket.gethostname()]
@@ -216,6 +220,8 @@ def get_exofop_ctoi_catalog(ver=TODAYSTR, returnpath=False):
     ctoipath = os.path.join(ctoi_dir, 'ctoi-exofop-{}.csv'.format(ver))
 
     if not os.path.exists(ctoipath):
+        if not os.path.exists(ctoi_dir):
+            os.mkdir(ctoi_dir)
         ctoidf =  pd.read_csv(
             'https://exofop.ipac.caltech.edu/tess/download_ctoi.php?sort=ctoi&output=csv'
         )
