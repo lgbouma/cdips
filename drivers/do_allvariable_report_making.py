@@ -132,6 +132,8 @@ def do_allvariable_report_making(source_id, outdir=None,
     """
 
     print(42*'=')
+    thetime = datetime.utcnow().isoformat()
+    print(f'{thetime}: Beginning {source_id} do_allvariable_report_making.')
 
     picklepath = os.path.join(outdir, 'data', f'{source_id}_allvar.pkl')
     statuspath = os.path.join(outdir, 'logs', f'{source_id}_status.log')
@@ -279,6 +281,11 @@ def do_allvariable_report_making(source_id, outdir=None,
                    'detrending_completed': True}
         ppu.save_status(statuspath, 'lc_info', lc_info)
 
+    else:
+        thetime = datetime.utcnow().isoformat()
+        print(f'{thetime}: Found {picklepath}, skipping detrending.')
+
+
     s = ppu.load_status(statuspath)
     if str2bool(s['lc_info']['detrending_completed']):
         with open(picklepath, 'rb') as f:
@@ -314,6 +321,19 @@ def do_allvariable_report_making(source_id, outdir=None,
         'n_dict': outd['n_dict']
     }
     ppu.save_status(statuspath, 'report_info', report_info)
+
+    #
+    # save the SPCA light curve
+    #
+    ap = allvardict['ap']
+    outdf = pd.DataFrame({
+        'selected_time_bjdtdb_STIME': allvardict['STIME'],
+        f'selected_flux_special_PCA_detrending_SPCA{ap}': allvardict[f'SPCA{ap}'],
+        f'selected_flux_error_SPCAE{ap}': allvardict[f'SPCAE{ap}'],
+    })
+    outlcpath = os.path.join(outdir, 'data', f'{source_id}_SPCA_lightcurve.csv')
+    outdf.to_csv(outlcpath, index=False)
+    print(f'Wrote {outlcpath}')
 
     return 1
 

@@ -1,3 +1,9 @@
+"""
+make_allvar_report
+    allvar_periodogram_checkplot
+    allvar_plot_timeseries_vecs
+    plot_rotationcheck
+"""
 from glob import glob
 import os, pickle, shutil, multiprocessing
 
@@ -10,6 +16,7 @@ from datetime import datetime
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.wcs import WCS
+from astropy.table import Table
 
 from astroquery.vizier import Vizier
 from astroquery.mast import Catalogs
@@ -232,18 +239,25 @@ def plot_rotationcheck(a, lsp, objectinfo):
     ss = [3.0, 6]
     labels = ['Pleaides', 'Praesepe']
 
-    xlim_sel = (0.5, 1.5)
-
     for _cls, _col, z, m, l, lw, s, mew in zip(
         classes, colors, zorders, markers, labels, lws, ss, mews
     ):
-        df = pd.read_csv(os.path.join(rotdir, f'curtis19_{_cls}_BpmRpinterp.csv'))
 
-        xval = df['BpmRp_interp']
-        sel = (xval > xlim_sel[0]) & (xval < xlim_sel[1])
+        t = Table.read(
+            os.path.join(rotdir, 'Curtis_2020_apjabbf58t5_mrt.txt'),
+            format='cds'
+        )
+        if _cls == 'pleiades':
+            df = t[t['Cluster'] == 'Pleiades'].to_pandas()
+        elif _cls == 'praesepe':
+            df = t[t['Cluster'] == 'Praesepe'].to_pandas()
+        else:
+            raise NotImplementedError
+
+        xval = df['(BP-RP)0']
 
         ax1.plot(
-            xval[sel], df['prot'][sel], c=_col, alpha=1, zorder=z,
+            xval, df['Prot'], c=_col, alpha=1, zorder=z,
             markersize=s, rasterized=False, lw=lw, label=l, marker=m, mew=mew,
             mfc=_col
         )
@@ -255,8 +269,8 @@ def plot_rotationcheck(a, lsp, objectinfo):
     )
 
     ax1.legend(loc='best', handletextpad=0.1, framealpha=0.7)
-    ax1.set_ylabel('Rotation Period [days]')
-    ax1.set_xlabel('(Bp-Rp)$_0$ [mag]')
+    ax1.set_ylabel('P$_\mathrm{rot}$ [days]')
+    ax1.set_xlabel('($G_{\mathrm{BP}}-G_{\mathrm{RP}}$)$_0$ [mag]')
     ax1.set_ylim((0,14))
 
     #
