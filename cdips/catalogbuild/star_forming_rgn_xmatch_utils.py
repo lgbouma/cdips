@@ -4,6 +4,11 @@ functions to download and wrangle catalogs of cluster members that I want to
 crossmatch against Gaia-DR2.
 
 called from `homogenize_cluster_lists.py`
+
+Contents:
+    Zari18_stars_to_csv
+    CantatGaudin2019_velaOB2_to_csv
+    VillaVelez18_check
 '''
 import os, pickle, subprocess, itertools, socket
 from glob import glob
