@@ -68,7 +68,8 @@ def Kounkel2018_orion_to_csv():
     inpath = os.path.join(clusterdatadir, 'Kounkel_2018_orion_table2.vot')
     df = given_votable_get_df(inpath, assert_equal='Gaia')
 
-    df['Group'] = df['Group'].str.decode('utf-8')
+    inpath2 = os.path.join(clusterdatadir, 'Kounkel_2018_orion_table3.fits')
+    df2 = Table(fits.open(inpath2)[1].data).to_pandas()
 
     sel = ~(
         (pd.isnull(df['Group']))
@@ -80,7 +81,13 @@ def Kounkel2018_orion_to_csv():
 
     sdf = df[sel]
 
-    outdf = sdf[['Gaia','Group']]
+    # take HRD age over CMD age (spectroscopic Teffs, but more
+    # uncertain)
+    sdf2 = df2[['Group','Age-HR']]
+    mdf = sdf.merge(sdf2, on='Group', how='left')
+    mdf["age"] = np.round(np.log10(mdf["Age-HR"]),3)
+
+    outdf = mdf[['Gaia','Group','age']]
 
     outdf = outdf.rename(columns={"Gaia": "source_id", "Group": "cluster"})
 
@@ -88,7 +95,7 @@ def Kounkel2018_orion_to_csv():
         np.repeat('k18orion_', len(outdf)), nparr(outdf['cluster'])
     )
 
-    outpath = inpath.replace('.vot','_cut_only_source_cluster.csv')
+    outpath = inpath.replace('.vot','_cut_only_source_cluster_age.csv')
     outdf.to_csv(outpath, index=False)
     print('made {}'.format(outpath))
 
@@ -106,30 +113,116 @@ def KounkelCovey2019_clusters_to_csv():
     df1 = pd.read_csv(os.path.join(clusterdatadir,'KC19_string_table1.csv'))
     df2 = pd.read_csv(os.path.join(clusterdatadir,'KC19_string_table2.csv'))
 
-    sdf2 = df2[['group_id','name']]
+    sdf2 = df2[['group_id','name','age']]
 
     mdf = df1.merge(sdf2, on='group_id', how='left')
 
     names = nparr(mdf['name'])
     groupids = nparr(mdf['group_id'])
+    ages = nparr(mdf['age'])
 
     nullgroupids = groupids[pd.isnull(names)].astype(str)
     baz = np.core.defchararray.add(
         np.repeat('kc19group_', len(nullgroupids)), nullgroupids
     )
-
     names[pd.isnull(names)] = baz
 
     mdf['cluster'] = names
 
-    scols = ['source_id','cluster']
+    scols = ['source_id','cluster','age']
     out_df = mdf[scols]
 
     outpath = os.path.join(
-        datadir, 'KounkelCovey2019_cut_cluster_source.csv'
+        clusterdatadir, 'KounkelCovey2019_cut_cluster_source_age.csv'
     )
     out_df.to_csv(outpath, index=False)
     print('made {}'.format(outpath))
+
+
+def CantatGaudin20b_to_csv():
+
+    # open clusters and ages
+    srccolumns = "Cluster|AgeNN"
+    dstcolumns = "cluster|age"
+    df1 = get_vizier_table_as_dataframe(
+        "J/A+A/640/A1", srccolumns, dstcolumns, table_num=0,
+        whichcataloglist="J/A+A/640/A1"
+    )
+    assert len(df1) == 2017
+
+    # cluster members and source_ids
+    srccolumns = "GaiaDR2|Cluster"
+    dstcolumns = "source_id|cluster"
+    df2 = get_vizier_table_as_dataframe(
+        "J/A+A/640/A1", srccolumns, dstcolumns, table_num=1,
+        whichcataloglist="J/A+A/640/A1"
+    )
+    assert len(df2) == 234128
+
+    mdf = df2.merge(df1, how='left', on='cluster')
+    assert len(mdf) == len(df2)
+
+    outpath = os.path.join(
+        clusterdatadir, 'v05', 'CantatGaudin20b_cut_cluster_source_age.csv'
+    )
+    mdf.to_csv(outpath, index=False)
+    print(f'made {outpath}')
+
+
+
+def Kounkel2020_to_csv():
+    """
+    Paper II of the "strings" series, Kounkel, Covey, and Stassun 2020.
+    """
+    #
+    # make "cluster,source" header dataframe with "cluster" being whatever
+    # KCS20 gave as their crossmatched names, else groupids (if their
+    # crossmatched name was NaN). we are not including the ages now, because we
+    # are getting them in construct_unique_cluster_name_column when the age
+    # column is assigned.
+    #
+
+    # 987376 rows (stars)
+    t1path = os.path.join(clusterdatadir,'v05','J_AJ_160_279_table1.dat.gz.fits')
+    # 8293 groups
+    t2path = os.path.join(clusterdatadir,'v05','J_AJ_160_279_table2.dat.gz.fits')
+
+    df1 = Table(fits.open(t1path)[1].data).to_pandas()
+    df2 = Table(fits.open(t2path)[1].data).to_pandas()
+
+    sdf2 = df2[['Group','OName','logAge']]
+
+    mdf = df1.merge(sdf2, on='Group', how='left')
+
+    names = nparr(mdf['OName'])
+    names = np.char.strip(names.astype(str))
+    groupids = nparr(mdf['Group'])
+    ages = nparr(mdf['logAge'])
+
+    noothername = (pd.isnull(names))|(names=='')
+    nullgroupids = groupids[noothername].astype(str)
+    baz = np.core.defchararray.add(
+        np.repeat('kcs20group_', len(nullgroupids)), nullgroupids
+    )
+    names[noothername] = baz
+
+    mdf['cluster'] = names
+
+    # # remove trailing whitespace [nvm; done above]
+    # mdf.cluster = mdf.cluster.apply(
+    #     lambda x: x.strip() if isinstance(x, str) else x
+    # )
+
+    mdf = mdf.rename(columns={"Gaia":"source_id", 'logAge':'age'})
+    scols = ['source_id','cluster','age']
+    out_df = mdf[scols]
+
+    outpath = os.path.join(
+        clusterdatadir, 'v05', 'Kounkel2020_cut_cluster_source_age.csv'
+    )
+    out_df.to_csv(outpath, index=False)
+    print('made {}'.format(outpath))
+
 
 
 def GaiaCollaboration2018_clusters_to_csv():
@@ -553,8 +646,3 @@ def Dias2014_nbhr_gaia_to_nearestnbhr():
 
     df.to_csv(outpath, index=False)
     print('made {}'.format(outpath))
-
-
-
-
-

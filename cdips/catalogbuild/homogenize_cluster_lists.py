@@ -23,12 +23,18 @@ from astroquery.gaia import Gaia
 from astrobase.timeutils import precess_coordinates
 from datetime import datetime
 
+from cdips.catalogbuild.vizier_xmatch_utils import (
+    run_v05_vizier_to_csv
+)
 from cdips.catalogbuild.open_cluster_xmatch_utils import (
     GaiaCollaboration2018_clusters_to_csv,
     Kharchenko2013_position_mag_match_Gaia,
     Dias2014_nbhr_gaia_to_nearestnbhr,
     KounkelCovey2019_clusters_to_csv,
-    Kounkel2018_orion_to_csv
+    Kounkel2020_to_csv,
+    Kounkel2018_orion_to_csv,
+    CantatGaudin20b_to_csv
+
 )
 from cdips.catalogbuild.moving_group_xmatch_utils import (
     make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch,
@@ -59,6 +65,7 @@ def main():
     D14 = 0
     KC19 = 0
     K18 = 0
+    CG18 = 0
     # MGs
     do_BANYAN_XI = 0
     do_BANYAN_XII = 0
@@ -73,23 +80,43 @@ def main():
     do_Zari18 = 0
     do_CG19_vela = 0
 
+    # v0.5
+    # ["CantatGaudin2020a", "CastroGinard20", "Meingast2021", "Meingast2019",
+    # "Damiani2019", "Briceno2019", "Goldman2018", "Roccatagliata2020",
+    # "RoserSchilbach2020", "Ratzenbock2020", "EsplinLuhman2019", "Ujjwal2020",
+    # "Furnkranz2019"]
+    do_v05_vizier_calls = 0
+    do_Kounkel20 = 0
+    do_CantatGaudin20b = 1
+
+
+
+
     do_merge_MG_catalogs = 0
     do_merge_OC_catalogs = 0
     do_merge_OC_MG_catalogs = 0
-    do_final_merge = 1
-    catalog_vnum = '0.4'
+    do_final_merge = 0
+    catalog_vnum = '0.5'
 
-    if GaiaCollab18:
-        GaiaCollaboration2018_clusters_to_csv()
-    if K13:
-        Kharchenko2013_position_mag_match_Gaia()
-    if D14:
-        Dias2014_nbhr_gaia_to_nearestnbhr()
+    if do_v05_vizier_calls:
+        run_v05_vizier_to_csv()
+    if do_Kounkel20:
+        Kounkel2020_to_csv()
+    if do_CantatGaudin20b:
+        CantatGaudin20b_to_csv()
+
     if KC19:
         KounkelCovey2019_clusters_to_csv()
     if K18:
         Kounkel2018_orion_to_csv()
-
+    if GaiaCollab18:
+        GaiaCollaboration2018_clusters_to_csv()
+    if CG18:
+        CantatGaudin2018_to_csv()
+    if K13:
+        Kharchenko2013_position_mag_match_Gaia()
+    if D14:
+        Dias2014_nbhr_gaia_to_nearestnbhr()
     if do_BANYAN_XI:
         make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch()
     if do_BANYAN_XII:
@@ -143,8 +170,8 @@ def fname_to_reference(fname):
         'Zari_2018_pms_tab_cut_only_source_cluster_MATCH.csv':'Zari_2018_PMS',
         'CantatGaudin2019_velaOB2_MATCH.csv':'CantatGaudin_2019_velaOB2',
         'VillaVelez_2018_DR2_PreMainSequence_MATCH.csv':'Velez_2018_scoOB2',
-        'KounkelCovey2019_cut_cluster_source.csv':'Kounkel_2019',
-        'Kounkel_2018_orion_table2_cut_only_source_cluster.csv':'Kounkel_2018_Ori'
+        'KounkelCovey2019_cut_cluster_source_age.csv':'Kounkel_2019',
+        'Kounkel_2018_orion_table2_cut_only_source_cluster_age.csv':'Kounkel_2018_Ori'
     }
 
     return d[fname]
@@ -349,8 +376,8 @@ def merge_OC_catalogs():
             available, in degrees.
     """
     fnames = [
-        'Kounkel_2018_orion_table2_cut_only_source_cluster.csv',
-        'KounkelCovey2019_cut_cluster_source.csv',
+        'Kounkel_2018_orion_table2_cut_only_source_cluster_age.csv',
+        'KounkelCovey2019_cut_cluster_source_age.csv',
         'CantatGaudin_2018_table2_cut_only_source_cluster.csv',
         'GaiaCollaboration2018_616_A10_tablea1a_within_250pc_cut_only_source_cluster.csv',
         'GaiaCollaboration2018_616_A10_tablea1b_beyond_250pc_cut_only_source_cluster.csv',
