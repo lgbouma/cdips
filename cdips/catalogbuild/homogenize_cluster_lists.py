@@ -47,14 +47,9 @@ from cdips.catalogbuild.star_forming_rgn_xmatch_utils import (
     CantatGaudin2019_velaOB2_to_csv
 )
 
-if socket.gethostname() == 'phtess2':
-    clusterdatadir = '/home/lbouma/proj/cdips/data/cluster_data/'
-    localdir = '/home/lbouma/local/cdips/catalogs/'
-elif socket.gethostname() == 'brik':
-    clusterdatadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
-    localdir = '/home/luke/local/cdips/catalogs/'
-else:
-    raise NotImplementedError
+from cdips.paths import DATADIR, LOCALDIR
+clusterdatadir = os.path.join(DATADIR, 'cluster_data')
+localdir = LOCALDIR
 
 def main():
 

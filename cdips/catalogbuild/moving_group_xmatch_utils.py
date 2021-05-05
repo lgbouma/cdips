@@ -2,9 +2,10 @@
 """
 functions to crossmatch moving group catalogs with Gaia-DR2.
 
-heritage: `get_tess_alert_search_list.py` TOI crossmatches.
+called from `homogenize_cluster_lists.py`
 
 includes:
+
     make_vizier_GaiaDR2_crossmatch
         make_Kraus14_GaiaDR2_crossmatch
         make_Roser11_GaiaDR2_crossmatch
@@ -48,10 +49,8 @@ def make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
                                    outdir=datadir,
                                    homedir='/home/luke/' ):
     '''
-    general routine to xmatch catalog of <~100,000 members w/ coords and PMs
-    against gaia dr2.
-
-    assumes that the catalog is on vizier.
+    Spatially crossmatch catalog of <~100,000 members w/ coords and PMs against
+    Gaia DR2.  This assumes that the catalog is on vizier.
 
     make_Kraus14_GaiaDR2_crossmatch is an example of a call.
     '''

@@ -4,7 +4,8 @@ TO MAKE THE TARGET STAR CATALOG
 The `/drivers/` are not used. Instead, the process is:
 
 1. Use `/cdips/catalogbuild/homogenize_cluster_lists.py` to get everything in
-   same format.  The merging is then done here as well.  (Iteratively).
+   same format (`cluster`, `source_id`, `age`).  The merging is then done here
+   as well.  (Iteratively).
 
 2. Use `/cdips/catalogbuild/construct_unique_cluster_name_column.py` to do what
    is advertized.

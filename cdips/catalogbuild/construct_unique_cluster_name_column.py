@@ -27,13 +27,8 @@ from itertools import repeat
 from cdips.utils import collect_cdips_lightcurves as ccl
 from astropy.io.votable import from_table, writeto, parse
 
-if socket.gethostname() == 'phtess2':
-    clusterdatadir = '/home/lbouma/proj/cdips/data/cluster_data/'
-elif socket.gethostname() == 'brik':
-    clusterdatadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
-else:
-    raise NotImplementedError
-
+from cdips.paths import DATADIR
+clusterdatadir = os.path.join(DATADIR, 'cluster_data')
 
 ########
 # code #

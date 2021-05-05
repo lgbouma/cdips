@@ -28,12 +28,9 @@ from astroquery.vizier import Vizier
 from astrobase.timeutils import precess_coordinates
 from datetime import datetime
 
-if socket.gethostname() == 'phtess2':
-    clusterdatadir = '/home/lbouma/proj/cdips/data/cluster_data/'
-elif socket.gethostname() == 'brik':
-    clusterdatadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
-else:
-    raise NotImplementedError
+from cdips.paths import DATADIR
+datadir = DATADIR
+clusterdatadir = os.path.join(DATADIR, 'cluster_data')
 
 def Zari18_stars_to_csv():
     """
@@ -46,7 +43,7 @@ def Zari18_stars_to_csv():
     the cluster. So the "cluster name" column for this one will be "N/A".
     """
 
-    indir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
+    indir = clusterdatadir
     inpaths = [
         os.path.join(indir,'Zari_2018_pms_tab.vot'),
         os.path.join(indir,'Zari_2018_ums_tab.vot')
@@ -78,7 +75,6 @@ def CantatGaudin2019_velaOB2_to_csv():
     catalogs = Vizier.get_catalogs(catalog_list.keys())
 
     tab = catalogs[0]
-
     df = tab.to_pandas()
 
     outdf = df[['Source','Pop']]

@@ -9,6 +9,7 @@ contents:
 Utilities:
     given_votable_get_df
 Gaia groups:
+    CantatGaudin20b_to_csv
     Kounkel2018_orion_to_csv
     KounkelCovey2019_clusters_to_csv
     GaiaCollaboration2018_clusters_to_csv
@@ -29,7 +30,7 @@ import numpy as np, pandas as pd
 from numpy import array as nparr
 
 from astropy.table import Table
-from astropy.io import ascii
+from astropy.io import ascii, fits
 from astropy.coordinates import SkyCoord
 from astropy import units as u, constants as c
 from astropy.io.votable import from_table, writeto, parse
@@ -39,12 +40,12 @@ from astroquery.gaia import Gaia
 from astrobase.timeutils import precess_coordinates
 from datetime import datetime
 
-if socket.gethostname() == 'phtess2':
-    clusterdatadir = '/home/lbouma/proj/cdips/data/cluster_data/'
-elif socket.gethostname() == 'brik':
-    clusterdatadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/'
-else:
-    raise NotImplementedError
+from cdips.paths import DATADIR
+clusterdatadir = os.path.join(DATADIR, 'cluster_data')
+
+from cdips.catalogbuild.vizier_xmatch_utils import (
+    get_vizier_table_as_dataframe
+)
 
 def given_votable_get_df(votablepath, assert_equal='source_id'):
     """
