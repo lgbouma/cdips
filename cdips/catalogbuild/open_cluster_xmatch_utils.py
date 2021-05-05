@@ -63,6 +63,7 @@ def given_votable_get_df(votablepath, assert_equal='source_id'):
 
     return df
 
+
 def Kounkel2018_orion_to_csv():
 
     inpath = os.path.join(clusterdatadir, 'Kounkel_2018_orion_table2.vot')
@@ -98,7 +99,6 @@ def Kounkel2018_orion_to_csv():
     outpath = inpath.replace('.vot','_cut_only_source_cluster_age.csv')
     outdf.to_csv(outpath, index=False)
     print('made {}'.format(outpath))
-
 
 
 def KounkelCovey2019_clusters_to_csv():
@@ -169,7 +169,6 @@ def CantatGaudin20b_to_csv():
     print(f'made {outpath}')
 
 
-
 def Kounkel2020_to_csv():
     """
     Paper II of the "strings" series, Kounkel, Covey, and Stassun 2020.
@@ -222,7 +221,6 @@ def Kounkel2020_to_csv():
     )
     out_df.to_csv(outpath, index=False)
     print('made {}'.format(outpath))
-
 
 
 def GaiaCollaboration2018_clusters_to_csv():
@@ -538,6 +536,7 @@ def Dias2014_position_mag_match_Gaia(sepmax=5*u.arcsec, Gmag_pm_bound=2):
     outdf.to_csv(outpath, index=False)
     print('--> made {}'.format(outpath))
 
+
 def make_Dias2014_cut_csv():
 
     inpath = ( '/home/luke/local/tess-trex/catalogs/'
@@ -606,7 +605,6 @@ def make_Dias2014_cut_vot():
     v_outtab = from_table(outtab)
     writeto(v_outtab, outpath)
     print('--> made {}'.format(outpath))
-
 
 
 def Dias2014_nbhr_gaia_to_nearestnbhr():

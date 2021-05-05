@@ -22,6 +22,7 @@ includes:
     make_Preibisch01_GaiaDR2_crossmatch
     make_Casagrande_11_GaiaDR2_crossmatch
     make_Bell17_GaiaDR2_crossmatch
+    Tian2020_to_csv
 """
 from __future__ import division, print_function
 
@@ -41,7 +42,11 @@ import sys, os, re, itertools, subprocess
 from glob import glob
 from numpy import array as arr
 
-datadir = '/home/luke/Dropbox/proj/cdips/data/cluster_data/moving_groups/'
+
+from cdips.paths import DATADIR
+clusterdatadir = os.path.join(DATADIR, 'cluster_data')
+
+datadir = os.path.join('moving_groups')
 
 def make_vizier_GaiaDR2_crossmatch(vizier_search_str, ra_str, dec_str,
                                    pmra_str, pmdec_str, name_str, assoc_name,
@@ -948,3 +953,51 @@ def make_Bell17_GaiaDR2_crossmatch(maxsep=10,
     df.to_csv(xmatchoutpath, index=False)
     print('made {}'.format(xmatchoutpath))
     print(79*'=')
+
+
+def Tian2020_to_csv():
+
+    tablepath = os.path.join(clusterdatadir, 'v05', 'apjabbf4bt1_mrt.txt')
+    df = Table.read(tablepath, format='ascii.cds').to_pandas()
+
+    outdf = pd.DataFrame({
+        'source_id':list(df['Gaia'].astype(np.int64))
+    })
+    outdf['cluster'] = 'OrionSnake'
+    outdf['age'] = np.round(np.log10(3.38e7),2)
+    outdf = outdf[["source_id", "cluster", "age"]]
+
+    outpath = os.path.join(
+        clusterdatadir, 'v05', 'Tian2020_cut_cluster_source_age.csv'
+    )
+    outdf.to_csv(outpath, index=False)
+    print(f'Made {outpath}')
+
+
+def Pavlidou2021_to_csv():
+
+    tablepaths = glob(os.path.join(clusterdatadir, 'v05', 'table_*new.tex'))
+
+    dfs = []
+    for tablepath in tablepaths:
+
+        dfs.append(pd.read_csv(
+            tablepath, sep=" & ",
+            names='ix,source_id,ra,dec,pmra,pmdec,plx,Gmag,allwise'.split(',')
+        ))
+
+
+    df = pd.concat(dfs)
+
+    outdf = pd.DataFrame({
+        'source_id':list(df['source_id'].astype(np.int64))
+    })
+    outdf['cluster'] = 'Perseus'
+    outdf['age'] = np.round(np.log10(5e6),2)
+    outdf = outdf[["source_id", "cluster", "age"]]
+
+    outpath = os.path.join(
+        clusterdatadir, 'v05', 'Pavlidou2021_cut_cluster_source_age.csv'
+    )
+    outdf.to_csv(outpath, index=False)
+    print(f'Made {outpath}')

@@ -23,6 +23,9 @@ from astroquery.gaia import Gaia
 from astrobase.timeutils import precess_coordinates
 from datetime import datetime
 
+from cdips.catalogbuild.simbad_xmatch_utils import (
+    run_SIMBAD_to_csv, SIMBAD_bibcode_to_GaiaDR2_csv
+)
 from cdips.catalogbuild.vizier_xmatch_utils import (
     run_v05_vizier_to_csv
 )
@@ -34,7 +37,6 @@ from cdips.catalogbuild.open_cluster_xmatch_utils import (
     Kounkel2020_to_csv,
     Kounkel2018_orion_to_csv,
     CantatGaudin20b_to_csv
-
 )
 from cdips.catalogbuild.moving_group_xmatch_utils import (
     make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch,
@@ -45,7 +47,9 @@ from cdips.catalogbuild.moving_group_xmatch_utils import (
     make_Luhman12_GaiaDR2_crossmatch,
     make_Bell17_GaiaDR2_crossmatch,
     make_Roser11_GaiaDR2_crossmatch,
-    make_Oh17_GaiaDR2_crossmatch
+    make_Oh17_GaiaDR2_crossmatch,
+    Tian2020_to_csv,
+    Pavlidou2021_to_csv
 )
 from cdips.catalogbuild.star_forming_rgn_xmatch_utils import (
     Zari18_stars_to_csv,
@@ -81,15 +85,17 @@ def main():
     do_CG19_vela = 0
 
     # v0.5
-    # ["CantatGaudin2020a", "CastroGinard20", "Meingast2021", "Meingast2019",
-    # "Damiani2019", "Briceno2019", "Goldman2018", "Roccatagliata2020",
-    # "RoserSchilbach2020", "Ratzenbock2020", "EsplinLuhman2019", "Ujjwal2020",
-    # "Furnkranz2019"]
+    # vizier calls: ["CantatGaudin2020a", "CastroGinard20", "Meingast2021",
+    # "Meingast2019", "Damiani2019", "Briceno2019", "Goldman2018",
+    # "Roccatagliata2020", "RoserSchilbach2020", "Ratzenbock2020",
+    # "EsplinLuhman2019", "Ujjwal2020", "Furnkranz2019"]
     do_v05_vizier_calls = 0
+    do_v05_simbad_bibcodes = 0
+    do_SIMBAD_otype_calls = 0
     do_Kounkel20 = 0
-    do_CantatGaudin20b = 1
-
-
+    do_CantatGaudin20b = 0
+    do_Tian20 = 0
+    do_Pavlidou21 = 0
 
 
     do_merge_MG_catalogs = 0
@@ -104,6 +110,20 @@ def main():
         Kounkel2020_to_csv()
     if do_CantatGaudin20b:
         CantatGaudin20b_to_csv()
+    if do_Tian20:
+        Tian2020_to_csv()
+    if do_SIMBAD_otype_calls:
+        run_SIMBAD_to_csv(get_longtypes=1)
+        run_SIMBAD_to_csv(get_longtypes=0)
+    if do_v05_simbad_bibcodes:
+        # Rizzuto2017, CottenSong2016
+        bibcodes = ['2017AJ....154..224R', '2016ApJS..225...15C']
+        for b in bibcodes:
+            SIMBAD_bibcode_to_GaiaDR2_csv(
+                b, os.path.join(clusterdatadir, 'v05')
+            )
+    if do_Pavlidou21:
+        Pavlidou2021_to_csv()
 
     if KC19:
         KounkelCovey2019_clusters_to_csv()
