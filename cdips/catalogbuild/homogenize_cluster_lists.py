@@ -24,7 +24,7 @@ from astrobase.timeutils import precess_coordinates
 from datetime import datetime
 
 from cdips.catalogbuild.concatenate_merge import (
-    assemble_target_catalog
+    get_target_catalog
 )
 from cdips.catalogbuild.simbad_xmatch_utils import (
     run_SIMBAD_to_csv, SIMBAD_bibcode_to_GaiaDR2_csv
@@ -106,9 +106,9 @@ def main():
     do_Pavlidou21 = 0
     do_Gagne20 = 0
     do_Rizzuto17 = 0
-    do_NASAExoArchive = 1
+    do_NASAExoArchive = 0
 
-    do_v05_merge = 0
+    do_v05_merge = 1
     catalog_vnum = '0.5'
 
 
@@ -122,7 +122,7 @@ def main():
     # do_final_merge = 0
 
     if do_v05_merge:
-        assemble_target_catalog(catalog_vnum)
+        get_target_catalog(catalog_vnum)
 
     if do_NASAExoArchive:
         NASAExoArchive_to_csv()
@@ -225,6 +225,9 @@ def fname_to_reference(fname):
 
 
 def combine_it(rows):
+    # NOTE: deprecated! REMOVE!
+    # NOTE: deprecated! REMOVE!
+    # NOTE: deprecated! REMOVE!
     # given set of rows w/ duplicate source_ids, give a single row.
 
     source_id = rows['source_id']

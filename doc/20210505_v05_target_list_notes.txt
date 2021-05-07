@@ -74,10 +74,9 @@ CastroGinard2020, and CantatGaudin2020a.
 This means that the catalogs we included for which ages were not immediately
 available were those of CITET CottenSong2016, Oh2017, Zari2018, and Ujjwal2020.
 We also included the HATS and HATNet candidate databases, and SIMBAD object
-identifiers $\texttt{TT*}$, $\texttt{Y*O}, $\texttt{Y*?}, $\texttt{TT?},
-and $\texttt{pMS*}.
-Finally, we also included every star in the NASA Exoplanet Archive
-$\texttt{ps}$ table that had a Gaia identifier available  (CITE Akeson
+identifiers $\texttt{TT*}$, $\texttt{Y*O}, $\texttt{Y*?}, $\texttt{TT?}, and
+$\texttt{pMS*}.  Finally, we also included every star in the NASA Exoplanet
+Archive $\texttt{ps}$ table that had a Gaia identifier available  (CITE Akeson
 2013).  If the age had finite uncertainties, we also included it.
 """
 

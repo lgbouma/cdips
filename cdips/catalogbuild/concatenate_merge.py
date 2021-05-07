@@ -5,6 +5,12 @@ concatenate and merge them.
 Date: May 2021.
 
 Background: Created for v0.5 target catalog merge, to simplify life.
+
+Contents:
+    get_target_catalog
+    assemble_target_catalog
+    get_target_catalog_latex_table
+    AGE_LOOKUP: manual lookupdictionary of common cluster ages.
 """
 
 import numpy as np, pandas as pd
@@ -102,6 +108,12 @@ def get_target_catalog_latex_table():
 
 
 def assemble_target_catalog(catalog_vnum):
+    """
+    Given V05_LIST_OF_LISTS_KEYS_PATHS.csv, exported from
+    /doco/list_of_cluster_member_lists.ods, clean and concatenate the cluster
+    members. Flatten the resulting list on source_ids, joining the cluster,
+    age, and bibcode columns into comma-separated strings.
+    """
 
     metadf = pd.read_csv(
         os.path.join(clusterdatadir, 'V05_LIST_OF_LISTS_KEYS_PATHS.csv')
@@ -110,6 +122,7 @@ def assemble_target_catalog(catalog_vnum):
 
     N_stars_in_lists = []
     Nstars_with_age_in_lists = []
+    dfs = []
 
     # for each table, concatenate into a dataframe of source_id, cluster,
     # log10age ("age").
@@ -122,6 +135,11 @@ def assemble_target_catalog(catalog_vnum):
         assert os.path.exists(csvpath)
 
         df = pd.read_csv(csvpath)
+
+        df['reference_id'] = r.reference_id
+        df['reference_bibcode'] = r.bibcode
+        if 'HATSandHATNcandidates' in r.reference_id:
+            df['reference_bibcode'] = 'JoelHartmanPrivComm'
 
         colnames = df.columns
 
@@ -222,17 +240,89 @@ def assemble_target_catalog(catalog_vnum):
 
         N_stars_in_lists.append(len(df))
         Nstars_with_age_in_lists.append(len(df[~pd.isnull(df.age)]))
+        dfs.append(df)
+
+        assert (
+            'source_id' in df.columns
+            and
+            'cluster' in df.columns
+            and
+            'age' in df.columns
+        )
 
     metadf["Nstars"] = N_stars_in_lists
     metadf["Nstars_with_age"] = Nstars_with_age_in_lists
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
 
+    # concatenation.
+    nomagcut_df = pd.concat(dfs)
+    assert np.sum(metadf.Nstars) == len(nomagcut_df)
+
+    # clean ages
+    sel = (nomagcut_df.age == -np.inf)
+    nomagcut_df.loc[sel,'age'] = np.nan
+    nomagcut_df['age'] = np.round(nomagcut_df.age,2)
+
+    #
+    # merge duplicates, and ','-join the cluster id strings, age values
+    #
+    scols = ['source_id', 'cluster', 'age', 'reference_id', 'reference_bibcode']
+    nomagcut_df = nomagcut_df[scols].sort_values(by='source_id')
+
+    for c in nomagcut_df.columns:
+        nomagcut_df[c] = nomagcut_df[c].astype(str)
+
+    print(79*'-')
+    print('Beginning aggregation (takes ~2-3 minutes for v0.5)...')
+    _ = nomagcut_df.groupby('source_id')
+    df_agg = _.agg({
+        "cluster": list,
+        "age": list,
+        "reference_id": list,
+        "reference_bibcode": list
+    })
+
+    u_sourceids = np.unique(nomagcut_df.source_id)
+    N_sourceids = len(u_sourceids)
+    assert len(df_agg) == N_sourceids
+
+    df_agg["source_id"] = df_agg.index
+
+    # turn the lists to comma separated strings
+    outdf = pd.DataFrame({
+        "source_id": df_agg.source_id,
+        "cluster": [','.join(map(str, l)) for l in df_agg['cluster']],
+        "age": [','.join(map(str, l)) for l in df_agg['age']],
+        "mean_age": [np.round(np.nanmean(np.array(l).astype(float)),2) for l in df_agg['age']],
+        "reference_id": [','.join(map(str, l)) for l in df_agg['reference_id']],
+        "reference_bibcode": [','.join(map(str, l)) for l in df_agg['reference_bibcode']],
+    })
 
     outpath = os.path.join(
-        clusterdatadir, 'V05_LIST_OF_LISTS_KEYS_PATHS_ASSEMBLED.csv'
+        clusterdatadir, f'list_of_lists_keys_paths_assembled_v{catalog_vnum}.csv'
     )
+    metadf.to_csv(outpath, index=False)
+    print(f'Made {outpath}')
+
+    outpath = os.path.join(
+        clusterdatadir, f'cdips_targets_v{catalog_vnum}_nomagcut.csv'
+    )
+    outdf.to_csv(outpath, index=False)
+    print(f'Made {outpath}')
+
+
+def get_target_catalog(catalog_vnum):
+
+    csvpath = os.path.join(
+        clusterdatadir, f'cdips_targets_v{catalog_vnum}_nomagcut.csv'
+    )
+    if not os.path.exists(csvpath):
+        assemble_target_catalog(catalog_vnum)
+    df = pd.read_csv(csvpath)
+
+    metapath = os.path.join(
+        clusterdatadir, f'list_of_lists_keys_paths_assembled_v{catalog_vnum}.csv'
+    )
+    metadf = pd.read_csv(metapath)
 
     import IPython; IPython.embed()
     assert 0
