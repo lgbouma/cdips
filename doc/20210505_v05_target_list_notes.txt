@@ -78,6 +78,13 @@ identifiers $\texttt{TT*}$, $\texttt{Y*O}, $\texttt{Y*?}, $\texttt{TT?}, and
 $\texttt{pMS*}.  Finally, we also included every star in the NASA Exoplanet
 Archive $\texttt{ps}$ table that had a Gaia identifier available  (CITE Akeson
 2013).  If the age had finite uncertainties, we also included it.
+
+The technical manipulations for the merging, cleaning, and joining were
+performed using the $\texttt{pandas}$ module (CITE). 
+The eventually crossmatch (based on the $\texttt{source_id}$) against the Gaia
+DR2 archive was performed asychronously on the Gaia archive
+website\footnote{\url{https://gea.esac.esa.int/archive/}}, since the more
+common synchronous 
 """
 
 

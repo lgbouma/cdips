@@ -17,7 +17,9 @@ import numpy as np, pandas as pd
 import os
 from glob import glob
 
-from cdips.utils.gaiaqueries import given_source_ids_get_gaia_data
+from cdips.utils.gaiaqueries import (
+    given_source_ids_get_gaia_data, given_votable_get_df
+)
 
 from cdips.paths import DATADIR, LOCALDIR
 clusterdatadir = os.path.join(DATADIR, 'cluster_data')
@@ -368,26 +370,64 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
         # one-time verification
         verify_target_catalog(df, metadf)
 
-    # NOTE: this doesn't work, probably because of a sync/async issue. now
-    # raising an error in given_source_ids_get_gaia_data if n_max exceeds 5e4,
-    # because the ~70k items that WERE returned are duds.
-    cols = (
-        'g.source_id, g.ra, g.dec, g.parallax, g.parallax_error, g.pmra, '
-        'g.pmdec, g.phot_g_mean_mag, g.phot_rp_mean_mag, g.phot_bp_mean_mag'
+    votablepath = os.path.join(
+        clusterdatadir, f'cdips_v05_0-result.vot.gz'
     )
-    gdf = given_source_ids_get_gaia_data(
-        np.array(df.source_id.astype(np.int64)),
-        f'cdips_targets_v{catalog_vnum}',
-        n_max=int(2e6), overwrite=False,
-        enforce_all_sourceids_viable=True, whichcolumns=cols,
-        gaia_datarelease='gaiadr2'
-    )
+    if not os.path.exists(votablepath):
+        temppath = os.path.join(clusterdatadir, 'v05_sourceids.csv')
+        print(f'Wrote {temppath}')
+        df['source_id'].to_csv(
+            temppath,
+            index=False
+        )
+        querystr = (
+            "SELECT top 2000000 g.source_id, g.ra, g.dec, g.parallax, "
+            "g.parallax_error, g.pmra, g.pmdec, g.phot_g_mean_mag, "
+            "g.phot_rp_mean_mag, g.phot_bp_mean_mag FROM "
+            "user_lbouma.v05_sourceids as u, gaiadr2.gaia_source AS g WHERE "
+            "u.source_id=g.source_id "
+        )
+        print('Now you must go to https://gea.esac.esa.int/archive/, login, and run')
+        print(querystr)
+        assert 0
+        # # NOTE: the naive implementation below doesn't work, probably because of a
+        # # sync/async issue. given_source_ids_get_gaia_data now raises an
+        # # error # if n_max exceeds 5e4, because the ~70k items that WERE
+        # # returned are duds.
+        # cols = (
+        #     'g.source_id, g.ra, g.dec, g.parallax, g.parallax_error, g.pmra, '
+        #     'g.pmdec, g.phot_g_mean_mag, g.phot_rp_mean_mag, g.phot_bp_mean_mag'
+        # )
+        # gdf = given_source_ids_get_gaia_data(
+        #     np.array(df.source_id.astype(np.int64)),
+        #     f'cdips_targets_v{catalog_vnum}',
+        #     n_max=int(2e6), overwrite=False,
+        #     enforce_all_sourceids_viable=True, whichcolumns=cols,
+        #     gaia_datarelease='gaiadr2'
+        # )
 
-    #FIXME FIXME FIXME: somewhere you messed up int / int64 / strings...
-    #because there are only 40k Gaia DR2 matches for the 1.5M queries.
+    gdf = given_votable_get_df(votablepath, assert_equal='source_id')
+
+    if not len(gdf) == len(df):
+        print(79*"*")
+        print('WRN!')
+        print('Expected {len(df)} matches in Gaia DR2')
+        print('Got {len(gdf)} matches in Gaia DR2')
+        print(79*"*")
+
+        # one-time verification
+        #FIXME VERIFY THE GAIA MATCH
+        verify_target_catalog(df, metadf)
+
+    #FIXME : some number of these are missing
+
 
     import IPython; IPython.embed()
 
+    # every queried source_id should have a result.
+
     mdf = df.merge(gdf, on='source_id', how='left')
+
+    import IPython; IPython.embed()
 
     assert 0
