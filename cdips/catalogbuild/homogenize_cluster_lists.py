@@ -23,11 +23,17 @@ from astroquery.gaia import Gaia
 from astrobase.timeutils import precess_coordinates
 from datetime import datetime
 
+from cdips.catalogbuild.concatenate_merge import (
+    assemble_target_catalog
+)
 from cdips.catalogbuild.simbad_xmatch_utils import (
     run_SIMBAD_to_csv, SIMBAD_bibcode_to_GaiaDR2_csv
 )
 from cdips.catalogbuild.vizier_xmatch_utils import (
     run_v05_vizier_to_csv
+)
+from cdips.catalogbuild.nasa_xmatch_utils import (
+    NASAExoArchive_to_csv
 )
 from cdips.catalogbuild.open_cluster_xmatch_utils import (
     GaiaCollaboration2018_clusters_to_csv,
@@ -36,7 +42,7 @@ from cdips.catalogbuild.open_cluster_xmatch_utils import (
     KounkelCovey2019_clusters_to_csv,
     Kounkel2020_to_csv,
     Kounkel2018_orion_to_csv,
-    CantatGaudin20b_to_csv
+    CantatGaudin20b_to_csv,
 )
 from cdips.catalogbuild.moving_group_xmatch_utils import (
     make_Gagne18_BANYAN_XI_GaiaDR2_crossmatch,
@@ -49,7 +55,9 @@ from cdips.catalogbuild.moving_group_xmatch_utils import (
     make_Roser11_GaiaDR2_crossmatch,
     make_Oh17_GaiaDR2_crossmatch,
     Tian2020_to_csv,
-    Pavlidou2021_to_csv
+    Pavlidou2021_to_csv,
+    Gagne2020_to_csv,
+    Rizzuto2017_to_csv
 )
 from cdips.catalogbuild.star_forming_rgn_xmatch_utils import (
     Zari18_stars_to_csv,
@@ -96,14 +104,28 @@ def main():
     do_CantatGaudin20b = 0
     do_Tian20 = 0
     do_Pavlidou21 = 0
+    do_Gagne20 = 0
+    do_Rizzuto17 = 0
+    do_NASAExoArchive = 1
 
-
-    do_merge_MG_catalogs = 0
-    do_merge_OC_catalogs = 0
-    do_merge_OC_MG_catalogs = 0
-    do_final_merge = 0
+    do_v05_merge = 0
     catalog_vnum = '0.5'
 
+
+    #
+    # NOTE: deprecated mergers
+    # (<=V0.4. TODO: remove them!)
+    #
+    # do_merge_MG_catalogs = 0
+    # do_merge_OC_catalogs = 0
+    # do_merge_OC_MG_catalogs = 0
+    # do_final_merge = 0
+
+    if do_v05_merge:
+        assemble_target_catalog(catalog_vnum)
+
+    if do_NASAExoArchive:
+        NASAExoArchive_to_csv()
     if do_v05_vizier_calls:
         run_v05_vizier_to_csv()
     if do_Kounkel20:
@@ -112,18 +134,22 @@ def main():
         CantatGaudin20b_to_csv()
     if do_Tian20:
         Tian2020_to_csv()
+    if do_Gagne20:
+        Gagne2020_to_csv()
     if do_SIMBAD_otype_calls:
         run_SIMBAD_to_csv(get_longtypes=1)
         run_SIMBAD_to_csv(get_longtypes=0)
     if do_v05_simbad_bibcodes:
-        # Rizzuto2017, CottenSong2016
-        bibcodes = ['2017AJ....154..224R', '2016ApJS..225...15C']
+        # CottenSong2016
+        bibcodes = ['2016ApJS..225...15C']
         for b in bibcodes:
             SIMBAD_bibcode_to_GaiaDR2_csv(
                 b, os.path.join(clusterdatadir, 'v05')
             )
     if do_Pavlidou21:
         Pavlidou2021_to_csv()
+    if do_Rizzuto17:
+        Rizzuto2017_to_csv()
 
     if KC19:
         KounkelCovey2019_clusters_to_csv()
@@ -160,14 +186,15 @@ def main():
     if do_CG19_vela:
         CantatGaudin2019_velaOB2_to_csv()
 
-    if do_merge_MG_catalogs:
-        merge_MG_catalogs()
-    if do_merge_OC_catalogs:
-        merge_OC_catalogs()
-    if do_merge_OC_MG_catalogs:
-        merge_OC_MG_catalogs()
-    if do_final_merge:
-        final_merge(vnum=catalog_vnum)
+    # NOTE: deprecated!
+    #if do_merge_MG_catalogs:
+    #    merge_MG_catalogs()
+    #if do_merge_OC_catalogs:
+    #    merge_OC_catalogs()
+    #if do_merge_OC_MG_catalogs:
+    #    merge_OC_MG_catalogs()
+    #if do_final_merge:
+    #    final_merge(vnum=catalog_vnum)
 
 
 def fname_to_reference(fname):
