@@ -70,6 +70,7 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
                                    overwrite=True,
                                    enforce_all_sourceids_viable=True,
                                    savstr='',
+                                   whichcolumns='*',
                                    gaia_datarelease='gaiadr2'):
     """
     Args:
@@ -89,12 +90,20 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         savstr (str); optional string that will be included in the path to
         the downloaded vizier table.
 
+        whichcolumns (str): ADQL column getter string. For instance "*", or "
+
         gaia_datarelease (str): 'gaiadr2' or 'gaiaedr3'. Default is Gaia DR2.
 
     Returns:
 
         dataframe with Gaia DR2 / EDR3 crossmatch info.
     """
+
+    if n_max > int(5e4):
+        raise NotImplementedError(
+            'the gaia archive / astroquery seems to give invalid results past '
+            '50000 source_ids in this implementation...'
+        )
 
     if type(source_ids) != np.ndarray:
         raise TypeError(
@@ -122,21 +131,22 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
     if os.path.exists(dlpath) and overwrite:
         os.remove(dlpath)
 
+    jobstr = (
+    '''
+    SELECT top {n_max:d} {whichcolumns}
+    FROM tap_upload.foobar as u, {gaia_datarelease:s}.gaia_source AS g
+    WHERE u.source_id=g.source_id
+    '''
+    ).format(
+        whichcolumns=whichcolumns,
+        n_max=n_max,
+        gaia_datarelease=gaia_datarelease
+    )
+    query = jobstr
+
     if not os.path.exists(dlpath):
 
         Gaia.login(credentials_file=credentials_file)
-
-        jobstr = (
-        '''
-        SELECT top {n_max:d} *
-        FROM tap_upload.foobar as u, {gaia_datarelease:s}.gaia_source AS g
-        WHERE u.source_id=g.source_id
-        '''
-        ).format(
-            n_max=n_max,
-            gaia_datarelease=gaia_datarelease
-        )
-        query = jobstr
 
         # might do async if this times out. but it doesn't.
         j = Gaia.launch_job(query=query,
