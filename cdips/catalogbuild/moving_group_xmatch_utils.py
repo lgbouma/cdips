@@ -974,6 +974,71 @@ def Tian2020_to_csv():
     print(f'Made {outpath}')
 
 
+def Gagne2020_to_csv():
+
+    tablepath = os.path.join(clusterdatadir, 'v05', 'apjabb77et12_mrt.txt')
+    df = Table.read(tablepath, format='ascii.cds').to_pandas()
+
+    sel = (
+        (df['Memb-Type'] == 'IM')
+        |
+        (df['Memb-Type'] == 'CM')
+        |
+        (df['Memb-Type'] == 'LM')
+    )
+
+    sdf = df[sel]
+
+    outdf = pd.DataFrame({
+        'source_id':list(df['Gaia'].astype(np.int64))
+    })
+    outdf['cluster'] = 'muTau'
+    outdf['age'] = np.round(np.log10(6.2e7),2)
+    outdf = outdf[["source_id", "cluster", "age"]]
+
+    outpath = os.path.join(
+        clusterdatadir, 'v05', 'Gagne2020_cut_cluster_source_age.csv'
+    )
+    outdf.to_csv(outpath, index=False)
+    print(f'Made {outpath}')
+
+
+def Rizzuto2017_to_csv():
+
+    # actual contents
+    tablepath = os.path.join(clusterdatadir, 'v05', 'ajaa9070t2_mrt.txt')
+    df1 = Table.read(tablepath, format='ascii.cds').to_pandas()
+    df1.EPIC = df1.EPIC.astype(np.int64)
+
+    # SIMBAD xmatch
+    df2 = pd.read_csv(os.path.join(
+        clusterdatadir, 'v05', 'SIMBAD_2017AJ....154..224R.csv')
+    )
+
+    df2['EPIC'] = df2['IDS'].str.extract("EPIC\ (\d*)")
+    sdf2 = df2[~pd.isnull(df2.EPIC)]
+    sdf2['EPIC'] = sdf2.EPIC.astype(np.int64)
+
+    print(f'N initially in table: {len(df1)}')
+    print(f'N in table after EPIC/GAIA XMATCH: {len(sdf2)}')
+
+    mdf = sdf2.merge(df1[["ID","EPIC"]], how='left', on='EPIC')
+    assert len(mdf) == len(sdf2)
+
+    mdf['cluster'] = mdf.ID
+
+    outdf = mdf[['source_id', 'cluster']]
+
+    outpath = os.path.join(
+        clusterdatadir, 'v05', 'Rizzuto2017_cut_cluster_source.csv'
+    )
+    outdf.to_csv(outpath, index=False)
+    print(f'Made {outpath}')
+
+
+
+
+
 def Pavlidou2021_to_csv():
 
     tablepaths = glob(os.path.join(clusterdatadir, 'v05', 'table_*new.tex'))
