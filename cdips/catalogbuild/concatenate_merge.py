@@ -17,6 +17,8 @@ import numpy as np, pandas as pd
 import os
 from glob import glob
 
+from cdips.utils.gaiaqueries import given_source_ids_get_gaia_data
+
 from cdips.paths import DATADIR, LOCALDIR
 clusterdatadir = os.path.join(DATADIR, 'cluster_data')
 localdir = LOCALDIR
@@ -287,7 +289,7 @@ def assemble_target_catalog(catalog_vnum):
 
     df_agg["source_id"] = df_agg.index
 
-    # turn the lists to comma separated strings
+    # turn the lists to comma separated strings.
     outdf = pd.DataFrame({
         "source_id": df_agg.source_id,
         "cluster": [','.join(map(str, l)) for l in df_agg['cluster']],
@@ -310,13 +312,51 @@ def assemble_target_catalog(catalog_vnum):
     print(f'Made {outpath}')
 
 
-def get_target_catalog(catalog_vnum):
+def verify_target_catalog(df, metadf):
+    """
+    Check that each entry in the (pre magnitude cut) target catalog has
+    a source_id that matches the original catalog. (i.e., ensure that no
+    int/int64/str lossy conversion bugs have happened).
+    """
+
+    print(79*'-')
+    print('Beginning verification...')
+    print(79*'-')
+
+    for ix, r in metadf.sort_values('Nstars').iterrows():
+
+        print(f'{r.reference_id} (Nstars={r.Nstars})...')
+
+        sel = df.reference_id.str.contains(r.reference_id)
+        df_source_ids = np.array(df.loc[sel, 'source_id']).astype(np.int64)
+
+        csvpath = os.path.join(clusterdatadir, r.csv_path)
+        df_true = pd.read_csv(csvpath)
+        if 'source_id' not in df_true.columns:
+            df_true = df_true.rename(columns={"source":"source_id"})
+
+        true_source_ids = (
+            np.unique(np.array(df_true.source_id).astype(np.int64))
+        )
+
+        np.testing.assert_array_equal(
+            np.sort(df_source_ids), np.sort(true_source_ids)
+        )
+
+    print('Verified that the pre-mag cut target catalog has source_ids that '
+          'correctly match the original. ')
+    print(79*'-')
+
+
+
+def get_target_catalog(catalog_vnum, VERIFY=0):
 
     csvpath = os.path.join(
         clusterdatadir, f'cdips_targets_v{catalog_vnum}_nomagcut.csv'
     )
     if not os.path.exists(csvpath):
         assemble_target_catalog(catalog_vnum)
+
     df = pd.read_csv(csvpath)
 
     metapath = os.path.join(
@@ -324,5 +364,30 @@ def get_target_catalog(catalog_vnum):
     )
     metadf = pd.read_csv(metapath)
 
+    if VERIFY:
+        # one-time verification
+        verify_target_catalog(df, metadf)
+
+    # NOTE: this doesn't work, probably because of a sync/async issue. now
+    # raising an error in given_source_ids_get_gaia_data if n_max exceeds 5e4,
+    # because the ~70k items that WERE returned are duds.
+    cols = (
+        'g.source_id, g.ra, g.dec, g.parallax, g.parallax_error, g.pmra, '
+        'g.pmdec, g.phot_g_mean_mag, g.phot_rp_mean_mag, g.phot_bp_mean_mag'
+    )
+    gdf = given_source_ids_get_gaia_data(
+        np.array(df.source_id.astype(np.int64)),
+        f'cdips_targets_v{catalog_vnum}',
+        n_max=int(2e6), overwrite=False,
+        enforce_all_sourceids_viable=True, whichcolumns=cols,
+        gaia_datarelease='gaiadr2'
+    )
+
+    #FIXME FIXME FIXME: somewhere you messed up int / int64 / strings...
+    #because there are only 40k Gaia DR2 matches for the 1.5M queries.
+
     import IPython; IPython.embed()
+
+    mdf = df.merge(gdf, on='source_id', how='left')
+
     assert 0
