@@ -4,6 +4,12 @@ catalogbuild/homogenize_cluster_lists.py, match what you can against
 Kharchenko2013 to get cluster names and ages.
 
 (Except for KC19, which gets its original ages)
+
+Contents:
+    construct_unique_cluster_name_column
+    get_unique_cluster_name
+    get_k13_df
+    get_k13_name_match
 """
 
 ###########
