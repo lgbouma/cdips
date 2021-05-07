@@ -5,7 +5,7 @@ Contents
 --------
 
 run_SIMBAD_to_csv: get defaults known stars for CDIPS v0.5. TT*, Y*O, Y*?, TT?,
-    Pl, pMS*, EB*
+    Pl, pMS*
 
 SIMBAD_otype_to_GaiaDR2_csv: given an otype[s], get all SIMBAD matches.
 
@@ -60,6 +60,8 @@ def run_SIMBAD_to_csv(
     otypes_list = otypes_list.split(',')
     outdir = os.path.join(clusterdir, 'v05')
 
+    # these types break the "20k per row" rule when tiling the sky in 10, or
+    # even 20 pieces.
     LONG_TYPES = ["Y*O", "Y*?", "EB*"]
 
     if get_longtypes:
