@@ -24,6 +24,10 @@ TODAYSTR = '-'.join([today_YYYYMMDD()[:4],
 
 def get_cdips_catalog(ver=0.4):
 
+    if not isinstance(ver, float):
+        ver = float(ver)
+
+
     dir_d = {
         'brik':'/home/luke/local/cdips/catalogs/',
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
@@ -34,16 +38,25 @@ def get_cdips_catalog(ver=0.4):
 
     cdips_stars_dir = dir_d[socket.gethostname()]
 
-    cdips_stars_path = os.path.join(
-        cdips_stars_dir, 'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(ver)
-    )
-
-    df = pd.read_csv(cdips_stars_path, sep=';')
+    if ver <= 0.4:
+        cdips_stars_path = os.path.join(
+            cdips_stars_dir, 'OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(ver)
+        )
+        df = pd.read_csv(cdips_stars_path, sep=';')
+    else:
+        cdips_stars_path = os.path.join(
+            cdips_stars_dir,
+            f'cdips_targets_v{ver}_gaiasources_Rplt16_orclose.csv'
+        )
+        df = pd.read_csv(cdips_stars_path, sep=',')
 
     return df
 
 
 def get_cdips_pub_catalog(ver=0.4):
+
+    if not isinstance(ver, float):
+        ver = float(ver)
 
     dir_d = {
         'brik':'/home/luke/local/cdips/catalogs/',
@@ -56,11 +69,18 @@ def get_cdips_pub_catalog(ver=0.4):
 
     cdips_stars_dir = dir_d[socket.gethostname()]
 
-    cdips_stars_path = os.path.join(
-        cdips_stars_dir, 'OC_MG_FINAL_v{}_publishable.csv'.format(ver)
-    )
+    if ver <= 0.4:
+        cdips_stars_path = os.path.join(
+            cdips_stars_dir, 'OC_MG_FINAL_v{}_publishable.csv'.format(ver)
+        )
+        df = pd.read_csv(cdips_stars_path, sep=';')
+    else:
+        cdips_stars_path = os.path.join(
+            cdips_stars_dir,
+            f'cdips_targets_v{ver}_gaiasources_Rplt16_orclose.csv'
+        )
+        df = pd.read_csv(cdips_stars_path, sep=',')
 
-    df = pd.read_csv(cdips_stars_path, sep=';')
 
     return df
 
