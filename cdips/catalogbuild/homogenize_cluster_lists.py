@@ -111,7 +111,7 @@ def main():
     #FIXME: 
     # need to rebuild and rerun the Gaia side.
 
-    do_v05_merge = 1
+    do_the_merge = 1
     catalog_vnum = '0.5'
 
 
@@ -124,7 +124,7 @@ def main():
     # do_merge_OC_MG_catalogs = 0
     # do_final_merge = 0
 
-    if do_v05_merge:
+    if do_the_merge:
         get_target_catalog(catalog_vnum)
 
     if do_NASAExoArchive:

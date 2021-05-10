@@ -9,7 +9,7 @@ Background: Created for v0.5 target catalog merge, to simplify life.
 Contents:
     AGE_LOOKUP: manual lookupdictionary of common cluster ages.
     get_target_catalog
-    assemble_target_catalog
+    assemble_initial_source_list
     get_target_catalog_latex_table
     verify_target_catalog
 """
@@ -112,7 +112,7 @@ def get_target_catalog_latex_table():
     r = ads.ExportQuery("2019AJ....158..122K").execute()
 
 
-def assemble_target_catalog(catalog_vnum):
+def assemble_initial_source_list(catalog_vnum):
     """
     Given LIST_OF_LISTS_STARTER_v0.5.csv , exported from
     /doc/list_of_cluster_member_lists.ods, clean and concatenate the cluster
@@ -396,15 +396,15 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
     """
     1. Assemble the target catalog (down to arbitrary brightness; i.e, just
     clean and concatenate).
-    2. Manually async query the Gaia database.
-    3.
+    2. Manually async query the Gaia database based on those source_ids.
+    3. Verify the result, and merge and write it.
     """
 
     csvpath = os.path.join(
         clusterdatadir, f'cdips_targets_v{catalog_vnum}_nomagcut.csv'
     )
     if not os.path.exists(csvpath):
-        assemble_target_catalog(catalog_vnum)
+        assemble_initial_source_list(catalog_vnum)
 
     df = pd.read_csv(csvpath)
 
@@ -469,14 +469,98 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
     # so, do the merge using the GAIA xmatch results as the base.
     mdf = gdf.merge(df, on='source_id', how='left')
 
-    # TODO: update the `metadf` to have the CORRECT number of stars in each
-    # reference_id.
-    # TODO Ditto for the count of ( Rp>16 | ( (plx/plx_error)>5 & (dist<100pc))  )
-    # stars. [and check the counter ignroing the second condition there...
-    # since we're talking just nearby v faint M dwarfs, and white dwarfs, for
-    # which it would matter].
-    # TODO then 
 
-    import IPython; IPython.embed()
+    #
+    # update metadf with new info.
+    #
+    N_stars_in_lists = []
+    Nstars_with_age_in_lists = []
+    N_sel0 = []
+    N_sel1 = []
+    N_sel2 = []
+    for ix, r in metadf.iterrows():
 
-    assert 0
+        csvpath = os.path.join(clusterdatadir, r.csv_path)
+        assert os.path.exists(csvpath)
+        _df = pd.read_csv(csvpath)
+        if 'source_id' not in _df.columns:
+            _df = _df.rename(columns={"source":"source_id"})
+
+        _sel = mdf.source_id.isin(_df.source_id)
+        N_stars_in_lists.append(len(mdf[_sel]))
+        _selage =  (~pd.isnull(mdf.age)) & _sel
+        Nstars_with_age_in_lists.append(len(mdf[_selage]))
+
+        _sel0 = (
+            _sel
+            &
+            (mdf.phot_rp_mean_mag < 16)
+        )
+
+        _sel1 =  (
+            _sel
+            &
+            ( (mdf.phot_rp_mean_mag < 16)
+             |
+            (
+              (mdf.parallax/mdf.parallax_error > 5) & (mdf.parallax > 10)
+            )
+            )
+        )
+
+        _sel2 = _sel1 & (~(pd.isnull(mdf.age)))
+
+        N_sel0.append(len(mdf[_sel0]))
+        N_sel1.append(len(mdf[_sel1]))
+        N_sel2.append(len(mdf[_sel2]))
+
+    metadf["N_gaia"] = N_stars_in_lists
+    metadf["N_gaia_withage"] = Nstars_with_age_in_lists
+    metadf["N_Rplt16"] = N_sel0
+    metadf["N_Rplt16_orclose"] = N_sel1
+    metadf["N_Rplt16_orclose_withage"] = N_sel2
+    metadf['Nstars_m_Ngaia'] = metadf.Nstars - metadf.N_gaia
+
+    #
+    # save the output
+    #
+    csvpath = os.path.join(
+        clusterdatadir, f'cdips_targets_v{catalog_vnum}_nomagcut_gaiasources.csv'
+    )
+    if not os.path.exists(csvpath):
+        mdf.to_csv(csvpath, index=False)
+        print(f'Wrote {csvpath}')
+
+    metapath = os.path.join(
+        clusterdatadir,
+        f'list_of_lists_keys_paths_assembled_v{catalog_vnum}_gaiasources.csv'
+    )
+    if not os.path.exists(csvpath):
+        metadf.sort_values(by='Nstars').to_csv(metapath, ascending=False, index=False)
+        print(f'Wrote {metapath}')
+
+    # Rp<16
+    csvpath = os.path.join(
+        clusterdatadir, f'cdips_targets_v{catalog_vnum}_gaiasources_Rplt16.csv'
+    )
+    if not os.path.exists(csvpath):
+        sel = (mdf.phot_rp_mean_mag < 16)
+        smdf = mdf[sel]
+        smdf.to_csv(csvpath, index=False)
+        print(f'Wrote {csvpath}')
+
+    # Rp<16 or close
+    csvpath = os.path.join(
+        clusterdatadir, f'cdips_targets_v{catalog_vnum}_gaiasources_Rplt16_orclose.csv'
+    )
+    if not os.path.exists(csvpath):
+        sel =  (
+            (mdf.phot_rp_mean_mag < 16)
+            |
+            (
+              (mdf.parallax/mdf.parallax_error > 5) & (mdf.parallax > 10)
+            )
+        )
+        smdf = mdf[sel]
+        smdf.to_csv(csvpath, index=False)
+        print(f'Wrote {csvpath}')
