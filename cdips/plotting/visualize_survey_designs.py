@@ -221,6 +221,15 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
         from cdips.utils import collect_cdips_lightcurves as ccl
         df = ccl.get_cdips_pub_catalog(ver=0.5)
 
+        if overplot_cdips == 'full':
+            pass
+        elif overplot_cdips == 'lt1kpc':
+            sel = (df.parallax > 1) & (df.parallax/df.parallax_error > 3)
+            df = df[sel]
+        elif overplot_cdips == 'lt300pc':
+            sel = (df.parallax > 3.3333333) & (df.parallax/df.parallax_error > 3)
+            df = df[sel]
+
         c = SkyCoord(np.array(df['ra'])*u.deg, np.array(df['dec'])*u.deg,
                      frame='icrs')
 
@@ -398,6 +407,8 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
                 ha='right',va='bottom')
 
     fig.tight_layout()
+    if overplot_cdips:
+        savname = savname.replace('OVERPLOT', f'{overplot_cdips}')
     fig.savefig(os.path.join(savdir,savname),dpi=350, bbox_inches='tight')
     print('saved {}'.format(os.path.join(savdir,savname)))
 
@@ -525,7 +536,7 @@ def plot_tess_skymap(overplot_galactic_plane=True, for_proposal=False,
         if not plot_tess:
             eclsavname = eclsavname.replace('.png','_notess.png')
         if overplot_cdips:
-            eclsavname = eclsavname.replace('.png','_cdipsoverplot.png')
+            eclsavname = eclsavname.replace('.png',f'_cdipstargetsOVERPLOT.png')
         icrssavname = eclsavname.replace('eclmap','icrsmap')
         galsavname = eclsavname.replace('eclmap','galacticmap')
 
@@ -592,7 +603,7 @@ if __name__=="__main__":
 
     # END OPTIONS
 
-    for overplot_cdips in [0,1]:
+    for overplot_cdips in [0,'lt300pc','full','lt1kpc']:
         plot_tess_skymap(overplot_galactic_plane=overplot_galactic_plane,
                          for_proposal=for_proposal,
                          overplot_k2_fields=overplot_k2_fields,
