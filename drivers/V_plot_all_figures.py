@@ -63,7 +63,7 @@ def main():
     sectors = None
     plot_hrd_scat(sectors, overwrite=1, closest_subset=1)
     plot_hrd_scat(sectors, overwrite=1, close_subset=1)
-    plot_hrd_scat(sectors, overwrite=1, close_subset=0)
+    plot_hrd_scat(sectors, overwrite=1)
 
     # fig N: histogram of CDIPS target star age.
     plot_target_star_hist_logt(OC_MG_CAT_ver=OC_MG_CAT_ver, overwrite=1)
@@ -1394,12 +1394,12 @@ def plot_hrd_scat(sectors, overwrite=0, close_subset=0, use_actual_lcs=0,
         df = ccl.get_cdips_pub_catalog(ver=OC_MG_CAT_ver)
 
         # 2d SCATTER CASE
-        if close_subset:
+        if close_subset or closest_subset:
             df = df[df['parallax'] > 0]
         plx_as = df['parallax']/1000
         if close_subset:
             df = df[ 1/plx_as < 1000 ]
-        if closest_subset:
+        elif closest_subset:
             # 300 pc sample.
             df = df[ 1/plx_as < 300 ]
 

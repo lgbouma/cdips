@@ -219,7 +219,7 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
     if overplot_cdips:
 
         from cdips.utils import collect_cdips_lightcurves as ccl
-        df = ccl.get_cdips_pub_catalog(ver=0.4)
+        df = ccl.get_cdips_pub_catalog(ver=0.5)
 
         c = SkyCoord(np.array(df['ra'])*u.deg, np.array(df['dec'])*u.deg,
                      frame='icrs')
@@ -493,7 +493,7 @@ def plot_tess_skymap(overplot_galactic_plane=True, for_proposal=False,
     """
 
     savdir = os.path.join(os.path.dirname(cd.__path__[0]),
-                          'results/paper_figures')
+                          'results/paper_V_figures')
     orbit_duration_days = 1/2 #27.32 / 2
 
     # things to change
