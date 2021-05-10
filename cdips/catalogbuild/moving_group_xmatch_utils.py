@@ -12,6 +12,9 @@ includes:
         make_Luhman12_GaiaDR2_crossmatch
     make_votable_given_cols
     make_votable_given_full_cols
+    Tian2020_to_csv
+
+DEPRECATED IN >=V0.5 (in favor of SIMBAD_bibcode_to_GaiaDR2_csv):
     make_Gagne18_BANYAN_any_DR2_crossmatch
         make_Gagne18_BANYAN_XIII_GaiaDR2_crossmatch
         make_Gagne18_BANYAN_XII_GaiaDR2_crossmatch
@@ -22,7 +25,6 @@ includes:
     make_Preibisch01_GaiaDR2_crossmatch
     make_Casagrande_11_GaiaDR2_crossmatch
     make_Bell17_GaiaDR2_crossmatch
-    Tian2020_to_csv
 """
 from __future__ import division, print_function
 

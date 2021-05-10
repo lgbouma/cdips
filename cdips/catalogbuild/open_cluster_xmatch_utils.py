@@ -13,15 +13,17 @@ Gaia groups:
     Kounkel2018_orion_to_csv
     KounkelCovey2019_clusters_to_csv
     GaiaCollaboration2018_clusters_to_csv
-Kharchenko+2013:
-    Kharchenko2013_position_mag_match_Gaia
-    estimate_Gaia_G_given_2mass_J_Ks
-    failed_Kharchenko2013_match_Gaia
-Dias+2014:
-    Dias2014_position_mag_match_Gaia
-    make_Dias2014_cut_csv
-    make_Dias2014_cut_vot
-    Dias2014_nbhr_gaia_to_nearestnbhr
+
+DEPRECATED:
+    Kharchenko+2013:
+        Kharchenko2013_position_mag_match_Gaia
+        estimate_Gaia_G_given_2mass_J_Ks
+        failed_Kharchenko2013_match_Gaia
+    Dias+2014:
+        Dias2014_position_mag_match_Gaia
+        make_Dias2014_cut_csv
+        make_Dias2014_cut_vot
+        Dias2014_nbhr_gaia_to_nearestnbhr
 '''
 import os, pickle, subprocess, itertools, socket
 from glob import glob
