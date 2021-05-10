@@ -46,7 +46,7 @@ catalogs, listed in Table~\ref{table:list_of_lists}.  For any of these catalogs
 for which Gaia DR2 identifiers were not immediately available, we either
 followed the spatial (plus proper-motion) crossmatching procedures described in
 CITET Bouma et al 2019, or else we pulled the Gaia DR2 source identifiers
-associatd with the catalog from SIMBAD.  We consequently opted to drop the
+associated with the catalog from SIMBAD.  We consequently opted to drop the
 $\texttt{ext_catalog_name}$ and $\texttt{dist}$ columns maintained in CITET
 Bouma et al 2019, as these were only populated for a small number of stars.
 
@@ -71,8 +71,13 @@ determined by CITET CantatGaudin2020b to assign ages to the catalogs from
 GaiaCollaboration2018Table1, GaiaCollaboration2018Table2, CantatGaudin2018a,
 CastroGinard2020, and CantatGaudin2020a.
 
-This means that the catalogs we included for which ages were not immediately
-available were those of CITET CottenSong2016, Oh2017, Zari2018, and Ujjwal2020.
+The catalogs we included for which ages were not immediately available were
+those of CITET CottenSong2016, Oh2017, Zari2018, Gagne2018a, Gagne2018b,
+Gagne2018c, and Ujjwal2020.  While in principle the stars discussed by Gagne
+2018abc have easily associated ages, our SIMBAD cross-matching lost the moving
+group association from those studies, which should therefore be recovered using
+BANYAN
+$\Sigma$.\footnote{\url{http://www.exoplanetes.umontreal.ca/banyan/banyansigma.php}}.
 We also included the HATS and HATNet candidate databases, and SIMBAD object
 identifiers $\texttt{TT*}$, $\texttt{Y*O}, $\texttt{Y*?}, $\texttt{TT?}, and
 $\texttt{pMS*}.  Finally, we also included every star in the NASA Exoplanet

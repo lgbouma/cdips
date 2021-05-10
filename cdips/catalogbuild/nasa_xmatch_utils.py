@@ -10,17 +10,17 @@ clusterdatadir = os.path.join(DATADIR, 'cluster_data')
 
 from cdips.utils import today_YYYYMMDD
 
-def NASAExoArchive_to_csv(N_max=int(3e4)):
+def NASAExoArchive_to_csv(N_max=int(1e5)):
 
     outpath = os.path.join(
-        LOCALDIR, f'NASAExoArchive_ps_table_{today_YYYYMMDD()}.csv'
+        LOCALDIR, f'NASAExoArchive_ps_table_20210506.csv'
     )
 
     if not os.path.exists(outpath):
 
         tap = TapPlus(url="https://exoplanetarchive.ipac.caltech.edu/TAP/")
         query = (
-            f'select top 100000 '+
+            f'select top {N_max} '+
             'pl_name, gaia_id, st_age, st_ageerr1, st_ageerr2 from ps'
         )
         print(query)
@@ -29,19 +29,28 @@ def NASAExoArchive_to_csv(N_max=int(3e4)):
 
         assert len(r) != N_max
 
-        source_ids = np.array(
-            pd.DataFrame({'gaia_id':r['gaia_id']}).
-            gaia_id.str.extract('Gaia DR2 (.*)')
-        )
-
         df = r.to_pandas()
-        df['source_id'] = source_ids.astype(str)
 
-        df.to_csv(outpath, index=False)
+        source_ids = np.array(
+            pd.DataFrame({'gaia_id':r['gaia_id'].astype(str)}).
+            gaia_id.str.extract('Gaia DR2 (.*)')
+        ).astype(str)
+
+        # NOTE this is nasty. NaN's, if written to the CSV file, will then be
+        # READ in with read_csv as an object column. int64/string
+        # representation doesnt change it. (int64 actually fails, because it
+        # can't convert the NaN)
+        source_ids = source_ids.flatten()
+        sel = ~(source_ids == 'nan')
+
+        sdf = df[sel]
+
+        sdf['source_id'] = source_ids[sel].astype(str)
+
+        sdf.to_csv(outpath, index=False)
         print(f'Made {outpath}')
 
     df = pd.read_csv(outpath)
-
     sel = ~(pd.isnull(df.source_id))
 
     outdf = pd.DataFrame({
@@ -50,7 +59,7 @@ def NASAExoArchive_to_csv(N_max=int(3e4)):
         'st_ageerr1':df.loc[sel,'st_ageerr1'],
         'st_ageerr2':df.loc[sel,'st_ageerr2']
     })
-    outdf['cluster'] = f'NASAExoArchive_ps_{today_YYYYMMDD()}'
+    outdf['cluster'] = f'NASAExoArchive_ps_20210506'
 
     has_age_value = ~pd.isnull(outdf.st_age)
     has_age_errs = (~pd.isnull(outdf.st_ageerr1)) & (~pd.isnull(outdf.st_ageerr2))
@@ -67,7 +76,7 @@ def NASAExoArchive_to_csv(N_max=int(3e4)):
     outcols = ['source_id','cluster','age']
 
     outpath = os.path.join(
-        clusterdatadir, 'v05', f'NASAExoArchive_ps_{today_YYYYMMDD()}.csv'
+        clusterdatadir, 'v05', f'NASAExoArchive_ps_20210506.csv'
     )
 
     outdf[outcols].to_csv(outpath, index=False)

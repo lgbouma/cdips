@@ -7,10 +7,11 @@ Date: May 2021.
 Background: Created for v0.5 target catalog merge, to simplify life.
 
 Contents:
+    AGE_LOOKUP: manual lookupdictionary of common cluster ages.
     get_target_catalog
     assemble_target_catalog
     get_target_catalog_latex_table
-    AGE_LOOKUP: manual lookupdictionary of common cluster ages.
+    verify_target_catalog
 """
 
 import numpy as np, pandas as pd
@@ -113,14 +114,14 @@ def get_target_catalog_latex_table():
 
 def assemble_target_catalog(catalog_vnum):
     """
-    Given V05_LIST_OF_LISTS_KEYS_PATHS.csv, exported from
-    /doco/list_of_cluster_member_lists.ods, clean and concatenate the cluster
+    Given LIST_OF_LISTS_STARTER_v0.5.csv , exported from
+    /doc/list_of_cluster_member_lists.ods, clean and concatenate the cluster
     members. Flatten the resulting list on source_ids, joining the cluster,
     age, and bibcode columns into comma-separated strings.
     """
 
     metadf = pd.read_csv(
-        os.path.join(clusterdatadir, 'V05_LIST_OF_LISTS_KEYS_PATHS.csv')
+        os.path.join(clusterdatadir, 'LIST_OF_LISTS_STARTER_v0.5.csv')
     )
     metadf['bibcode'] = metadf.ads_link.str.extract("abs\/(.*)\/")
 
@@ -168,7 +169,7 @@ def assemble_target_catalog(catalog_vnum):
         if "cluster" not in colnames:
             msg = (
                 f'WRN! for {r.reference_id} did not find "cluster" column. '+
-                'Appending the reference_id as the cluster ID.'
+                f'Appending the reference_id ({r.reference_id}) as the cluster ID.'
             )
             print(msg)
 
@@ -233,6 +234,8 @@ def assemble_target_catalog(catalog_vnum):
                 ('HATSandHATNcandidates' in r.reference_id)
                 or
                 ('SIMBAD' in r.reference_id)
+                or
+                ('Gagne2018' in r.reference_id)
             ):
                 age = np.ones(len(df))*np.nan
                 df['age'] = age
@@ -351,7 +354,51 @@ def verify_target_catalog(df, metadf):
 
 
 
+def verify_gaia_xmatch(df, gdf, metadf):
+    """
+    Check that each entry in the target catalog has a Gaia xmatch source_id
+    that matches the original catalog. For any that do not, understand why not.
+    """
+
+    print(79*'-')
+    print('Beginning Gaia xmatch verification...')
+    print(79*'-')
+
+    gdf_source_ids = np.unique(np.array(gdf.source_id).astype(np.int64))
+
+    for ix, r in metadf.sort_values('Nstars').iterrows():
+
+        print(f'{r.reference_id} (Nstars={r.Nstars})...')
+
+        sel = df.reference_id.str.contains(r.reference_id)
+        df_source_ids = np.array(df.loc[sel, 'source_id']).astype(np.int64)
+
+        int1d = np.intersect1d(df_source_ids, gdf_source_ids)
+        if not len(int1d) == len(df_source_ids):
+            msg = f'\tWRN! {r.reference_id} only got {len(int1d)} Gaia xmatches.'
+            print(msg)
+
+            if 'NASAExoArchive' in r.reference_id:
+                csvpath = os.path.join(clusterdatadir, r.csv_path)
+                df_true = pd.read_csv(csvpath)
+                missing = df_source_ids[
+                    ~np.in1d(df_source_ids, gdf_source_ids)
+                ]
+                # NOTE: should not be raised.
+
+    print('Verified that the pre-mag cut target catalog has source_ids that '
+          'match the original (or close enough). ')
+    print(79*'-')
+
+
+
 def get_target_catalog(catalog_vnum, VERIFY=0):
+    """
+    1. Assemble the target catalog (down to arbitrary brightness; i.e, just
+    clean and concatenate).
+    2. Manually async query the Gaia database.
+    3.
+    """
 
     csvpath = os.path.join(
         clusterdatadir, f'cdips_targets_v{catalog_vnum}_nomagcut.csv'
@@ -371,7 +418,7 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
         verify_target_catalog(df, metadf)
 
     votablepath = os.path.join(
-        clusterdatadir, f'cdips_v05_0-result.vot.gz'
+        clusterdatadir, f'cdips_v05_1-result.vot.gz'
     )
     if not os.path.exists(votablepath):
         temppath = os.path.join(clusterdatadir, 'v05_sourceids.csv')
@@ -411,22 +458,24 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
     if not len(gdf) == len(df):
         print(79*"*")
         print('WRN!')
-        print('Expected {len(df)} matches in Gaia DR2')
-        print('Got {len(gdf)} matches in Gaia DR2')
+        print(f'Expected {len(df)} matches in Gaia DR2')
+        print(f'Got {len(gdf)} matches in Gaia DR2')
         print(79*"*")
+        verify_gaia_xmatch(df, gdf, metadf)
 
-        # one-time verification
-        #FIXME VERIFY THE GAIA MATCH
-        verify_target_catalog(df, metadf)
+    # every queried source_id should have a result. the two that do not are
+    # EsplinLuhman2019, 377 matches to 443 stars, and Gagne2018c, 914 matches
+    # to 916 stars. this is 60 missing stars out of 1.5 million. we'll be okay.
+    # so, do the merge using the GAIA xmatch results as the base.
+    mdf = gdf.merge(df, on='source_id', how='left')
 
-    #FIXME : some number of these are missing
-
-
-    import IPython; IPython.embed()
-
-    # every queried source_id should have a result.
-
-    mdf = df.merge(gdf, on='source_id', how='left')
+    # TODO: update the `metadf` to have the CORRECT number of stars in each
+    # reference_id.
+    # TODO Ditto for the count of ( Rp>16 | ( (plx/plx_error)>5 & (dist<100pc))  )
+    # stars. [and check the counter ignroing the second condition there...
+    # since we're talking just nearby v faint M dwarfs, and white dwarfs, for
+    # which it would matter].
+    # TODO then 
 
     import IPython; IPython.embed()
 

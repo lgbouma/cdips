@@ -108,6 +108,9 @@ def main():
     do_Rizzuto17 = 0
     do_NASAExoArchive = 0
 
+    #FIXME: 
+    # need to rebuild and rerun the Gaia side.
+
     do_v05_merge = 1
     catalog_vnum = '0.5'
 
@@ -141,7 +144,12 @@ def main():
         run_SIMBAD_to_csv(get_longtypes=0)
     if do_v05_simbad_bibcodes:
         # CottenSong2016
-        bibcodes = ['2016ApJS..225...15C']
+        # Kraus2014
+        # Oh2017
+        # Gagne 2018abc
+        bibcodes = ['2016ApJS..225...15C', '2014AJ....147..146K',
+                    '2017AJ....153..257O', '2018ApJ...862..138G',
+                    '2018ApJ...860...43G', '2018ApJ...856...23G' ]
         for b in bibcodes:
             SIMBAD_bibcode_to_GaiaDR2_csv(
                 b, os.path.join(clusterdatadir, 'v05')
