@@ -18,7 +18,7 @@ if not os.path.exists(CACHEDIR):
     os.mkdir(CACHEDIR)
 
 def get_exoplanetarchive_planetarysystems(tabletype="ps", overwrite=1,
-                                          n_max=int(1e5), verbose=1):
+                                          n_max=int(3e5), verbose=1):
     """
     Args:
         overwrite: if true, will download the LATEST tables from the NASA

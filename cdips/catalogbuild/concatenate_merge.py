@@ -508,7 +508,7 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
             )
         )
 
-        _sel2 = _sel1 & (~(pd.isnull(mdf.age)))
+        _sel2 = _sel1 & (mdf.mean_age > -1)
 
         N_sel0.append(len(mdf[_sel0]))
         N_sel1.append(len(mdf[_sel1]))
@@ -530,14 +530,18 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
     if not os.path.exists(csvpath):
         mdf.to_csv(csvpath, index=False)
         print(f'Wrote {csvpath}')
+    else:
+        print(f'Found {csvpath}')
 
     metapath = os.path.join(
         clusterdatadir,
         f'list_of_lists_keys_paths_assembled_v{catalog_vnum}_gaiasources.csv'
     )
-    if not os.path.exists(csvpath):
-        metadf.sort_values(by='Nstars').to_csv(metapath, ascending=False, index=False)
+    if not os.path.exists(metapath):
+        metadf.sort_values(by='Nstars', ascending=False).to_csv(metapath, index=False)
         print(f'Wrote {metapath}')
+    else:
+        print(f'Found {metapath}')
 
     # Rp<16
     csvpath = os.path.join(
@@ -548,6 +552,8 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
         smdf = mdf[sel]
         smdf.to_csv(csvpath, index=False)
         print(f'Wrote {csvpath}')
+    else:
+        print(f'Found {csvpath}')
 
     # Rp<16 or close
     csvpath = os.path.join(
@@ -564,3 +570,5 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
         smdf = mdf[sel]
         smdf.to_csv(csvpath, index=False)
         print(f'Wrote {csvpath}')
+    else:
+        print(f'Found {csvpath}')

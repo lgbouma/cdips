@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt, pandas as pd, numpy as np
 """
 Goal: get Gaia DR2 IDs of stars in "clusters". These lists define the sample of
 target stars for which we make light-curves.
@@ -7,6 +6,7 @@ See ../doc/list_of_cluster_member_lists.ods for an organized spreadsheet of the
 different member lists.
 """
 
+import matplotlib.pyplot as plt, pandas as pd, numpy as np
 import os, pickle, subprocess, itertools, socket
 from glob import glob
 
@@ -37,6 +37,7 @@ from cdips.catalogbuild.nasa_xmatch_utils import (
 )
 from cdips.catalogbuild.open_cluster_xmatch_utils import (
     GaiaCollaboration2018_clusters_to_csv,
+    # NOTE: commented because <=v0.4 deprecated
     #Kharchenko2013_position_mag_match_Gaia,
     #Dias2014_nbhr_gaia_to_nearestnbhr,
     KounkelCovey2019_clusters_to_csv,
