@@ -10,7 +10,6 @@ Contents:
     AGE_LOOKUP: manual lookupdictionary of common cluster ages.
     get_target_catalog
     assemble_initial_source_list
-    get_target_catalog_latex_table
     verify_target_catalog
 """
 
@@ -98,19 +97,6 @@ AGE_LOOKUP = {
     'cg19velaOB2_pop6': agefmt(20e6),
     'cg19velaOB2_pop7': agefmt(11e6),
 }
-
-def get_target_catalog_latex_table():
-    """
-    authorname/year, title, number of DR2 sources that I collected, number of DR2
-    sources with Rp<16
-    """
-
-    # https://ads.readthedocs.io/en/latest/#getting-started
-    import ads
-    # NOTE: it takes lists too. best to just do that! ignoring the nan for
-    # Joel's list.
-    r = ads.ExportQuery("2019AJ....158..122K").execute()
-
 
 def assemble_initial_source_list(catalog_vnum):
     """
