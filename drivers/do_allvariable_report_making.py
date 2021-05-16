@@ -30,7 +30,7 @@ RUNID_EXTINCTION_DICT = {
     'IC_2602': 0.0799,  # avg E(B-V) from Randich+18, *1.31 per Stassun+2019
     'compstar_NGC_2516': 0.1343, # same as for NGC_2516
     'NGC_2516': 0.1343, # based on the S98 average (cf /Users/luke/Dropbox/proj/cdips_followup/results/TIC_268_neighborhood/LGB_extinction)
-    'CrA': 0.06389, # KC19 ratio used
+    'CrA': 0.05025, # AV_to_EBpmRp, using A_V=0.11892 from KC19
     'kc19group_113': 0.1386, # 0.258 from KC19 -- take ratio
     'Orion': 0.1074, # again KC19 ratio used
     'VelaOB2': 0.2686, # KC19 ratio
@@ -40,13 +40,15 @@ RUNID_EXTINCTION_DICT = {
 def main():
 
     # runid = 'compstar_NGC_2516'
-    runid = 'NGC_2516' # 20210305 CG18, KC19, M21 sourcelist.
+    # runid = 'NGC_2516' # 20210305 CG18, KC19, M21 sourcelist.
+    runid = 'CrA' # KC19+KCS20, "CrA" from v0.5
+    # runid = 'IC_2602' # CG18+KC19, sorted by color
+
+    # NOTE: might want to rerun these...
     # runid = 'ScoOB2' # CG18+KC19, sorted by color
     # runid = 'VelaOB2' # CG18+KC19, sorted by color
     # runid = 'Orion' # CG18+KC19, sorted by color
     # runid = 'kc19group_113' # CG18+KC19, sorted by color
-    # runid = 'CrA' # CG18+KC19, sorted by color
-    # runid = 'IC_2602' # CG18+KC19, sorted by color
 
     E_BpmRp = RUNID_EXTINCTION_DICT[runid]
     use_calib = True if 'compstar' in runid else False
@@ -58,19 +60,22 @@ def main():
                 f'/home/lbouma/proj/cdips/data/cluster_data/NGC_2516_full_fullfaint_20210305.csv'
             )
         else:
-            sourcelist_path = (
-                f'/home/lbouma/proj/cdips/data/cluster_data/cdips_catalog_split/OC_MG_FINAL_v0.4_publishable_CUT_{runid}.csv'
+            datadir = (
+                '/home/lbouma/proj/cdips/data/cluster_data/cdips_catalog_split/'
             )
+            sourcelist_path = os.path.join(
+                datadir, f'OC_MG_FINAL_v0.4_publishable_CUT_{runid}.csv'
+            )
+            if not os.path.exists(sourcelist_path):
+                sourcelist_path = os.path.join(
+                    datadir, f'OC_MG_FINAL_v0.5_publishable_CUT_{runid}.csv'
+                )
+                assert os.path.exists(sourcelist_path)
+
     else:
         sourcelist_path = (
             f'/home/lbouma/proj/cdips/data/compstar_data/{runid}_sourcelist.csv'
         )
-
-    # runid = 'ic2602_examples'
-    # sourcelist_path = (
-    #     f'/home/lbouma/proj/cdips/tests/data/test_pca_{runid}.csv'
-    # )
-    # df = pd.read_csv(sourcelist_path, comment='#', names=['source_id'])
 
     ##########################################
 
