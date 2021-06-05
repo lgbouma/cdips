@@ -59,7 +59,8 @@ from cdips.catalogbuild.moving_group_xmatch_utils import (
     Tian2020_to_csv,
     Pavlidou2021_to_csv,
     Gagne2020_to_csv,
-    Rizzuto2017_to_csv
+    Rizzuto2017_to_csv,
+    Kerr2021_to_csv
 )
 from cdips.catalogbuild.star_forming_rgn_xmatch_utils import (
     Zari18_stars_to_csv,
@@ -114,13 +115,16 @@ def main():
     do_Gagne20 = 0
     do_Rizzuto17 = 0
     do_NASAExoArchive = 0
+    do_Kerr2021 = 0
 
     do_the_merge = 1
-    catalog_vnum = '0.5'
+    catalog_vnum = '0.6'
 
     if do_the_merge:
         get_target_catalog(catalog_vnum)
 
+    if do_Kerr2021:
+        Kerr2021_to_csv()
     if do_NASAExoArchive:
         NASAExoArchive_to_csv()
     if do_v05_vizier_calls:

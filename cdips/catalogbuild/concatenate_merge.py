@@ -107,7 +107,7 @@ def assemble_initial_source_list(catalog_vnum):
     """
 
     metadf = pd.read_csv(
-        os.path.join(clusterdatadir, 'LIST_OF_LISTS_STARTER_v0.5.csv')
+        os.path.join(clusterdatadir, 'LIST_OF_LISTS_STARTER_V0.6.csv')
     )
     metadf['bibcode'] = metadf.ads_link.str.extract("abs\/(.*)\/")
 
@@ -378,7 +378,7 @@ def verify_gaia_xmatch(df, gdf, metadf):
 
 
 
-def get_target_catalog(catalog_vnum, VERIFY=0):
+def get_target_catalog(catalog_vnum, VERIFY=1):
     """
     1. Assemble the target catalog (down to arbitrary brightness; i.e, just
     clean and concatenate).
@@ -394,6 +394,7 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
 
     df = pd.read_csv(csvpath)
 
+    # made by assemble_initial_source_list above.
     metapath = os.path.join(
         clusterdatadir, f'list_of_lists_keys_paths_assembled_v{catalog_vnum}.csv'
     )
@@ -403,21 +404,22 @@ def get_target_catalog(catalog_vnum, VERIFY=0):
         # one-time verification
         verify_target_catalog(df, metadf)
 
+    # e.g., cdips_v05_1-result.vot.gz
     votablepath = os.path.join(
-        clusterdatadir, f'cdips_v05_1-result.vot.gz'
+        clusterdatadir, f'cdips_v{str(catalog_vnum).replace(".","")}_1-result.vot.gz'
     )
     if not os.path.exists(votablepath):
-        temppath = os.path.join(clusterdatadir, 'v05_sourceids.csv')
+        temppath = os.path.join(clusterdatadir, f'v{str(catalog_vnum).replace(".","")}_sourceids.csv')
         print(f'Wrote {temppath}')
         df['source_id'].to_csv(
             temppath,
             index=False
         )
         querystr = (
-            "SELECT top 2000000 g.source_id, g.ra, g.dec, g.parallax, "
-            "g.parallax_error, g.pmra, g.pmdec, g.phot_g_mean_mag, "
-            "g.phot_rp_mean_mag, g.phot_bp_mean_mag FROM "
-            "user_lbouma.v05_sourceids as u, gaiadr2.gaia_source AS g WHERE "
+            "SELECT top 2000000 g.source_id, g.ra, g.dec, g.parallax, "+
+            "g.parallax_error, g.pmra, g.pmdec, g.phot_g_mean_mag, "+
+            "g.phot_rp_mean_mag, g.phot_bp_mean_mag FROM "+
+            f"user_lbouma.v{str(catalog_vnum).replace('.','')}_sourceids as u, gaiadr2.gaia_source AS g WHERE "+
             "u.source_id=g.source_id "
         )
         print('Now you must go to https://gea.esac.esa.int/archive/, login, and run')

@@ -13,6 +13,7 @@ includes:
     make_votable_given_cols
     make_votable_given_full_cols
     Tian2020_to_csv
+    Kerr2021_to_csv
 
 DEPRECATED IN >=V0.5 (in favor of SIMBAD_bibcode_to_GaiaDR2_csv):
     make_Gagne18_BANYAN_any_DR2_crossmatch
@@ -974,6 +975,33 @@ def Tian2020_to_csv():
     )
     outdf.to_csv(outpath, index=False)
     print(f'Made {outpath}')
+
+
+def Kerr2021_to_csv():
+
+    tablepath = os.path.join(
+        clusterdatadir, 'v06', 'Kerr_2021_Table1_accepted.txt'
+    )
+    df = Table.read(tablepath, format='ascii.cds').to_pandas()
+
+    outdf = pd.DataFrame({
+        'source_id':list(df['Gaia'].astype(np.int64)),
+        'cluster':list('TLC_'+df['TLC'].astype(str)),
+        'age':np.round(np.log10(1e6*np.array(df['Age'].astype(float))), 2)
+    })
+    sel = (
+        (outdf.cluster == 'TLC_-1')
+        |
+        (outdf.cluster == 'TLC_0')
+    )
+    outdf.loc[sel, 'cluster'] = 'N/A'
+
+    outpath = os.path.join(
+        clusterdatadir, 'v06', 'Kerr2021_cut_cluster_source_age.csv'
+    )
+    outdf.to_csv(outpath, index=False)
+    print(f'Made {outpath}')
+
 
 
 def Gagne2020_to_csv():
