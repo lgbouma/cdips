@@ -59,19 +59,25 @@ assert int(wotanversiontuple[0]) >= 1
 assert int(wotanversiontuple[1]) >= 4
 
 def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
-                 window_length=None):
+                 window_length=None, edge_cutoff=None):
     """
+    Apply the wotan flatten function. Implemented methods include pspline,
+    biweight, and median.
+
     Args:
         time, flux (np.ndarray): array of times and fluxes.
 
         break_tolerance (float): maximum time past which light curve is split
         into timegroups, each of which is detrended individually.
 
-        method (str): 'pspline' or 'biweight'
+        method (str): 'pspline', 'biweight', 'median'.
 
         cval (float): the wotan 'biweight' tuning parameter.
 
         window_length (float): length of the window in days.
+
+        edge_cutoff (float): how much of the edge to remove. Only works for
+        'median' method.
 
     Returns:
         flat_flux, trend_flux (np.ndarray): flattened array, and the trend
@@ -103,6 +109,15 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
                                             break_tolerance=break_tolerance,
                                             window_length=window_length,
                                             cval=cval)
+
+        elif method == 'median':
+            flat_flux, trend_flux = flatten(time, flux,
+                                            method='median',
+                                            return_trend=True,
+                                            break_tolerance=break_tolerance,
+                                            window_length=window_length,
+                                            edge_cutoff=edge_cutoff)
+
         else:
             raise NotImplementedError
 
