@@ -10,6 +10,9 @@ get_exofop_toi_catalog: ExoFOP-TESS TOI table.
 get_exofop_ctoi_catalog: ExoFOP-TESS CTOI table.
 get_exofop_ctoi_catalog_entry: Single row from above.
 
+get_nasa_exoplanet_archive_pscomppars: Pull the latest NASA exoplanet archive
+    composite planet parameter table.
+
 ticid_to_toiid: Given a TICID, get a TOI identifer
 get_tic_star_information: Given TICID, query TICv8 for arbitrary columns.
 """
@@ -21,6 +24,62 @@ from cdips.utils import today_YYYYMMDD
 TODAYSTR = '-'.join([today_YYYYMMDD()[:4],
                      today_YYYYMMDD()[4:6],
                      today_YYYYMMDD()[6:]])
+
+from cdips.paths import LOCALDIR
+
+def get_nasa_exoplanet_archive_pscomppars(ver=TODAYSTR, N_max=int(1e4)):
+    """
+    If newestpossible is True, will download the latest NEA pscomppars table,
+    from today. Otherwise, it'll take the most recent from those already
+    downloaded.
+    """
+
+    from astroquery.utils.tap.core import TapPlus
+
+    savedir = os.path.join(LOCALDIR, 'catalogs')
+
+    if not os.path.exists(savedir):
+        try:
+            os.mkdir(savedir)
+        except:
+            raise NotImplementedError(f'Tried to make {savedir} and failed.')
+
+    nea_path = os.path.join(
+        savedir, f'nasaexoplanetarchive-pscomppars-{ver}.csv'
+    )
+
+    if not os.path.exists(nea_path):
+
+        tap = TapPlus(url="https://exoplanetarchive.ipac.caltech.edu/TAP/")
+        query = (
+            f'select top {N_max} '+
+            'pl_name, hostname, pl_letter, gaia_id, tic_id, ra, dec, '+
+            'discoverymethod, disc_year, pl_orbper, pl_orbsmax, pl_rade, '+
+            'pl_radeerr1, pl_radeerr2, '+
+            'pl_radjerr1, pl_radjerr2, '+
+            'pl_radj, pl_bmasse, pl_bmasseerr1, pl_bmasseerr2, pl_bmassj, '+
+            'pl_bmassjerr1, pl_bmassjerr2, pl_orbeccen, pl_imppar, '+
+            'st_teff, st_rad, st_mass, st_met, st_logg, st_rotp, sy_dist, '+
+            'sy_disterr1, sy_disterr2, sy_plx, sy_plxerr1, sy_plxerr2, '+
+            'sy_vmag, sy_tmag, '+
+            'tran_flag, '+
+            'st_age, st_ageerr1, st_ageerr2 from pscomppars'
+        )
+        print(query)
+        j = tap.launch_job(query=query)
+        r = j.get_results()
+
+        assert len(r) != N_max
+
+        df = r.to_pandas()
+        df.to_csv(nea_path, index=False)
+
+    else:
+        df = pd.read_csv(nea_path, sep=',')
+
+    return df
+
+
 
 def get_cdips_catalog(ver=0.4):
 

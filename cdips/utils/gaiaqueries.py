@@ -197,7 +197,8 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
     within these bounds.
 
     Args:
-        bounds (dict): with parallax, ra, dec bounds.
+        bounds (dict): dict with keys parallax_lower, parallax_upper, ra_lower,
+        ra_upper, dec_lower, dec_upper. (Each of which has a float value).
 
         groupname (str): string used when cacheing for files. if you are
         querying a field star, best to include sourceid.
