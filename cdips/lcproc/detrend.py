@@ -82,6 +82,9 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
     Returns:
         flat_flux, trend_flux (np.ndarray): flattened array, and the trend
         vector that was divided out.
+
+    See also:
+        https://wotan.readthedocs.io/en/latest/
     """
 
     # Initial pre-processing: verify that under break_tolerance, time and flux

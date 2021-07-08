@@ -59,6 +59,8 @@ def get_nasa_exoplanet_archive_pscomppars(ver=TODAYSTR, N_max=int(1e4)):
             'pl_radjerr1, pl_radjerr2, '+
             'pl_radj, pl_bmasse, pl_bmasseerr1, pl_bmasseerr2, pl_bmassj, '+
             'pl_bmassjerr1, pl_bmassjerr2, pl_orbeccen, pl_imppar, '+
+            'pl_insol, pl_insolerr1, pl_insolerr2, '+
+            'pl_eqt, pl_eqt, pl_eqt, '+
             'st_teff, st_rad, st_mass, st_met, st_logg, st_rotp, sy_dist, '+
             'sy_disterr1, sy_disterr2, sy_plx, sy_plxerr1, sy_plxerr2, '+
             'sy_vmag, sy_tmag, '+

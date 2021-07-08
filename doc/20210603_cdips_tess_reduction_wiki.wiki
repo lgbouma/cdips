@@ -1,0 +1,200 @@
+= cdips-pipeline HOWTO =
+
+-----------------------------------------------------------------------
+
+Author: Luke Bouma
+Date: Thu Jun  3 10:04:03 2021
+Purpose: Cookbook for running the cdips-pipeline.
+
+-----------------------------------------------------------------------
+== Set up the computer, virtual environment, and directory structure ==
+
+The README.md for the cdips-pipline contains a description of the dependencies
+and suggested directory structure:
+
+{{{
+https://github.com/waqasbhatti/cdips-pipeline
+}}}
+
+For the Cycle 1 reduction phn12 and phtess1 were used as the "compute nodes".
+phtess2 was attempted as a compute node, and failed due to a C-linking library
+error in astrometry.net.
+
+The "trex_37" virtual environment through anaconda was used.  This is a pretty
+standard python 3.7 virtual environment, with the exception that
+`cdips-pipeline` is hard-coded into site-packages '''.pth''' file, as discussed
+in Section 1.7 of the README,
+https://github.com/waqasbhatti/cdips-pipeline/blob/972c9f05232cc59e29773ec30e85e9cf64ca8cae/README.md
+
+The best approach for you will likely be to make a new project directory at
+the analog of:
+
+{{{
+/nfs/<YOURMACHINENAME>/ar0/H/PROJ/<YOURUSERNAME>/cdips-pipeline/
+}}}
+
+on whatever machine you opt to use.  Do this using a '''git clone''' command,
+per Section 1.2 of the README.md
+
+This will get pretty much all the necessary code in your repository.  The one
+exception is the '''projid_????.sh''' run scripts (discussed below).  
+
+-----------------------------------------------------------------------
+== Get the FFIs ==
+
+The Cycle 1 FFI data themselves (raw FFIs, calibrated FFIs, light curves) live at
+/nfs/phtess2/ar0/TESS/FFI
+
+Cycle 2 FFIs for some sectors already also live there, e.g., at
+/nfs/phtess2/ar0/TESS/FFI/CAL/sector-14
+
+These are downloaded using wget scripts downloaded from MAST, for instance
+/nfs/phtess2/ar0/TESS/FFI/CAL/sector-14/tesscurl_sector_14_ffic.sh
+
+'''Be sure to verify that the wget download worked'''. I just manually checked
+for incomplete files using a command like
+{{{
+find . -size -30M -ls
+}}}
+which will reveal incomplete downloads.  I'm not sure if these are due to the
+MAST side, or wget.  This could be automated better.
+
+Sector 14, for instance, hsa already been downloaded in this way.
+
+-----------------------------------------------------------------------
+== Set up "run scripts" ==
+
+Examples of the '''projid_????.sh''' run scripts, each of which corresponds to
+one sector's camera / ccd (~1300 FFIs for Years 1-2), are at
+
+{{{
+/nfs/phn12/ar0/H/PROJ/lbouma/cdips-pipeline/drivers/tess_tuning_scripts
+}}}
+
+These files are not on the github because there are 16 per sector (4 cameras *
+4 CCDs), and so many files get generated.
+
+In December 2019, I generated a first-pass set of run scripts for the Cycle 2
+reductions, using
+
+{{{
+https://github.com/waqasbhatti/cdips-pipeline/blob/972c9f05232cc59e29773ec30e85e9cf64ca8cae/drivers/make_tess_REDUCTION_sectors_14_thru_26.py
+}}}
+
+This generated 16 per sector * 13 sectors = 208 run scripts.  They are indexed
+'''projid_1750.sh''' through '''projid_1958.sh''', and I wrote them to
+
+{{{
+/nfs/phn12/ar0/H/PROJ/lbouma/cdips-pipeline/drivers/tess_tuning_scripts
+}}}
+
+Sector 14, for instance, is '''projid_1750.sh''' through '''projid_1765.sh'''
+
+To quickly get started, you could copy these to the analogous directory in your
+PROJ directory.
+
+-----------------------------------------------------------------------
+== Run the reductions ==
+
+{{{
+cd /nfs/<YOURMACHINE>/ar0/H/PROJ/<YOURUSERNAME>/cdips-pipeline/drivers/
+mkdir logs
+cd tess_tuning_scripts
+}}}
+
+Then
+
+{{{
+(from bash, in the trex_37 virtualenvironment) ./projid_1750.sh &
+}}}
+
+Will begin the reduction for sector 14, camera 1, ccd 1.  Output will be logged
+to /logs/s0014-cam1-ccd1-projid1750.log in the directory made above.  It's a
+bit verbose, but it is parseable.
+
+-----------------------------------------------------------------------
+== Debugging ==
+
+While the pipeline should '''just work''', it may not.  There will likely be
+some startup dependency issues.  The docstring of the TESS_reduction.py driver
+script, which is what is being called by the '''projid_????.sh''' scripts,
+enumerates each step of the reduction.
+
+The major "checkpoints" (denoted with indentation in this docstring) are
+"get_files_needed_before_image_subtraction", "run_imagesubtraction",
+"run_detrending", and "assess_run".
+
+"Checkpoint" here means that if the files made between any checkpoints are
+found (i.e., because the pipeline ran them successfully), these steps will be
+skipped when the reduction is resumed, using the same 
+
+If the log shows a bug in the cdips-pipeline portion of the reduction (and not
+something to do with dependencies, directory structure, etc), then reading the
+logs, and navigating the codebase using docstring is the fastest way to isolate
+where and why the failure happened.
+
+[I could screencast this process or we could paircode for some early
+iterations, to give some better intuition.]
+
+Depending on the nature of the bug, and if it isn't clear why the failure
+happened, I'll insert the in-line python debugging statement '''import IPython;
+IPython.embed()''' where I *think* it happened, and run '''./projid_1750.sh'''
+(or sometimes quicker things) to embed an interactive python kernel (NB. no
+longer running as a background process) before the failure point, to query the
+objects that are doing the failing.  There are other debugging tools (e.g.,
+PDB), but this has worked OK for me.
+
+Once the bug has been isolated, and the patch implemented, the run can be
+resumed using the same
+
+{{{
+(from bash, in the trex_37 virtualenvironment) ./projid_1750.sh &
+}}}
+
+command.  Depending on the nature of the bug, and because of how the
+checkpointing in the pipeline works, it's often a good idea to first run
+
+{{{
+https://github.com/waqasbhatti/cdips-pipeline/blob/master/drivers/clean_single_camera_ccd.sh
+}}}
+
+after changing the camnum, ccdnum, projectid, sector, and "removeall"
+parameters.   As noted in the comment strings, setting "removeall=false" is the
+safer option, since this clears only the (XTRNS, .itrans, .xysdk, astromref, rsub*,
+and subtractedconv) files, and not the "pre-image-subtraction" trimmed and
+background subtracted FFIs.
+
+This script cleans out the files in the previously buggy portion of the
+reduction, to prevent the cdips-pipeline from erroneously skipping the step due
+to the '''existence''' of the files.
+
+-----------------------------------------------------------------------
+== Assessing the output ==
+
+Once the run is complete, the results of can be assessed in the "stats_files"
+directory, at e.g.,
+
+{{{
+/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s0011/ISP_2-2-1585/stats_files
+}}}
+
+-----------------------------------------------------------------------
+== Bringing to scale (operate at the sector level, not the CCD level) ==
+
+Instead of running 
+{{{
+./projid_1750.sh &
+}}}
+
+208 times, once one camera/ccd is working for a sector, I scale up to run all
+of them using scripts like
+
+{{{
+/nfs/phn12/ar0/H/PROJ/lbouma/cdips-pipeline/drivers/tess_tuning_scripts/sector1_reduction.sh
+}}}
+
+which are made using one-off scripts like
+
+{{{
+  https://github.com/waqasbhatti/cdips-pipeline/blob/972c9f05232cc59e29773ec30e85e9cf64ca8cae/drivers/make_REDUCTION_runscript.py
+}}}
