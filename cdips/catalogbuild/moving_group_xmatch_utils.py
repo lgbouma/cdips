@@ -14,6 +14,7 @@ includes:
     make_votable_given_full_cols
     Tian2020_to_csv
     Kerr2021_to_csv
+    Gagne2020_to_csv
 
 DEPRECATED IN >=V0.5 (in favor of SIMBAD_bibcode_to_GaiaDR2_csv):
     make_Gagne18_BANYAN_any_DR2_crossmatch
