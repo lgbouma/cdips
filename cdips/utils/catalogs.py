@@ -83,7 +83,7 @@ def get_nasa_exoplanet_archive_pscomppars(ver=TODAYSTR, N_max=int(1e4)):
 
 
 
-def get_cdips_catalog(ver=0.4):
+def get_cdips_catalog(ver=0.6):
 
     if not isinstance(ver, float):
         ver = float(ver)

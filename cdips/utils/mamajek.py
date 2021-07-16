@@ -9,6 +9,7 @@ Contents:
     get_interp_BpmRp_from_Teff
     get_interp_BmV_from_BpmRp
     get_SpType_BpmRp_correspondence
+    get_SpType_GmRp_correspondence
 """
 import os
 import numpy as np, pandas as pd
@@ -236,5 +237,34 @@ def get_SpType_BpmRp_correspondence(
 
     if not return_absG:
         return np.array(sptypes), np.array(BpmRps)
+    else:
+        return np.array(sptypes), np.array(AbsGs), np.array(Msuns)
+
+
+def get_SpType_GmRp_correspondence(
+    sptypes=['A0V','F0V','G0V','K2V','K5V','M0V','M3V','M5V'],
+    return_absG=False
+    ):
+
+    mamadf = load_basetable()
+
+    sel = (
+        (mamadf['G-Rp'] != '...')
+    )
+
+    sdf = mamadf[sel]
+
+    GmRps = []
+    AbsGs = []
+    Msuns = []
+    for sptype in sptypes:
+        GmRps.append(float(sdf.loc[sdf.SpT==sptype]['G-Rp']))
+        AbsGs.append(float(sdf.loc[sdf.SpT==sptype]['M_G']))
+        Msuns.append(float(sdf.loc[sdf.SpT==sptype]['Msun']))
+
+    sptypes = [s.replace('V','') for s in sptypes]
+
+    if not return_absG:
+        return np.array(sptypes), np.array(GmRps)
     else:
         return np.array(sptypes), np.array(AbsGs), np.array(Msuns)

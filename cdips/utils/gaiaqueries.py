@@ -1,11 +1,15 @@
 """
 Contents:
+
     make_votable_given_source_ids
     given_votable_get_df
+
     given_source_ids_get_gaia_data
     query_neighborhood
     given_dr2_sourceids_get_edr3_xmatch
     edr3_propermotion_to_ICRF
+
+    parallax_to_distance_highsn
 """
 ###########
 # imports #
@@ -513,3 +517,25 @@ def edr3_propermotion_to_ICRF(pmra, pmdec, ra, dec, G):
     pmdecCorr = sind(ra)*omegaX -cosd(ra)*omegaY
 
     return pmra -pmraCorr/1000., pmdec -pmdecCorr /1000.
+
+
+def parallax_to_distance_highsn(parallax_mas, gaia_datarelease='gaia_edr3'):
+    """
+    Given a Gaia parallax in mas, get a zero-point corrected trigonometric
+    parallax in parsecs.
+    """
+
+    if gaia_datarelease == 'gaia_edr3':
+        # Applicable to 5-parameter solutions (and more or less to 6-parameter
+        # too) e.g., https://arxiv.org/abs/2103.16096,
+        # https://arxiv.org/abs/2101.09691
+        offset = -0.026 # mas
+    elif gaia_datarelease == 'gaia_dr2':
+        # Lindegren+2018, as used by e.g., Gagne+2020 ApJ 903 96
+        offset = -0.029 # mas
+    else:
+        raise NotImplementedError
+
+    dist_trig_pc = 1e3 * ( 1 / (parallax_mas - offset) )
+
+    return dist_trig_pc
