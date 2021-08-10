@@ -385,11 +385,13 @@ def get_group_and_neighborhood_information(
     print('bounding by {} stdevns'.format(n_std))
 
     for param in params:
-        bounds[param+'_upper'] = (
-            group_df_dr2[param].mean() + n_std*group_df_dr2[param].std()
+        bounds[param+'_upper'] = np.minimum(
+            group_df_dr2[param].mean() + n_std*group_df_dr2[param].std(),
+            360-1e-5
         )
-        bounds[param+'_lower'] = (
-            group_df_dr2[param].mean() - n_std*group_df_dr2[param].std()
+        bounds[param+'_lower'] = np.maximum(
+            group_df_dr2[param].mean() - n_std*group_df_dr2[param].std(),
+            1e-5
         )
 
     if bounds['parallax_lower'] < 0:

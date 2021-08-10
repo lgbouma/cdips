@@ -6,7 +6,7 @@ import os
 import numpy as np, pandas as pd
 
 from cdips.utils import collect_cdips_lightcurves as ccl
-from cdips.utils.catalogs import get_toi_catalog
+from cdips.utils.catalogs import get_toi_catalog, get_exofop_toi_catalog
 from astroquery.vizier import Vizier
 
 def initialize_vetting_report_information(
@@ -79,7 +79,10 @@ def initialize_vetting_report_information(
         print('WRN! Did not find pfpath {}'.format(pfpath))
         pfdf = None
 
-    toidf = get_toi_catalog()
+    try:
+        toidf = get_toi_catalog()
+    except:
+        toidf = get_exofop_toi_catalog()
 
     Vizier.ROW_LIMIT = -1
     catalog_list = Vizier.find_catalogs('J/A+A/558/A53')
