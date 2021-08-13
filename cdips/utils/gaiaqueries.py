@@ -7,6 +7,7 @@ Contents:
     given_source_ids_get_gaia_data
     query_neighborhood
     given_dr2_sourceids_get_edr3_xmatch
+
     edr3_propermotion_to_ICRF
 
     parallax_to_distance_highsn
@@ -75,7 +76,8 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
                                    enforce_all_sourceids_viable=True,
                                    savstr='',
                                    whichcolumns='*',
-                                   gaia_datarelease='gaiadr2'):
+                                   gaia_datarelease='gaiadr2',
+                                   getdr2ruwe=False):
     """
     Args:
 
@@ -97,6 +99,9 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         whichcolumns (str): ADQL column getter string. For instance "*", or "
 
         gaia_datarelease (str): 'gaiadr2' or 'gaiaedr3'. Default is Gaia DR2.
+
+        getdr2ruwe (bool): if True, queries gaiadr2.ruwe instead of
+        gaiadr2.gaia_source
 
     Returns:
 
@@ -135,17 +140,30 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
     if os.path.exists(dlpath) and overwrite:
         os.remove(dlpath)
 
-    jobstr = (
-    '''
-    SELECT top {n_max:d} {whichcolumns}
-    FROM tap_upload.foobar as u, {gaia_datarelease:s}.gaia_source AS g
-    WHERE u.source_id=g.source_id
-    '''
-    ).format(
-        whichcolumns=whichcolumns,
-        n_max=n_max,
-        gaia_datarelease=gaia_datarelease
-    )
+    if not getdr2ruwe:
+        jobstr = (
+        '''
+        SELECT top {n_max:d} {whichcolumns}
+        FROM tap_upload.foobar as u, {gaia_datarelease:s}.gaia_source AS g
+        WHERE u.source_id=g.source_id
+        '''
+        ).format(
+            whichcolumns=whichcolumns,
+            n_max=n_max,
+            gaia_datarelease=gaia_datarelease
+        )
+    else:
+        assert gaia_datarelease == 'gaiadr2'
+        jobstr = (
+        '''
+        SELECT top {n_max:d} *
+        FROM tap_upload.foobar as u, gaiadr2.ruwe AS g
+        WHERE u.source_id=g.source_id
+        '''
+        ).format(
+            n_max=n_max
+        )
+
     query = jobstr
 
     if not os.path.exists(dlpath):
