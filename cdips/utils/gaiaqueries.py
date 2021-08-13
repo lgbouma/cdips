@@ -537,7 +537,7 @@ def edr3_propermotion_to_ICRF(pmra, pmdec, ra, dec, G):
     return pmra -pmraCorr/1000., pmdec -pmdecCorr /1000.
 
 
-def parallax_to_distance_highsn(parallax_mas, gaia_datarelease='gaia_edr3'):
+def parallax_to_distance_highsn(parallax_mas, e_parallax_mas=0, gaia_datarelease='gaia_edr3'):
     """
     Given a Gaia parallax in mas, get a zero-point corrected trigonometric
     parallax in parsecs.
@@ -555,5 +555,12 @@ def parallax_to_distance_highsn(parallax_mas, gaia_datarelease='gaia_edr3'):
         raise NotImplementedError
 
     dist_trig_pc = 1e3 * ( 1 / (parallax_mas - offset) )
+
+    if e_parallax_mas:
+        upper_dist_trig_pc = 1e3 * ( 1 / (parallax_mas - e_parallax_mas - offset) )
+        lower_dist_trig_pc = 1e3 * ( 1 / (parallax_mas + e_parallax_mas - offset) )
+        upper_unc = upper_dist_trig_pc - dist_trig_pc
+        lower_unc = dist_trig_pc - lower_dist_trig_pc
+        return dist_trig_pc, upper_unc, lower_unc
 
     return dist_trig_pc
