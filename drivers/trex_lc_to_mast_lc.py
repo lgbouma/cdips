@@ -21,17 +21,17 @@ from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.lcproc import reformat_lcs_for_mast as rlm
 from cdips.lcproc import detrend as dtr
 
-import imageutils as iu
+from astrobase import imageutils as iu
 
 def main():
 
     trex_lc_to_mast_lc(
-        sectors=[9],
+        sectors=[14],
         cams=[1,2,3,4],
         ccds=[1,2,3,4],
         make_symlinks=0,
         reformat_lcs=1,
-        OC_MG_CAT_ver=0.4,
+        OC_MG_CAT_ver=0.6,
         cdipsvnum=1
     )
 

@@ -260,7 +260,12 @@ def do_initial_period_finding(
         print('found supplemented periodfinding results, loading them')
         mdf = pd.read_csv(outpath, sep=';')
 
-    u_ref, u_ref_count = np.unique(mdf['reference'], return_counts=True)
+    if mdf.has_key('reference'):
+        u_ref, u_ref_count = np.unique(mdf['reference'], return_counts=True)
+    elif mdf.has_key('reference_id'):
+        u_ref, u_ref_count = np.unique(mdf['reference_id'], return_counts=True)
+    else:
+        u_ref, u_ref_count = ('N/A', 0)
     u_cluster, u_cluster_count = np.unique(
         np.array(mdf['cluster']).astype(str), return_counts=True)
     outpath = os.path.join(outdir, 'which_references_and_clusters_matter.txt')

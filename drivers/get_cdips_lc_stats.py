@@ -11,6 +11,10 @@ usage:
 
 NOTE: depends on pipe-trex (--> run in environment with aperturephot on path)
 """
+import sys
+
+sys.path.append('/nfs/phtess1/ar1/TESS/PROJ/jhartman/202106_CDIPS/cdips-pipeline')
+
 import pandas as pd, numpy as np
 import aperturephot as ap
 import os, subprocess, shlex, shutil
@@ -49,12 +53,20 @@ def get_cdips_lc_stats(
         format(cdipssource_vnum)
     )
     if not os.path.exists(catalogfile):
-        cfile = (
-            '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.
-            format(cdipssource_vnum)
-        )
-        cdipsdf = pd.read_csv(cfile, sep=';')
-
+        if cdipssource_vnum < 0.6:
+            cfile = (
+                '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.
+                format(cdipssource_vnum)
+            )
+            cdipsdf = pd.read_csv(cfile, sep=';')
+        else:
+            cfile = (
+                '/nfs/phtess1/ar1/TESS/PROJ/lbouma/cdips_targets_v{}_gaiasources_Rplt16_orclose.csv'.
+                format(cdipssource_vnum)
+            )
+            cdipsdf = pd.read_csv(cfile, sep=',')
+            
+            
         outdf = cdipsdf[['source_id','phot_rp_mean_mag']]
 
         outdf.to_csv(catalogfile, sep=' ', index=False, header=False)

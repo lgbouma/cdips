@@ -24,12 +24,12 @@ from do_initial_period_finding import do_initial_period_finding
 def main():
 
     ##########################################
-    sector = 5
+    sector = 14
     outdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
     overwrite = 0
     cams = [1,2,3,4]
     ccds = [1,2,3,4]
-    OC_MG_CAT_ver = 0.4
+    OC_MG_CAT_ver = 0.6
     cdipsvnum = 1
     ##########################################
 

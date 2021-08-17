@@ -868,9 +868,14 @@ def plot_LS_period_vs_color_and_age(sectors, overwrite=0, OC_MG_CAT_ver=None):
     mdf = pfdf.merge(cddf, how='left', on='source_id')
 
     FAP_CUTOFF = 1e-15
-    sel = mdf['reference'].str.contains('CantatGaudin_2018')
-    sel |= mdf['reference'].str.contains('Kharchenko2013')
-    sel |= mdf['reference'].str.contains('GaiaCollaboration2018')
+    if mdf.has_key('reference'):
+        sel = mdf['reference'].str.contains('CantatGaudin_2018')
+        sel |= mdf['reference'].str.contains('Kharchenko2013')
+        sel |= mdf['reference'].str.contains('GaiaCollaboration2018')
+    elif mdf.has_key('reference_id'):
+        sel = mdf['reference_id'].str.contains('CantatGaudin_2018')
+        sel |= mdf['reference_id'].str.contains('Kharchenko2013')
+        sel |= mdf['reference_id'].str.contains('GaiaCollaboration2018')
     sel &= ~pd.isnull(mdf['phot_rp_mean_mag'] - mdf['phot_bp_mean_mag'])
     sel &= mdf['ls_fap'] < FAP_CUTOFF
     sel &= ~pd.isnull(mdf['k13_logt'])
@@ -1152,7 +1157,10 @@ def plot_target_star_reference_pie_chart(OC_MG_CAT_ver=None, overwrite=1):
     # ('Dias2014', 470313), ('Kharchenko2013', 183992), ('CantatGaudin_2018',
     # 177913), ('Zari_2018_UMS', 82875), ('Zari_2018_PMS', 35488)
     #
-    cnt = Counter(nparr(cdips_df['reference']))
+    if cdips_df.has_key('reference'):
+        cnt = Counter(nparr(cdips_df['reference']))
+    elif cdips_df.has_key('reference_id'):
+        cnt = Counter(nparr(cdips_df['reference_id']))
     atleast2 = 0
     for k in cnt.keys():
         if ',' in k:

@@ -1,7 +1,7 @@
 import os
 import pandas as pd, numpy as np
 from astropy.io import fits
-import imageutils as iu
+from astrobase import imageutils as iu
 
 def test_single_lc():
 

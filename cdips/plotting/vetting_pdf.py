@@ -741,6 +741,16 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
     xmatchdist: {xmatchdist:s}
     """
     )
+    if d.has_key('reference'):
+        reference_val = d['reference'][:max_nchar]
+    elif d.has_key('reference_id'):
+        reference_val = d['reference_id'][:max_nchar]
+    else:
+        reference_val = ''
+    if d.has_key('ext_catalog_name'):
+        ext_catalog_name_val=d['ext_catalog_name'][:max_nchar]
+    else:
+        ext_catalog_name_val=''
     try:
         max_nchar = 20
         outstr = txt.format(
@@ -786,8 +796,8 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
             dist_pc=float(hdr['TICGDIST']),
             AstExcNoiseSig=d['AstExcNoiseSig'],
             cluster='N/A' if pd.isnull(d['cluster']) else d['cluster'][:max_nchar],
-            reference=d['reference'][:max_nchar],
-            ext_catalog_name=d['ext_catalog_name'][:max_nchar],
+            reference=reference_val,
+            ext_catalog_name=ext_catalog_name_val,
             xmatchdist=','.join(
                 ['{:.1e}"'.format(3600*float(l)) for l in str(d['dist']).split(',')]
             )[:max_nchar]
@@ -977,11 +987,18 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         if 'K13index' in why_not_in_k13:
             why_not_in_k13 = 'K13index extra info...'
 
-    if ('Zari_2018_UMS' in supprow['reference'].iloc[0]
-        or 'Zari_2018_PMS' in supprow['reference'].iloc[0]
-       ):
+    if supprow.has_key('reference'):
+        if ('Zari_2018_UMS' in supprow['reference'].iloc[0]
+            or 'Zari_2018_PMS' in supprow['reference'].iloc[0]
+        ):
 
-        why_not_in_k13 = str(supprow['reference'].iloc[0])
+            why_not_in_k13 = str(supprow['reference'].iloc[0])
+    elif supprow.has_key('reference_id'):
+        if ('Zari_2018_UMS' in supprow['reference_id'].iloc[0]
+            or 'Zari_2018_PMS' in supprow['reference_id'].iloc[0]
+        ):
+
+            why_not_in_k13 = str(supprow['reference_id'].iloc[0])
 
     have_cluster_parameters = False
     if have_name_match:
@@ -1166,6 +1183,16 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     d = 1/$\omega_{{as}}$ = {dist_pc:.0f} pc
     """
     )
+    if d.has_key('reference'):
+        reference_val = d['reference'][:max_nchar]
+    elif d.has_key('reference_id'):
+        reference_val = d['reference_id'][:max_nchar]
+    else:
+        reference_val = ''
+    if d.has_key('ext_catalog_name'):
+        ext_catalog_name_val=d['ext_catalog_name'][:max_nchar]
+    else:
+        ext_catalog_name_val=''
     try:
         max_nchar = 20
         outstr = txt.format(
@@ -1190,8 +1217,8 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
             plx_mas_err=float(supprow['Parallax_error[mas][7]']),
             dist_pc=1/(1e-3 * float(hdr['Parallax[mas]'])),
             cluster='N/A' if pd.isnull(d['cluster']) else d['cluster'][:max_nchar],
-            reference=d['reference'][:max_nchar],
-            ext_catalog_name=d['ext_catalog_name'][:max_nchar],
+            reference=reference_val,
+            ext_catalog_name=ext_catalog_name_val,
             xmatchdist=','.join(
                 ['{:.1e}"'.format(3600*float(l)) for l in str(d['dist']).split(',')]
             )[:max_nchar],
@@ -1993,9 +2020,17 @@ def plot_group_neighborhood(
 
         if isinstance(source_id, int) or isinstance(source_id, str):
             row = get_cdips_pub_catalog_entry(source_id, ver=0.4)
-            references = row['reference'].iloc[0]
+            if row.has_key('reference'):
+                references = row['reference'].iloc[0]
+            elif row.has_key('reference_id'):
+                references = row['reference_id'].iloc[0]
+            else:
+                references = 'N/A'
             clusters = row['cluster'].iloc[0]
-            ext_catalog_names = row['ext_catalog_name'].iloc[0]
+            if row.has_key('ext_catalog_name'):
+                ext_catalog_names = row['ext_catalog_name'].iloc[0]
+            else:
+                ext_catalog_names = 'N/A'
         else:
             references = 'N/A'
             clusters = 'N/A'

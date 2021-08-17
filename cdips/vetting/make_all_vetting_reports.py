@@ -82,7 +82,10 @@ def make_all_vetting_reports(tfa_sr_paths, lcbasedir, resultsdir, cdips_df,
         suppfulldf = supplementstatsdf
 
         # don't make a report if the membership claim is insufficient
-        reference = str(supprow['reference'].iloc[0])
+        if supprow.has_key('reference'):
+            reference = str(supprow['reference'].iloc[0])
+        elif supprow.has_key('reference_id'):
+            reference = str(supprow['reference_id'].iloc[0])
         referencesplt = reference.split(',')
         INSUFFICIENT = ['Dias2014', 'Zari_2018_UMS', 'Kharchenko2013']
         is_insufficient = [c in INSUFFICIENT for c in referencesplt]

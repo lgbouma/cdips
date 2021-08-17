@@ -214,9 +214,15 @@ def get_group_and_neighborhood_information(
 
     # multiple memberships ,-separated. get lists of references, cluster names,
     # ext catalog names.
-    references = np.array(row['reference'].iloc[0].split(','))
+    if row.has_key('reference'):
+        references = np.array(row['reference'].iloc[0].split(','))
+    elif row.has_key('reference_id'):
+        references = np.array(row['reference_id'].iloc[0].split(','))
     clusters = np.array(row['cluster'].iloc[0].split(','))
-    ext_catalog_names = np.array(row['ext_catalog_name'].iloc[0].split(','))
+    if row.has_key('ext_catalog_name'):
+        ext_catalog_names = np.array(row['ext_catalog_name'].iloc[0].split(','))
+    else:
+        ext_catalog_names = ''
     if force_references and force_groupname:
         references = force_references
         clusters = np.array([force_groupname])

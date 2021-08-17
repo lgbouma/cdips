@@ -307,18 +307,37 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
     #
     # set CDIPS key/value/comments in primary header.
     #
-    primaryhdr.set('CDIPSREF',
-                   info['reference'].iloc[0],
-                   'Catalog(s) w/ cluster membrshp [,sep]')
+    if info.has_key('reference'):
+        referencekey = 'reference'
+    elif info.has_key('reference_id'):
+        referencekey = 'reference_id'
+    else:
+        referencekey = ''
+
+    if referencekey != '':
+        primaryhdr.set('CDIPSREF',
+                       info[referencekey].iloc[0],
+                       'Catalog(s) w/ cluster membrshp [,sep]')
 
     primaryhdr.set('CDCLSTER',
                    str(info['cluster'].iloc[0]),
                    'Cluster name(s) in CDIPSREF [,sep]')
 
-    primaryhdr.set('CDEXTCAT',
-                   info['ext_catalog_name'].iloc[0],
-                   'Star name(s) in CDIPSREF [,sep]')
+    if info.has_key('ext_catalog_name'):
+        primaryhdr.set('CDEXTCAT',
+                       info['ext_catalog_name'].iloc[0],
+                       'Star name(s) in CDIPSREF [,sep]')
 
+    if info.has_key('reference_bibcode'):
+        primaryhdr.set('CDREFBIB',
+                       info['reference_bibcode'].iloc[0],
+                       'Bibcode(s) for Membership Catalog(s) [,sep]')
+
+    if info.has_key('mean_age'):
+        primaryhdr.set('CDIPSAGE',
+                       info['mean_age'].iloc[0],
+                       'Average age across references that provide an age')
+        
     primaryhdr.set('CDXMDIST',
                    str(info['dist'].iloc[0]),
                    '[deg] DIST btwn CDIPSREF & GAIADR2 locn')
