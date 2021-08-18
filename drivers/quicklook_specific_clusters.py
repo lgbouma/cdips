@@ -185,7 +185,7 @@ def make_quicklook(task):
     print(f'Made {outpath}')
 
 
-def make_source_list(k, ver=0.4):
+def make_source_list(k, ver=0.6):
 
     clusterkey = k
 
