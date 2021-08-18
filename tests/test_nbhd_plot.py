@@ -15,7 +15,7 @@ from cdips.plotting import vetting_pdf as vp
 
 DEBUG = 1
 
-def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.4,
+def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.6,
                    force_references=None, force_groupname=None,
                    manual_gmag_limit=None):
 

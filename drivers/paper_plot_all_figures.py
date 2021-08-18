@@ -49,7 +49,7 @@ OUTDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/paper_figures/'
 CLUSTERDATADIR = '/home/lbouma/proj/cdips/data/cluster_data'
 LCDIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
 
-OC_MG_CAT_ver=0.4
+OC_MG_CAT_ver=0.6
 
 def main():
 

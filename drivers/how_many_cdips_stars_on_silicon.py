@@ -107,6 +107,6 @@ def how_many_cdips_stars_on_silicon(sector=None, ver=None):
 if __name__ == "__main__":
 
     sector = 7
-    ver = 0.4
+    ver = 0.6
 
     how_many_cdips_stars_on_silicon(sector=sector, ver=ver)

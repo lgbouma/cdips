@@ -109,4 +109,4 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
 
 if __name__ == "__main__":
-    test_vetting_report(sector=8, cdips_cat_vnum=0.4)
+    test_vetting_report(sector=8, cdips_cat_vnum=0.6)

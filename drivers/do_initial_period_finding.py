@@ -42,7 +42,7 @@ def main():
     do_initial_period_finding(
         sectornum=1, nworkers=nworkers, maxworkertasks=1000,
         outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
-        OC_MG_CAT_ver=0.4
+        OC_MG_CAT_ver=0.6
     )
 
 

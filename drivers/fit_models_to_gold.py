@@ -1072,7 +1072,7 @@ if __name__=="__main__":
 
     for sector in sectors:
 
-        cdips_cat_vnum = 0.4
+        cdips_cat_vnum = 0.6
         is_not_cdips_still_good = False
 
         main(sector=sector, cdips_cat_vnum=cdips_cat_vnum,
