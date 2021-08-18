@@ -78,7 +78,7 @@ def explore_pca(
     ccd=3,
     symlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS/',
     outdir='/home/lbouma/proj/cdips/tests/test_pca_plots/',
-    OC_MG_CAT_ver=0.4,
+    OC_MG_CAT_ver=0.6,
     cdipsvnum=1,
     max_n_test_lcs=100
 ):
