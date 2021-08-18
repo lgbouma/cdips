@@ -592,7 +592,7 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
 
 
 def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
-                use_smootheigvecs=True):
+                use_smootheigvecs=True, ap=None):
     """
     Given a CDIPS light curve file, and the PCA eigenvectors for this
     sector/cam/ccd, construct the vectors to "detrend" or "decorrelate" against
@@ -610,6 +610,8 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
         use_smootheigvecs: whether or not to smooth the PCA eigenvectors, using
         a windowed biweight filter.
 
+        ap (int): 1, 2, 3, or None.  If None, tries to get best aperture.
+
     Returns:
         tuple containing:
         dtrvecs (np.ndarray), sysvecs (np.ndarray), ap (the optimal aperture),
@@ -624,15 +626,16 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
         hdul[0].header, hdul[1].header, hdul[1].data
     )
     hdul.close()
-    try:
-        best_ap = get_best_ap_number_given_lcpath(lcpath)
-    except TypeError:
-        best_ap = 1
-    ap = np.nanmin([best_ap, 2])
+    if ap is None:
+        try:
+            best_ap = get_best_ap_number_given_lcpath(lcpath)
+        except TypeError:
+            best_ap = 1
+        ap = np.nanmin([best_ap, 2])
+    else:
+        pass
 
     ##########################################
-    # begin PCA.
-    #
     # eigenvecs shape: N_templates x N_times
     #
     # model: 
@@ -709,6 +712,15 @@ def calculate_linear_model_mag(y, basisvecs, n_components,
     """
     Given a set of basis vectors in a linear model for a target light curve
     (y), calculate the coefficients and apply the linear model prediction.
+
+    `basisvecs` needs to have shape: N_templates x N_times
+
+    model:
+    y(w, x) = w_0 + w_1 x_1 + ... + w_p x_p.
+
+    where X is matrix of (n_samples, n_features), so each template is a
+    "sample", and each time is a "feature". Analogous to e.g., doing PCA to
+    reconstruct a spectrum, and you want each wavelength bin to be a feature.
 
     Allow methods:
 

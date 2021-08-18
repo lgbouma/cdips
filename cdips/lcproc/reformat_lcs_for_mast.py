@@ -3,7 +3,7 @@ Given directories of symlinked PIPE-TREX-output FTIS LCs, make the headers
 presentable; apply minor changes to improve their BLS-searchability; compute &
 append PCA-detrended light curves.
 
-reformat_headers
+reformat_headers: mostly driven by _reformat_header
 reformat_worker
 parallel_reformat_headers
 """
@@ -23,6 +23,7 @@ from sklearn.linear_model import LinearRegression
 
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.tests import verify_lightcurves as test
+from cdips.lcproc import detrend as dtr
 
 from astrobase.lcmath import find_lc_timegroups
 
@@ -137,17 +138,10 @@ def _map_timeseries_key_to_unit(k):
 
 
 def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
-                     eigveclist=None, n_comp_df=None):
-
-    ##########################################
-    raise NotImplementedError
-    # TODO: replace this entire PCA routine with a call to
-    # dtr.calculate_linear_model_mag, as in tests.test_pca. The routine below
-    # was good for S1-S13; we will update it in upcoming reductions.
-    ##########################################
-
-    # eigveclist: length 3, each with a np.ndarray of eigenvectors given by
-    # dtr.prepare_pca
+                     eigveclist=None, n_comp_df=None, max_n_comp=5):
+    """
+    Worker function for `reformat_headers`
+    """
 
     hdul = fits.open(lcpath)
     primaryhdr, hdr, data = (
@@ -155,127 +149,50 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
     )
     hdul.close()
 
-    ##########################################
-    # begin PCA.
-    #
-    # first, get ensemble pca magnitude vectors. these will be appended.
-    # (in an annoying order. so be it).
-    #
-    # eigenvecs shape: N_templates x N_times
-    #
-    # model: 
-    # y(w, x) = w_0 + w_1 x_1 + ... + w_p x_p.
-    #
-    # X is matrix of (n_samples, n_features), so each template is a "sample",
-    # and each time is a "feature". Analogous to e.g., doing PCA to reconstruct
-    # a spectrum, and you want each wavelength bin to be a feature.
-    #
-    #
     primaryhdr['DTR_PCA'] = False
 
     pca_mags = {}
 
+    #
+    # Iterate over each aperture and get the PCA-detrended light curve.  Here
+    # eigveclist is length 3, each with a np.ndarray of eigenvectors given by
+    # dtr.prepare_pca.
+    #
     for ix, eigenvecs in enumerate(eigveclist):
+
+        ap = ix+1
 
         if np.any(pd.isnull(eigenvecs)):
             print('got nans in eigvecs. bad!')
             import IPython; IPython.embed()
 
-        ap = ix+1
+        #
+        # Retrieve the set of vectors to be decorrelated against. for >=Cycle 2
+        # reductions, we're adopting the top 5 smoothed PCA eigenvectors, and
+        # the background timeseries.
+        #
+        sysvecnames = ['BGV']
+        dtrvecs, _, _, _, _, _, _ = (
+            dtr.get_dtrvecs(lcpath, eigveclist, sysvecnames=sysvecnames,
+                            use_smootheigvecs=True, ap=ap)
+        )
+        time, y = data['TMID_BJD'], data[f'IRM{ap}']
 
-        n_components = max([int(n_comp_df['fa_cv_ap{}'.format(ap)]), 5])
+        # Set maximum number of PCA eigenvectors.
+        n_components = max_n_comp
+        n_components += len(sysvecnames)
 
-        reg = LinearRegression(fit_intercept=True)
+        # Calculate the decorrelated vector.
+        pca_mag, n_comp = dtr.calculate_linear_model_mag(
+            y, dtrvecs, n_components, method='LinearRegression'
+        )
 
-        y = data['IRM{}'.format(ap)]
+        pca_mags[f'PCA{ap}'] = pca_mag
 
-        if np.all(pd.isnull(y)):
-            # if all nan, job is easy
-            model_mag = y
-            pca_mags['PCA{}'.format(ap)] = model_mag
-            primaryhdr['PCA{}NCMP'.format(ap)] = (
-                'nan',
-                'N principal components PCA{}'.format(ap)
-            )
-
-        elif np.any(pd.isnull(y)):
-            #
-            # if some nan in target light curve, tricky. strategy: impose the
-            # same nans onto the eigenvectors. then fit without nans. then put
-            # nans back in.
-            #
-            mean_mag = np.nanmean(y)
-
-            _X = eigenvecs[:n_components, :]
-
-            _X = _X[:, ~pd.isnull(y)]
-
-            reg.fit(_X.T, y[~pd.isnull(y)] - mean_mag)
-
-            model_mag = reg.intercept_ + (reg.coef_ @ _X)
-
-            model_mag += mean_mag
-
-            #
-            # now insert nans where they were in original target light curve.
-            # typically nans occur in groups. insert by groups. this is a
-            # tricky procedure, so test after to ensure nan indice in the model
-            # and target light curves are the same.
-            #
-            naninds = np.argwhere(pd.isnull(y)).flatten()
-
-            ngroups, groups = find_lc_timegroups(naninds, mingap=1)
-
-            for group in groups:
-
-                thisgroupnaninds = naninds[group]
-
-                model_mag = np.insert(model_mag,
-                                      np.min(thisgroupnaninds),
-                                      [np.nan]*len(thisgroupnaninds))
-
-            np.testing.assert_(
-                model_mag.shape == y.shape
-            )
-            np.testing.assert_(
-                (len((model_mag-y)[pd.isnull(model_mag-y)])
-                 ==
-                 len(y[pd.isnull(y)])
-                ),
-                'got different nan indices in model mag than target mag'
-            )
-
-            #
-            # save result as IRM mag - PCA model mag + mean IRM mag
-            #
-            pca_mags['PCA{}'.format(ap)] = y - model_mag + mean_mag
-
-            primaryhdr['PCA{}NCMP'.format(ap)] = (
-                n_components,
-                'N principal components PCA{}'.format(ap)
-            )
-
-        else:
-            # otherwise, just directly fit the principal components
-            mean_mag = np.nanmean(y)
-
-            _X = eigenvecs[:n_components, :]
-
-            reg.fit(_X.T, y-mean_mag)
-
-            model_mag = reg.intercept_ + (reg.coef_ @ _X)
-
-            model_mag += mean_mag
-
-            #
-            # save result as IRM mag - PCA model mag + mean IRM mag
-            #
-            pca_mags['PCA{}'.format(ap)] = y - model_mag + mean_mag
-
-            primaryhdr['PCA{}NCMP'.format(ap)] = (
-                n_components,
-                'N principal components PCA{}'.format(ap)
-            )
+        primaryhdr['PCA{}NCMP'.format(ap)] = (
+            n_comp,
+            f'N principal components PCA{ap}'
+        )
 
     #
     # now merge the timeseries, as from TFA merge...
@@ -337,7 +254,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
         primaryhdr.set('CDIPSAGE',
                        info['mean_age'].iloc[0],
                        'Average age across references that provide an age')
-        
+
     primaryhdr.set('CDXMDIST',
                    str(info['dist'].iloc[0]),
                    '[deg] DIST btwn CDIPSREF & GAIADR2 locn')
@@ -563,7 +480,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
     # who dun it
     #
     primaryhdr.set('ORIGIN',
-                   'Bouma&team|CDIPS|Princeton',
+                   'Bouma&Hartman|CDIPS|Princeton',
                    'Author|Project|Institution')
 
     #
@@ -667,7 +584,7 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
 
     raise AssertionError('deprecation: need to correct cam/ccd and pass it')
 
-    cdips_df = ccl.get_cdips_catalog(ver=0.4)
+    cdips_df = ccl.get_cdips_catalog(ver=cdipsvnum)
 
     tasks = [(x, cdips_df, outdir, sectornum, cdipsvnum) for x in lcpaths[:300]]
 
@@ -690,6 +607,10 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
 
 def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, OC_MG_CAT_ver,
                      eigveclist=None, n_comp_df=None):
+    """
+    Reformat headers into HLSP-compliant format, and also compute PCA-detrended
+    light curves.
+    """
 
     cdips_df = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
 
