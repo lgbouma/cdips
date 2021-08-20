@@ -231,20 +231,20 @@ def given_merged_organize_PCs(sector=None):
         os.mkdir(outdir)
 
     if sector==6:
-        srcdir = '../results/vetting_classifications/20190617_sector-6_PC_cut'
+        srcdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/20190617_sector-6_PC_cut'
     elif sector==7:
-        srcdir = '../results/vetting_classifications/20190618_sector-7_PC_cut'
+        srcdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/20190618_sector-7_PC_cut'
     elif sector in [8,9,10,11]:
         # NB. I "remade" these vetting plots to add the neighborhood charts
         srcdir = glob(
-            '../results/vetting_classifications/2019????_sector-{}_PC_cut_remake'.
+            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2019????_sector-{}_PC_cut_remake'.
             format(sector)
         )
         assert len(srcdir) == 1
         srcdir = srcdir[0]
-    elif sector in [1,2,3,4,5,12,13]:
+    elif sector in [1,2,3,4,5,12,13,14]:
         srcdir = glob(
-            '../results/vetting_classifications/2020????_sector-{}_PC_cut'.
+            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2020????_sector-{}_PC_cut'.
             format(sector)
         )
         assert len(srcdir) == 1
@@ -282,14 +282,14 @@ def given_merged_organize_PCs(sector=None):
         raise NotImplementedError
     elif sector in [8,9,10,11]:
         srcdir = glob(
-            '../results/vetting_classifications/2019????_sector-{}_PC_cut_remake'.
+            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2019????_sector-{}_PC_cut_remake'.
             format(sector)
         )
         assert len(srcdir) == 1
         srcdir = srcdir[0]
-    elif sector in [1,2,3,4,5,12,13]:
+    elif sector in [1,2,3,4,5,12,13,14]:
         srcdir = glob(
-            '../results/vetting_classifications/2020????_sector-{}_PC_cut'.
+            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2020????_sector-{}_PC_cut'.
             format(sector)
         )
         assert len(srcdir) == 1

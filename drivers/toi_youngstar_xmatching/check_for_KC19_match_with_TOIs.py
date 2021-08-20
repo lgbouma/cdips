@@ -75,7 +75,7 @@ def main():
     match_df = pd.DataFrame(np.array(match_list), columns=scols)
     match_df['toi'] = name_list
     outpath = (
-        '../../results/toi_youngstar_xmatching/'
+        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/toi_youngstar_xmatching/'
         '{}_KC19_TOI_match.csv'.format(toidate)
     )
     match_df.to_csv(outpath, index=False, sep=';')

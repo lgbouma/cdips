@@ -67,7 +67,7 @@ def get_cdips_lc_stats(
             cdipsdf = pd.read_csv(cfile, sep=',')
             
             
-        outdf = cdipsdf[['source_id','phot_rp_mean_mag']]
+        outdf = cdipsdf[['source_id','phot_rp_mean_mag']].dropna(axis=0, how='any')
 
         outdf.to_csv(catalogfile, sep=' ', index=False, header=False)
 
@@ -175,10 +175,16 @@ def supplement_stats_file(
     # merge against CDIPS catalog info
     cdips_df = ccl.get_cdips_pub_catalog(ver=cdipssource_vnum)
 
-    dcols = (
-        'cluster;ext_catalog_name;reference;source_id;unique_cluster_name;logt;logt_provenance;comment'
-    )
-    dcols = dcols.split(';')
+    if cdipssource_vnum < 0.6:
+        dcols = (
+            'cluster;ext_catalog_name;reference;source_id;unique_cluster_name;logt;logt_provenance;comment'
+        )
+        dcols = dcols.split(';')
+    else:
+        dcols = (
+            'source_id,ra,dec,parallax,parallax_error,pmra,pmdec,phot_g_mean_mag,phot_rp_mean_mag,phot_bp_mean_mag,cluster,age,mean_age,reference_id,reference_bibcode'
+        )
+        dcols = dcols.split(',')
     ccdf = cdips_df[dcols]
     ccdf['source_id'] = ccdf['source_id'].astype(np.int64)
 

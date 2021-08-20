@@ -27,8 +27,18 @@ from cdips.lcproc import detrend as dtr
 
 from astrobase.lcmath import find_lc_timegroups
 
+def _NaN_as_str(val):
+    if isinstance(val, np.ma.core.MaskedConstant):
+        return 'nan'
+    elif np.isnan(val):
+        return 'nan'
+    else:
+        return val
+
 def _get_tic(mrow, key):
     if isinstance(mrow[key], np.ma.core.MaskedConstant):
+        return 'nan'
+    elif np.isnan(mrow[key]):
         return 'nan'
     else:
         return mrow[key]
@@ -252,7 +262,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
 
     if 'mean_age' in info:
         primaryhdr.set('CDIPSAGE',
-                       info['mean_age'].iloc[0],
+                       _NaN_as_str(info['mean_age'].iloc[0]),
                        'Average age across references that provide an age')
 
     if 'dist' in info:
@@ -357,8 +367,12 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
     #
     sel = ~stars['GAIA'].mask
     selstars = stars[sel]
-
-    if len(selstars)>=1:
+    isgaiaid=True
+    try:
+        int(primaryhdr['GAIA-ID'])
+    except:
+        isgaiaid=False
+    if len(selstars)>=1 and isgaiaid:
 
         #
         # TICv8 rebased on GaiaDR2: enforce that my Gaia-DR2 to TICv8 xmatch is
@@ -368,12 +382,17 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
             np.in1d(np.array(selstars['GAIA']).astype(int),
                     np.array(int(primaryhdr['GAIA-ID'])))
         ):
-
-            ind = (
-                int(np.where(np.in1d(np.array(selstars['GAIA']).astype(int),
-                                 np.array(int(primaryhdr['GAIA-ID']))))[0])
-            )
-
+            try:
+                ind = (
+                    int(np.where(np.in1d(np.array(selstars['GAIA']).astype(int),
+                                         np.array(int(primaryhdr['GAIA-ID']))))[0])
+                )
+            except:
+                ind = (
+                    int(np.where(np.in1d(np.array(selstars['GAIA']).astype(int),
+                                         np.array(int(primaryhdr['GAIA-ID']))))[0].flatten()[0])
+                )
+                
             mrow = selstars[ind]
 
         else:

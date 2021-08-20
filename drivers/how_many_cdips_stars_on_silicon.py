@@ -25,10 +25,10 @@ from datetime import datetime
 def how_many_cdips_stars_on_silicon(sector=None, ver=None):
 
     fitsdir = (
-        '/home/luke/local/cdips/fullframeimages/cal_imgs/sector-{}/'.
+        '/nfs/phtess2/ar0/TESS/FFI/RED/sector-{}/'.
         format(sector)
     )
-    fnames = np.sort(glob(os.path.join(fitsdir,'*cal_img.fits')))
+    fnames = np.sort(glob(os.path.join(fitsdir,'cam*_ccd*/*cal_img.fits')))
 
     df = ccl.get_cdips_catalog(ver=ver)
     c = SkyCoord(nparr(df['ra']), nparr(df['dec']), unit=(u.deg,u.deg))
@@ -73,7 +73,7 @@ def how_many_cdips_stars_on_silicon(sector=None, ver=None):
     dictstr = "\n\t".join("{}: {}".format(k, v) for k, v in N_onchip.items())
 
     outpath = (
-        '../results/star_catalog/'+
+        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/star_catalog/'+
         'how_many_cdips_stars_on_silicon_sector{}.txt'.
         format(sector)
     )

@@ -109,10 +109,10 @@ def make_table():
     tab_s6 = pd.DataFrame(allentries[0], columns=['Name','$N_{\\mathrm{lc}}$','Description'])
     tab_s7 = pd.DataFrame(allentries[1], columns=['Name','$N_{\\mathrm{lc}}$','Description'])
 
-    outfull_s6 = '../paper_I/table_s6_most_common_clusters_full.csv'
-    outfull_s7 = '../paper_I/table_s7_most_common_clusters_full.csv'
-    outtex_s6 = '../paper_I/table_s6_most_common_clusters.tex'
-    outtex_s7 = '../paper_I/table_s7_most_common_clusters.tex'
+    outfull_s6 = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/paper_I/table_s6_most_common_clusters_full.csv'
+    outfull_s7 = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/paper_I/table_s7_most_common_clusters_full.csv'
+    outtex_s6 = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/paper_I/table_s6_most_common_clusters.tex'
+    outtex_s7 = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/paper_I/table_s7_most_common_clusters.tex'
     outpaths = [outfull_s6, outfull_s7, outtex_s6, outfull_s7]
 
     tab_s6.to_csv(outfull_s6, index=False)

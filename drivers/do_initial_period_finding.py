@@ -260,9 +260,9 @@ def do_initial_period_finding(
         print('found supplemented periodfinding results, loading them')
         mdf = pd.read_csv(outpath, sep=';')
 
-    if mdf.has_key('reference'):
+    if 'reference' in mdf:
         u_ref, u_ref_count = np.unique(mdf['reference'], return_counts=True)
-    elif mdf.has_key('reference_id'):
+    elif 'reference_id' in mdf:
         u_ref, u_ref_count = np.unique(mdf['reference_id'], return_counts=True)
     else:
         u_ref, u_ref_count = ('N/A', 0)

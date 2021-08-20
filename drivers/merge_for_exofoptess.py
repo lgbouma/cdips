@@ -161,7 +161,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
         # Manually commented candidates are the only ones we're uploading.
         #
         manual_comment_df = pd.read_csv(
-            '../data/exoFOP_uploads/{}_cdips_candidate_upload.csv'.
+            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/data/exoFOP_uploads/{}_cdips_candidate_upload.csv'.
             format(today_YYYYMMDD()), sep=","
         )
         common = status_df.merge(manual_comment_df,

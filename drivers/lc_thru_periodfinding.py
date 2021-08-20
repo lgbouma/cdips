@@ -63,7 +63,7 @@ def main():
 
     # see how many LCs were expected
     outpath = (
-        '../results/star_catalog/'+
+        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/star_catalog/'+
         'how_many_cdips_stars_on_silicon_sector{}.txt'.
         format(sector)
     )

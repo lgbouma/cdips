@@ -18,7 +18,7 @@ cdips_df = ccl.get_cdips_pub_catalog(ver=0.3)
 N_rows = 4
 sdf = cdips_df.sample(n=N_rows, random_state=43)
 
-outtex = '../paper_I/table_cdips_targets.tex'
+outtex = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/paper_I/table_cdips_targets.tex'
 sdf.sort_values(by='source_id').T.to_latex(outtex, index=False)
 
 print('made {}'.format(outtex))

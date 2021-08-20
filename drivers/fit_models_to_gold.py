@@ -49,7 +49,7 @@ import cdips.vetting.make_all_vetting_reports as mavr
 # config #
 ##########
 
-DATADIR = '../data/mcmc_fitting_identifiers'
+DATADIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/data/mcmc_fitting_identifiers'
 
 long_run_df = pd.read_csv(
     os.path.join(DATADIR, 'LONG_RUN_IDENTIFIERS.csv')

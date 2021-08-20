@@ -75,7 +75,7 @@ def main(is_20190818_exofop_upload=1):
     if not is_20190818_exofop_upload:
         raise NotImplementedError
 
-    df = pd.read_csv('../data/exoFOP_uploads/20190918_s6_and_s7_w_sourceid.csv',
+    df = pd.read_csv('/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/data/exoFOP_uploads/20190918_s6_and_s7_w_sourceid.csv',
                      sep='|')
 
     for ix, r in df.iterrows():
