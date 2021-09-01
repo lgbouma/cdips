@@ -741,25 +741,29 @@ def calculate_linear_model_mag(y, basisvecs, n_components,
     elif method == 'RidgeCV':
         reg = RidgeCV(alphas=np.logspace(-10, 10, 210), fit_intercept=True)
 
-    if np.all(pd.isnull(y)):
+    y2 = y
+    y2[y2 == np.inf] = np.nan
+    y2[y2 == -np.inf] = np.nan
+        
+    if np.all(pd.isnull(y2)):
         # if all nan, job is easy
         out_mag = y
         n_comp = 'nan'
 
-    elif np.any(pd.isnull(y)):
+    elif np.any(pd.isnull(y2)):
 
         #
         # if some nan in target light curve, tricky. strategy: impose the
         # same nans onto the eigenvectors. then fit without nans. then put
         # nans back in.
         #
-        mean_mag = np.nanmean(y)
-        std_mag = np.nanstd(y)
-        norm_mag = (y[~pd.isnull(y)] - mean_mag)/std_mag
+        mean_mag = np.nanmean(y2)
+        std_mag = np.nanstd(y2)
+        norm_mag = (y2[~pd.isnull(y2)] - mean_mag)/std_mag
 
         _X = basisvecs[:n_components, :]
 
-        _X = _X[:, ~pd.isnull(y)]
+        _X = _X[:, ~pd.isnull(y2)]
 
         reg.fit(_X.T, norm_mag)
 
@@ -773,7 +777,7 @@ def calculate_linear_model_mag(y, basisvecs, n_components,
         # tricky procedure, so test after to ensure nan indice in the model
         # and target light curves are the same.
         #
-        naninds = np.argwhere(pd.isnull(y)).flatten()
+        naninds = np.argwhere(pd.isnull(y2)).flatten()
 
         ngroups, groups = find_lc_timegroups(naninds, mingap=1)
 
@@ -789,9 +793,9 @@ def calculate_linear_model_mag(y, basisvecs, n_components,
             model_mag.shape == y.shape
         )
         np.testing.assert_(
-            (len((model_mag-y)[pd.isnull(model_mag-y)])
+            (len((model_mag-y2)[pd.isnull(model_mag-y2)])
              ==
-             len(y[pd.isnull(y)])
+             len(y[pd.isnull(y2)])
             ),
             'got different nan indices in model mag than target mag'
         )
