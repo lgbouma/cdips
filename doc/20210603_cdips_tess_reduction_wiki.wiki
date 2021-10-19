@@ -198,3 +198,56 @@ which are made using one-off scripts like
 {{{
   https://github.com/waqasbhatti/cdips-pipeline/blob/972c9f05232cc59e29773ec30e85e9cf64ca8cae/drivers/make_REDUCTION_runscript.py
 }}}
+
+-----------------------------------------------------------------------
+== Postprocessing light curves to MAST-ready format, and planet-finding ==
+
+Great!  You have made light curves in the '''{source_id}_llc.fits''' format, in
+directories like
+'''/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s{sectornum}/ISP_{cam}-{ccd}-{projid}/'''.
+
+It's now time to convert the light curves into the high-level science product
+(HLSP) format used on MAST, and to find some planets.
+
+This is done using a different software repository, the /cdips/ package.  A
+"HOWTO.md" is available at
+{{{
+  https://github.com/lgbouma/cdips/blob/0746e8d4cfc469f1e62a721cec4f175bdb636ce3/drivers/HOWTO.md
+}}}
+
+You'll need to begin by doing a '''git clone
+https://github.com/lgbouma/cdips.git''' to create a local install, and then a
+'''python setup.py develop''' (or '''python setup.py install''', but the former
+is easier if you need to debug anything) from within the relevant conda virtual
+environment to install the cdips package.
+
+You should then be able to run '''python -c "from cdips import __path__"'''
+from your command line without error.
+
+The '''cdips.drivers.HOWTO.md''' linked above contains the relevant steps under
+"TO PRODUCE PLANET CANDIDATES FROM CDIPS LCS".
+
+In short:
+
+{{{
+cd drivers
+python -u lc_thru_periodfinding.py &> your_log_file.log &
+}}}
+
+will do the HLSP formatting conversion, make some metadata files, and run an
+initial periodogram search (Lomb Scargle for rotation periods,
+Transit Least Squares on detrended single-sector light curves for
+planet-finding).
+'''NOTE''' that you must update your desired sector numbers, camera numbers,
+and *the version identifer of the target catalog you used* before running this,
+in the top of '''lc_thru_periodfinding.main'''.
+
+After running this step (and again following the HOWTO.md), since each sector
+has somewhat different noise properties, you'll need to update your "detection"
+criteria in drivers.do_initial_period_finding, or else establish smart
+defaults to omit this step (this was done manually during the Cycle 1
+reductions).
+
+Reconstructive TFA and the actual making of vetting PDF reports for candidates
+that passed the detection thresholds is then done, following the latter steps
+in '''cdips.drivers.HOWTO.md'''.

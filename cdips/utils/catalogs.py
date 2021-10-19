@@ -94,7 +94,8 @@ def get_cdips_catalog(ver=0.6):
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
-        'PU-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/'
+        'PU-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/',
+        'marduk.local':'/Users/luke/local/cdips/catalogs/'
     }
 
     cdips_stars_dir = dir_d[socket.gethostname()]
@@ -125,6 +126,7 @@ def get_cdips_pub_catalog(ver=0.4):
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'PU-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/',
+        'marduk.local':'/Users/luke/local/cdips/catalogs/',
         'WWS-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/'
     }
 
@@ -162,6 +164,7 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.4):
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'PU-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/',
+        'marduk.local':'/Users/luke/local/cdips/catalogs/',
         'WWS-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/'
     }
 
@@ -214,6 +217,7 @@ def get_toi_catalog(ver=TODAYSTR):
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-plus_catalogs/',
         'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/toi-plus_catalogs/',
         'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-plus_catalogs/',
+        'marduk.local':'/Users/luke/local/cdips/catalogs/',
         'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-plus_catalogs/'
     }
 
@@ -247,6 +251,7 @@ def get_exofop_toi_catalog(ver=TODAYSTR, returnpath=False):
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-exofop_catalogs/',
         'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/',
         'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/',
+        'marduk.local':'/Users/luke/local/cdips/catalogs/',
         'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/'
     }
 
@@ -295,6 +300,7 @@ def get_exofop_ctoi_catalog(ver=TODAYSTR, returnpath=False):
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/ctoi_catalogs/',
         'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/ctoi_catalogs/',
         'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/ctoi_catalogs/',
+        'marduk.local':'/Users/luke/local/cdips/catalogs/',
         'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/ctoi_catalogs/'
     }
 
