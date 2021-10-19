@@ -269,10 +269,10 @@ def plot_mwd(lon, dec, color_val, origin=0, size=3,
                 kep_d[module][output] = {}
                 sel = (kep['module']==module) & (kep['output']==output)
 
-                _ra = list(kep.ix[sel]['ra'])
-                _dec = list(kep.ix[sel]['dec'])
-                _elon = list(kep.ix[sel]['elon'])
-                _elat = list(kep.ix[sel]['elat'])
+                _ra = list(kep.loc[sel, 'ra'])
+                _dec = list(kep.loc[sel, 'dec'])
+                _elon = list(kep.loc[sel, 'elon'])
+                _elat = list(kep.loc[sel, 'elat'])
 
                 _ra = [_ra[0], _ra[1], _ra[3], _ra[2] ]
                 _dec =  [_dec[0], _dec[1], _dec[3], _dec[2] ]
@@ -575,6 +575,9 @@ def plot_tess_skymap(overplot_galactic_plane=True, for_proposal=False,
 
         for c, lon, lat, s in zip(coordsyss, lons, lats, savnames):
 
+            if c == 'galactic' and overplot_k2_fields:
+                continue
+
             plot_mwd(nparr(df[lon])[sel_durn],
                      nparr(df[lat])[sel_durn],
                      nparr(df['obs_duration'])[sel_durn],
@@ -602,6 +605,12 @@ if __name__=="__main__":
     primary_plus_extended = 1  # whether to use "merged" coordinates
 
     # END OPTIONS
+
+    plot_tess_skymap(overplot_galactic_plane=overplot_galactic_plane,
+                     for_proposal=for_proposal,
+                     overplot_k2_fields=1,
+                     plot_tess=plot_tess, overplot_cdips=0,
+                     primary_plus_extended=primary_plus_extended)
 
     for overplot_cdips in [0,'lt300pc','full','lt1kpc']:
         plot_tess_skymap(overplot_galactic_plane=overplot_galactic_plane,
