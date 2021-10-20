@@ -1,6 +1,0 @@
-from image inspection:
-
-pixel values 86k doesnt' seem to have visible bleed trails
-
-~>100k does.
-
