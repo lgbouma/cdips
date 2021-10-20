@@ -1,0 +1,40 @@
+Tue Oct 19 09:44:32 2021
+
+The earlier note on this topic,
+20201109_injectionrecovery_completeness_goldenvariability.txt, wound up being
+useful in the ocntext of the NGC 2516 study, and in figuring out how to do a
+"light" PCA detrending to remove only the SYSTEMATIC components of the
+variability.
+
+This is great for the tasks of rotation period measurement (the point of the
+NGC2516 paper), and studying complex rotators, among others.
+
+However for transit-hunting, it doesn't cut it.
+
+In the upcoming Cycle 2 reductions that Hartman has been working on, this was
+addressed per https://github.com/lgbouma/cdips/issues/3.
+
+So, the tests should be done on a "gold sample" of PCA1 (or maybe PCA2) light
+curves from sectors 14 through 19.  [Rather than S1-S13, which I guess should
+be rerun].
+
+(Just b/c those are the sectors that have been reduced from Cycle 2, so far).
+
+What are the best clusters in those fields?
+
+KC19: after looking at mw2d, I'm guessing:
+
+Chameleon_I
+CrA
+Upper_Sco
+Stephenson_1
+Alpha_per (Theia 133)
+RSG_5
+Theia 506 (very close!)
+Theia 507
+AB_Dor
+Pleiades
+UBC_1 (i.e., Theia 520)
+
+So the approach is: for each of these clusters, collect any and all S14-S19 light
+curves that exist based on the KC19 list.

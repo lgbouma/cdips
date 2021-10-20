@@ -13,8 +13,6 @@ Light curve retrieval:
 
     make_lc_list: make a metadata file consisting of the G_Rp<16 cluster light
     curves paths.
-        Not Implemented!!
-        "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/get_lc_list.sh but pythonized"
 
 Light curve miscellanea:
 
@@ -302,11 +300,47 @@ def make_calibration_list(
             raise AssertionError('append cmd failed!!')
 
 
-def make_lc_list():
+def make_lc_list(
+    listpath='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/lc_list_20200818.txt',
+    sector_interval=None
+):
     """
-    make a metadata file consisting of the G_Rp<16 cluster light
-    curves paths.
-        "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/get_lc_list.sh but pythonized"
-    """
+    Make a TXT file consisting of the G_Rp<16 cluster light curves paths. This
+    will almost always be run on phtess[N] machines, unless you collect the
+    entire CDIPS reductions on some other system.  This TXT metadata file is
+    useful for quickly retrieving files given a Gaia DR2 source_id.
 
-    raise NotImplementedError
+    Args:
+        listpath (str): where the list of light curve paths will be written.
+
+        sector_interval (list): E.g., [1,19] to span Sectors 1 through 19 in
+        the list that is created.
+    """
+    assert isinstance(sector_interval, list)
+    if os.path.exists(listpath):
+        raise ValueError(f'Found {listpath}. Escaping to not overwrite.')
+
+    sector_start = int(sector_interval[0])
+    sector_end = int(sector_interval[1])
+
+    assert sector_end > sector_start
+
+    BASEDIR = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS"
+    LCGLOB = "hlsp_cdips_*_llc.fits"
+
+    for sector in range(sector_start, sector_end+1):
+        print(42*'-')
+        print(f'Beginning LC retrieval for sector {sector}...')
+
+        lcpaths = glob(os.path.join(
+            BASEDIR, f"sector-{sector}", "cam*_ccd*", LCGLOB
+        ))
+
+        N_lcs = len(lcpaths)
+        print(f'Sector {sector} has {N_lcs} CDIPS light curves (G_RP<16).')
+
+        with open(listpath, "a") as fbuf:
+            fbuf.writelines(
+                "\n".join(lcpaths)+"\n"
+            )
+        print(f'... appended them to {listpath}')
