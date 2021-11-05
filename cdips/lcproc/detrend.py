@@ -56,7 +56,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import MinMaxScaler
 
 # NOTE: some code duplication with cdips.testing.check_dependencies
-from wotan import flatten, version
+from wotan import flatten, version, slide_clip
 wotanversion = version.WOTAN_VERSIONING
 wotanversiontuple = tuple(wotanversion.split('.'))
 assert int(wotanversiontuple[0]) >= 1
@@ -184,10 +184,13 @@ def clean_rotationsignal_tess_singlesector_light_curve(
             window_length=dtr_dict['window_length'], edge_cutoff=None
         )
 
-    #NOTE: you are detrending on _time[sel0], clipped_flux[sel0]
     elif dtr_method == 'notch':
         from notch_and_locor.core import sliding_window
 
+        #
+        # HARD-CODE notch options (nb. could also let them be options via
+        # dtr_dict).
+        #
         # Set to True to do a full fit over time and arclength (default False).
         use_arclength = False
         # Internally, keep as "False" to use wdat.fcor as the flux.
@@ -199,35 +202,37 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         # searched. [0.75, 1.0, 2.0, 4.0] hours.  If this is set to be True,
         # the 45 minute one is dropped.
         resolvable_trans = False
+        # show_progress: if True, puts out a TQDM bar
+        show_progress= True
 
-        #TODO: format everything!  (using the stuff already in the exaples to
-        #figure out `data` format, `detrend` format, etc
+        # Format "data" into recarray format needed for notch.
+        TIME, FLUX = _time[sel0], clipped_flux[sel0]
+        N_points = len(TIME)
+        data = np.recarray(
+            (N_points,),
+            dtype=[('t',float), ('fraw',float), ('fcor',float), ('s',float),
+                   ('qual',int), ('divisions',float)]
+        )
+        data.t = TIME
+        data.fcor = FLUX
+        data.fraw[:] = 0
+        data.s[:] = 0
+        data.qual[:] = 0
+
+        # Run notch
         fittimes, depth, detrend, polyshape, badflag = (
             sliding_window(
                 data, windowsize=dtr_dict['window_length'],
-                use_arclength=arclength, use_raw=use_raw,
-                deltabic=min_deltabic, resolvable_trans=resolvabletrans,
-                cleanmask=transmask, show_progress=show_progress
-            ) ##Notch Filter
-        )
-        #FIXME FIXME FIXME
-        #FIXME FIXME FIXME
-        #FIXME FIXME FIXME
-
-        # TODO: get flat_flux, trend_flux
-
-        #FIXME
-        # staging
-        fittimes, depth, detrend, polyshape, badflag = core.do_detrend(
-            1, 1001, arclength=False, raw=useraw, wsize=window, indata=data,
-            saveoutput=False, outdir='', resolvabletrans=False, demode=1,
-            cleanup=True, deltabic=mindbic
+                use_arclength=use_arclength, use_raw=use_raw,
+                deltabic=min_deltabic, resolvable_trans=resolvable_trans,
+                show_progress=show_progress
+            )
         )
 
-        ##Store everything in a common format recarray
-        dl = len(detrend)
+        # Store everything in a common format recarray
+        N_points = len(detrend)
         notch = np.recarray(
-            (dl, ), dtype=[
+            (N_points, ), dtype=[
                 ('t', float), ('detrend', float), ('polyshape', float),
                 ('notch_depth', float), ('deltabic', float), ('bicstat', float),
                 ('badflag', int)
@@ -244,9 +249,11 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         bicstat = notch.deltabic-np.median(notch.deltabic)
         notch.bicstat = 1- bicstat/np.max(bicstat)
 
-        #FIXME
-        # staging
-
+        #
+        # Convert to my naming scheme.
+        #
+        flat_flux = notch.detrend
+        trend_flux = notch.polyshape
 
     elif dtr_method == 'locor':
 
@@ -285,6 +292,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         'clipped_flat_flux': clipped_flat_flux,
         'clipped_flux': clipped_flux,
         'flat_flux': flat_flux,
+        'trend_flux': trend_flux
     }
 
     return search_time, search_flux, dtr_stages_dict

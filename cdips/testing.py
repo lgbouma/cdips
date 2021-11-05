@@ -21,15 +21,24 @@ def check_dependencies():
     some dependencies can be hidden; this makes them explicit, especially if
     you are worried about versions for some packages.
     """
+    #
+    # wotan install https://wotan.readthedocs.io/en/latest/Installation.html
+    #
     import pygam
     import wotan
-
     from wotan import version
     wotanversion = version.WOTAN_VERSIONING
     wotanversiontuple = tuple(wotanversion.split('.'))
     assert int(wotanversiontuple[0]) >= 1
     assert int(wotanversiontuple[1]) >= 9
 
+    #
+    # notch and locor:
+    # clone and setup.py install https://github.com/lgbouma/Notch_and_LOCoR,
+    # which was forked from Aaron Rizzuto's implentation.
+    #
+    from notch_and_locor.core import sliding_window
+    from notch_and_locor.core import rcomb
 
 def assert_lsperiod_is_approx(time, flux, err, target_period, significant=4,
                               verbose=True):

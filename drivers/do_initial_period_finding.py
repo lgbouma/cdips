@@ -26,13 +26,12 @@ from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils import lcutils as lcu
 from cdips.lcproc import mask_orbit_edges as moe
 from cdips.lcproc import detrend as dtr
+from cdips.testing import check_dependencies
 from skim_cream import plot_initial_period_finding_results
 
 from astrobase.lcmath import sigclip_magseries
 
-# dependencies are hidden; this makes them explicit
-import pygam
-import wotan
+from wotan import slide_clip
 
 DEBUG = False
 nworkers = mp.cpu_count()
@@ -86,7 +85,18 @@ def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
     freq, power = ls.autopower(minimum_frequency=1/period_max,
                                maximum_frequency=1/period_min)
     ls_fap = ls.false_alarm_probability(power.max())
-    ls_period = 1/freq[np.argmax(power)]
+    best_freq = freq[np.argmax(power)]
+    ls_period = 1/best_freq
+
+    theta = ls.model_parameters(best_freq)
+    ls_amplitude = theta[1]
+
+    #FIXME FIXME FIXME FIXME
+    # "detrend if variable" is kind of a less interesting thing. generally
+    # speaking, pretty much every star that we are interested in is variable.
+    # i.e., our purpose here is to find planets around the FGK stars.
+
+    #FIXME what is the amplitude of the best-fitting sinusoid?
 
     if detrend_if_variable and ls_fap > ls_fap_cutoff:
         # If light-curve was not variable in TFA form (FAP > cutoff), don't run
@@ -99,39 +109,26 @@ def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
         pass
 
     #
-    # prepare flux for transit least squares.
+    # Apply the "full light curve cleaning" process:
+    # mask_orbit_edge->slide_clip->detrend->slide_clip
     #
-    f_x0 = 1e4
-    m_x0 = 10
-    flux = f_x0 * 10**( -0.4 * (mag - m_x0) )
-    flux /= np.nanmedian(flux)
-
-    #
-    # ignore the times near the edges of orbits for TLS.
-    #
-    bls_time, bls_flux = moe.mask_orbit_start_and_end(
-        time, flux, raise_expectation_error=False
+    lspdict = {'ls_period':ls_period, 'ls_fap':ls_fap}
+    search_time, search_flux = dtr.clean_tess_singlesector_light_curve(
+        time, mag, magisflux=False, dtrmethod='best', dtrdict=None, lspdict=lspdict,
     )
 
-    #
-    # sig clip asymmetric [40,4] (40 is the dip-side).
-    #
-    bls_time, bls_flux, _ = sigclip_magseries(bls_time, bls_flux,
-                                              np.ones_like(bls_flux)*1e-4,
-                                              magsarefluxes=True,
-                                              sigclip=[40,4], iterative=True)
+    # FIXME FIXME FIXME DO YOU NEED TO SAVE THE ACTUAL FLUX THAT IS SEARCHED
+    # HERE? THIS IS PRETTY PROCESSED!!!!  You'll want to show it in the vetting
+    # reports as well!! So if not the FLUX itself... at least the DETRENDING
+    # method (mask_orbit_edge->slide_clip->detrend->slide_clip) needs to be
+    # turned into a "helper" or a wrapper...
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
+    #TODO TODO TODO
+    #FIXME FIXME FIXME
+    #FIXME FIXME FIXME
 
-    #
-    # detrend if required.
-    #
-    detrended = False
-    if detrend_if_variable and ls_fap < ls_fap_cutoff:
-        if DEBUG:
-            print('fap<cutoff for sourceid : {} '.format(source_id))
-        bls_flux, _ = dtr.detrend_flux(bls_time, bls_flux)
-        detrended = True
-
-    model = transitleastsquares(bls_time, bls_flux)
+    model = transitleastsquares(search_time, search_flux)
     results = model.power(use_threads=1, show_progress_bar=False,
                           R_star_min=0.1, R_star_max=10, M_star_min=0.1,
                           M_star_max=5.0, period_min=period_min,
@@ -191,6 +188,8 @@ def do_initial_period_finding(
     outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
     OC_MG_CAT_ver=None
 ):
+
+    check_dependencies()
 
     lcdirectory = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/'.

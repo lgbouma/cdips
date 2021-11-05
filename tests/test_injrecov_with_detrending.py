@@ -27,13 +27,14 @@ import batman
 import astropy.units as u, astropy.constants as c
 from wotan import flatten
 
-from astrobase import periodbase
+from astrobase.periodbase.htls import tls_parallel_pfind
 from astrobase.lcmath import sigclip_magseries
 from astrobase import imageutils as iu
 from wotan import slide_clip
 
 from cdips.lcproc import mask_orbit_edges as moe, detrend as dtr
 from cdips.utils import lcutils as lcu
+from cdips.testing import check_dependencies
 
 import multiprocessing as mp
 
@@ -224,6 +225,7 @@ def inj_recov_worker(task):
         clipped_inj_flux = dtr_stages_dict['clipped_flux']
         clipped_flat_flux = dtr_stages_dict['clipped_flat_flux']
         flat_flux = dtr_stages_dict['flat_flux']
+        trend_flux = dtr_stages_dict['trend_flux']
 
         if plot_detrend_check:
             hdrlist = 'CDCLSTER,CDIPSAGE,TESSMAG'.split(',')
@@ -272,7 +274,7 @@ def inj_recov_worker(task):
 
         # period find
         err = np.ones_like(search_flux)*1e-4
-        tlsp = periodbase.tls_parallel_pfind(
+        tlsp = tls_parallel_pfind(
             search_time, search_flux, err, magsarefluxes=True, tls_rstar_min=0.1,
             tls_rstar_max=10, tls_mstar_min=0.1, tls_mstar_max=5.0,
             tls_oversample=8, tls_mintransits=1,
@@ -576,12 +578,16 @@ def inject_signal(time, ap_mag, inj_dict):
 
 def main():
 
-    df_notch = get_inj_recov_results(
-        {'method':'notch', 'break_tolerance':0.5, 'window_length':0.5}
-    )
+    check_dependencies()
+
     df_locor = get_inj_recov_results(
         {'method':'locor', 'break_tolerance':0.5, 'window_length':1.0}
     )
+    assert 0 #FIXME
+    df_notch = get_inj_recov_results(
+        {'method':'notch', 'break_tolerance':0.5, 'window_length':0.5}
+    )
+    #TODO
     df_best = get_inj_recov_results(
         {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
     )
