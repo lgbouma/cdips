@@ -18,7 +18,7 @@ Light curve miscellanea:
 
     _given_mag_get_flux: self-descriptive.
 
-    get_lc_data: given a path, return selected vectors.
+    get_lc_data: given a CDIPS lcpath, return some key default vectors.
 
     get_best_ap_number_given_lcpath: self-descriptive.
 
@@ -132,14 +132,14 @@ def find_cdips_lc_paths(
 
 
 
-def get_lc_data(lcpath, mag_aperture='TFA2', tfa_aperture='TFA2'):
+def get_lc_data(lcpath, mag_aperture='PCA2', tfa_aperture='TFA2'):
     """
     Given a CDIPS LC path, return some key vectors.
     """
 
     hdul = fits.open(lcpath)
 
-    tfa_time = hdul[1].data['TMID_BJD']
+    time = hdul[1].data['TMID_BJD']
     ap_mag = hdul[1].data[mag_aperture]
     tfa_mag = hdul[1].data[tfa_aperture]
 
@@ -154,7 +154,7 @@ def get_lc_data(lcpath, mag_aperture='TFA2', tfa_aperture='TFA2'):
     # */cam2_ccd1/hlsp_cdips_tess_ffi_gaiatwo0002916360554371119104-0006_tess_v01_llc.fits
     source_id = lcpath.split('gaiatwo')[1].split('-')[0].lstrip('0')
 
-    return source_id, tfa_time, ap_mag, xcc, ycc, ra, dec, tmag, tfa_mag
+    return source_id, time, ap_mag, xcc, ycc, ra, dec, tmag, tfa_mag
 
 
 def _given_mag_get_flux(mag, err_mag=None):

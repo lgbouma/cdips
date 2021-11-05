@@ -6,12 +6,30 @@ equal particular values. These are useful for instance when testing different
 detrending methods, and during injection recovery analyses.
 
 Contents:
+
+    check_dependencies
+
     assert_lsperiod_is_approx
     assert_spdmperiod_is_approx
     assert_tlsperiodepoch_is_approx
 """
 
 from numpy.testing import assert_approx_equal
+
+def check_dependencies():
+    """
+    some dependencies can be hidden; this makes them explicit, especially if
+    you are worried about versions for some packages.
+    """
+    import pygam
+    import wotan
+
+    from wotan import version
+    wotanversion = version.WOTAN_VERSIONING
+    wotanversiontuple = tuple(wotanversion.split('.'))
+    assert int(wotanversiontuple[0]) >= 1
+    assert int(wotanversiontuple[1]) >= 9
+
 
 def assert_lsperiod_is_approx(time, flux, err, target_period, significant=4,
                               verbose=True):

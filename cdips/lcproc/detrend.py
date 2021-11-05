@@ -5,6 +5,9 @@ Contents:
 
 Very useful:
 
+    clean_tess_singlesector_light_curve: masks orbit edges, sigma slide clip,
+        detrends, re-sigma slide clip.
+
     detrend_flux: a wrapper to wotan pspline or biweight detrending (given
         vectors of time and flux).
 
@@ -52,11 +55,185 @@ from sklearn.linear_model import LinearRegression, BayesianRidge, RidgeCV
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import MinMaxScaler
 
+# NOTE: some code duplication with cdips.testing.check_dependencies
 from wotan import flatten, version
 wotanversion = version.WOTAN_VERSIONING
 wotanversiontuple = tuple(wotanversion.split('.'))
 assert int(wotanversiontuple[0]) >= 1
-assert int(wotanversiontuple[1]) >= 4
+assert int(wotanversiontuple[1]) >= 9
+
+def clean_rotationsignal_tess_singlesector_light_curve(
+    time, mag, magisflux=False, dtr_dict=None, lsp_dict=None,
+    maskorbitedge=True
+):
+    """
+    The goal of this function is to remove a stellar rotation signal from a
+    single TESS light curve (ideally one without severe insturmental
+    systematics) while preserving transits.
+
+    "Cleaning" by default is taken to mean mask_orbit_edge -> slide_clip ->
+    detrend -> slide_clip.  "Detrend" can mean any of the Wotan flatteners,
+    Notch, or LoCoR.
+
+    Args:
+        time, mag (np.ndarray): time and magnitude (or flux) vectors
+
+        magisflux (bool): True if the "mag" vector is a flux already
+
+        dtr_dict (optional dict): dictionary containing arguments passed to
+        Wotan, Notch, or LoCoR. Relevant keys should include:
+
+            'dtr_method' (str): one of: ['best', 'notch', 'locor', 'pspline',
+            'biweight', 'none']
+
+        lsp_dict (optional dict): dictionary containing Lomb Scargle
+        periodogram information, which is used in the "best" method for
+        choosing between LoCoR or Notch detrending.
+
+        maskorbitedge (bool): whether to apply the initial "mask_orbit_edge"
+        step. Probably would only want to be false if you had already done it
+        elsewhere.
+
+    Returns:
+        search_time, search_flux, dtr_stages_dict (np.ndarrays and dict): light
+            curve ready for TLS or BLS style periodograms; and a dictionary of
+            the different processing stages.
+    """
+
+    #
+    # convert mag to flux and median-normalize
+    #
+    if magisflux:
+        flux = mag
+    else:
+        f_x0 = 1e4
+        m_x0 = 10
+        flux = f_x0 * 10**( -0.4 * (mag - m_x0) )
+
+    flux /= np.nanmedian(flux)
+
+    #
+    # ignore the times near the edges of orbits for TLS.
+    #
+    if maskorbitedge:
+        _time, _flux = moe.mask_orbit_start_and_end(
+            time, flux, raise_expectation_error=False
+        )
+    else:
+        _time, _flux = time, flux
+
+    #
+    # sliding sigma clip asymmetric [20,3]*MAD, about median. use a 3-day
+    # window, to give ~100 to 150 data points. mostly to avoid big flares.
+    #
+    clip_window = 3
+    clipped_flux = slide_clip(
+        _time, _flux, window_length=clip_window, low=20, high=3,
+        method='mad', center='median'
+    )
+    sel0 = ~np.isnan(clipped_flux)
+
+    #
+    # set the detrending method. default to "best".
+    #
+    if isinstance(dtr_dict, dict):
+        if 'method' in dtr_dict.keys():
+            dtr_method = dtr_dict['method']
+        else:
+            dtr_method = 'best'
+    else:
+        dtr_method = 'best'
+
+    if dtr_method == 'best' and not isinstance(lsp_dict, dict):
+        errmsg = (
+            '"best" detrending requires knowledge
+            of LS period, FAP, and amplitude'
+        )
+        raise ValueError(errmsg)
+
+    allowed_methods = ['best', 'notch', 'locor', 'pspline', 'biweight', 'none']
+    if dtr_method not in allowed_methods:
+        raise NotImplementedError(
+            f'{dtr_method} is not an implemented detrending method.'
+        )
+
+    #
+    # apply the detrending call based on the method given
+    #
+
+    if not isinstance(dtr_dict, dict):
+        dtr_dict = {}
+        dtr_dict['method'] = dtr_method
+
+    if dtr_method in ['pspline','biweight','none']:
+
+        if 'break_tolerance' not in dtr_dict:
+            dtr_dict['break_tolerance'] = None
+        if 'window_length' not in dtr_dict:
+            dtr_dict['window_length'] = None
+
+        flat_flux, trend_flux = detrend_flux(
+            _time[sel0], clipped_flux[sel0], break_tolerance=dtr_dict['break_tolerance'],
+            method=dtr_dict['method'], cval=None,
+            window_length=dtr_dict['window_length'], edge_cutoff=None
+        )
+
+    #NOTE: you are detrending on _time[sel0], clipped_flux[sel0]
+    elif dtr_method == 'notch':
+        from notch_and_locor.core import sliding_window
+
+        #FIXME FIXME FIXME
+        #TODO: format everything!
+        fittimes, depth, detrend, polyshape, badflag = (
+            sliding_window(
+                data, windowsize=wsize, use_arclength=arclength, use_raw=raw,
+                deltabic=deltabic, resolvable_trans=resolvabletrans,
+                cleanmask=transmask, show_progress=show_progress
+            ) ##Notch Filter
+        #FIXME FIXME FIXME
+
+    elif dtr_method == 'locor':
+
+        from notch_and_locor.core import rcomb
+
+        #FIXME FIXME FIXME
+        fittimes, depth, detrend, polyshape, badflag = (
+            rcomb(
+                data, wsize, cleanmask=transmask, aliasnum=alias_num
+            ) ##LOCoR
+        )
+        #FIXME FIXME FIXME
+
+
+    elif dtr_method == 'best':
+        #TODO implement
+        pass
+
+    #
+    # re-apply sliding sigma clip asymmetric [20,3]*MAD, about median, after
+    # detrending.
+    #
+    clip_window = 3
+    clipped_flat_flux = slide_clip(
+        _time[sel0], flat_flux, window_length=clip_window, low=20, high=3,
+        method='mad', center='median'
+    )
+    sel1 = ~np.isnan(clipped_flat_flux)
+
+    search_flux = clipped_flat_flux[sel1]
+    search_time = _time[sel0][sel1]
+
+    dtr_stages_dict = {
+        'sel0': sel0,
+        'sel1': sel1,
+        'clipped_flat_flux': clipped_flat_flux,
+        'clipped_flux': clipped_flux,
+        'flat_flux': flat_flux,
+    }
+
+    return search_time, search_flux, dtr_stages_dict
+
+
 
 def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
                  window_length=None, edge_cutoff=None):
@@ -120,6 +297,11 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
                                             break_tolerance=break_tolerance,
                                             window_length=window_length,
                                             edge_cutoff=edge_cutoff)
+
+        elif method == 'none':
+            flat_flux = flux
+            trend_flux = None
+
 
         else:
             raise NotImplementedError

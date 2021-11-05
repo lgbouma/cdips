@@ -37,3 +37,5 @@ drivers/reconstructive_tfa/sector-*_output/
 tests/test_pca/*
 *pkl
 *Theia303*
+tests/*csv
+

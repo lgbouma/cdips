@@ -3,25 +3,16 @@
 [date: June 10, 2019; refactored Oct 19 2021]
 [author: Luke Bouma bouma.luke@gmail.com]
 
-Select a set of CDIPS light curves.  Originally, in 2019, this was 100 random
-TFA light curves.  With two years of added experience, we instead will choose
-light curves of stars in known nearby clusters.
-
-Then inject a 0.25% = 2.5 mmag central-transit planet with periods in the range
-1–12 d.  Try recovering via TLS (a) without detrending, (b) with detrending.
-(For each light curve, do say 10 experiments).
-
-Detrending options to include:
-* robust Huber spline (with w = 0.3 d))
-* sliding biweight (w = 0.25 d). For a sliding biweight, if w/T14 > 2.2,
-  most (> 98%) of the flux integral is preserved. So anything between w=0.25 days
-  to w=0.5 days should be good...
-* pspline
-* notch
-* LoCoR
-
 usage: $ python -u test_injrecov_with_detrending.py &> dtr.log &
        $ tail -f dtr.log | grep 'inj_'
+
+Contents:
+main
+    get_inj_recov_results
+        inj_recov_worker
+    get_random_lc_paths
+    get_cluster_lc_paths
+    inject_signal
 """
 
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
@@ -30,6 +21,7 @@ from glob import glob
 from datetime import datetime
 from astropy.io import fits
 from numpy import array as nparr
+from collections import Counter
 
 import batman
 import astropy.units as u, astropy.constants as c
@@ -37,8 +29,10 @@ from wotan import flatten
 
 from astrobase import periodbase
 from astrobase.lcmath import sigclip_magseries
+from astrobase import imageutils as iu
+from wotan import slide_clip
 
-from cdips.lcproc import mask_orbit_edges as moe
+from cdips.lcproc import mask_orbit_edges as moe, detrend as dtr
 from cdips.utils import lcutils as lcu
 
 import multiprocessing as mp
@@ -46,33 +40,45 @@ import multiprocessing as mp
 resultsdirectory = (
     '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/test_injrecov_with_detrending'
 )
+if not os.path.exists(resultsdirectory):
+    os.mkdir(resultsdirectory)
 
+def get_inj_recov_results(
+    dtr_dict,
+    overwrite=0, # whether to overwrite ALL previous saved csvs
+    N_periods_per_lc=10, #10
+    N_lcs=100, # number to draw
+    P_lower=1, # lower bound of injected periods
+    P_upper=10, # 10 days
+    inj_depth=0.005, # 5 mmag, 0.5% central transit
+    use_random_lcs=0,  # whether to draw random LCs
+    use_cluster_lcs=1 # whether to use LCs from selected nearby clusters
+    ):
+    """
+    Given a detrending method and its tuning parameters, run injection recovery
+    of a b=0 planet with periods in the range [P_lower, P_upper].
 
-def get_inj_recov_results(dtr_dict):
+    Do this on a set of CDIPS light curves.  Originally, in 2019, this was 100 random
+    TFA light curves.  With two years of added experience, we instead will choose
+    light curves of stars in known nearby clusters.
 
-    ##########################################
-    np.random.seed(42)
+    Args:
+        dtr_dict (dict): e.g., Must have at least key "method" (could also have
+        "break_tolerance", and "window_length").  `Method` can be ["pspline",
+        "none", "biweight", "median", "notch", "locor", "best"].
+    """
 
-    overwrite = 0 # whether to overwrite ALL previous saved csvs
+    np.random.seed(42) # for random choice of LCs
 
-    N_periods_per_lc = 10 #10
-    N_lcs = 1000 #100
-
-    P_lower = 1        # 1 day
-    P_upper = 10       # 10 days
-    inj_depth = 0.005 # 5 mmag, 0.5% central transit
-
-    use_random_lcs = 0  # whether to draw random LCs
-    use_cluster_lcs = 1 # whether to use LCs from selected nearby clusters
-
-    nworkers = mp.cpu_count()
-    maxworkertasks = 1000
-    ##########################################
+    assert np.all(
+        np.in1d(list(dtr_dict.keys()),
+                ['method', 'window_length', 'break_tolerance'])
+    )
 
     outpath = os.path.join(
         resultsdirectory,
         'detrend_check_method-{}_window_length-{}.csv'.
-        format(dtr_dict['method'],dtr_dict['window_length'])
+        format(dtr_dict['method'], dtr_dict['window_length'])
     )
     if os.path.exists(outpath) and not overwrite:
         print('found {} and no overwrite'.format(outpath))
@@ -114,13 +120,16 @@ def get_inj_recov_results(dtr_dict):
             (lcpath, inj_dict, dtr_dict, True)
         )
 
+    nworkers = mp.cpu_count()
+    maxworkertasks = 1000
+
     pool = mp.Pool(nworkers,maxtasksperchild=maxworkertasks)
     results = pool.map(inj_recov_worker, tasks)
     pool.close()
     pool.join()
 
-    # merge and save results
-    # 3334295094569278976_period-2.58577_method-hspline_windowlength-0.3.csv
+    # merge and save results; e.g.,
+    # 3334295094569278976_period-2.58577_method-pspline_windowlength-0.3.csv
     csvpaths = glob(os.path.join(
         resultsdirectory,'worker_output',
         '*_method-{}_windowlength-{}.csv'.
@@ -133,7 +142,6 @@ def get_inj_recov_results(dtr_dict):
     return df
 
 
-
 def inj_recov_worker(task):
 
     lcpath, inj_dict, dtr_dict, plot_detrend_check = task
@@ -142,12 +150,20 @@ def inj_recov_worker(task):
     # signals was recovered in first peak, (c) whether it was in first three
     # peaks.
 
-    source_id, tfa_time, tfa_mag, xcc, ycc, ra, dec, tmag = (
-        lcu.get_lc_data(lcpath, tfa_aperture='TFA2')
+    APNAME = 'PCA1'
+    source_id, time, ap_mag, xcc, ycc, ra, dec, tmag, tfa_mag = (
+        lcu.get_lc_data(lcpath, mag_aperture=APNAME, tfa_aperture='TFA1')
     )
 
+    outdir = os.path.join(
+        resultsdirectory, 'worker_output'
+    )
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+
     outpath = os.path.join(
-        resultsdirectory,'worker_output',
+        outdir,
+        f'tmag{tmag:.2f}_'+
         str(source_id)+
         "_period-{:.5f}".format(inj_dict['period'])+
         "_method-{}".format(dtr_dict['method'])+
@@ -158,7 +174,7 @@ def inj_recov_worker(task):
         print('found {}'.format(outpath))
         return
 
-    if np.all(pd.isnull(tfa_mag)):
+    if np.all(pd.isnull(ap_mag)):
 
         t = {
             'source_id':source_id,
@@ -193,29 +209,58 @@ def inj_recov_worker(task):
     # otherwise, begin the injection recovery + detrending experiment.
     #
     try:
-        # inject
-        inj_time, inj_flux, t0 = inject_signal(tfa_time, tfa_mag, inj_dict)
+
+        # convert mag to flux. mask orbit edges. inject signal.
+        inj_time, inj_flux, t0 = inject_signal(time, ap_mag, inj_dict)
         inj_dict['epoch'] = t0
 
-        # sig clip asymmetric [50,5]
-        inj_time, inj_flux, _ = sigclip_magseries(inj_time, inj_flux,
-                                                  np.ones_like(inj_flux)*1e-4,
-                                                  magsarefluxes=True,
-                                                  sigclip=[50,5])
+        search_time, search_flux, dtr_stages_dict = (
+            dtr.clean_rotationsignal_tess_singlesector_light_curve(
+            inj_time, inj_flux, magisflux=True, dtr_dict=dtr_dict,
+            maskorbitedge=False)
+        )
 
-        # detrend
-        flat_flux, trend_flux = detrend_lightcurve(inj_time, inj_flux, dtr_dict)
+        sel0 = dtr_stages_dict['sel0']
+        clipped_inj_flux = dtr_stages_dict['clipped_flux']
+        clipped_flat_flux = dtr_stages_dict['clipped_flat_flux']
+        flat_flux = dtr_stages_dict['flat_flux']
 
         if plot_detrend_check:
+            hdrlist = 'CDCLSTER,CDIPSAGE,TESSMAG'.split(',')
+            infodict = iu.get_header_keyword_list(lcpath, hdrlist)
+            cluster = infodict['CDCLSTER']
+            age = float(infodict['CDIPSAGE'])
+            tmag = float(infodict['TESSMAG'])
+            titlestr = (
+                f"{source_id}: {cluster[:20]}, logt={age:.2f}, T={tmag:.2f}"
+            )
+
             f,axs = plt.subplots(nrows=2, sharex=True)
-            axs[0].scatter(inj_time, inj_flux, c='black', s=1)
-            axs[0].plot(inj_time, trend_flux, c='red')
-            axs[1].scatter(inj_time, flat_flux, c='black', s=1)
-            axs[0].set_ylabel('raw flux')
-            axs[1].set_ylabel('flattened flux')
+            # lower: "raw" data; upper: sigma-clipped
+            axs[0].scatter(
+                inj_time, clipped_inj_flux, c='black', s=1, zorder=2,
+                rasterized=True
+            )
+            axs[0].scatter(
+                inj_time, inj_flux, c='red', s=1, zorder=1, rasterized=True
+            )
+            axs[0].plot(inj_time[sel0], trend_flux, c='C0')
+            axs[1].scatter(
+                inj_time[sel0], clipped_flat_flux, c='black', s=1, zorder=2,
+                rasterized=True, label='searched flux'
+            )
+            axs[1].scatter(
+                inj_time[sel0], flat_flux, c='red', s=0.5, zorder=1,
+                rasterized=True
+            )
+            axs[1].legend(loc='best',fontsize='xx-small')
+            axs[0].set_ylabel(f'flux {APNAME}')
+            axs[0].set_title(titlestr, fontsize='x-small')
+            axs[1].set_ylabel('flattened')
             axs[1].set_xlabel('time [bjd]')
             outpng = os.path.join(
                 resultsdirectory,'worker_output',
+                f'tmag{tmag:.2f}_'+
                 str(source_id)+
                 "_period-{:.5f}".format(inj_dict['period'])+
                 "_method-{}".format(dtr_dict['method'])+
@@ -223,17 +268,17 @@ def inj_recov_worker(task):
                 ".png"
             )
             f.savefig(outpng, dpi=300)
+            print(f"Made {outpng}")
 
         # period find
-        err = np.ones_like(flat_flux)*1e-4
-        tlsp = periodbase.tls_parallel_pfind(inj_time, flat_flux, err,
-                                             magsarefluxes=True,
-                                             tls_rstar_min=0.1, tls_rstar_max=10,
-                                             tls_mstar_min=0.1, tls_mstar_max=5.0,
-                                             tls_oversample=8, tls_mintransits=1,
-                                             tls_transit_template='default',
-                                             nbestpeaks=5, sigclip=None,
-                                             nworkers=1)
+        err = np.ones_like(search_flux)*1e-4
+        tlsp = periodbase.tls_parallel_pfind(
+            search_time, search_flux, err, magsarefluxes=True, tls_rstar_min=0.1,
+            tls_rstar_max=10, tls_mstar_min=0.1, tls_mstar_max=5.0,
+            tls_oversample=8, tls_mintransits=1,
+            tls_transit_template='default', nbestpeaks=5, sigclip=None,
+            nworkers=1
+        )
 
         nbestperiods = tlsp['nbestperiods']
         lspbestperiods = nbestperiods[::]
@@ -340,38 +385,6 @@ def inj_recov_worker(task):
         return
 
 
-
-def detrend_lightcurve(time, flux, dtr_dict):
-
-    if dtr_dict['method'] == 'none':
-        flatten_lc = flux
-        trend_lc = None
-
-    elif dtr_dict['method'] in ['biweight','hspline']:
-        flatten_lc, trend_lc = flatten(time, flux,
-                                       window_length=dtr_dict['window_length'],
-                                       method=dtr_dict['method'],
-                                       return_trend=True, edge_cutoff=False,
-                                       break_tolerance=dtr_dict['break_tolerance'])
-
-    elif dtr_dict['method'] in ['pspline']:
-        flatten_lc, trend_lc = flatten(time, flux,
-                                       method=dtr_dict['method'],
-                                       return_trend=True,
-                                       break_tolerance=dtr_dict['break_tolerance'])
-
-    elif dtr_dict['method'] in ['cosine']:
-        flatten_lc, trend_lc = flatten(time, flux,
-                                       method=dtr_dict['method'],
-                                       return_trend=True,
-                                       robust=dtr_dict['robust'],
-                                       window_length=dtr_dict['window_length'],
-                                       break_tolerance=dtr_dict['break_tolerance'])
-
-
-    return flatten_lc, trend_lc
-
-
 def get_random_lc_paths(N_lcs=100):
 
     lcglob = 'cam?_ccd?/*_llc.fits'
@@ -394,18 +407,9 @@ def get_random_lc_paths(N_lcs=100):
 def get_cluster_lc_paths(N_lcs=100):
     """
     Draw light curves from a set of clusters that I think might be good in
-    S14-S19 to test planet injection/recovery:
-        Chameleon_I
-        CrA
-        Upper_Sco
-        Stephenson_1
-        Alpha_per (Theia 133)
-        RSG_5
-        Theia 506 (very close!)
-        Theia 507
-        AB_Dor
-        Pleiades
-        UBC_1 (i.e., Theia 520)
+    S14-S19 to test planet injection/recovery.
+
+    These are in a list of 8 clusters, and have RP<14.
     """
     from cdips.utils.catalogs import get_cdips_catalog
 
@@ -413,24 +417,66 @@ def get_cluster_lc_paths(N_lcs=100):
     df = df[~pd.isnull(df.cluster)]
 
     cluster_names = [
-        "Chameleon_I",
-        "CrA",
-        "Upper_Sco",
-        "Stephenson_1",
-        "Alpha_per",# (Theia 133)
-        "RSG_5",
-        "kc19group_506", #(very close!)
-        "kc19group_507",
-        "AB_Dor",
-        "Pleiades",
-        "UBC_1", # (Theia 520)
+        "Stephenson_1", # logt 7.5, 100-500pc, Theia 73, we are familiar
+        "Alpha_per",# logt 7.8, 100-200pc, Theia 133
+        "RSG_5", # logt 7.5, 300-400pc.
+        "kc19group_506", # 350 Myr, 100pc (!!!).
+        "kc19group_507", # 350 Myr, 100-200pc.
+        "AB_Dor", # ~120 Myr, 100-300pc from KC19.
+        "Pleiades", # 120 Myr, 120 pc.
+    ]
+    special_names = [
+        "UBC_1", # 350 Myr, 300-400pc, Theia 520
     ]
 
-    sel = np.zeros(len(df))
+    sel = np.zeros(len(df)).astype(bool)
     for cluster_name in cluster_names:
-        sel |= df.cluster.str.contains(c)
+        sel |= df.cluster.str.contains(cluster_name)
+
+    # avoid e.g., "UBC_186" matching for "UBC_1".
+    for cluster_name in special_names:
+        sel |= (df.cluster == cluster_name)
+        sel |= df.cluster.str.contains(cluster_name+',')
 
     sdf = df[sel]
+
+    # NOTE: a further cut, to deal with less crappy data
+    sel = sdf.phot_rp_mean_mag < 14
+    sdf = sdf[sel]
+
+    camdpath = f'camd_{"_".join(cluster_names)}.png'
+    if not os.path.exists(camdpath):
+        plt.close('all')
+        get_yval = (
+            lambda _df: np.array(
+                _df['phot_g_mean_mag'] + 5*np.log10(_df['parallax']/1e3) + 5
+            )
+        )
+        get_xval = (
+            lambda _df: np.array(
+                _df['phot_bp_mean_mag'] - _df['phot_rp_mean_mag']
+            )
+        )
+        fig, axs = plt.subplots(ncols=2)
+
+        s=0.5
+        axs[0].scatter(
+            get_xval(sdf), get_yval(sdf), c='k', alpha=1, zorder=3,
+            s=s, rasterized=False, linewidths=0.1, marker='o',
+            edgecolors='k'
+        )
+        axs[0].set_xlabel("BP-RP [mag]")
+        axs[0].set_ylabel("M_G [mag]")
+
+        axs[1].scatter(
+            get_xval(sdf), sdf.phot_g_mean_mag, c='k', alpha=1, zorder=3,
+            s=s, rasterized=False, linewidths=0.1, marker='o',
+            edgecolors='k'
+        )
+        axs[1].set_xlabel("BP-RP [mag]")
+        axs[1].set_ylabel("G [mag]")
+
+        fig.savefig(camdpath, bbox_inches='tight', dpi=400)
 
     # NOTE: OK!  Now, find the light curves, from S14-S19, corresponding to
     # these clusters.
@@ -439,26 +485,36 @@ def get_cluster_lc_paths(N_lcs=100):
         "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/S14_S19_lc_list_20211019.txt"
     )
 
-    make_lc_list(
-        lclistpath, sector_interval=[14,19]
+    if not os.path.exists(lclistpath):
+        make_lc_list(
+            lclistpath, sector_interval=[14,19]
+        )
+
+    lcdf = pd.read_csv(lclistpath, names=["lcpath"])
+    lcdf['source_id'] = lcdf.lcpath.apply(
+        lambda x:
+        x.split('/')[-1].split('gaiatwo')[1].split('-')[0].lstrip('0')
     )
 
-    # FIXME FIXME FIXME: ok, now get the light curves corresponding to these
-    # clusters...
+    sdf['source_id'] = sdf.source_id.astype(str)
+    mdf = sdf.merge(lcdf, on="source_id", how="left")
 
-    import IPython; IPython.embed()
+    smdf = mdf[~pd.isnull(mdf.lcpath)]
 
-
-    lcglob = 'cam?_ccd?/*_llc.fits'
-
-    SECTORNUM = 6
-
-    lcdirectory = (
-        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/'.
-        format(SECTORNUM)
+    res = Counter(smdf.cluster)
+    print(42*'-')
+    print(
+        f'Got {len(smdf)} T<14 light curves in {cluster_names} & {special_names}...'
+    )
+    print(
+        f'Most common 40:\n{res.most_common(n=40)}'
     )
 
-    lcpaths = glob(os.path.join(lcdirectory, lcglob))
+    outpath = f'S14_S19_20211020_lcpaths_{"_".join(cluster_names)}.csv'
+    smdf.to_csv(outpath, index=False)
+    print(f'Saved {outpath}')
+
+    lcpaths = nparr(smdf.lcpath)
     np.random.shuffle(lcpaths)
 
     lcpaths = np.random.choice(lcpaths,size=N_lcs)
@@ -466,20 +522,19 @@ def get_cluster_lc_paths(N_lcs=100):
     return lcpaths
 
 
-
-
-
-def inject_signal(tfa_time, tfa_mag, inj_dict):
+def inject_signal(time, ap_mag, inj_dict):
 
     # mags to flux
     f_x0 = 1e4
     m_x0 = 10
-    tfa_flux = f_x0 * 10**( -0.4 * (tfa_mag - m_x0) )
-    tfa_flux /= np.nanmedian(tfa_flux)
+    ap_flux = f_x0 * 10**( -0.4 * (ap_mag - m_x0) )
+    ap_flux /= np.nanmedian(ap_flux)
 
     # ignore the times near the edges of orbits for TLS.
-    time, flux = moe.mask_orbit_start_and_end(tfa_time, tfa_flux)
-    del tfa_time, tfa_flux
+    time, flux= moe.mask_orbit_start_and_end(
+        time, ap_flux, raise_expectation_error=False
+    )
+
 
     # initialize model to inject: 90 degrees, LD coeffs for 5000 K dwarf star
     # in TESS band (Claret 2018) no eccentricity, random phase, b=0, stellar
@@ -521,21 +576,27 @@ def inject_signal(tfa_time, tfa_mag, inj_dict):
 
 def main():
 
-    df_pspline = get_inj_recov_results({'method':'pspline',
-                                        'break_tolerance':0.5,
-                                        'window_length':0.5})
-    df_biweight = get_inj_recov_results({'method':'biweight',
-                                        'window_length':0.5,
-                                        'break_tolerance':0.5})
-    df_none = get_inj_recov_results({'method':'none',
-                                     'window_length':0.3,
-                                     'break_tolerance':0.3})
-    df_hspline = get_inj_recov_results({'method':'hspline',
-                                        'window_length':0.5,
-                                        'break_tolerance':0.5})
+    df_notch = get_inj_recov_results(
+        {'method':'notch', 'break_tolerance':0.5, 'window_length':0.5}
+    )
+    df_locor = get_inj_recov_results(
+        {'method':'locor', 'break_tolerance':0.5, 'window_length':1.0}
+    )
+    df_best = get_inj_recov_results(
+        {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
+    )
+    df_pspline = get_inj_recov_results(
+        {'method':'pspline', 'break_tolerance':0.5, 'window_length':0.5}
+    )
+    df_biweight = get_inj_recov_results(
+        {'method':'biweight', 'window_length':0.5, 'break_tolerance':0.5}
+    )
+    df_none = get_inj_recov_results(
+        {'method':'none', 'window_length':0.3, 'break_tolerance':0.3}
+    )
 
-    descrps = ['none','pspline', 'biweight','hspline']
-    dfs = [df_none, df_pspline, df_biweight, df_hspline]
+    descrps = ['notch', 'locor', 'best', 'none','pspline', 'biweight']
+    dfs = [df_notch, df_locor, df_best, df_none, df_pspline, df_biweight]
 
     for df, d in zip(dfs, descrps):
         outstr = (
@@ -555,27 +616,27 @@ def main():
         )
         print(textwrap.dedent(outstr))
 
-    mdf = df_pspline.merge(df_none, how='left', on=['source_id', 'period'],
-                           suffixes=['_pspline','_none'])
+    # #FIXME WTF IF THE NEXT 10 LINES? MIGHT WANT TO CALl IT DEPRECATED...
 
-    pok_nbad = mdf[mdf['recovered_in_topthree_peaks_pspline'] &
-                   ~mdf['recovered_in_topthree_peaks_none']].sort_values(
-                       by=['source_id','period'])
-    nok_pbad = mdf[mdf['recovered_in_topthree_peaks_none'] &
-                   ~mdf['recovered_in_topthree_peaks_pspline']].sort_values(
-                       by=['source_id','period'])
+    # mdf = df_pspline.merge(df_none, how='left', on=['source_id', 'period'],
+    #                        suffixes=['_pspline','_none'])
 
-    print('pspline found, but none didnt find for:\n{}'.format(
-        pok_nbad[['source_id','period','sde_1_none','sde_1_pspline']]
-    ))
+    # pok_nbad = mdf[mdf['recovered_in_topthree_peaks_pspline'] &
+    #                ~mdf['recovered_in_topthree_peaks_none']].sort_values(
+    #                    by=['source_id','period'])
+    # nok_pbad = mdf[mdf['recovered_in_topthree_peaks_none'] &
+    #                ~mdf['recovered_in_topthree_peaks_pspline']].sort_values(
+    #                    by=['source_id','period'])
 
-    print('none found, but pspline didnt find for:\n{}'.format(
-        nok_pbad[['source_id','period','sde_1_none','sde_1_pspline']]
-    ))
+    # print('pspline found, but none didnt find for:\n{}'.format(
+    #     pok_nbad[['source_id','period','sde_1_none','sde_1_pspline']]
+    # ))
+
+    # print('none found, but pspline didnt find for:\n{}'.format(
+    #     nok_pbad[['source_id','period','sde_1_none','sde_1_pspline']]
+    # ))
 
     print('\ndone\n')
-
-
 
 
 if __name__=="__main__":
