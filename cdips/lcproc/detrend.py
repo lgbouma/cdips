@@ -216,34 +216,36 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
         # TODO: get flat_flux, trend_flux
 
-    fittimes, depth, detrend, polyshape, badflag = core.do_detrend(
-        1, 1001, arclength=False, raw=useraw, wsize=window, indata=data,
-        saveoutput=False, outdir='', resolvabletrans=False, demode=1,
-        cleanup=True, deltabic=mindbic
-    )
+        #FIXME
+        # staging
+        fittimes, depth, detrend, polyshape, badflag = core.do_detrend(
+            1, 1001, arclength=False, raw=useraw, wsize=window, indata=data,
+            saveoutput=False, outdir='', resolvabletrans=False, demode=1,
+            cleanup=True, deltabic=mindbic
+        )
 
-    ##Store everything in a common format recarray
-    dl = len(detrend)
-    notch = np.recarray(
-        (dl, ), dtype=[
-            ('t', float), ('detrend', float), ('polyshape', float),
-            ('notch_depth', float), ('deltabic', float), ('bicstat', float),
-            ('badflag', int)
-        ]
-    )
+        ##Store everything in a common format recarray
+        dl = len(detrend)
+        notch = np.recarray(
+            (dl, ), dtype=[
+                ('t', float), ('detrend', float), ('polyshape', float),
+                ('notch_depth', float), ('deltabic', float), ('bicstat', float),
+                ('badflag', int)
+            ]
+        )
 
-    notch.t = data.t
-    notch.notch_depth = depth[0].copy()
-    notch.deltabic    = depth[1].copy()
-    notch.detrend     = detrend.copy()
-    notch.badflag     = badflag.copy()
-    notch.polyshape   = polyshape.copy()
+        notch.t = data.t
+        notch.notch_depth = depth[0].copy()
+        notch.deltabic    = depth[1].copy()
+        notch.detrend     = detrend.copy()
+        notch.badflag     = badflag.copy()
+        notch.polyshape   = polyshape.copy()
 
-    bicstat = notch.deltabic-np.median(notch.deltabic)
-    notch.bicstat = 1- bicstat/np.max(bicstat)
+        bicstat = notch.deltabic-np.median(notch.deltabic)
+        notch.bicstat = 1- bicstat/np.max(bicstat)
 
-
-
+        #FIXME
+        # staging
 
 
     elif dtr_method == 'locor':
