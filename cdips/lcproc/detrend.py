@@ -5,8 +5,8 @@ Contents:
 
 Very useful:
 
-    clean_tess_singlesector_light_curve: masks orbit edges, sigma slide clip,
-        detrends, re-sigma slide clip.
+    clean_rotationsignal_tess_singlesector_light_curve: masks orbit edges,
+        sigma slide clip, detrends, re-sigma slide clip.
 
     detrend_flux: a wrapper to wotan pspline or biweight detrending (given
         vectors of time and flux).
@@ -71,9 +71,10 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     single TESS light curve (ideally one without severe insturmental
     systematics) while preserving transits.
 
-    "Cleaning" by default is taken to mean mask_orbit_edge -> slide_clip ->
-    detrend -> slide_clip.  "Detrend" can mean any of the Wotan flatteners,
-    Notch, or LoCoR.
+    "Cleaning" by default is taken to mean the sequence of mask_orbit_edge ->
+    slide_clip -> detrend -> slide_clip.  "Detrend" can mean any of the Wotan
+    flatteners, Notch, or LoCoR. "slide_clip" means apply windowed
+    sigma-clipping removal.
 
     Args:
         time, mag (np.ndarray): time and magnitude (or flux) vectors
@@ -85,6 +86,11 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
             'dtr_method' (str): one of: ['best', 'notch', 'locor', 'pspline',
             'biweight', 'none']
+
+            'break_tolerance' (float): number of days past which a segment of
+            light curve is considered a "new segment".
+
+            'window_length' (float): length of sliding window in days
 
         lsp_dict (optional dict): dictionary containing Lomb Scargle
         periodogram information, which is used in the "best" method for
@@ -146,8 +152,8 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
     if dtr_method == 'best' and not isinstance(lsp_dict, dict):
         errmsg = (
-            '"best" detrending requires knowledge
-            of LS period, FAP, and amplitude'
+            '"best" detrending requires knowledge '
+            'of LS period, FAP, and amplitude'
         )
         raise ValueError(errmsg)
 
@@ -182,15 +188,61 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     elif dtr_method == 'notch':
         from notch_and_locor.core import sliding_window
 
-        #FIXME FIXME FIXME
-        #TODO: format everything!
+        # Set to True to do a full fit over time and arclength (default False).
+        use_arclength = False
+        # Internally, keep as "False" to use wdat.fcor as the flux.
+        use_raw = False
+        # BIC difference between transit and no-transit model required to
+        # select the transit model
+        min_deltabic = -1.0
+        # By default (resolvabletrans == False), a grid of transit durations is
+        # searched. [0.75, 1.0, 2.0, 4.0] hours.  If this is set to be True,
+        # the 45 minute one is dropped.
+        resolvable_trans = False
+
+        #TODO: format everything!  (using the stuff already in the exaples to
+        #figure out `data` format, `detrend` format, etc
         fittimes, depth, detrend, polyshape, badflag = (
             sliding_window(
-                data, windowsize=wsize, use_arclength=arclength, use_raw=raw,
-                deltabic=deltabic, resolvable_trans=resolvabletrans,
+                data, windowsize=dtr_dict['window_length'],
+                use_arclength=arclength, use_raw=use_raw,
+                deltabic=min_deltabic, resolvable_trans=resolvabletrans,
                 cleanmask=transmask, show_progress=show_progress
             ) ##Notch Filter
         #FIXME FIXME FIXME
+        #FIXME FIXME FIXME
+        #FIXME FIXME FIXME
+
+        # TODO: get flat_flux, trend_flux
+    fittimes, depth, detrend, polyshape, badflag = core.do_detrend(
+        1, 1001, arclength=False, raw=useraw, wsize=window, indata=data,
+        saveoutput=False, outdir='', resolvabletrans=False, demode=1,
+        cleanup=True, deltabic=mindbic
+    )
+
+    ##Store everything in a common format recarray
+    dl = len(detrend)
+    notch = np.recarray(
+        (dl, ), dtype=[
+            ('t', float), ('detrend', float), ('polyshape', float),
+            ('notch_depth', float), ('deltabic', float), ('bicstat', float),
+            ('badflag', int)
+        ]
+    )
+
+    notch.t = data.t
+    notch.notch_depth = depth[0].copy()
+    notch.deltabic    = depth[1].copy()
+    notch.detrend     = detrend.copy()
+    notch.badflag     = badflag.copy()
+    notch.polyshape   = polyshape.copy()
+
+    bicstat = notch.deltabic-np.median(notch.deltabic)
+    notch.bicstat = 1- bicstat/np.max(bicstat)
+
+
+
+
 
     elif dtr_method == 'locor':
 
