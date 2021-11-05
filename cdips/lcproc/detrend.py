@@ -209,11 +209,13 @@ def clean_rotationsignal_tess_singlesector_light_curve(
                 deltabic=min_deltabic, resolvable_trans=resolvabletrans,
                 cleanmask=transmask, show_progress=show_progress
             ) ##Notch Filter
+        )
         #FIXME FIXME FIXME
         #FIXME FIXME FIXME
         #FIXME FIXME FIXME
 
         # TODO: get flat_flux, trend_flux
+
     fittimes, depth, detrend, polyshape, badflag = core.do_detrend(
         1, 1001, arclength=False, raw=useraw, wsize=window, indata=data,
         saveoutput=False, outdir='', resolvabletrans=False, demode=1,
