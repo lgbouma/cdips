@@ -8,6 +8,10 @@ Very useful:
     clean_rotationsignal_tess_singlesector_light_curve: masks orbit edges,
         sigma slide clip, detrends, re-sigma slide clip.
 
+    _run_notch: a wrapper to Aaron Rizzuto's Notch implementation.
+
+    _run_locor: a wrapper to Aaron Rizzuto's LOCOR implementation.
+
     detrend_flux: a wrapper to wotan pspline or biweight detrending (given
         vectors of time and flux).
 
@@ -50,6 +54,8 @@ import numpy.lib.recfunctions as rfn
 from astrobase import imageutils as iu
 from astrobase.lcmath import find_lc_timegroups
 
+from astropy.timeseries import LombScargle
+
 from sklearn.decomposition import PCA, FactorAnalysis
 from sklearn.linear_model import LinearRegression, BayesianRidge, RidgeCV
 from sklearn.model_selection import cross_val_score
@@ -64,8 +70,7 @@ assert int(wotanversiontuple[1]) >= 9
 
 def clean_rotationsignal_tess_singlesector_light_curve(
     time, mag, magisflux=False, dtr_dict=None, lsp_dict=None,
-    maskorbitedge=True
-):
+    maskorbitedge=True):
     """
     The goal of this function is to remove a stellar rotation signal from a
     single TESS light curve (ideally one without severe insturmental
@@ -73,7 +78,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
     "Cleaning" by default is taken to mean the sequence of mask_orbit_edge ->
     slide_clip -> detrend -> slide_clip.  "Detrend" can mean any of the Wotan
-    flatteners, Notch, or LoCoR. "slide_clip" means apply windowed
+    flatteners, Notch, or LOCOR. "slide_clip" means apply windowed
     sigma-clipping removal.
 
     Args:
@@ -82,7 +87,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         magisflux (bool): True if the "mag" vector is a flux already
 
         dtr_dict (optional dict): dictionary containing arguments passed to
-        Wotan, Notch, or LoCoR. Relevant keys should include:
+        Wotan, Notch, or LOCOR. Relevant keys should include:
 
             'dtr_method' (str): one of: ['best', 'notch', 'locor', 'pspline',
             'biweight', 'none']
@@ -94,7 +99,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
         lsp_dict (optional dict): dictionary containing Lomb Scargle
         periodogram information, which is used in the "best" method for
-        choosing between LoCoR or Notch detrending.
+        choosing between LOCOR or Notch detrending.
 
         maskorbitedge (bool): whether to apply the initial "mask_orbit_edge"
         step. Probably would only want to be false if you had already done it
@@ -103,7 +108,8 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     Returns:
         search_time, search_flux, dtr_stages_dict (np.ndarrays and dict): light
             curve ready for TLS or BLS style periodograms; and a dictionary of
-            the different processing stages.
+            the different processing stages (see comments for details of
+            `dtr_stages_dict` contents).
     """
 
     #
@@ -138,6 +144,19 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         method='mad', center='median'
     )
     sel0 = ~np.isnan(clipped_flux)
+
+    #
+    # FIXME: proboably want to run a LS periodogram here... to get an idea for
+    # the rotational properties, and whether it makes sense to even try and
+    # detrend this object?
+    #
+    # TODO TODO TODO PUT THE LS PERIODOGRAM HERE. RUN IT GENERICALLY FOR
+    # ANYTHING YOU WANT TO "REMOVE A ROTATIONAL SIGNAL FROM". THIS IS THE RIGHT
+    # PLACE B/C THE MASKING AND CLIPPING HAS BEEN DONE.
+
+
+    # FIXME FIXME FIXME LEFT OFF HERE.
+
 
     #
     # set the detrending method. default to "best".
@@ -185,88 +204,16 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         )
 
     elif dtr_method == 'notch':
-        from notch_and_locor.core import sliding_window
 
-        #
-        # HARD-CODE notch options (nb. could also let them be options via
-        # dtr_dict).
-        #
-        # Set to True to do a full fit over time and arclength (default False).
-        use_arclength = False
-        # Internally, keep as "False" to use wdat.fcor as the flux.
-        use_raw = False
-        # BIC difference between transit and no-transit model required to
-        # select the transit model
-        min_deltabic = -1.0
-        # By default (resolvabletrans == False), a grid of transit durations is
-        # searched. [0.75, 1.0, 2.0, 4.0] hours.  If this is set to be True,
-        # the 45 minute one is dropped.
-        resolvable_trans = False
-        # show_progress: if True, puts out a TQDM bar
-        show_progress= True
-
-        # Format "data" into recarray format needed for notch.
-        TIME, FLUX = _time[sel0], clipped_flux[sel0]
-        N_points = len(TIME)
-        data = np.recarray(
-            (N_points,),
-            dtype=[('t',float), ('fraw',float), ('fcor',float), ('s',float),
-                   ('qual',int), ('divisions',float)]
+        flat_flux, trend_flux, notch = _run_notch(
+            _time[sel0], clipped_flux[sel0], dtr_dict
         )
-        data.t = TIME
-        data.fcor = FLUX
-        data.fraw[:] = 0
-        data.s[:] = 0
-        data.qual[:] = 0
-
-        # Run notch
-        fittimes, depth, detrend, polyshape, badflag = (
-            sliding_window(
-                data, windowsize=dtr_dict['window_length'],
-                use_arclength=use_arclength, use_raw=use_raw,
-                deltabic=min_deltabic, resolvable_trans=resolvable_trans,
-                show_progress=show_progress
-            )
-        )
-
-        # Store everything in a common format recarray
-        N_points = len(detrend)
-        notch = np.recarray(
-            (N_points, ), dtype=[
-                ('t', float), ('detrend', float), ('polyshape', float),
-                ('notch_depth', float), ('deltabic', float), ('bicstat', float),
-                ('badflag', int)
-            ]
-        )
-
-        notch.t = data.t
-        notch.notch_depth = depth[0].copy()
-        notch.deltabic    = depth[1].copy()
-        notch.detrend     = detrend.copy()
-        notch.badflag     = badflag.copy()
-        notch.polyshape   = polyshape.copy()
-
-        bicstat = notch.deltabic-np.median(notch.deltabic)
-        notch.bicstat = 1- bicstat/np.max(bicstat)
-
-        #
-        # Convert to my naming scheme.
-        #
-        flat_flux = notch.detrend
-        trend_flux = notch.polyshape
 
     elif dtr_method == 'locor':
 
-        from notch_and_locor.core import rcomb
-
-        #FIXME FIXME FIXME
-        fittimes, depth, detrend, polyshape, badflag = (
-            rcomb(
-                data, wsize, cleanmask=transmask, aliasnum=alias_num
-            ) ##LOCoR
+        flat_flux, trend_flux, notch, lsp_dict = _run_locor(
+            _time[sel0], clipped_flux[sel0], dtr_dict, lsp_dict
         )
-        #FIXME FIXME FIXME
-
 
     elif dtr_method == 'best':
         #TODO implement
@@ -287,16 +234,183 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     search_time = _time[sel0][sel1]
 
     dtr_stages_dict = {
+        # non-nan indices from clipped_flux
         'sel0': sel0,
+        # non-nan indices from clipped_flat_flux
         'sel1': sel1,
-        'clipped_flat_flux': clipped_flat_flux,
+        # after initial window sigma_clip on flux, what is left?
         'clipped_flux': clipped_flux,
+        # after detrending, what is left?
         'flat_flux': flat_flux,
+        # after window sigma_clip on flat_flux, what is left?
+        'clipped_flat_flux': clipped_flat_flux,
+        # what does the detrending algorithm give as the "trend"?
         'trend_flux': trend_flux
     }
+    if isinstance(lsp_dict, dict):
+        dtr_stages_dict['lsp_dict'] = lsp_dict
 
     return search_time, search_flux, dtr_stages_dict
 
+
+def _run_notch(TIME, FLUX, dtr_dict):
+
+    from notch_and_locor.core import sliding_window
+
+    #
+    # HARD-CODE notch options (nb. could also let them be options via
+    # dtr_dict).
+    #
+    # Set to True to do a full fit over time and arclength (default False).
+    use_arclength = False
+    # Internally, keep as "False" to use wdat.fcor as the flux.
+    use_raw = False
+    # BIC difference between transit and no-transit model required to
+    # select the transit model
+    min_deltabic = -1.0
+    # By default (resolvabletrans == False), a grid of transit durations is
+    # searched. [0.75, 1.0, 2.0, 4.0] hours.  If this is set to be True,
+    # the 45 minute one is dropped.
+    resolvable_trans = False
+    # show_progress: if True, puts out a TQDM bar
+    show_progress= True
+
+    # Format "data" into recarray format needed for notch.
+    N_points = len(TIME)
+    data = np.recarray(
+        (N_points,),
+        dtype=[('t',float), ('fraw',float), ('fcor',float), ('s',float),
+               ('qual',int), ('divisions',float)]
+    )
+    data.t = TIME
+    data.fcor = FLUX
+    data.fraw[:] = 0
+    data.s[:] = 0
+    data.qual[:] = 0
+
+    # Run notch
+    fittimes, depth, detrend, polyshape, badflag = (
+        sliding_window(
+            data, windowsize=dtr_dict['window_length'],
+            use_arclength=use_arclength, use_raw=use_raw,
+            deltabic=min_deltabic, resolvable_trans=resolvable_trans,
+            show_progress=show_progress
+        )
+    )
+
+    assert len(fittimes) == len(TIME)
+
+    # Store everything in a common format recarray
+    N_points = len(detrend)
+    notch = np.recarray(
+        (N_points, ), dtype=[
+            ('t', float), ('detrend', float), ('polyshape', float),
+            ('notch_depth', float), ('deltabic', float), ('bicstat', float),
+            ('badflag', int)
+        ]
+    )
+
+    notch.t = data.t
+    notch.notch_depth = depth[0].copy()
+    notch.deltabic    = depth[1].copy()
+    notch.detrend     = detrend.copy()
+    notch.badflag     = badflag.copy()
+    notch.polyshape   = polyshape.copy()
+
+    bicstat = notch.deltabic-np.median(notch.deltabic)
+    notch.bicstat = 1- bicstat/np.max(bicstat)
+
+    #
+    # Convert to my naming scheme.
+    #
+    flat_flux = notch.detrend
+    trend_flux = notch.polyshape
+
+    return flat_flux, trend_flux, notch
+
+
+def _run_locor(TIME, FLUX, dtr_dict, lsp_dict):
+    """
+    NOTE: lsp_dict is created here if None is passed.
+    """
+
+    from notch_and_locor.core import rcomb
+
+    # Format "data" into recarray format needed for notch.
+    N_points = len(TIME)
+    data = np.recarray(
+        (N_points,),
+        dtype=[('t',float), ('fraw',float), ('fcor',float), ('s',float),
+               ('qual',int), ('divisions',float)]
+    )
+    data.t = TIME
+    data.fcor = FLUX
+    data.fraw[:] = 0
+    data.s[:] = 0
+    data.qual[:] = 0
+
+    # Get rotation period, if not available.
+    if not isinstance(lsp_dict, dict):
+        print(
+            "Did not get period from lsp_dict: finding via Lomb Scargle. "
+            "WARNING: it's better to feed via lsp_dict for cacheing speeds. "
+        )
+
+        ls = LombScargle(TIME, FLUX, FLUX*1e-3)
+        period_min, period_max = 0.1, 10
+        freq, power = ls.autopower(minimum_frequency=1/period_max,
+                                   maximum_frequency=1/period_min)
+        ls_fap = ls.false_alarm_probability(power.max())
+        best_freq = freq[np.argmax(power)]
+        ls_period = 1/best_freq
+        theta = ls.model_parameters(best_freq)
+        ls_amplitude = theta[1]
+
+        # NOTE: this just forces LOCOR to run irrespective of the exact
+        # ls_period, ls_amplitude, ls_fap, or color. In other words, it
+        # doesn't deal with the question of whether the star is young.  You
+        # should do that elsewhere, and probably only be running LOCOR for
+        # stars with Prot <~ a few days.
+
+        lsp_dict['ls_period'] = ls_period
+        lsp_dict['ls_amplitude'] = ls_amplitude
+        lsp_dict['ls_fap'] = ls_fap
+
+    wsize = lsp_dict['ls_period']
+
+    #
+    # minimum rotation period to bunch rotations together to run LOCoR.
+    # 2 days works robustly for K2 long cadence data. TESS we shall see.
+    #
+    alias_num = 2.0
+
+    # Run LOCOR (Locally Optimized Combination of Rotations)
+    fittimes, depth, detrend, polyshape, badflag = (
+        rcomb(
+            data, wsize, aliasnum=alias_num
+        )
+    )
+
+    assert len(fittimes) == len(TIME)
+
+    # store everything in a common format recarray
+    N_points = len(detrend)
+    locor = np.recarray(
+        (N_points, ),
+        dtype=[('t', float), ('detrend', float), ('badflag', int)]
+    )
+    locor.detrend = detrend.copy()
+    locor.badflag = badflag.copy()
+    locor.polyshape = polyshape.copy()
+    locor.t = data.t
+
+    #
+    # Convert to my naming scheme.
+    #
+    flat_flux = locor.detrend
+    trend_flux = locor.polyshape
+
+    return flat_flux, trend_flux, locor, lsp_dict
 
 
 def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
@@ -990,7 +1104,7 @@ def calculate_linear_model_mag(y, basisvecs, n_components,
     y2 = y
     y2[y2 == np.inf] = np.nan
     y2[y2 == -np.inf] = np.nan
-        
+
     if np.all(pd.isnull(y2)):
         # if all nan, job is easy
         out_mag = y

@@ -59,14 +59,20 @@ def get_inj_recov_results(
     Given a detrending method and its tuning parameters, run injection recovery
     of a b=0 planet with periods in the range [P_lower, P_upper].
 
-    Do this on a set of CDIPS light curves.  Originally, in 2019, this was 100 random
-    TFA light curves.  With two years of added experience, we instead will choose
-    light curves of stars in known nearby clusters.
+    Do this on a set of CDIPS light curves.  Originally, in 2019, this was 100
+    random TFA light curves.  With two years of added experience, we instead
+    will choose light curves of stars in known nearby clusters.
 
     Args:
+
         dtr_dict (dict): e.g., Must have at least key "method" (could also have
         "break_tolerance", and "window_length").  `Method` can be ["pspline",
         "none", "biweight", "median", "notch", "locor", "best"].
+
+    Returns:
+
+        Dataframe with concatenated summary statistics from an
+        injection-recovery run.
     """
 
     np.random.seed(42) # for random choice of LCs
@@ -220,6 +226,12 @@ def inj_recov_worker(task):
             inj_time, inj_flux, magisflux=True, dtr_dict=dtr_dict,
             maskorbitedge=False)
         )
+
+        if 'lsp_dict' in dtr_stages_dict:
+            # copy periodogram information to saved output file
+            dtr_dict['ls_period'] = lsp_dict['ls_period']
+            dtr_dict['ls_amplitude'] = lsp_dict['ls_amplitude']
+            dtr_dict['ls_fap'] = lsp_dict['ls_fap']
 
         sel0 = dtr_stages_dict['sel0']
         clipped_inj_flux = dtr_stages_dict['clipped_flux']
@@ -581,11 +593,11 @@ def main():
     check_dependencies()
 
     df_locor = get_inj_recov_results(
-        {'method':'locor', 'break_tolerance':0.5, 'window_length':1.0}
+        {'method':'locor', 'break_tolerance':None, 'window_length':"prot"}
     )
     assert 0 #FIXME
     df_notch = get_inj_recov_results(
-        {'method':'notch', 'break_tolerance':0.5, 'window_length':0.5}
+        {'method':'notch', 'break_tolerance':None, 'window_length':0.5}
     )
     #TODO
     df_best = get_inj_recov_results(

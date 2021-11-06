@@ -8,7 +8,7 @@ least 12 everywhere, and 15 if you're in a ratty region of period space.
 run as (from phtess2 usually):
 $ python -u do_initial_period_finding.py &> logs/sector6_initial_period_finding.log &
 """
-from astropy.stats import LombScargle
+from astropy.timeseries import LombScargle
 from transitleastsquares import transitleastsquares
 
 from astrobase import lcmath
@@ -87,7 +87,6 @@ def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
     ls_fap = ls.false_alarm_probability(power.max())
     best_freq = freq[np.argmax(power)]
     ls_period = 1/best_freq
-
     theta = ls.model_parameters(best_freq)
     ls_amplitude = theta[1]
 
@@ -112,9 +111,9 @@ def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
     # Apply the "full light curve cleaning" process:
     # mask_orbit_edge->slide_clip->detrend->slide_clip
     #
-    lspdict = {'ls_period':ls_period, 'ls_fap':ls_fap}
-    search_time, search_flux = dtr.clean_tess_singlesector_light_curve(
-        time, mag, magisflux=False, dtrmethod='best', dtrdict=None, lspdict=lspdict,
+    lsp_dict = {'ls_period':ls_period, 'ls_fap':ls_fap}
+    search_time, search_flux = dtr.clean_rotationsignal_tess_singlesector_light_curve(
+        time, mag, magisflux=False, dtrmethod='best', dtr_dict=None, lsp_dict=lsp_dict,
     )
 
     # FIXME FIXME FIXME DO YOU NEED TO SAVE THE ACTUAL FLUX THAT IS SEARCHED
