@@ -634,14 +634,6 @@ def main():
         {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
     )
 
-    # assert 0 #FIXME
-    # df_biweight = get_inj_recov_results(
-    #     {'method':'biweight', 'window_length':0.5, 'break_tolerance':0.5}
-    # )
-    # df_none = get_inj_recov_results(
-    #     {'method':'none', 'window_length':0.3, 'break_tolerance':0.3}
-    # )
-
     descrps = ['notch', 'locor', 'pspline', 'best']
     dfs = [df_notch, df_locor, df_pspline, df_best]
 
@@ -663,25 +655,26 @@ def main():
         )
         print(textwrap.dedent(outstr))
 
-    # #FIXME WTF IF THE NEXT 10 LINES? MIGHT WANT TO CALl IT DEPRECATED...
+    #
+    # print some of the notch/best overlap
+    #
+    mdf = df_notch.merge(df_best, how='left', on=['source_id', 'period'],
+                           suffixes=['_notch','_best'])
 
-    # mdf = df_pspline.merge(df_none, how='left', on=['source_id', 'period'],
-    #                        suffixes=['_pspline','_none'])
+    pok_nbad = mdf[mdf['recovered_in_topthree_peaks_notch'] &
+                   ~mdf['recovered_in_topthree_peaks_best']].sort_values(
+                       by=['source_id','period'])
+    nok_pbad = mdf[mdf['recovered_in_topthree_peaks_best'] &
+                   ~mdf['recovered_in_topthree_peaks_notch']].sort_values(
+                       by=['source_id','period'])
 
-    # pok_nbad = mdf[mdf['recovered_in_topthree_peaks_pspline'] &
-    #                ~mdf['recovered_in_topthree_peaks_none']].sort_values(
-    #                    by=['source_id','period'])
-    # nok_pbad = mdf[mdf['recovered_in_topthree_peaks_none'] &
-    #                ~mdf['recovered_in_topthree_peaks_pspline']].sort_values(
-    #                    by=['source_id','period'])
+    print('notch found, but best didnt find for:\n{}'.format(
+        pok_nbad[['source_id','period','sde_1_best','sde_1_notch']]
+    ))
 
-    # print('pspline found, but none didnt find for:\n{}'.format(
-    #     pok_nbad[['source_id','period','sde_1_none','sde_1_pspline']]
-    # ))
-
-    # print('none found, but pspline didnt find for:\n{}'.format(
-    #     nok_pbad[['source_id','period','sde_1_none','sde_1_pspline']]
-    # ))
+    print('best found, but notch didnt find for:\n{}'.format(
+        nok_pbad[['source_id','period','sde_1_best','sde_1_notch']]
+    ))
 
     print('\ndone\n')
 
