@@ -185,6 +185,9 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     #
     # apply the detrending call based on the method given
     #
+
+    dtr_method_used = dtr_method
+
     if dtr_method in ['pspline','biweight','none']:
 
         if 'break_tolerance' not in dtr_dict:
@@ -220,6 +223,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
             flat_flux, trend_flux, notch = _run_notch(
                 _time[sel0], clipped_flux[sel0], dtr_dict
             )
+            dtr_method_used += '-notch'
         elif (
             lsp_dict['ls_period'] < PERIOD_CUTOFF and
             lsp_dict['ls_period'] > 0
@@ -227,6 +231,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
             flat_flux, trend_flux, notch = _run_locor(
                 _time[sel0], clipped_flux[sel0], dtr_dict, lsp_dict
             )
+            dtr_method_used = '-locor'
         else:
             raise NotImplementedError(f"Got LS period {lsp_dict['ls_period']}")
 
@@ -256,7 +261,9 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         # after window sigma_clip on flat_flux, what is left?
         'clipped_flat_flux': clipped_flat_flux,
         # what does the detrending algorithm give as the "trend"?
-        'trend_flux': trend_flux
+        'trend_flux': trend_flux,
+        # what method was used? if "best", gives "best-notch" or "best-locor"
+        'dtr_method_used': dtr_method_used
     }
     if isinstance(lsp_dict, dict):
         # in most cases, cache the LS period, amplitude, and FAP
