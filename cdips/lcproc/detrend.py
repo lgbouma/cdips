@@ -63,6 +63,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 # NOTE: some code duplication with cdips.testing.check_dependencies
 from wotan import flatten, version, slide_clip
+from wotan.pspline import pspline
 wotanversion = version.WOTAN_VERSIONING
 wotanversiontuple = tuple(wotanversion.split('.'))
 assert int(wotanversiontuple[0]) >= 1
@@ -70,7 +71,7 @@ assert int(wotanversiontuple[1]) >= 9
 
 def clean_rotationsignal_tess_singlesector_light_curve(
     time, mag, magisflux=False, dtr_dict=None, lsp_dict=None,
-    maskorbitedge=True):
+    maskorbitedge=True, lsp_options={'period_min':0.1, 'period_max':20}):
     """
     The goal of this function is to remove a stellar rotation signal from a
     single TESS light curve (ideally one without severe insturmental
@@ -99,7 +100,12 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
         lsp_dict (optional dict): dictionary containing Lomb Scargle
         periodogram information, which is used in the "best" method for
-        choosing between LOCOR or Notch detrending.
+        choosing between LOCOR or Notch detrending.  If this is not passed,
+        it'll be constructed here after the mask_orbit_edge -> slide_clip
+        steps.
+
+        lsp_options: contains keys period_min and period_max, used for the
+        internal Lomb Scargle periodogram search.
 
         maskorbitedge (bool): whether to apply the initial "mask_orbit_edge"
         step. Probably would only want to be false if you had already done it
@@ -111,6 +117,8 @@ def clean_rotationsignal_tess_singlesector_light_curve(
             the different processing stages (see comments for details of
             `dtr_stages_dict` contents).
     """
+
+    dtr_method = _get_detrending_method(dtr_dict)
 
     #
     # convert mag to flux and median-normalize
@@ -146,50 +154,37 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     sel0 = ~np.isnan(clipped_flux)
 
     #
-    # FIXME: proboably want to run a LS periodogram here... to get an idea for
-    # the rotational properties, and whether it makes sense to even try and
-    # detrend this object?
+    # for "best" or LOCOR detrending, you need to know the stellar rotation
+    # period.  so, if it hasn't already been run, run the LS periodogram here.
+    # in `lsp_dict`, cache the LS peak period, amplitude, and FAP.
     #
-    # TODO TODO TODO PUT THE LS PERIODOGRAM HERE. RUN IT GENERICALLY FOR
-    # ANYTHING YOU WANT TO "REMOVE A ROTATIONAL SIGNAL FROM". THIS IS THE RIGHT
-    # PLACE B/C THE MASKING AND CLIPPING HAS BEEN DONE.
+    if (not isinstance(lsp_dict, dict)) and (dtr_method in ['locor', 'best']):
 
+        period_min = lsp_options['period_min']
+        period_max = lsp_options['period_max']
 
-    # FIXME FIXME FIXME LEFT OFF HERE.
-
-
-    #
-    # set the detrending method. default to "best".
-    #
-    if isinstance(dtr_dict, dict):
-        if 'method' in dtr_dict.keys():
-            dtr_method = dtr_dict['method']
-        else:
-            dtr_method = 'best'
-    else:
-        dtr_method = 'best'
-
-    if dtr_method == 'best' and not isinstance(lsp_dict, dict):
-        errmsg = (
-            '"best" detrending requires knowledge '
-            'of LS period, FAP, and amplitude'
+        ls = LombScargle(_time[sel0], clipped_flux[sel0], clipped_flux[sel0]*1e-3)
+        freq, power = ls.autopower(
+            minimum_frequency=1/period_max, maximum_frequency=1/period_min
         )
-        raise ValueError(errmsg)
+        ls_fap = ls.false_alarm_probability(power.max())
+        best_freq = freq[np.argmax(power)]
+        ls_period = 1/best_freq
+        theta = ls.model_parameters(best_freq)
+        ls_amplitude = theta[1]
 
-    allowed_methods = ['best', 'notch', 'locor', 'pspline', 'biweight', 'none']
-    if dtr_method not in allowed_methods:
-        raise NotImplementedError(
-            f'{dtr_method} is not an implemented detrending method.'
-        )
-
-    #
-    # apply the detrending call based on the method given
-    #
+        lsp_dict = {}
+        lsp_dict['ls_period'] = ls_period
+        lsp_dict['ls_amplitude'] = ls_amplitude
+        lsp_dict['ls_fap'] = ls_fap
 
     if not isinstance(dtr_dict, dict):
         dtr_dict = {}
         dtr_dict['method'] = dtr_method
 
+    #
+    # apply the detrending call based on the method given
+    #
     if dtr_method in ['pspline','biweight','none']:
 
         if 'break_tolerance' not in dtr_dict:
@@ -211,13 +206,29 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
     elif dtr_method == 'locor':
 
-        flat_flux, trend_flux, notch, lsp_dict = _run_locor(
+        flat_flux, trend_flux, notch = _run_locor(
             _time[sel0], clipped_flux[sel0], dtr_dict, lsp_dict
         )
 
     elif dtr_method == 'best':
-        #TODO implement
-        pass
+
+        # for stars with Prot < 1 day, use LOCOR.  for stars with Prot > 1 day,
+        # use Notch.  (or pspline?).
+        PERIOD_CUTOFF = 1.0
+
+        if lsp_dict['ls_period'] > PERIOD_CUTOFF:
+            flat_flux, trend_flux, notch = _run_notch(
+                _time[sel0], clipped_flux[sel0], dtr_dict
+            )
+        elif (
+            lsp_dict['ls_period'] < PERIOD_CUTOFF and
+            lsp_dict['ls_period'] > 0
+        ):
+            flat_flux, trend_flux, notch = _run_locor(
+                _time[sel0], clipped_flux[sel0], dtr_dict, lsp_dict
+            )
+        else:
+            raise NotImplementedError(f"Got LS period {lsp_dict['ls_period']}")
 
     #
     # re-apply sliding sigma clip asymmetric [20,3]*MAD, about median, after
@@ -248,9 +259,34 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         'trend_flux': trend_flux
     }
     if isinstance(lsp_dict, dict):
+        # in most cases, cache the LS period, amplitude, and FAP
         dtr_stages_dict['lsp_dict'] = lsp_dict
 
     return search_time, search_flux, dtr_stages_dict
+
+
+def _get_detrending_method(dtr_dict):
+    """
+    Get the string representation of the detrending method to be used. default
+    to "best".
+    """
+
+    allowed_methods = ['best', 'notch', 'locor', 'pspline', 'biweight', 'none']
+
+    if isinstance(dtr_dict, dict):
+        if 'method' in dtr_dict.keys():
+            dtr_method = dtr_dict['method']
+        else:
+            dtr_method = 'best'
+    else:
+        dtr_method = 'best'
+
+    if dtr_method not in allowed_methods:
+        raise NotImplementedError(
+            f'{dtr_method} is not an implemented detrending method.'
+        )
+
+    return dtr_method
 
 
 def _run_notch(TIME, FLUX, dtr_dict):
@@ -349,7 +385,8 @@ def _run_locor(TIME, FLUX, dtr_dict, lsp_dict):
     data.s[:] = 0
     data.qual[:] = 0
 
-    # Get rotation period, if not available.
+    # Get rotation period, if not available.  In most cases, it should be
+    # passed in via lsp_dict.
     if not isinstance(lsp_dict, dict):
         print(
             "Did not get period from lsp_dict: finding via Lomb Scargle. "
@@ -410,7 +447,7 @@ def _run_locor(TIME, FLUX, dtr_dict, lsp_dict):
     flat_flux = locor.detrend
     trend_flux = locor.polyshape
 
-    return flat_flux, trend_flux, locor, lsp_dict
+    return flat_flux, trend_flux, locor
 
 
 def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
@@ -453,28 +490,58 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
 
     try:
         if method == 'pspline':
-            # matched detrending to do_initial_period_finding
-            flat_flux, trend_flux = flatten(time, flux,
-                                            method='pspline',
-                                            return_trend=True,
-                                            break_tolerance=break_tolerance,
-                                            robust=True)
+
+            # Detrend each time segment individually, to prevent overfitting
+            # based on the `max_splines` parameter.
+
+            flat_fluxs, trend_fluxs = [], []
+            for g in group_inds:
+                tgtime, tgflux = time[g], flux[g]
+
+                t_min, t_max = np.min(tgtime), np.max(tgtime)
+                t_baseline = t_max - t_min
+                transit_timescale = 6/24.
+
+                # e.g., for a 25 day segment, we want max_splines to be ~100,
+                # i.e., 1 spline point every 6 hours.  this helps prevent
+                # overfitting.
+                max_splines = int(t_baseline / transit_timescale)
+
+                # a 2-sigma cutoff is standard, but there's no obvious reason for
+                # this being the case. generally, anything far from the median
+                # shouldn't go into the fit.
+                stdev_cut = 1.5
+
+                edge_cutoff = 0
+
+                # note: major API update in wotan v1.6
+                # pspline(time, flux, edge_cutoff, max_splines, stdev_cut, return_nsplines, verbose)
+                _trend_flux, _nsplines = pspline(
+                    tgtime, tgflux, edge_cutoff, max_splines, stdev_cut, False, False
+                )
+
+                _flat_flux = tgflux/_trend_flux
+
+                flat_fluxs.append(_flat_flux)
+                trend_fluxs.append(_trend_flux)
+
+            flat_flux = np.hstack(flat_fluxs)
+            trend_flux = np.hstack(trend_fluxs)
+
+
         elif method == 'biweight':
-            # another option:
-            flat_flux, trend_flux = flatten(time, flux,
-                                            method='biweight',
-                                            return_trend=True,
-                                            break_tolerance=break_tolerance,
-                                            window_length=window_length,
-                                            cval=cval)
+            flat_flux, trend_flux = flatten(
+                time, flux, method='biweight', return_trend=True,
+                break_tolerance=break_tolerance, window_length=window_length,
+                cval=cval
+            )
 
         elif method == 'median':
-            flat_flux, trend_flux = flatten(time, flux,
-                                            method='median',
-                                            return_trend=True,
-                                            break_tolerance=break_tolerance,
-                                            window_length=window_length,
-                                            edge_cutoff=edge_cutoff)
+            flat_flux, trend_flux = flatten(
+                time, flux, method='median', return_trend=True,
+                break_tolerance=break_tolerance, window_length=window_length,
+                edge_cutoff=edge_cutoff
+            )
 
         elif method == 'none':
             flat_flux = flux

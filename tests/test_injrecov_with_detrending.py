@@ -78,8 +78,10 @@ def get_inj_recov_results(
     np.random.seed(42) # for random choice of LCs
 
     assert np.all(
-        np.in1d(list(dtr_dict.keys()),
-                ['method', 'window_length', 'break_tolerance'])
+        np.in1d(
+            list(dtr_dict.keys()),
+            ['method', 'window_length', 'break_tolerance']
+        )
     )
 
     outpath = os.path.join(
@@ -92,7 +94,9 @@ def get_inj_recov_results(
         return pd.read_csv(outpath)
 
     if overwrite:
-        csvpaths = glob(os.path.join(resultsdirectory,'worker_output','*.csv'))
+        csvpaths = glob(os.path.join(
+            resultsdirectory, 'worker_output', dtr_dict['method'], '*.csv')
+        )
         for c in csvpaths:
             os.remove(c)
 
@@ -130,15 +134,29 @@ def get_inj_recov_results(
     nworkers = mp.cpu_count()
     maxworkertasks = 1000
 
+    print(42*'-')
+    print(f"{datetime.now().isoformat()}: beginning {dtr_dict['method']} ")
+    print(42*'-')
+
+    DEBUG = 0
+    if DEBUG:
+        inj_recov_worker(tasks[0])
+        import IPython; IPython.embed()
+        assert 0
+
     pool = mp.Pool(nworkers,maxtasksperchild=maxworkertasks)
     results = pool.map(inj_recov_worker, tasks)
     pool.close()
     pool.join()
 
+    print(42*'-')
+    print(f"{datetime.now().isoformat()}: finished {dtr_dict['method']} ")
+    print(42*'-')
+
     # merge and save results; e.g.,
     # 3334295094569278976_period-2.58577_method-pspline_windowlength-0.3.csv
     csvpaths = glob(os.path.join(
-        resultsdirectory,'worker_output',
+        resultsdirectory, 'worker_output', dtr_dict['method'],
         '*_method-{}_windowlength-{}.csv'.
         format(dtr_dict['method'],dtr_dict['window_length']))
     )
@@ -163,7 +181,7 @@ def inj_recov_worker(task):
     )
 
     outdir = os.path.join(
-        resultsdirectory, 'worker_output'
+        resultsdirectory, 'worker_output', dtr_dict['method']
     )
     if not os.path.exists(outdir):
         os.mkdir(outdir)
@@ -172,9 +190,9 @@ def inj_recov_worker(task):
         outdir,
         f'tmag{tmag:.2f}_'+
         str(source_id)+
-        "_period-{:.5f}".format(inj_dict['period'])+
-        "_method-{}".format(dtr_dict['method'])+
-        '_windowlength-{}'.format(dtr_dict['window_length'])+
+        f"_period-{inj_dict['period']:.5f}"+
+        f"_method-{dtr_dict['method']}"+
+        f"_windowlength-{dtr_dict['window_length']}"+
         ".csv"
     )
     if os.path.exists(outpath):
@@ -229,9 +247,9 @@ def inj_recov_worker(task):
 
         if 'lsp_dict' in dtr_stages_dict:
             # copy periodogram information to saved output file
-            dtr_dict['ls_period'] = lsp_dict['ls_period']
-            dtr_dict['ls_amplitude'] = lsp_dict['ls_amplitude']
-            dtr_dict['ls_fap'] = lsp_dict['ls_fap']
+            dtr_dict['ls_period'] = dtr_stages_dict['lsp_dict']['ls_period']
+            dtr_dict['ls_amplitude'] = dtr_stages_dict['lsp_dict']['ls_amplitude']
+            dtr_dict['ls_fap'] = dtr_stages_dict['lsp_dict']['ls_fap']
 
         sel0 = dtr_stages_dict['sel0']
         clipped_inj_flux = dtr_stages_dict['clipped_flux']
@@ -240,40 +258,23 @@ def inj_recov_worker(task):
         trend_flux = dtr_stages_dict['trend_flux']
 
         if plot_detrend_check:
-            hdrlist = 'CDCLSTER,CDIPSAGE,TESSMAG'.split(',')
+            hdrlist =  (
+                'CDCLSTER,CDIPSAGE,TESSMAG,phot_bp_mean_mag,phot_rp_mean_mag'.
+                split(',')
+            )
             infodict = iu.get_header_keyword_list(lcpath, hdrlist)
             cluster = infodict['CDCLSTER']
             age = float(infodict['CDIPSAGE'])
             tmag = float(infodict['TESSMAG'])
+            bpmrp = (
+                float(infodict['phot_bp_mean_mag']) -
+                float(infodict['phot_rp_mean_mag'])
+            )
             titlestr = (
-                f"{source_id}: {cluster[:20]}, logt={age:.2f}, T={tmag:.2f}"
+                f"{source_id}: {cluster[:16]}, logt={age:.2f}, T={tmag:.2f}, Bp-Rp={bpmrp:.2f}"
             )
-
-            f,axs = plt.subplots(nrows=2, sharex=True)
-            # lower: "raw" data; upper: sigma-clipped
-            axs[0].scatter(
-                inj_time, clipped_inj_flux, c='black', s=1, zorder=2,
-                rasterized=True
-            )
-            axs[0].scatter(
-                inj_time, inj_flux, c='red', s=1, zorder=1, rasterized=True
-            )
-            axs[0].plot(inj_time[sel0], trend_flux, c='C0')
-            axs[1].scatter(
-                inj_time[sel0], clipped_flat_flux, c='black', s=1, zorder=2,
-                rasterized=True, label='searched flux'
-            )
-            axs[1].scatter(
-                inj_time[sel0], flat_flux, c='red', s=0.5, zorder=1,
-                rasterized=True
-            )
-            axs[1].legend(loc='best',fontsize='xx-small')
-            axs[0].set_ylabel(f'flux {APNAME}')
-            axs[0].set_title(titlestr, fontsize='x-small')
-            axs[1].set_ylabel('flattened')
-            axs[1].set_xlabel('time [bjd]')
             outpng = os.path.join(
-                resultsdirectory,'worker_output',
+                resultsdirectory, 'worker_output', dtr_dict['method'],
                 f'tmag{tmag:.2f}_'+
                 str(source_id)+
                 "_period-{:.5f}".format(inj_dict['period'])+
@@ -281,8 +282,32 @@ def inj_recov_worker(task):
                 '_windowlength-{}'.format(dtr_dict['window_length'])+
                 ".png"
             )
-            f.savefig(outpng, dpi=300)
-            print(f"Made {outpng}")
+            if not os.path.exists(outpng):
+                f,axs = plt.subplots(nrows=2, sharex=True)
+                # lower: "raw" data; upper: sigma-clipped
+                axs[0].scatter(
+                    inj_time, clipped_inj_flux, c='black', s=1, zorder=2,
+                    rasterized=True
+                )
+                axs[0].scatter(
+                    inj_time, inj_flux, c='red', s=1, zorder=1, rasterized=True
+                )
+                axs[0].plot(inj_time[sel0], trend_flux, c='C0')
+                axs[1].scatter(
+                    inj_time[sel0], clipped_flat_flux, c='black', s=1,
+                    zorder=2, rasterized=True, label='searched flux'
+                )
+                axs[1].scatter(
+                    inj_time[sel0], flat_flux, c='red', s=0.5, zorder=1,
+                    rasterized=True
+                )
+                axs[1].legend(loc='best',fontsize='xx-small')
+                axs[0].set_ylabel(f'flux {APNAME}')
+                axs[0].set_title(titlestr, fontsize='x-small')
+                axs[1].set_ylabel('flattened')
+                axs[1].set_xlabel('time [bjd]')
+                f.savefig(outpng, dpi=300)
+                print(f"{datetime.now().isoformat()}: Made {outpng}")
 
         # period find
         err = np.ones_like(search_flux)*1e-4
@@ -359,7 +384,11 @@ def inj_recov_worker(task):
             'recovered_as_best_peak':recovered_as_best_peak,
             'recovered_in_topthree_peaks':recovered_in_topthree_peaks
         }
-        outd = {**t, **inj_dict, **dtr_dict, **d}
+        # t: star info
+        # inj_dict: injection-recovery information
+        # dtr_dict: detrending info, including Prot
+        # d: TLS results
+        outd = {**t, **infodict, **inj_dict, **dtr_dict, **d}
         outdf = pd.DataFrame(outd, index=[0])
 
         outdf.to_csv(outpath, index=False)
@@ -458,7 +487,8 @@ def get_cluster_lc_paths(N_lcs=100):
     sel = sdf.phot_rp_mean_mag < 14
     sdf = sdf[sel]
 
-    camdpath = f'camd_{"_".join(cluster_names)}.png'
+    outdir = resultsdirectory
+    camdpath = os.path.join(outdir, f'camd_{"_".join(cluster_names)}.png')
     if not os.path.exists(camdpath):
         plt.close('all')
         get_yval = (
@@ -549,7 +579,6 @@ def inject_signal(time, ap_mag, inj_dict):
         time, ap_flux, raise_expectation_error=False
     )
 
-
     # initialize model to inject: 90 degrees, LD coeffs for 5000 K dwarf star
     # in TESS band (Claret 2018) no eccentricity, random phase, b=0, stellar
     # density set to 1.5x solar.  Eq (30) Winn 2010 to get a/Rstar.
@@ -595,26 +624,26 @@ def main():
     df_locor = get_inj_recov_results(
         {'method':'locor', 'break_tolerance':None, 'window_length':"prot"}
     )
-    assert 0 #FIXME
     df_notch = get_inj_recov_results(
         {'method':'notch', 'break_tolerance':None, 'window_length':0.5}
-    )
-    #TODO
-    df_best = get_inj_recov_results(
-        {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
     )
     df_pspline = get_inj_recov_results(
         {'method':'pspline', 'break_tolerance':0.5, 'window_length':0.5}
     )
-    df_biweight = get_inj_recov_results(
-        {'method':'biweight', 'window_length':0.5, 'break_tolerance':0.5}
-    )
-    df_none = get_inj_recov_results(
-        {'method':'none', 'window_length':0.3, 'break_tolerance':0.3}
+    df_best = get_inj_recov_results(
+        {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
     )
 
-    descrps = ['notch', 'locor', 'best', 'none','pspline', 'biweight']
-    dfs = [df_notch, df_locor, df_best, df_none, df_pspline, df_biweight]
+    # assert 0 #FIXME
+    # df_biweight = get_inj_recov_results(
+    #     {'method':'biweight', 'window_length':0.5, 'break_tolerance':0.5}
+    # )
+    # df_none = get_inj_recov_results(
+    #     {'method':'none', 'window_length':0.3, 'break_tolerance':0.3}
+    # )
+
+    descrps = ['notch', 'locor', 'pspline', 'best']
+    dfs = [df_notch, df_locor, df_pspline, df_best]
 
     for df, d in zip(dfs, descrps):
         outstr = (

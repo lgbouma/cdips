@@ -14,6 +14,7 @@ Contents:
     assert_tlsperiodepoch_is_approx
 """
 
+import numpy as np
 from numpy.testing import assert_approx_equal
 
 def check_dependencies():
@@ -22,7 +23,8 @@ def check_dependencies():
     you are worried about versions for some packages.
     """
     #
-    # wotan install https://wotan.readthedocs.io/en/latest/Installation.html
+    # wotan bleeding edge install 
+    # or better (bleeding edge): clone and setup.py install
     #
     import pygam
     import wotan
@@ -30,7 +32,23 @@ def check_dependencies():
     wotanversion = version.WOTAN_VERSIONING
     wotanversiontuple = tuple(wotanversion.split('.'))
     assert int(wotanversiontuple[0]) >= 1
-    assert int(wotanversiontuple[1]) >= 9
+    assert int(wotanversiontuple[1]) >= 10
+
+    # check if pspline works with the expected number of args as of wotan v1.10
+    # nb. also requires the bugfix with the stdev cut.
+    time = np.linspace(0,10,100)
+    flux = np.ones(len(time)) + np.random.rand(len(time))*1e-3
+    edge_cutoff = 0
+    max_splines = 4
+    stdev_cut = 1.5
+    return_nsplines = False
+    verbose = False
+    from wotan.pspline import pspline
+    trend_flux, n_splines = pspline(
+        time, flux, edge_cutoff, max_splines, stdev_cut, return_nsplines,
+        verbose
+    )
+
 
     #
     # notch and locor:

@@ -40,7 +40,7 @@ def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.6,
     if isinstance(info, tuple):
 
         if DEBUG:
-            picklepath = 'nbhd_info_{}.pkl'.format(source_id)
+            picklepath = 'test_nbhd_plot/nbhd_info_{}.pkl'.format(source_id)
             with open(picklepath , 'wb') as f:
                 pickle.dump(info, f)
                 print('made {}'.format(picklepath))
@@ -66,7 +66,7 @@ def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.6,
         )
 
         if DEBUG:
-            picklepath = 'nbhd_info_{}.pkl'.format(source_id)
+            picklepath = 'test_nbhd_plot/nbhd_info_{}.pkl'.format(source_id)
             with open(picklepath , 'wb') as f:
                 pickle.dump(info, f)
                 print('made {}'.format(picklepath))
