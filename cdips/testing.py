@@ -20,7 +20,7 @@ from numpy.testing import assert_approx_equal
 def check_dependencies():
     """
     This is a general "dependency-catcher" function, which checks whether
-    packages can be imported 
+    a few packages important for can be imported.
 
     Versions for some packages
     some dependencies can be hidden; this makes them explicit, especially if
