@@ -17,8 +17,8 @@ gives you light curves?".
 
 Some possible answers include "find planets", "measure stellar rotation
 periods", and "find weird variable stars".  This question is also in many cases
-applicable to any time-series data, and some of the tools contained are
-developed with that generality in mind.
+applicable to any time-series data, and some of the tools in this repository
+are developed with that generality in mind.
 
 Directory contents are as follows.
 
@@ -39,14 +39,17 @@ Directory contents are as follows.
 
 Author
 ----------
+
 Luke Bouma
 
 License
 ----------
+
 MIT
 
 Install
 ----------
+
 `git clone https://github.com/lgbouma/cdips`
 `python setup.py install`
 
@@ -62,4 +65,12 @@ One place to start if you are building an environment from scratch:
 
 Update env
 ----------
+
 `conda env export --no-builds > environment.yml`
+
+
+Relevant reading
+----------
+1. [CDIPS-I: Methods](https://ui.adsabs.harvard.edu/abs/2019ApJS..245...13B/abstract)
+2. [CDIPS-II: TOI-837b](https://ui.adsabs.harvard.edu/abs/2020AJ....160..239B/abstract)
+3. [CDIPS-III: NGC-2516](https://ui.adsabs.harvard.edu/abs/2021AJ....162..197B/abstract)
