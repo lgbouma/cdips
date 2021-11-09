@@ -1,9 +1,0 @@
-'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam1_ccd1/3217331693306617344_llc_raw_tfa_bkgd.png' maybe WJ, T=7.8
-'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam1_ccd1/3218825787873590784_llc_raw_tfa_bkgd.png' nice EB
-'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam1_ccd1/3218838436552796672_llc_raw_tfa_bkgd.png'
-'/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_LCS/sector-6/cam1_ccd1/3221813126606597120_llc_raw_tfa_bkgd.png' EB/HJ
-
-etc. looked thru maybe 1k.
-
-NOTE: rotational signatures are a bit stronger in this one!!
-

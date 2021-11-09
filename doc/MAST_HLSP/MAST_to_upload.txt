@@ -1,6 +1,0 @@
-ftp archive.stsci.edu
-Sign in using your STScI-registered email address (as the user name) and password
-cd pub/hlsp/cdips/
-mkdir sector-7
-cd sector-7
-put sector-7.tar.gz sector-7.tar.gz

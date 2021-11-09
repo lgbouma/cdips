@@ -1,9 +1,0 @@
-* 5940873564977644416 == HD 149834. Known spectroscopic binary in <10 Myr NGC
-  6193. Primary is B star. TESS shows eclipsing. Anyone know anybody who would
-  be interested in this? It's included as a PC in the above.
-
-* 5974331982990013696 is a gold 5Re 8day super-Neptune, despite only two
-  transits in the CDIPS LC. The eleanor LC shows the third transit where it's
-  expected (the CDIPS LC auto-masked a portion of time near the edge of the
-  orbit).
-
