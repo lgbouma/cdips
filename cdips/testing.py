@@ -19,9 +19,35 @@ from numpy.testing import assert_approx_equal
 
 def check_dependencies():
     """
+    This is a general "dependency-catcher" function, which checks whether
+    packages can be imported 
+
+    Versions for some packages
     some dependencies can be hidden; this makes them explicit, especially if
-    you are worried about versions for some packages.
+    you are worried about .
     """
+
+    import cdips as cd
+
+    # require astroquery >= 0.4.0
+    # see: https://astroquery.readthedocs.io/en/latest/
+    # `pip install --pre astroquery`
+    import astroquery as aq
+    updatemsg = (
+        'Need to update astroquery. Preferred method '
+        '`pip install --pre astroquery`'
+    )
+    assert int(aq.__version__.split('.')[1]) >= 4, updatemsg
+
+    # require astropy >= 4.0
+    # generally `conda update astropy` should be fine.
+    import astropy as ap
+    updatemsg = (
+        'Need to update astropy. Preferred method '
+        '`conda update astropy`'
+    )
+    assert int(ap.__version__.split('.')[0]) >= 4, updatemsg
+
     #
     # wotan bleeding edge install 
     # or better (bleeding edge): clone and setup.py install
@@ -31,32 +57,46 @@ def check_dependencies():
     from wotan import version
     wotanversion = version.WOTAN_VERSIONING
     wotanversiontuple = tuple(wotanversion.split('.'))
+    updatemsg = (
+        'Need to update wotan. Please clone & setup.py '
+        'install https://github.com/hippke/wotan'
+    )
     assert int(wotanversiontuple[0]) >= 1
-    assert int(wotanversiontuple[1]) >= 10
+    assert int(wotanversiontuple[1]) >= 10, updatemsg
 
     # check if pspline works with the expected number of args as of wotan v1.10
     # nb. also requires the bugfix with the stdev cut.
+    rng = np.random.default_rng(42)
     time = np.linspace(0,10,100)
-    flux = np.ones(len(time)) + np.random.rand(len(time))*1e-3
+    flux = (
+        np.ones(len(time)) + 1e-2*np.linspace(-1,1,len(time)) +
+        rng.random(len(time))*1e-3
+    )
     edge_cutoff = 0
     max_splines = 4
     stdev_cut = 1.5
     return_nsplines = False
     verbose = False
     from wotan.pspline import pspline
+    import warnings
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
     trend_flux, n_splines = pspline(
         time, flux, edge_cutoff, max_splines, stdev_cut, return_nsplines,
         verbose
     )
 
-
     #
     # notch and locor:
     # clone and setup.py install https://github.com/lgbouma/Notch_and_LOCoR,
     # which was forked from Aaron Rizzuto's implentation.
+    # also requires
+    # clone and setup.py install https://github.com/evertrol/mpyfit
     #
     from notch_and_locor.core import sliding_window
     from notch_and_locor.core import rcomb
+
+    print('testing.check_dependencies passed!')
+
 
 def assert_lsperiod_is_approx(time, flux, err, target_period, significant=4,
                               verbose=True):
