@@ -71,6 +71,9 @@ Update env
 
 Relevant reading
 ----------
+
 1. [CDIPS-I: Methods](https://ui.adsabs.harvard.edu/abs/2019ApJS..245...13B/abstract)
+
 2. [CDIPS-II: TOI-837b](https://ui.adsabs.harvard.edu/abs/2020AJ....160..239B/abstract)
+
 3. [CDIPS-III: NGC-2516](https://ui.adsabs.harvard.edu/abs/2021AJ....162..197B/abstract)
