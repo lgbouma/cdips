@@ -1,8 +1,7 @@
 # `cdips`
 Cluster Difference Imaging Photometric Survey
 
-Description
-----------
+## Description
 
 This repository contains some of the code developed for the [CDIPS
 project](https://arxiv.org/abs/1910.01133).  If you are interested in light
@@ -35,20 +34,16 @@ Directory contents are as follows.
 * `/tests/` has testing scripts for vetting report generation, HLSP light curve
   generation, and detrending method comparison.  pytest & CI are not set up for
   this repo.
-```
 
-Author
-----------
+## Author
 
 Luke Bouma
 
-License
-----------
+## License
 
 MIT
 
-Install
-----------
+## Install
 
 `git clone https://github.com/lgbouma/cdips`
 `python setup.py install`
@@ -63,14 +58,11 @@ One place to start if you are building an environment from scratch:
 
 `conda env create -f environment.yml -n py38`
 
-Update env
-----------
+## Update env
 
 `conda env export --no-builds > environment.yml`
 
-
-Relevant reading
-----------
+## Relevant reading
 
 1. [CDIPS-I: Methods](https://ui.adsabs.harvard.edu/abs/2019ApJS..245...13B/abstract)
 
