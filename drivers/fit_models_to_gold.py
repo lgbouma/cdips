@@ -350,6 +350,8 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
     lc_sr = hdul_sr[1].data
     lc, hdr = hdul[1].data, hdul[0].header
 
+    # FIXME: logic needs updating in >=S14 processing
+    raise NotImplementedError
     is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
 
     fluxap = 'IRM2' if is_pspline_dtr else 'TFASR2'

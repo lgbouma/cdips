@@ -2,14 +2,14 @@
 TO PRODUCE CANDIDATES FROM CDIPS LCS
 ----------
 
-Merges steps 2-5 of "HOWTO.md". Goes from cdips-pipeline light curves to
-period-finding results.
+Merges steps 2-4 of "HOWTO.md". Goes from cdips-pipeline light curves to
+HLSP-formatted light curves.
 
-After running, you need to manually tune the SNR distribution for which you
-consider objects, in `do_initial_period_finding`.
+After running, period-finding can be run on the light curves for which it is
+expected to be worthwhile, in `do_initial_period_finding`.
 
 USAGE:
-    python -u lc_thru_periodfinding.py &> logs/s9_to_pf.log &
+    python -u lc_to_hlspformat.py &> logs/s14_to_hlsp.log &
 """
 
 import os, shutil
@@ -71,21 +71,6 @@ def main():
         how_many_cdips_stars_on_silicon(sector=sector, ver=OC_MG_CAT_ver)
     else:
         print('found {}'.format(outpath))
-
-    # run initial TLS and LS
-    do_initial_period_finding(
-        sectornum=sector, nworkers=nworkers, maxworkertasks=1000,
-        outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
-        OC_MG_CAT_ver=OC_MG_CAT_ver
-    )
-
-    msg = (
-        """
-        After running, you need to manually tune the SNR distribution for which
-        you consider objects, in `do_initial_period_finding`.
-        """
-    )
-    print(msg)
 
 
 if __name__=="__main__":

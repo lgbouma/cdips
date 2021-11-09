@@ -23,7 +23,7 @@ Directory contents are as follows.
 
 * `/drivers/` is the interface to make target catalogs, find planet candidates
   and variable stars, classify, vet the classifications, and make plots and
-  tables for papers.
+  tables for papers.  See /drivers/HOWTO.md for instructions.
 
 * `/cdips/` is a python package with tools to make target catalogs, process
   light curves, optimize cdips-pipeline parameters, plot and analyze light

@@ -15,7 +15,7 @@ TO PRODUCE PLANET CANDIDATES FROM CDIPS LCS
 
 1. make lightcurves using cdips-pipeline.
 
-2. `lc_thru_periodfinding`: makes HLSP lightcurves and period-finds, by
+2. `lc_to_hlspformat`: makes HLSP lightcurves, by
    wrapping the following steps.
 
   * run `trex_lc_to_mast_lc` (symlinks CDIPS matches into a good directory
@@ -30,19 +30,18 @@ TO PRODUCE PLANET CANDIDATES FROM CDIPS LCS
   * to learn how many stars were expected on silicon, run
     `how_many_cdips_stars_on_silicon`
 
-  * `do_initial_period_finding`: runs initial TLS and LS, to apply use for cuts
-     and pass to reconstructive TFA.
-     also writes `which_references_and_clusters_matter.txt` (to know how badly
-     your results depend on the Dias 2014 catalog). also makes plots that show
-     the distribution of results.
+3. `do_initial_period_finding`: runs detrending, LS, and TLS.
+    also writes `which_references_and_clusters_matter.txt`, to get familiar
+    with the clusters in any given field. also makes plots that show the
+    distribution of results.
 
-3. manually fine-tune your criteria for "signal detection" & update
+4. manually fine-tune your criteria for "signal detection" & update
    `do_initial_period_finding.py` (w/ the sector number too).
 
-4. `reconstructive_tfa/RunTFASR.sh` does signal reconstruction for TFA
-   lightcurves
+5. (DEPRECATED in >=S14) `reconstructive_tfa/RunTFASR.sh` does signal
+   reconstruction for TFA lightcurves
 
-5. `make_all_vetting_reports`: make a multipage PDF with the information needed
+6. `make_all_vetting_reports`: make a multipage PDF with the information needed
    to make classifications for vetting.
 
     * Run it twice, and verify you made all of them with

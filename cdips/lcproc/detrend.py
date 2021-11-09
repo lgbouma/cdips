@@ -71,7 +71,8 @@ assert int(wotanversiontuple[1]) >= 9
 
 def clean_rotationsignal_tess_singlesector_light_curve(
     time, mag, magisflux=False, dtr_dict=None, lsp_dict=None,
-    maskorbitedge=True, lsp_options={'period_min':0.1, 'period_max':20}):
+    maskorbitedge=True, lsp_options={'period_min':0.1, 'period_max':20},
+    verbose=True):
     """
     The goal of this function is to remove a stellar rotation signal from a
     single TESS light curve (ideally one without severe insturmental
@@ -204,7 +205,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     elif dtr_method == 'notch':
 
         flat_flux, trend_flux, notch = _run_notch(
-            _time[sel0], clipped_flux[sel0], dtr_dict
+            _time[sel0], clipped_flux[sel0], dtr_dict, verbose=verbose
         )
 
     elif dtr_method == 'locor':
@@ -221,7 +222,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
         if lsp_dict['ls_period'] > PERIOD_CUTOFF:
             flat_flux, trend_flux, notch = _run_notch(
-                _time[sel0], clipped_flux[sel0], dtr_dict
+                _time[sel0], clipped_flux[sel0], dtr_dict, verbose=verbose
             )
             dtr_method_used += '-notch'
         elif (
@@ -296,7 +297,7 @@ def _get_detrending_method(dtr_dict):
     return dtr_method
 
 
-def _run_notch(TIME, FLUX, dtr_dict):
+def _run_notch(TIME, FLUX, dtr_dict, verbose=False):
 
     from notch_and_locor.core import sliding_window
 
@@ -316,7 +317,7 @@ def _run_notch(TIME, FLUX, dtr_dict):
     # the 45 minute one is dropped.
     resolvable_trans = False
     # show_progress: if True, puts out a TQDM bar
-    show_progress= True
+    show_progress = verbose
 
     # Format "data" into recarray format needed for notch.
     N_points = len(TIME)

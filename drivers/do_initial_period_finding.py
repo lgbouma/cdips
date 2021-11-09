@@ -1,6 +1,6 @@
 """
-Given >~10k LCs per galactic field, do the period finding (and optionally
-detrend if the LCs are variable).
+Given >~10k LCs per galactic field, do the period finding (and detrend, since
+the LCs should be variable).
 
 do_initial_period_finding SETS THE SDE LIMITS. currently implemented is at
 least 12 everywhere, and 15 if you're in a ratty region of period space.
@@ -38,95 +38,71 @@ nworkers = mp.cpu_count()
 
 def main():
 
+    check_dependencies()
+
     do_initial_period_finding(
-        sectornum=1, nworkers=nworkers, maxworkertasks=1000,
+        sectornum=14, nworkers=nworkers, maxworkertasks=1000,
         outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
         OC_MG_CAT_ver=0.6
     )
+    msg = (
+        """
+        After running, you need to manually tune the SNR distribution for which
+        you consider objects, in `do_initial_period_finding`.
+        """
+    )
+    print(msg)
 
 
-def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
-                                 period_max=27, orbitgap=1, expected_norbits=2,
-                                 orbitpadding=6/(24), detrend_if_variable=True,
-                                 ls_fap_cutoff=1e-5, tfa_time=None,
-                                 tfa_mag=None):
+def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
+                                 period_min=0.5, period_max=27, orbitgap=1,
+                                 expected_norbits=2, orbitpadding=6/(24),
+                                 dtr_method='best'):
     """
+    Given a source_id, time, and magnitude time-series, this function runs
+    clean_rotationsignal_tess_singlesector_light_curve to remove rotation
+    signals (via masking orbit edges, sigma slide clip, detrending, and
+    re-sigma slide clipping).  "Detrending" here means the "best" method
+    currently known, which is the notch + locor combination.
+    This was demonstrated through injection-recovery tests
+    (/tests/test_injrecov_with_detrending.py)
+
     kwargs:
 
-        time, mag : time and magnitude vector of IRM (raw) light-curve.
+        time, mag : time and magnitude vector of light-curve.  PCA is
+        preferred, since common instrumental systematics are removed.
 
-        tfa_time, tfa_mag: ditto for the TFA light-curve.
+        dtr_dict : E.g.,
+            {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
 
         orbitpadding (float): amount of time to clip near TESS perigee to
         remove ramp signals. 12 data points = 6 hours = 0.25 days (and must
         give in units of days).
 
-        detrend_if_variable (bool): if Lomb-Scargle finds a peak with FAP <
-        1e-5 in the TFA, the star is "variable". Detrend LC with robust
-        penalized B-splines (Eilers & Marx 1996), which are B-splines with knot
-        length automatically determined via cross-validation. (Additional knots
-        give smaller residuals on the training data, but bigger errors when
-        tested on the entire dataset).  I use the Wotan implementation
-        (Hippke+2019), which is a wrapper to the pyGAM spline fitter (Serven &
-        Brummitt 2018), with $2\sigma$ clipping of outliers from the fit
-        residuals at each iteration.  The maximum number of splines by default
-        is 50, which for TESS data (total time ~=25 days) is commensurate with
-        0.5 day periodic signal.
+        dtr_method (str): any of ['notch', 'locor', 'pspline', 'best'].
 
-        In injection-recovery tests (/tests/test_injrecov_with_detrending.py),
-        the result was that the additional trending was only helpful in
-        detecting planets whenever substantial non-gaussian variability existed
-        in the TFA light curve.
+    Returns: list of
+        r = [source_id, ls_period, ls_fap, ls_amplitude, tls_period, tls_sde,
+             tls_t0, tls_depth, tls_duration, tls_distinct_transit_count,
+             tls_odd_even, dtr_method]
     """
-    #
-    # Lomb scargle w/ uniformly weighted points.
-    #
-    ls = LombScargle(tfa_time, tfa_mag, tfa_mag*1e-3)
-    freq, power = ls.autopower(minimum_frequency=1/period_max,
-                               maximum_frequency=1/period_min)
-    ls_fap = ls.false_alarm_probability(power.max())
-    best_freq = freq[np.argmax(power)]
-    ls_period = 1/best_freq
-    theta = ls.model_parameters(best_freq)
-    ls_amplitude = theta[1]
 
-    #FIXME FIXME FIXME FIXME
-    # "detrend if variable" is kind of a less interesting thing. generally
-    # speaking, pretty much every star that we are interested in is variable.
-    # i.e., our purpose here is to find planets around the FGK stars.
+    lsp_options = {'period_min':0.1, 'period_max':20}
 
-    #FIXME what is the amplitude of the best-fitting sinusoid?
-
-    if detrend_if_variable and ls_fap > ls_fap_cutoff:
-        # If light-curve was not variable in TFA form (FAP > cutoff), don't run
-        # wotan, just search the TFA LC.
-        mag = deepcopy(tfa_mag)
-        time = tfa_time
-    else:
-        # If the light-curve is still variable in TFA-form, then default to just
-        # running wotan on the raw light-curve.
-        pass
-
-    #
-    # Apply the "full light curve cleaning" process:
-    # mask_orbit_edge->slide_clip->detrend->slide_clip
-    #
-    lsp_dict = {'ls_period':ls_period, 'ls_fap':ls_fap}
-    search_time, search_flux = dtr.clean_rotationsignal_tess_singlesector_light_curve(
-        time, mag, magisflux=False, dtrmethod='best', dtr_dict=None, lsp_dict=lsp_dict,
+    search_time, search_flux, dtr_stages_dict = (
+        dtr.clean_rotationsignal_tess_singlesector_light_curve(
+            time, mag, magisflux=False, dtr_dict=dtr_dict,
+            lsp_dict=None, maskorbitedge=True, lsp_options=lsp_options,
+            verbose=False
+        )
     )
 
-    # FIXME FIXME FIXME DO YOU NEED TO SAVE THE ACTUAL FLUX THAT IS SEARCHED
-    # HERE? THIS IS PRETTY PROCESSED!!!!  You'll want to show it in the vetting
-    # reports as well!! So if not the FLUX itself... at least the DETRENDING
-    # method (mask_orbit_edge->slide_clip->detrend->slide_clip) needs to be
-    # turned into a "helper" or a wrapper...
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
-    #TODO TODO TODO
-    #FIXME FIXME FIXME
-    #FIXME FIXME FIXME
+    # retrieve LS periodogram information
+    ls_period = dtr_stages_dict['lsp_dict']['ls_period']
+    ls_amplitude = dtr_stages_dict['lsp_dict']['ls_amplitude']
+    ls_fap = dtr_stages_dict['lsp_dict']['ls_fap']
 
+    # run the TLS periodogram
     model = transitleastsquares(search_time, search_flux)
     results = model.power(use_threads=1, show_progress_bar=False,
                           R_star_min=0.1, R_star_max=10, M_star_min=0.1,
@@ -139,29 +115,38 @@ def run_periodograms_and_detrend(source_id, time, mag, period_min=0.5,
     tls_t0 = results.T0
     tls_depth = results.depth
     tls_duration = results.duration
+    tls_distinct_transit_count = results.distinct_transit_count
+    tls_odd_even = results.odd_even_mismatch
 
-    r = [source_id, ls_period, ls_fap, tls_period, tls_sde, tls_t0, tls_depth,
-        tls_duration, detrended]
+    dtr_method = dtr_stages_dict['dtr_method_used']
+
+    r = [source_id, ls_period, ls_fap, ls_amplitude, tls_period, tls_sde,
+         tls_t0, tls_depth, tls_duration, tls_distinct_transit_count,
+         tls_odd_even, dtr_method]
 
     return r
-
-
-def get_lc_data(lcpath, mag_aperture='IRM2'):
-
-    return lcu.get_lc_data(lcpath, mag_aperture=mag_aperture)
 
 
 def periodfindingworker(lcpath):
 
     source_id, time, mag, xcc, ycc, ra, dec, _, tfa_mag = get_lc_data(lcpath)
 
+    APNAME = 'PCA1'
+    source_id, time, mag, xcc, ycc, ra, dec, _, tfa_mag = (
+        lcu.get_lc_data(lcpath, mag_aperture=APNAME, tfa_aperture='TFA1')
+    )
+
+    dtr_dict = {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
+
     if np.all(pd.isnull(mag)):
         r = [source_id, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
+             np.nan, np.nan, np.nan,
              False, xcc, ycc, ra, dec]
 
     else:
-        r = run_periodograms_and_detrend(source_id, time, mag,
-                                         tfa_time=time, tfa_mag=tfa_mag)
+        r = run_periodograms_and_detrend(
+            source_id, time, mag, dtr_dict
+        )
         r.append(xcc)
         r.append(ycc)
         r.append(ra)
@@ -181,8 +166,8 @@ def make_log_result(results, N_lcs):
 
 
 def do_initial_period_finding(
-    sectornum=6,
-    nworkers=52,
+    sectornum=None,
+    nworkers=None,
     maxworkertasks=1000,
     outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
     OC_MG_CAT_ver=None
@@ -191,8 +176,7 @@ def do_initial_period_finding(
     check_dependencies()
 
     lcdirectory = (
-        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/'.
-        format(sectornum)
+        f'/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{sectornum}/'
     )
     lcglob = 'cam?_ccd?/*_llc.fits'
 
@@ -204,7 +188,7 @@ def do_initial_period_finding(
         # when debugging, period find on fewer LCs
         lcpaths = np.random.choice(lcpaths,size=100)
 
-    outdir = os.path.join(outdir, 'sector-{}'.format(sectornum))
+    outdir = os.path.join(outdir, f'sector-{sectornum}')
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     outpath = os.path.join(outdir, 'initial_period_finding_results.csv')
@@ -227,14 +211,15 @@ def do_initial_period_finding(
 
         df = pd.DataFrame(
             results,
-            columns=['source_id', 'ls_period', 'ls_fap', 'tls_period',
+            columns=['source_id', 'ls_period', 'ls_fap', 'ls_amplitude', 'tls_period',
                      'tls_sde', 'tls_t0', 'tls_depth', 'tls_duration',
-                     'pspline_detrended', 'xcc', 'ycc', 'ra', 'dec']
+                     'tls_distinct_transit_count', 'tls_odd_even',
+                     'dtr_method', 'xcc', 'ycc', 'ra', 'dec']
         )
         df = df.sort_values(by='source_id')
 
         df.to_csv(outpath, index=False)
-        print('made {}'.format(outpath))
+        print(f'made {outpath}')
 
     else:
         print('found periodfinding results, loading them')
@@ -441,8 +426,6 @@ def do_initial_period_finding(
         df['limit'][df['tls_period']<1] = 15
         df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.75)] = 15
         df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    df['pspline_detrended'] = df['pspline_detrended'].astype(int)
 
     outpath = os.path.join(
         resultsdir, 'initial_period_finding_results_with_limit.csv'
