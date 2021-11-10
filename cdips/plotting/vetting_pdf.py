@@ -551,7 +551,7 @@ def _get_full_infodict(tlsp, hdr, mdf):
 
         # if you have only Rstar, use that to estimate stellar mass (assuming
         # it's a dwarf), and therefore the circular transit duration timescale
-        mamadf = pd.read_csv('../data/Mamajek_Rstar_Mstar_Teff_SpT.txt',
+        mamadf = pd.read_csv('../data/LITERATURE_DATA/Mamajek_Rstar_Mstar_Teff_SpT.txt',
                              delim_whitespace=True)
 
         #

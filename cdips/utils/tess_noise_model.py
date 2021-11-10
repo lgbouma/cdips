@@ -70,7 +70,7 @@ def N_pixels_in_aperture_Sullivan(T):
     '''
     from scipy.interpolate import interp1d
     df = pd.read_csv(
-            os.path.join(datadir, 'Sullivan_2015_optimalnumberofpixels.txt'),
+            os.path.join(datadir, 'LITERATURE_DATA', 'Sullivan_2015_optimalnumberofpixels.txt'),
             comment='#', delimiter=','
             )
     tmag = np.array(df['tmag']) # it's really I_C
@@ -213,7 +213,7 @@ def noise_model(
     ph_source = f_ph_source * effective_area * exptime
 
     # Load in average PRF produced by `ctd_avg_field_angle_avg.py`.
-    prf_file = os.path.join(datadir, 'average_PRF.fits')
+    prf_file = os.path.join(datadir, 'LITERATURE_DATA', 'average_PRF.fits')
     hdu = fits.open(prf_file)
     avg_PRF = hdu[0].data
 

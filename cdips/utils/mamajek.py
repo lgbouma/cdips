@@ -22,7 +22,8 @@ datadir = os.path.join(os.path.dirname(cd.__path__[0]), 'data')
 
 def load_basetable():
 
-    mamajekpath = os.path.join(datadir, 'EEM_dwarf_UBVIJHK_colors_Teff_20210302.txt')
+    mamajekpath = os.path.join(datadir, 'LITERATURE_DATA',
+                               'EEM_dwarf_UBVIJHK_colors_Teff_20210302.txt')
     mamadf = pd.read_csv(
         mamajekpath, comment='#', delim_whitespace=True
     )
