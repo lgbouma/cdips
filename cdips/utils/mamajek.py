@@ -135,7 +135,8 @@ def get_interp_BmV_from_Teff(teff):
     """
 
     mamadf = load_basetable()
-    mamadf = mamadf[3:-6] # finite, monotonic BmV
+    sel = (mamadf['B-V'] != '...')
+    mamadf = mamadf[sel] # finite, monotonic BmV
 
     mamarstar, mamamstar, mamateff, mamaBmV = (
         nparr(mamadf['R_Rsun'])[::-1],
