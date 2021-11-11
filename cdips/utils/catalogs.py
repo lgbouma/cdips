@@ -93,6 +93,7 @@ def get_cdips_catalog(ver=0.6):
         'brik':'/home/luke/local/cdips/catalogs/',
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phtess3':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'PU-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/',
         'marduk.local':'/Users/luke/local/cdips/catalogs/'
@@ -115,7 +116,7 @@ def get_cdips_catalog(ver=0.6):
     return df
 
 
-def get_cdips_pub_catalog(ver=0.4):
+def get_cdips_pub_catalog(ver=0.6):
 
     if not isinstance(ver, float):
         ver = float(ver)
@@ -124,6 +125,7 @@ def get_cdips_pub_catalog(ver=0.4):
         'brik':'/home/luke/local/cdips/catalogs/',
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phtess3':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'PU-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/',
         'marduk.local':'/Users/luke/local/cdips/catalogs/',
@@ -148,7 +150,7 @@ def get_cdips_pub_catalog(ver=0.4):
     return df
 
 
-def get_cdips_pub_catalog_entry(source_id, ver=0.4):
+def get_cdips_pub_catalog_entry(source_id, ver=0.6):
     """
     Given a Gaia DR2 source_id, query the CDIPS target star catalog for the
     information it contains.
@@ -162,6 +164,7 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.4):
         'brik':'/home/luke/local/cdips/catalogs/',
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
+        'phtess3':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'PU-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/',
         'marduk.local':'/Users/luke/local/cdips/catalogs/',
@@ -214,6 +217,7 @@ def get_toi_catalog(ver=TODAYSTR):
         'brik':'/home/luke/Dropbox/proj/cdips/data/toi-plus_catalogs/',
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-plus_catalogs/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-plus_catalogs/',
+        'phtess3':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-plus_catalogs/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-plus_catalogs/',
         'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/toi-plus_catalogs/',
         'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-plus_catalogs/',
@@ -248,6 +252,7 @@ def get_exofop_toi_catalog(ver=TODAYSTR, returnpath=False):
         'brik':'/home/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/',
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-exofop_catalogs/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-exofop_catalogs/',
+        'phtess3':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-exofop_catalogs/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/toi-exofop_catalogs/',
         'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/',
         'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/',
@@ -297,6 +302,7 @@ def get_exofop_ctoi_catalog(ver=TODAYSTR, returnpath=False):
         'brik':'/home/luke/Dropbox/proj/cdips/data/ctoi_catalogs/',
         'phtess1':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/ctoi_catalogs/',
         'phtess2':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/ctoi_catalogs/',
+        'phtess3':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/ctoi_catalogs/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/ctoi_catalogs/',
         'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/ctoi_catalogs/',
         'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/ctoi_catalogs/',

@@ -8,6 +8,37 @@ least 12 everywhere, and 15 if you're in a ratty region of period space.
 run as (from phtess2 usually):
 $ python -u do_initial_period_finding.py &> logs/sector6_initial_period_finding.log &
 """
+
+#############
+## LOGGING ##
+#############
+
+import logging
+from astrobase import log_sub, log_fmt, log_date_fmt
+
+DEBUG = False
+if DEBUG:
+    level = logging.DEBUG
+else:
+    level = logging.INFO
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig(
+    level=level,
+    style=log_sub,
+    format=log_fmt,
+    datefmt=log_date_fmt,
+)
+
+LOGDEBUG = LOGGER.debug
+LOGINFO = LOGGER.info
+LOGWARNING = LOGGER.warning
+LOGERROR = LOGGER.error
+LOGEXCEPTION = LOGGER.exception
+
+#############
+## IMPORTS ##
+#############
+
 from astropy.timeseries import LombScargle
 from transitleastsquares import transitleastsquares
 
@@ -33,7 +64,6 @@ from astrobase.lcmath import sigclip_magseries
 
 from wotan import slide_clip
 
-DEBUG = False
 nworkers = mp.cpu_count()
 
 def main():
@@ -51,7 +81,7 @@ def main():
         you consider objects, in `do_initial_period_finding`.
         """
     )
-    print(msg)
+    LOGINFO(msg)
 
 
 def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
@@ -129,8 +159,6 @@ def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
 
 def periodfindingworker(lcpath):
 
-    source_id, time, mag, xcc, ycc, ra, dec, _, tfa_mag = get_lc_data(lcpath)
-
     APNAME = 'PCA1'
     source_id, time, mag, xcc, ycc, ra, dec, _, tfa_mag = (
         lcu.get_lc_data(lcpath, mag_aperture=APNAME, tfa_aperture='TFA1')
@@ -160,8 +188,7 @@ def make_log_result(results, N_lcs):
         results.append(return_value)
         if N_lcs >= 100:
             if len(results) % (N_lcs//100) == 0:
-                print('{}: {:.0%} done'.format(datetime.utcnow().isoformat(),
-                                               len(results)/N_lcs))
+                LOGINFO(f'period finding: {len(results)/N_lcs:.0%} done')
     return log_result
 
 
@@ -197,8 +224,7 @@ def do_initial_period_finding(
         tasks = [(x) for x in lcpaths]
         N_lcs = len(lcpaths)
 
-        print('%sZ: %s files to run initial periodograms on' %
-              (datetime.utcnow().isoformat(), len(lcpaths)))
+        LOGINFO(f'{len(lcpaths)} files to run initial periodograms on')
 
         # pool and run jobs
         pool = mp.Pool(nworkers,maxtasksperchild=maxworkertasks)
@@ -219,10 +245,10 @@ def do_initial_period_finding(
         df = df.sort_values(by='source_id')
 
         df.to_csv(outpath, index=False)
-        print(f'made {outpath}')
+        LOGINFO(f'made {outpath}')
 
     else:
-        print('found periodfinding results, loading them')
+        LOGINFO('found periodfinding results, loading them')
         df = pd.read_csv(outpath)
 
     # you want some idea of what references, and what clusters are most
@@ -238,9 +264,9 @@ def do_initial_period_finding(
 
         # ";" sep needed b/c reference is ","-separated
         mdf.to_csv(outpath, index=False, sep=';')
-        print('made {}'.format(outpath))
+        LOGINFO('made {}'.format(outpath))
     else:
-        print('found supplemented periodfinding results, loading them')
+        LOGINFO('found supplemented periodfinding results, loading them')
         mdf = pd.read_csv(outpath, sep=';')
 
     if 'reference' in mdf:
@@ -291,7 +317,7 @@ def do_initial_period_finding(
                 top20clustercountsfrac=repr(u_cluster_count[np.argsort(u_cluster_count)[::-1]][:20]/len(mdf))
             )
             f.write(textwrap.dedent(txt))
-        print('made {}'.format(outpath))
+        LOGINFO('made {}'.format(outpath))
     else:
         pass
 
@@ -431,7 +457,7 @@ def do_initial_period_finding(
         resultsdir, 'initial_period_finding_results_with_limit.csv'
     )
     df.to_csv(outpath, index=False)
-    print('made {}'.format(outpath))
+    LOGINFO('made {}'.format(outpath))
 
     plot_initial_period_finding_results(df, resultsdir)
 

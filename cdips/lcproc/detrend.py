@@ -54,6 +54,8 @@ import numpy.lib.recfunctions as rfn
 from astrobase import imageutils as iu
 from astrobase.lcmath import find_lc_timegroups
 
+import cdips.lcproc.mask_orbit_edges as moe
+
 from astropy.timeseries import LombScargle
 
 from sklearn.decomposition import PCA, FactorAnalysis

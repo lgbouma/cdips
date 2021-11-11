@@ -102,8 +102,8 @@ def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
             d[snum][cam] = {}
             for ccd in range(1,5):
                 d[snum][cam][ccd] = projid
-                projid += 1                
-                
+                projid += 1
+
     return d[_sector][_cam][_ccd]
 
 
