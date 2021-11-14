@@ -142,63 +142,110 @@ def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
     ls_fap = dtr_stages_dict['lsp_dict']['ls_fap']
 
     # run the TLS periodogram
-    model = transitleastsquares(search_time, search_flux)
+    model = transitleastsquares(search_time, search_flux, verbose=False)
     results = model.power(use_threads=1, show_progress_bar=False,
-                          R_star_min=0.1, R_star_max=10, M_star_min=0.1,
-                          M_star_max=5.0, period_min=period_min,
+                          R_star_min=0.1, R_star_max=5, M_star_min=0.1,
+                          M_star_max=3.0, period_min=period_min,
                           period_max=period_max, n_transits_min=1,
                           transit_template='default', oversampling_factor=5)
 
-    tls_sde = results.SDE
-    tls_period = results.period
-    tls_t0 = results.T0
-    tls_depth = results.depth
-    tls_duration = results.duration
-    tls_distinct_transit_count = results.distinct_transit_count
-    tls_odd_even = results.odd_even_mismatch
-
     dtr_method = dtr_stages_dict['dtr_method_used']
 
-    r = [source_id, ls_period, ls_fap, ls_amplitude, tls_period, tls_sde,
-         tls_t0, tls_depth, tls_duration, tls_distinct_transit_count,
-         tls_odd_even, dtr_method]
+    r = {
+        'source_id': source_id,
+        'ls_period': ls_period,
+        'ls_fap': ls_fap,
+        'ls_amplitude': ls_amplitude,
+        'tls_period': results.period,
+        'tls_sde': results.SDE,
+        'tls_snr': results.snr,
+        'tls_t0': results.T0,
+        'tls_depth': results.depth,
+        'tls_duration': results.duration,
+        'tls_distinct_transit_count': results.distinct_transit_count,  # The number of transits with intransit data points
+        'tls_odd_even': results.odd_even_mismatch,
+        'dtr_method': dtr_method
+    }
 
     return r
 
 
-def periodfindingworker(lcpath):
+def periodfindingworker(task):
 
+    lcpath, outcsvpath = task
+
+    if os.path.exists(outcsvpath):
+        LOGINFO(f'Found {outcsvpath}. Skipping.')
+        return
+
+    # NOTE: default search aperture: PCA1
     APNAME = 'PCA1'
     source_id, time, mag, xcc, ycc, ra, dec, _, tfa_mag = (
         lcu.get_lc_data(lcpath, mag_aperture=APNAME, tfa_aperture='TFA1')
     )
 
-    dtr_dict = {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
+    try_dtr_method = 'best'
+    try_break_tolerance = 0.5
+    try_window_length = 0.5
+    dtr_dict = {'method':try_dtr_method,
+                'break_tolerance':try_break_tolerance,
+                'window_length':try_window_length}
+
+    DEFAULTDICT = {
+        'source_id': source_id,
+        'lcpath': lcpath,
+        'tls_status': 'FAILED',
+        'ls_period': np.nan,
+        'ls_fap': np.nan,
+        'ls_amplitude': np.nan,
+        'tls_period': np.nan,
+        'tls_sde': np.nan,
+        'tls_snr': np.nan,
+        'tls_t0': np.nan,
+        'tls_depth': np.nan,
+        'tls_duration': np.nan,
+        'tls_distinct_transit_count': np.nan,
+        'tls_odd_even': np.nan,
+        'dtr_method': try_dtr_method,
+        'xcc': xcc,
+        'ycc': ycc,
+        'ra': ra,
+        'dec': dec
+    }
 
     if np.all(pd.isnull(mag)):
-        r = [source_id, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
-             np.nan, np.nan, np.nan,
-             False, xcc, ycc, ra, dec]
+        r = DEFAULTDICT
+        r['tls_status'] = 'FAILED_ALLNANLC'
 
     else:
-        r = run_periodograms_and_detrend(
-            source_id, time, mag, dtr_dict
-        )
-        r.append(xcc)
-        r.append(ycc)
-        r.append(ra)
-        r.append(dec)
+        # Detrend and run the LS & TLS periodograms.
+        try:
+            r = run_periodograms_and_detrend(
+                source_id, time, mag, dtr_dict
+            )
+            r['xcc'] = xcc
+            r['ycc'] = ycc
+            r['ra'] = ra
+            r['dec'] = dec
+            r['tls_status'] = 'PASSED'
 
-    return r
+        except Exception as e:
+            msg = (
+                f'run_periodograms_and_detrend failed for GAIA DR2 '
+                f'{source_id}.\n Error was "{e}"'
+            )
+            LOGERROR(msg)
+            r = DEFAULTDICT
+            r['tls_status'] = 'FAILED_SEARCHERROR'
 
+    # Write the results to CSV.
+    outd = r
+    outdf = pd.DataFrame(outd, index=[0])
 
-def make_log_result(results, N_lcs):
-    def log_result(return_value):
-        results.append(return_value)
-        if N_lcs >= 100:
-            if len(results) % (N_lcs//100) == 0:
-                LOGINFO(f'period finding: {len(results)/N_lcs:.0%} done')
-    return log_result
+    outdf.to_csv(outcsvpath, index=False)
+    LOGINFO(f'Wrote {outcsvpath}.')
+
+    return
 
 
 def do_initial_period_finding(
@@ -230,29 +277,32 @@ def do_initial_period_finding(
     outpath = os.path.join(outdir, 'initial_period_finding_results.csv')
 
     if not os.path.exists(outpath):
-        tasks = [(x) for x in lcpaths]
+
+        workerdir = os.path.join(outdir, 'worker_output')
+        if not os.path.exists(workerdir):
+            os.mkdir(workerdir)
+
+        tasks = [
+            (x,
+             os.path.join(workerdir, os.path.basename(x).
+                          replace('.fits','_periodfindingresults.csv'))
+            )
+            for x in lcpaths
+        ]
+
         N_lcs = len(lcpaths)
 
         LOGINFO(f'{len(lcpaths)} files to run initial periodograms on')
 
-        # pool and run jobs
-        pool = mp.Pool(nworkers,maxtasksperchild=maxworkertasks)
-        results = []
-        for task in tasks:
-            pool.apply_async(periodfindingworker, args=[task],
-                             callback=make_log_result(results, N_lcs))
+        pool = mp.Pool(nworkers, maxtasksperchild=maxworkertasks)
+        _ = pool.map(periodfindingworker, tasks)
         pool.close()
         pool.join()
 
-        df = pd.DataFrame(
-            results,
-            columns=['source_id', 'ls_period', 'ls_fap', 'ls_amplitude', 'tls_period',
-                     'tls_sde', 'tls_t0', 'tls_depth', 'tls_duration',
-                     'tls_distinct_transit_count', 'tls_odd_even',
-                     'dtr_method', 'xcc', 'ycc', 'ra', 'dec']
-        )
+        # Merge results from worker CSVs.
+        csvpaths = glob(os.path.join(workerdir, '*_periodfindingresults.csv'))
+        df = pd.concat((pd.read_csv(f) for f in csvpaths))
         df = df.sort_values(by='source_id')
-
         df.to_csv(outpath, index=False)
         LOGINFO(f'made {outpath}')
 
@@ -334,7 +384,7 @@ def do_initial_period_finding(
     resultsdir = (
         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/'
         'cdips_lc_periodfinding/'
-        'sector-{}'.format(sectornum)
+        f'sector-{sectornum}'
     )
     initpfresultspath = (
         os.path.join(resultsdir, 'initial_period_finding_results.csv')
@@ -344,127 +394,8 @@ def do_initial_period_finding(
     limit, abovelimit = get_tls_sde_versus_period_detection_boundary(
         tls_sde, tls_period
     )
-
-    # SET MANUAL SNR LIMITS, based on plot_initial_period_finding_results
-    if sectornum == 1:
-        df['limit'] = np.ones(len(df))*9
-        df['limit'][df['tls_period']<1] = 14
-        df['limit'][df['tls_period']>11] = 20
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 2:
-        df['limit'] = np.ones(len(df))*8.5
-        df['limit'][df['tls_period']<1] = 14
-        df['limit'][df['tls_period']>11] = 30
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 3:
-        df['limit'] = np.ones(len(df))*8.5
-        df['limit'][df['tls_period']<1] = 11
-        df['limit'][df['tls_period']>15] = 20
-        df['limit'][(df['tls_period']<2.05) & (df['tls_period']>1.95)] = 15
-        df['limit'][(df['tls_period']<2.55) & (df['tls_period']>2.45)] = 15
-        df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.75)] = 15
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 4:
-        df['limit'] = np.ones(len(df))*10
-        df['limit'][df['tls_period']<1] = 13
-        df['limit'][(df['tls_period']<9.1) & (df['tls_period']>8.85)] = 22
-        df['limit'][(df['tls_period']>21)] = 40
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 5:
-        df['limit'] = np.ones(len(df))*12
-        df['limit'][df['tls_period']<1] = 15
-        df['limit'][(df['tls_period']<14) & (df['tls_period']>11.5)] = 18
-        df['limit'][(df['tls_period']>21)] = 30
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 6:
-        df['limit'] = np.ones(len(df))*12
-        df['limit'][df['tls_period']<1] = 15
-        df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.925)] = 20
-        df['limit'][(df['tls_period']<5.925) & (df['tls_period']>5.75)] = 15
-        df['limit'][(df['tls_period']<9) & (df['tls_period']>8.75)] = 15
-        df['limit'][(df['tls_period']<12.05) & (df['tls_period']>11.8)] = 15
-        df['limit'][(df['tls_period']>20) & (df['tls_period']<25)] = 18
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 7:
-        df['limit'] = np.ones(len(df))*12
-        df['limit'][df['tls_period']<1] = 16
-        df['limit'][(df['tls_period']<1.95) & (df['tls_period']>1.85)] = 18
-        df['limit'][(df['tls_period']>21) & (df['tls_period']<25)] = 18
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 8:
-        df['limit'] = np.ones(len(df))*12
-        df['limit'][df['tls_period']<1] = 16
-        df['limit'][(df['tls_period']<6.6) & (df['tls_period']>6.3)] = 15
-        df['limit'][(df['tls_period']>22)] = 40
-        df['limit'][(df['tls_period']<15) & (df['tls_period']>14.5)] = 15
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 9:
-        df['limit'] = np.ones(len(df))*12
-        df['limit'][df['tls_period']<1] = 16
-        df['limit'][(df['tls_period']>21)] = 18
-        df['limit'][(df['tls_period']<13.6) & (df['tls_period']>13.0)] = 25
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 10:
-        df['limit'] = np.ones(len(df))*12
-        df['limit'][df['tls_period']<1] = 16
-        df['limit'][(df['tls_period']<1.2) & (df['tls_period']>1)] = 14
-        df['limit'][(df['tls_period']>21)] = 20
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 11:
-        df['limit'] = np.ones(len(df))*12
-        df['limit'][df['tls_period']<1] = 17
-        df['limit'][(df['tls_period']<1.2) & (df['tls_period']>1)] = 14.5
-        df['limit'][(df['tls_period']<14.9) & (df['tls_period']>13.5)] = 25
-        df['limit'][(df['tls_period']<14.4) & (df['tls_period']>14.0)] = 45
-        df['limit'][(df['tls_period']<14.9/2) & (df['tls_period']>13.5/2)] = 14
-        df['limit'][(df['tls_period']<14.9/3) & (df['tls_period']>13.5/3)] = 14
-        df['limit'][(df['tls_period']>24)] = 30
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 12:
-        df['limit'] = np.ones(len(df))*12
-        df['limit'][df['tls_period']<1] = 17
-        df['limit'][(df['tls_period']<1.2) & (df['tls_period']>1)] = 14.5
-        df['limit'][(df['tls_period']<8.8) & (df['tls_period']>8.4)] = 19
-        df['limit'][(df['tls_period']<15.5) & (df['tls_period']>13.4)] = 19
-        df['limit'][(df['tls_period']<18.9) & (df['tls_period']>18.3)] = 19
-        df['limit'][(df['tls_period']>21)] = 30
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 13:
-        df['limit'] = np.ones(len(df))*10
-        df['limit'][df['tls_period']<1] = 15
-        df['limit'][(df['tls_period']<1.5) & (df['tls_period']>1)] = 12
-        df['limit'][(df['tls_period']<7.8) & (df['tls_period']>7.2)] = 15
-        df['limit'][(df['tls_period']>21)] = 30
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    elif sectornum == 14:
-        df['limit'] = np.ones(len(df))*10
-        df['limit'][df['tls_period']<1] = 15
-        df['limit'][(df['tls_period']<1.5) & (df['tls_period']>1)] = 12
-        df['limit'][(df['tls_period']<4.5) & (df['tls_period']>4.44)] = 20
-        df['limit'][(df['tls_period']<12.0) & (df['tls_period']>5.0)] = 13
-        df['limit'][(df['tls_period']<16.0) & (df['tls_period']>12.0)] = 25
-        df['limit'][(df['tls_period']<20.3) & (df['tls_period']>18.0)] = 20
-        df['limit'][(df['tls_period']>24)] = 30
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
-
-    else:
-        df['limit'] = np.ones(len(df))*12
-        df['limit'][df['tls_period']<1] = 15
-        df['limit'][(df['tls_period']<6.1) & (df['tls_period']>5.75)] = 15
-        df['abovelimit'] = np.array(df['tls_sde']>df['limit']).astype(int)
+    df['limit'] = limit
+    df['abovelimit'] = abovelimit
 
     outpath = os.path.join(
         resultsdir, 'initial_period_finding_results_with_limit.csv'
@@ -474,15 +405,15 @@ def do_initial_period_finding(
 
     plot_initial_period_finding_results(df, resultsdir)
 
-    if sectornum not in [1,2,3,4,5,6,7,8,9,10,11,12,13,14]:
-        raise NotImplementedError(
-            'you need to manually set SNR limits for this sector!'
-        )
+    msg = (
+        f'Finished do_initial_periodfinding for sector {sectornum}.'
+        f'\nYou might wish to verify that the detection boundary looks OK.'
+    )
+    LOGINFO(msg)
 
 
-def get_tls_sde_versus_period_detection_boundary(
-    tls_sde, tls_period, make_plots=False
-):
+def get_tls_sde_versus_period_detection_boundary(tls_sde, tls_period,
+                                                 make_plots=False):
     """
     Given np.ndarrays of tls_sde and tls_period, return an array "limit", which
     represents the boundary in SDE versus Period space between "above
@@ -505,7 +436,7 @@ def get_tls_sde_versus_period_detection_boundary(
             f'Only got {N_lcs} light curves for definition of TLS versus '
             'SDE boundary. Will likely often default to baseline window.'
         )
-        print(msg)
+        LOGWARNING(msg)
 
     # the cleanest window for single-sector TESS data is typically
     # from 2 to 10 days. use that to set the "bare minimum" threshold, as the

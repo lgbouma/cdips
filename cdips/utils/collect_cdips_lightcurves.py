@@ -153,17 +153,17 @@ def symlink_cdips_lcs(
                         print('\t found {}'.format(dst))
 
 
-def get_cdips_catalog(ver=0.4):
+def get_cdips_catalog(ver=0.6):
     return cdips.utils.catalogs.get_cdips_catalog(ver=ver)
 
-def get_cdips_pub_catalog(ver=0.4):
+def get_cdips_pub_catalog(ver=0.6):
     return cdips.utils.catalogs.get_cdips_pub_catalog(ver=ver)
 
 def get_toi_catalog(ver='2019-12-05'):
     return cdips.utils.catalogs.get_toi_catalog(ver=ver)
 
 
-def get_cdips_sourceids(ver=0.4):
+def get_cdips_sourceids(ver=0.6):
 
     if ver < 0.6:
         cdips_stars_path = (
@@ -214,7 +214,7 @@ def main(
     sectors=None,
     cams=None,
     ccds=None,
-    OC_MG_CAT_ver=0.4
+    OC_MG_CAT_ver=0.6
 ):
 
     if make_symlinks:
@@ -235,5 +235,5 @@ if __name__ == "__main__":
         ccds=[1,2,3,4],
         make_symlinks=1,
         make_plots=0,
-        OC_MG_CAT_ver=0.4
+        OC_MG_CAT_ver=0.6
     )

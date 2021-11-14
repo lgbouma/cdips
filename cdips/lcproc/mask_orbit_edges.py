@@ -1,3 +1,33 @@
+#############
+## LOGGING ##
+#############
+
+import logging
+from astrobase import log_sub, log_fmt, log_date_fmt
+
+DEBUG = False
+if DEBUG:
+    level = logging.DEBUG
+else:
+    level = logging.INFO
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig(
+    level=level,
+    style=log_sub,
+    format=log_fmt,
+    datefmt=log_date_fmt,
+)
+
+LOGDEBUG = LOGGER.debug
+LOGINFO = LOGGER.info
+LOGWARNING = LOGGER.warning
+LOGERROR = LOGGER.error
+LOGEXCEPTION = LOGGER.exception
+
+#############
+## IMPORTS ##
+#############
+
 from astrobase import lcmath
 import numpy as np, pandas as pd
 import os, textwrap
@@ -7,7 +37,7 @@ from datetime import datetime
 def mask_orbit_start_and_end(time, flux, orbitgap=1, expected_norbits=2,
                              orbitpadding=6/(24),
                              raise_expectation_error=True,
-                             return_inds=False):
+                             return_inds=False, verbose=True):
     """
     Ignore the times near the edges of orbits.
 
@@ -19,17 +49,20 @@ def mask_orbit_start_and_end(time, flux, orbitgap=1, expected_norbits=2,
     norbits, groups = lcmath.find_lc_timegroups(time, mingap=orbitgap)
 
     if norbits != expected_norbits:
-        errmsg = 'got {} orbits, expected {}. groups are {}'.format(
+        wrnmsg = 'got {} orbits, expected {}. groups are {}'.format(
             norbits, expected_norbits, repr(groups))
 
         if raise_expectation_error:
-            raise AssertionError(errmsg)
-        elif norbits > 0 and not raise_expectation_error:
-            print('WRN! {}'.format(errmsg))
+            raise AssertionError(wrnmsg)
+        elif norbits > 0 and not raise_expectation_error and verbose:
+            LOGINFO(f'WRN! {wrnmsg}')
+        elif norbits > 0 and not raise_expectation_error and not verbose:
+            # suppress the warning, just mask the edges
+            pass
         else:
             # no matter what, if you don't get any data, raise the assertion
             # error.
-            raise AssertionError(errmsg)
+            raise AssertionError(wrnmsg)
 
     sel = np.zeros_like(time).astype(bool)
     for group in groups:

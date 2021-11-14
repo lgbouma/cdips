@@ -140,7 +140,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     #
     if maskorbitedge:
         _time, _flux = moe.mask_orbit_start_and_end(
-            time, flux, raise_expectation_error=False
+            time, flux, raise_expectation_error=False, verbose=verbose
         )
     else:
         _time, _flux = time, flux
