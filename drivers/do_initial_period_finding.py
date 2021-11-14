@@ -2,8 +2,17 @@
 Given >~10k LCs per galactic field, do the period finding (and detrend, since
 the LCs should be variable).
 
-do_initial_period_finding SETS THE SDE LIMITS. currently implemented is at
-least 12 everywhere, and 15 if you're in a ratty region of period space.
+Contents:
+
+do_initial_period_finding: runs period-finding, and sets the detection limits
+adapted based on the results.
+
+periodfindingworker: given lcpath, run periodograms and detrend
+
+    run_periodograms_and_detrend: given source_id, time, mag, find planet.
+
+get_tls_sde_versus_period_detection_boundary: given TLS SDE and TLS periods for
+"plausible planet detections", define the detection boundary.
 
 run as (from phtess2 usually):
 $ python -u do_initial_period_finding.py &> logs/sector6_initial_period_finding.log &
@@ -332,6 +341,10 @@ def do_initial_period_finding(
     )
     df = pd.read_csv(initpfresultspath)
 
+    limit, abovelimit = get_tls_sde_versus_period_detection_boundary(
+        tls_sde, tls_period
+    )
+
     # SET MANUAL SNR LIMITS, based on plot_initial_period_finding_results
     if sectornum == 1:
         df['limit'] = np.ones(len(df))*9
@@ -465,6 +478,157 @@ def do_initial_period_finding(
         raise NotImplementedError(
             'you need to manually set SNR limits for this sector!'
         )
+
+
+def get_tls_sde_versus_period_detection_boundary(
+    tls_sde, tls_period, make_plots=False
+):
+    """
+    Given np.ndarrays of tls_sde and tls_period, return an array "limit", which
+    represents the boundary in SDE versus Period space between "above
+    threshold" and "below threshold" planets.  Also, return the array
+    "abovelimit", which is just the boolean array `tls_sde > limit`.
+
+    The construction of the boundary is performed by sorting on tls_period
+    """
+
+    assert np.all(np.isfinite(tls_period))
+    assert np.all(np.isfinite(tls_sde))
+    assert len(tls_sde) == len(tls_period)
+
+    N_lcs = len(tls_period)
+
+    WRN_THRESHOLD = 1e4
+
+    if N_lcs < WRN_THRESHOLD:
+        msg = (
+            f'Only got {N_lcs} light curves for definition of TLS versus '
+            'SDE boundary. Will likely often default to baseline window.'
+        )
+        print(msg)
+
+    # the cleanest window for single-sector TESS data is typically
+    # from 2 to 10 days. use that to set the "bare minimum" threshold, as the
+    # 95th percentile of the TLS SDE..
+    base_window = (tls_period > 2) & (tls_period < 10)
+    sde_95 = np.percentile(tls_sde[base_window], 95)
+
+    # ~2e4 to 1e5 LCs total typical per sector.
+    N_bins = int(N_lcs / 100)
+
+    hist, bin_edges = np.histogram(np.log10(tls_period), N_bins)
+
+    sde_boundary = []
+    midpoints = []
+    N_cutoff = 50
+
+    hist_50 = np.percentile(hist, 50)
+    hist_75 = np.percentile(hist, 75)
+    hist_90 = np.percentile(hist, 90)
+    hist_95 = np.percentile(hist, 95)
+    hist_98 = np.percentile(hist, 98)
+
+    for lo,hi,count in zip(bin_edges[0:-1], bin_edges[1:], hist):
+
+        midpoint = (lo+hi)/2
+
+        _sel = (
+            (np.log10(tls_period) >= lo)
+            &
+            (np.log10(tls_period) < hi)
+        )
+
+        these_sdes = tls_sde[_sel]
+
+        # you want a higher cutoff in regions with more points.
+        if count > hist_98:
+            this_sde = np.percentile(these_sdes, 99.8)
+        elif count > hist_95:
+            this_sde = np.percentile(these_sdes, 99.5)
+        elif count > hist_90:
+            this_sde = np.percentile(these_sdes, 99)
+        elif count > hist_75:
+            this_sde = np.percentile(these_sdes, 98)
+        elif count > hist_50:
+            this_sde = np.percentile(these_sdes, 97)
+        else:
+            this_sde = np.percentile(these_sdes, 80)
+
+        midpoints.append(midpoint)
+        if len(these_sdes) > N_cutoff:
+            sde_boundary.append(
+                np.max([
+                    sde_95, this_sde
+                ])
+            )
+        else:
+            sde_boundary.append(
+                sde_95
+            )
+    sde_boundary = np.array(sde_boundary)
+    period_bin_edges = 10**bin_edges
+
+    fn_log10period_to_limit = interp1d(
+        midpoints, sde_boundary, kind='quadratic', bounds_error=False,
+        fill_value='extrapolate'
+    )
+
+    interp_log10period = np.linspace(
+        min(np.log10(tls_period)), max(np.log10(tls_period)), 1000
+    )
+    interp_limit = fn_log10period_to_limit(interp_log10period)
+
+    limit = fn_log10period_to_limit(np.log10(tls_period))
+    abovelimit = np.array(tls_sde > limit).astype(bool)
+
+    if make_plots:
+        # assessment plots
+
+        # 1d period histogram
+        plt.hist(np.log10(tls_period), bins=N_bins)
+        plt.xlabel('log10 tls period [d]')
+        plt.ylabel('count')
+        plt.savefig('temp_tlsperiod_log10hist.png', dpi=400)
+        plt.close('all')
+
+        # 2d period vs SDE histogram
+        from fast_histogram import histogram1d, histogram2d
+        from astropy.visualization.mpl_normalize import ImageNormalize
+        from astropy.visualization import LogStretch
+        norm = ImageNormalize(vmin=0.1, vmax=50, stretch=LogStretch())
+        fig = plt.figure()
+        fig.set_dpi(600)
+        ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
+        ax.scatter_density(np.log10(tls_period), tls_sde, cmap='Greys', norm=norm)
+        plt.xlabel('log10 tls period [d]')
+        plt.ylabel('SDE')
+        fig.savefig('temp_log10period_log10sde_scatterdensity.png', dpi=600)
+        plt.close('all')
+
+        # scatter period vs SDE with boundary
+        #plt.plot(bin_edges, sde_boundary, c='orange', lw=0.5, zorder=3)
+        title = f'N={len(tls_sde)}. N_above={len(tls_sde[abovelimit])}'
+        plt.plot(interp_log10period, interp_limit, c='orange', lw=0.5, zorder=3)
+        plt.scatter(np.log10(tls_period), tls_sde,
+                    s=0.5, c='k', zorder=2, marker='.', linewidths=0)
+        plt.scatter(np.log10(tls_period[abovelimit]), tls_sde[abovelimit],
+                    s=4, c='C0', zorder=3, marker='.', linewidths=0)
+        plt.xlabel('log10 tls period [d]')
+        plt.ylabel('SDE')
+        plt.title(title)
+        plt.savefig('temp_period_sde_scatter_boundary.png', dpi=400)
+        plt.close('all')
+
+        # hist of above limit
+        plt.hist(np.log10(tls_period[abovelimit]), bins=50)
+        plt.xlabel('log10 tls period [d]')
+        plt.ylabel('count')
+        plt.savefig('temp_tlsperiod_log10hist_abovelimit.png', dpi=400)
+        plt.close('all')
+
+    return limit, abovelimit.astype(int)
+
+
 
 
 if __name__ == "__main__":
