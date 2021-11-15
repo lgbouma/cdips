@@ -178,7 +178,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
         lsp_dict = {}
         lsp_dict['ls_period'] = ls_period
-        lsp_dict['ls_amplitude'] = ls_amplitude
+        lsp_dict['ls_amplitude'] = np.abs(ls_amplitude)
         lsp_dict['ls_fap'] = ls_fap
 
     if not isinstance(dtr_dict, dict):
@@ -234,7 +234,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
             flat_flux, trend_flux, notch = _run_locor(
                 _time[sel0], clipped_flux[sel0], dtr_dict, lsp_dict
             )
-            dtr_method_used = '-locor'
+            dtr_method_used += '-locor'
         else:
             raise NotImplementedError(f"Got LS period {lsp_dict['ls_period']}")
 
@@ -420,7 +420,7 @@ def _run_locor(TIME, FLUX, dtr_dict, lsp_dict):
         # stars with Prot <~ a few days.
 
         lsp_dict['ls_period'] = ls_period
-        lsp_dict['ls_amplitude'] = ls_amplitude
+        lsp_dict['ls_amplitude'] = np.abs(ls_amplitude)
         lsp_dict['ls_fap'] = ls_fap
 
     wsize = lsp_dict['ls_period']

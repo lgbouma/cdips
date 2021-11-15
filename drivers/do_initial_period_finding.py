@@ -79,11 +79,12 @@ def main():
 
     check_dependencies()
 
-    do_initial_period_finding(
-        sectornum=14, nworkers=nworkers, maxworkertasks=1000,
-        outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
-        OC_MG_CAT_ver=0.6
-    )
+    for s in range(14, 20):
+        do_initial_period_finding(
+            sectornum=s, nworkers=nworkers, maxworkertasks=1000,
+            outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
+            OC_MG_CAT_ver=0.6
+        )
     msg = (
         """
         After running, you need to manually tune the SNR distribution for which
@@ -138,7 +139,7 @@ def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
 
     # retrieve LS periodogram information
     ls_period = dtr_stages_dict['lsp_dict']['ls_period']
-    ls_amplitude = dtr_stages_dict['lsp_dict']['ls_amplitude']
+    ls_amplitude = np.abs(dtr_stages_dict['lsp_dict']['ls_amplitude'])
     ls_fap = dtr_stages_dict['lsp_dict']['ls_fap']
 
     # run the TLS periodogram
@@ -228,6 +229,7 @@ def periodfindingworker(task):
             r['ra'] = ra
             r['dec'] = dec
             r['tls_status'] = 'PASSED'
+            r['lcpath'] = lcpath
 
         except Exception as e:
             msg = (
@@ -391,25 +393,34 @@ def do_initial_period_finding(
     )
     df = pd.read_csv(initpfresultspath)
 
-    limit, abovelimit = get_tls_sde_versus_period_detection_boundary(
-        tls_sde, tls_period
-    )
-    df['limit'] = limit
-    df['abovelimit'] = abovelimit
-
-    outpath = os.path.join(
-        resultsdir, 'initial_period_finding_results_with_limit.csv'
-    )
-    df.to_csv(outpath, index=False)
-    LOGINFO('made {}'.format(outpath))
-
-    plot_initial_period_finding_results(df, resultsdir)
-
     msg = (
         f'Finished do_initial_periodfinding for sector {sectornum}.'
         f'\nYou might wish to verify that the detection boundary looks OK.'
     )
     LOGINFO(msg)
+
+    #FIXME FIXME TODO TODO: you should probably omit obviously bullshit TLS
+    #periodfinding results _before_ defining this boundary.  e.g., finite t0,
+    #period, SDE, etc.  period < 20 days if single sector... cuts on depth,
+    #odd/even, transit count. ETC
+
+    # limit, abovelimit = get_tls_sde_versus_period_detection_boundary(
+    #     df.tls_sde, df.tls_period
+    # )
+    # df['limit'] = limit
+    # df['abovelimit'] = abovelimit
+
+    # outpath = os.path.join(
+    #     resultsdir, 'initial_period_finding_results_with_limit.csv'
+    # )
+    # df.to_csv(outpath, index=False)
+    # LOGINFO('made {}'.format(outpath))
+
+    # plot_initial_period_finding_results(df, resultsdir)
+
+    return
+
+
 
 
 def get_tls_sde_versus_period_detection_boundary(tls_sde, tls_period,
