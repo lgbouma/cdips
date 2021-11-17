@@ -14,6 +14,7 @@ periodfindingworker: given lcpath, run periodograms and detrend
 get_tls_sde_versus_period_detection_boundary: given TLS SDE and TLS periods for
 "plausible planet detections", define the detection boundary.
 
+----------
 run as (from phtess2 usually):
 $ python -u do_initial_period_finding.py &> logs/sector6_initial_period_finding.log &
 """
@@ -79,7 +80,7 @@ def main():
 
     check_dependencies()
 
-    for s in range(14, 20):
+    for s in range(14, 15):
         do_initial_period_finding(
             sectornum=s, nworkers=nworkers, maxworkertasks=1000,
             outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
@@ -320,8 +321,50 @@ def do_initial_period_finding(
     if not os.path.exists(outpath):
         cd = ccl.get_cdips_catalog(ver=OC_MG_CAT_ver)
 
+        #
+        # add Gaia plx, ra, dec, pmra, pmdec, G, BP, RP, cluster, age,
+        # mean_age, reference_id, and bibcode.
+        #
         df['source_id'] = df['source_id'].astype(np.int64)
         mdf = df.merge(cd, how='left', on='source_id')
+
+        #
+        # Supplement with initial Prot/color age classification.
+        # sub-NGC6811 (2; <~1 Gyr), sub-Praesepe (1; <~700 Myr); and
+        # sub-Pleiades (0; <~120 Myr).  Anything else is given a 3.
+        # Note that J.Curtis+2019's NGC6811 stalling paper only went down to
+        # ~M0V at 1 Gyr; the "sub-Gyr" requirement for redder stars therefore
+        # matches "sub-Praesepe".
+        # Note also that this initial classification ignores reddening.  So,
+        # stars at larger distances (e.g., 500-1000pc) will appear redder, and
+        # may shift a little at the class boundaries.  The latter two flaws
+        # with this approach seem small enough relative to the benefits it
+        # provides (a quick-look age check) that we keep it.  It also prevents
+        # introducing wrong extinction corrections.  (Though those could be
+        # implemented using say the all-sky Lallament+ STILISM maps).
+        #
+
+        bpmrp = mdf.phot_bp_mean_mag - mdf.phot_rp_mean_mag
+
+        # default is 3
+        prot_color_class = 3*np.ones(len(mdf))
+
+        # those that meet the <1 Gyr requirement are "class 2"
+        from cdips.gyroage import NGC6811InterpModel
+        sel = (mdf.ls_period < NGC6811InterpModel(bpmrp))
+        prot_color_class[sel] = 2
+
+        # those that meet the <700 Myr requirement are "class 1"
+        from cdips.gyroage import PraesepeInterpModel
+        sel = (mdf.ls_period < PraesepeInterpModel(bpmrp))
+        prot_color_class[sel] = 1
+
+        # those that meet the <120 Myr requirement are "class 0"
+        from cdips.gyroage import PleiadesInterpModel
+        sel = (mdf.ls_period < PleiadesInterpModel(bpmrp))
+        prot_color_class[sel] = 0
+
+        mdf['prot_color_class'] = prot_color_class
 
         # ";" sep needed b/c reference is ","-separated
         mdf.to_csv(outpath, index=False, sep=';')
@@ -399,26 +442,193 @@ def do_initial_period_finding(
     )
     LOGINFO(msg)
 
-    #FIXME FIXME TODO TODO: you should probably omit obviously bullshit TLS
-    #periodfinding results _before_ defining this boundary.  e.g., finite t0,
-    #period, SDE, etc.  period < 20 days if single sector... cuts on depth,
-    #odd/even, transit count. ETC
+    SEARCHTYPE = 'SINGLESECTOR_TRANSITING_PLANETS_AROUND_SUBGYR_STARS'
+    smdf = select_periodfinding_results_given_searchtype(
+        SEARCHTYPE, mdf
+    )
 
-    # limit, abovelimit = get_tls_sde_versus_period_detection_boundary(
-    #     df.tls_sde, df.tls_period
-    # )
-    # df['limit'] = limit
-    # df['abovelimit'] = abovelimit
+    limit, abovelimit = get_tls_sde_versus_period_detection_boundary(
+        smdf.tls_sde, smdf.tls_period
+    )
+    df['limit'] = limit
+    df['abovelimit'] = abovelimit
 
-    # outpath = os.path.join(
-    #     resultsdir, 'initial_period_finding_results_with_limit.csv'
-    # )
-    # df.to_csv(outpath, index=False)
-    # LOGINFO('made {}'.format(outpath))
+    outpath = os.path.join(
+        resultsdir, 'initial_period_finding_results_with_limit.csv'
+    )
+    df.to_csv(outpath, index=False)
+    LOGINFO('made {}'.format(outpath))
 
-    # plot_initial_period_finding_results(df, resultsdir)
+    plot_initial_period_finding_results(df, resultsdir)
 
     return
+
+
+def select_periodfinding_results_given_searchtype(SEARCHTYPE, df):
+    """
+    This function applies cuts on the raw period-finding results to define the
+    "base sample" of signals.  Note this doesn't involve a cut on SDE, but it
+    does involve cuts on some other TLS parameters (e.g., transit count, and
+    odd-even). It can also involve cuts on stellar parameters.
+
+    The SEARCHTYPE argument currently only has one implemented type of search:
+        SINGLESECTOR_TRANSITING_PLANETS_AROUND_SUBGYR_STARS.
+
+    In this case, four cuts are applied:
+
+        apply_singlesector_cuts:
+            * TLS period < 21 days.
+
+        apply_planet_cuts
+            * TLS gave finite ephemeris, SDE, duration, and transit count.
+            * >=3 transits
+            * TLS transit depth < 20%
+
+        apply_star_cuts:
+            * parallax / parallax_error > 3
+            * parallax > 1 mas (i.e., distance < 1 kpc)
+
+            (note: these are just to make stars actually possible for
+            follow-up. color requirements are needed for age cuts.)
+
+        apply_subgyr_cuts:
+
+            * LS gave finite period and amplitude.
+
+            * Stellar color (Bp-Rp) implies Teff <~ 6600 K. Bp-Rp > 0.5
+            (>F2-F3V), according to Mamajek's 2021.03.02.  Note this is *observed*
+            (i.e., without reddening correction). So, some hotter stars will
+            make it in near the boundary.
+
+            * LS period and color imply < 1 Gyr, assuming that LS period is the
+            rotation period.  (See description of prot_color_class in comments
+            above).
+
+            * No cut on amplitude is applied due to the low-amplitude tail for
+            the hot stars (e.g., Rebull+2020, Figure 10).
+    """
+
+    # NOTE: you may wish to change these, depending on your search
+    # parameters.
+    apply_planet_cuts = 1
+    apply_star_cuts = 1
+    apply_subgyr_cuts = 1
+    apply_singlesector_cuts = 1 if 'SINGLESECTOR' in SEARCHTYPE else 0
+
+    if SEARCHTYPE not in ["SINGLESECTOR_TRANSITING_PLANETS_AROUND_SUBGYR_STARS"]:
+        raise NotImplementedError
+
+    sel = ~pd.isnull(df.source_id)
+
+    if apply_singlesector_cuts:
+        #
+        # Require planet orbital period < 21 days for single sector. (The max
+        # period in this TLS search is 27 days, but there's a big systematic
+        # pileup).
+        #
+        sel &= (df.tls_period < 21)
+
+    if apply_planet_cuts:
+
+        #
+        # TLS gave finite ephemeris, SDE, duration, and transit count.
+        #
+        sel &= (~pd.isnull(df.tls_t0))
+        sel &= (~pd.isnull(df.tls_period))
+        sel &= (~pd.isnull(df.tls_sde))
+        sel &= (~pd.isnull(df.tls_duration))
+        sel &= (~pd.isnull(df.tls_distinct_transit_count))
+        sel &= (np.isfinite(df.tls_odd_even))
+
+        #
+        # TLS requirements.
+        # 1. At least three transits.
+        # 2. Depth < 20%, i.e., excluding mega-obvious EBs.  Odd-even
+        # requirements are done after vetting reports (since three-transit
+        # cases can fail to converge).
+        #
+
+        sel &= (df.tls_distinct_transit_count >= 3)
+        sel &= (df.tls_depth >= 0.8)
+
+    if apply_star_cuts:
+
+        #
+        # Parallax cuts: to be able to follow it up, the star pretty much
+        # always has to be within ~1 kpc (i.e., parallax < 1 mas).  Also, if
+        # the Gaia parallax solution has S/N < 3, something is probably wrong.  
+        #
+        sel &= (df.parallax/df.parallax_error > 3)
+        sel &= (df.parallax > 1)
+
+
+    if apply_subgyr_cuts:
+
+        #
+        # LS gave finite period, and amplitude.
+        #
+        sel &= (~pd.isnull(df.ls_period))
+        sel &= (~pd.isnull(df.ls_amplitude))
+
+        if apply_singlesector_cuts:
+
+            # NB. some M dwarfs at >=Praesepe age do have rotation periods
+            # longer than 15 days.  However we won't reliably be able to
+            # measure their rotation periods.
+
+            sel &= df.ls_period < 15
+
+        #
+        # Bp-Rp > 0.5. Rotation periods aren't measurable at hotter
+        # temperatures.
+        #
+        bpmrp = df.phot_bp_mean_mag - df.phot_rp_mean_mag
+        sel &= (bpmrp > 0.5)
+
+        #
+        # Rotation and color imply age below 1 Gyr.
+        #
+
+        sel &= (df.prot_color_class <= 2)
+
+    return df[sel]
+
+
+
+# source_id;ls_period;ls_fap;ls_amplitude;tls_period;tls_sde;tls_t0;tls_depth;tls_duration;tls_distinct_transit_count;tls_odd_even;dtr_method;xcc;ycc;ra_x;dec_x;ra_y;dec_y;parallax;parallax_error;pmra;pmdec;phot_g_mean_mag;phot_rp_mean_mag;phot_bp_mean_mag;cluster;age;mean_age;reference_id;reference_bibcode
+df = pd.read_csv("initial_period_finding_results_supplemented.csv", sep=';')
+
+# Require light curves with finite TLS t0, period, SDE, and LS period.
+sel = (
+    (~pd.isnull(df.tls_t0)) &
+    (~pd.isnull(df.tls_period)) &
+    (~pd.isnull(df.tls_sde)) &
+    (~pd.isnull(df.ls_period))
+)
+
+# Require period < 20 days for single sector
+# (The max period in the search is 27 days, but there's a big systematic
+# pileup).
+if is_single_sector:
+    sel &= (df.tls_period < 21)
+
+
+# Star sample cuts: cluster, age, etc.
+
+# Parallax cuts: to be able to follow it up
+
+# LS cuts: on period and amplitude, to match the color and intended ages to
+# search.  If the star isn't rotationally variable... there's a tiny chance
+# that it's actually young.
+
+# TLS cuts: depth, distinct transit count, odd/even.
+
+# TLS cuts: tls_sde and tls_period boundary.
+
+sdf = df[sel]
+
+
+
 
 
 
