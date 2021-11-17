@@ -53,6 +53,7 @@ from astropy.timeseries import LombScargle
 from transitleastsquares import transitleastsquares
 
 from astrobase import lcmath
+from scipy.interpolate import interp1d
 
 import multiprocessing as mp
 
@@ -80,19 +81,12 @@ def main():
 
     check_dependencies()
 
-    for s in range(14, 15):
+    for s in range(14, 20):
         do_initial_period_finding(
             sectornum=s, nworkers=nworkers, maxworkertasks=1000,
             outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
             OC_MG_CAT_ver=0.6
         )
-    msg = (
-        """
-        After running, you need to manually tune the SNR distribution for which
-        you consider objects, in `do_initial_period_finding`.
-        """
-    )
-    LOGINFO(msg)
 
 
 def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
@@ -164,7 +158,8 @@ def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
         'tls_t0': results.T0,
         'tls_depth': results.depth,
         'tls_duration': results.duration,
-        'tls_distinct_transit_count': results.distinct_transit_count,  # The number of transits with intransit data points
+        # The number of transits with intransit data points
+        'tls_distinct_transit_count': results.distinct_transit_count,
         'tls_odd_even': results.odd_even_mismatch,
         'dtr_method': dtr_method
     }
@@ -257,7 +252,7 @@ def do_initial_period_finding(
     maxworkertasks=1000,
     outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
     OC_MG_CAT_ver=None
-):
+    ):
 
     check_dependencies()
 
@@ -351,25 +346,27 @@ def do_initial_period_finding(
 
         # those that meet the <1 Gyr requirement are "class 2"
         from cdips.gyroage import NGC6811InterpModel
-        sel = (mdf.ls_period < NGC6811InterpModel(bpmrp))
+        sel = (mdf.ls_period < NGC6811InterpModel(bpmrp, bounds_error=False))
         prot_color_class[sel] = 2
 
         # those that meet the <700 Myr requirement are "class 1"
         from cdips.gyroage import PraesepeInterpModel
-        sel = (mdf.ls_period < PraesepeInterpModel(bpmrp))
+        sel = (mdf.ls_period < PraesepeInterpModel(bpmrp, bounds_error=False))
         prot_color_class[sel] = 1
 
         # those that meet the <120 Myr requirement are "class 0"
         from cdips.gyroage import PleiadesInterpModel
-        sel = (mdf.ls_period < PleiadesInterpModel(bpmrp))
+        sel = (mdf.ls_period < PleiadesInterpModel(bpmrp, bounds_error=False))
         prot_color_class[sel] = 0
 
         mdf['prot_color_class'] = prot_color_class
 
         # ";" sep needed b/c reference is ","-separated
         mdf.to_csv(outpath, index=False, sep=';')
-        LOGINFO('made {}'.format(outpath))
+        LOGINFO(f'made {outpath}')
+
     else:
+
         LOGINFO('found supplemented periodfinding results, loading them')
         mdf = pd.read_csv(outpath, sep=';')
 
@@ -381,6 +378,7 @@ def do_initial_period_finding(
         u_ref, u_ref_count = ('N/A', 0)
     u_cluster, u_cluster_count = np.unique(
         np.array(mdf['cluster']).astype(str), return_counts=True)
+
     outpath = os.path.join(outdir, 'which_references_and_clusters_matter.txt')
 
     if not os.path.exists(outpath):
@@ -450,7 +448,7 @@ def do_initial_period_finding(
         SEARCHTYPE, mdf
     )
     LOGINFO(f'After selection, {len(smdf)} LCs remain '
-            '({100*len(smdf)/len(mdf):.2f}%).')
+            f'({100*len(smdf)/len(mdf):.2f}%).')
     LOGINFO(f'Proceeding to generate SDE limit.')
 
     limit, abovelimit = get_tls_sde_versus_period_detection_boundary(
@@ -617,7 +615,7 @@ def get_tls_sde_versus_period_detection_boundary(tls_sde, tls_period,
 
     N_lcs = len(tls_period)
 
-    WRN_THRESHOLD = 1e4
+    WRN_THRESHOLD = 5e3
 
     if N_lcs < WRN_THRESHOLD:
         msg = (
@@ -632,8 +630,13 @@ def get_tls_sde_versus_period_detection_boundary(tls_sde, tls_period,
     base_window = (tls_period > 2) & (tls_period < 10)
     sde_95 = np.percentile(tls_sde[base_window], 95)
 
-    # ~2e4 to 1e5 LCs total typical per sector.
-    N_bins = int(N_lcs / 100)
+    # ~1e4 LCs total typical per sector (after applying viable star cuts).
+    # --> ~200 stars per bin.
+    if N_lcs < 2e4:
+        denom = 50
+    else:
+        denom = 100
+    N_bins = int(N_lcs / denom)
 
     hist, bin_edges = np.histogram(np.log10(tls_period), N_bins)
 
@@ -665,13 +668,13 @@ def get_tls_sde_versus_period_detection_boundary(tls_sde, tls_period,
         elif count > hist_95:
             this_sde = np.percentile(these_sdes, 99.5)
         elif count > hist_90:
-            this_sde = np.percentile(these_sdes, 99)
-        elif count > hist_75:
             this_sde = np.percentile(these_sdes, 98)
-        elif count > hist_50:
+        elif count > hist_75 and N_lcs > int(2e4):
             this_sde = np.percentile(these_sdes, 97)
+        elif count > hist_50 and N_lcs > int(2e4):
+            this_sde = np.percentile(these_sdes, 96)
         else:
-            this_sde = np.percentile(these_sdes, 80)
+            this_sde = sde_95
 
         midpoints.append(midpoint)
         if len(these_sdes) > N_cutoff:
@@ -688,7 +691,7 @@ def get_tls_sde_versus_period_detection_boundary(tls_sde, tls_period,
     period_bin_edges = 10**bin_edges
 
     fn_log10period_to_limit = interp1d(
-        midpoints, sde_boundary, kind='quadratic', bounds_error=False,
+        midpoints, sde_boundary, kind='linear', bounds_error=False,
         fill_value='extrapolate'
     )
 
@@ -746,8 +749,6 @@ def get_tls_sde_versus_period_detection_boundary(tls_sde, tls_period,
         plt.close('all')
 
     return limit, abovelimit.astype(int)
-
-
 
 
 if __name__ == "__main__":

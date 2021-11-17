@@ -1,3 +1,13 @@
+"""
+Contents:
+
+Visualize Cutis+2020 rotation periods.
+    plot_Prot_BpmRp0
+Interpolation between (BP-RP)_0 and rotation period.
+    PleiadesInterpModel
+    PraesepeInterpModel
+    NGC6811InterpModel
+"""
 import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
 from astropy.table import Table
@@ -81,7 +91,7 @@ def _get_Curtis20_data(cluster):
     return df
 
 
-def PleiadesInterpModel(BpmRp0):
+def PleiadesInterpModel(BpmRp0, bounds_error=True):
 
     df = pd.read_csv(
         join(DATADIR, "LITERATURE_DATA",
@@ -91,7 +101,7 @@ def PleiadesInterpModel(BpmRp0):
 
     fn_BpmRp0_t0_prot = interp1d(
         df.bpmrp0, df.Prot, kind='quadratic',
-        bounds_error=True, fill_value=np.nan
+        bounds_error=bounds_error, fill_value=np.nan
     )
 
     Protmod = fn_BpmRp0_t0_prot(BpmRp0)
@@ -99,7 +109,7 @@ def PleiadesInterpModel(BpmRp0):
     return Protmod
 
 
-def PraesepeInterpModel(BpmRp0):
+def PraesepeInterpModel(BpmRp0, bounds_error=True):
 
     df = pd.read_csv(
         join(DATADIR, "LITERATURE_DATA",
@@ -109,7 +119,7 @@ def PraesepeInterpModel(BpmRp0):
 
     fn_BpmRp0_t0_prot = interp1d(
         df.bpmrp0, df.Prot, kind='quadratic',
-        bounds_error=True, fill_value=np.nan
+        bounds_error=bounds_error, fill_value=np.nan
     )
 
     Protmod = fn_BpmRp0_t0_prot(BpmRp0)
@@ -117,7 +127,7 @@ def PraesepeInterpModel(BpmRp0):
     return Protmod
 
 
-def NGC6811InterpModel(BpmRp0):
+def NGC6811InterpModel(BpmRp0, bounds_error=True):
 
     df = pd.read_csv(
         join(DATADIR, "LITERATURE_DATA",
@@ -127,7 +137,7 @@ def NGC6811InterpModel(BpmRp0):
 
     fn_BpmRp0_t0_prot = interp1d(
         df.bpmrp0, df.Prot, kind='quadratic',
-        bounds_error=True, fill_value=np.nan
+        bounds_error=bounds_error, fill_value=np.nan
     )
 
     Protmod = fn_BpmRp0_t0_prot(BpmRp0)
