@@ -443,23 +443,29 @@ def do_initial_period_finding(
     LOGINFO(msg)
 
     SEARCHTYPE = 'SINGLESECTOR_TRANSITING_PLANETS_AROUND_SUBGYR_STARS'
+    LOGINFO(42*'-')
+    LOGINFO(f'Applying star+planet+age selection function for {SEARCHTYPE}')
+    LOGINFO(f'For this sector/cam/ccd, started with {len(mdf)} LCs.')
     smdf = select_periodfinding_results_given_searchtype(
         SEARCHTYPE, mdf
     )
+    LOGINFO(f'After selection, {len(smdf)} LCs remain '
+            '({100*len(smdf)/len(mdf):.2f}%).')
+    LOGINFO(f'Proceeding to generate SDE limit.')
 
     limit, abovelimit = get_tls_sde_versus_period_detection_boundary(
         smdf.tls_sde, smdf.tls_period
     )
-    df['limit'] = limit
-    df['abovelimit'] = abovelimit
+    smdf['limit'] = limit
+    smdf['abovelimit'] = abovelimit
 
     outpath = os.path.join(
         resultsdir, 'initial_period_finding_results_with_limit.csv'
     )
-    df.to_csv(outpath, index=False)
-    LOGINFO('made {}'.format(outpath))
+    smdf.to_csv(outpath, index=False)
+    LOGINFO(f'made {outpath}')
 
-    plot_initial_period_finding_results(df, resultsdir)
+    plot_initial_period_finding_results(smdf, resultsdir)
 
     return
 
@@ -592,45 +598,6 @@ def select_periodfinding_results_given_searchtype(SEARCHTYPE, df):
         sel &= (df.prot_color_class <= 2)
 
     return df[sel]
-
-
-
-# source_id;ls_period;ls_fap;ls_amplitude;tls_period;tls_sde;tls_t0;tls_depth;tls_duration;tls_distinct_transit_count;tls_odd_even;dtr_method;xcc;ycc;ra_x;dec_x;ra_y;dec_y;parallax;parallax_error;pmra;pmdec;phot_g_mean_mag;phot_rp_mean_mag;phot_bp_mean_mag;cluster;age;mean_age;reference_id;reference_bibcode
-df = pd.read_csv("initial_period_finding_results_supplemented.csv", sep=';')
-
-# Require light curves with finite TLS t0, period, SDE, and LS period.
-sel = (
-    (~pd.isnull(df.tls_t0)) &
-    (~pd.isnull(df.tls_period)) &
-    (~pd.isnull(df.tls_sde)) &
-    (~pd.isnull(df.ls_period))
-)
-
-# Require period < 20 days for single sector
-# (The max period in the search is 27 days, but there's a big systematic
-# pileup).
-if is_single_sector:
-    sel &= (df.tls_period < 21)
-
-
-# Star sample cuts: cluster, age, etc.
-
-# Parallax cuts: to be able to follow it up
-
-# LS cuts: on period and amplitude, to match the color and intended ages to
-# search.  If the star isn't rotationally variable... there's a tiny chance
-# that it's actually young.
-
-# TLS cuts: depth, distinct transit count, odd/even.
-
-# TLS cuts: tls_sde and tls_period boundary.
-
-sdf = df[sel]
-
-
-
-
-
 
 
 def get_tls_sde_versus_period_detection_boundary(tls_sde, tls_period,
