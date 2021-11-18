@@ -265,8 +265,12 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         'clipped_flat_flux': clipped_flat_flux,
         # what does the detrending algorithm give as the "trend"?
         'trend_flux': trend_flux,
+        'trend_time': _time[sel0],
         # what method was used? if "best", gives "best-notch" or "best-locor"
-        'dtr_method_used': dtr_method_used
+        'dtr_method_used': dtr_method_used,
+        # times and fluxes used
+        'search_time': search_time,
+        'search_flux': search_flux
     }
     if isinstance(lsp_dict, dict):
         # in most cases, cache the LS period, amplitude, and FAP

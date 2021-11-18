@@ -12,12 +12,11 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
-    (tfa_sr_paths, lcbasedir, resultsdir,
-    cddf, supplementstatsdf, pfdf, toidf,
-    k13_notes_df, sector) = (
-            ivri.initialize_vetting_report_information(sector, cdips_cat_vnum,
-                                                       baseresultsdir=outdir)
+    (lc_paths, lcbasedir, resultsdir, cdips_df, supplementstatsdf, pfdf, toidf,
+     sector) = (
+            ivri.initialize_vetting_report_information(sector, cdips_cat_vnum)
     )
+
 
     if sector == 6:
         ids_to_test = [
@@ -90,6 +89,11 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
             # '6011518462675791872',
         ]
 
+    if sector == 14:
+        ids_to_test = [
+            '860577889815369344'
+        ]
+
     for id_to_test in ids_to_test:
 
         existing_report_files = glob(
@@ -100,13 +104,13 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
                 os.remove(f)
                 print('removing {} to make for test_vetting_report'.format(f))
 
-        paths = [f for f in tfa_sr_paths if id_to_test in f]
+        paths = [f for f in lc_paths if id_to_test in f]
 
         mavp.make_all_vetting_reports(
-            paths, lcbasedir, resultsdir, cddf, supplementstatsdf, pfdf,
-            toidf, k13_notes_df, show_rvs=True, sector=sector
+            paths, lcbasedir, resultsdir, cdips_df, supplementstatsdf, pfdf,
+            toidf, show_rvs=True, sector=sector
         )
 
 
 if __name__ == "__main__":
-    test_vetting_report(sector=8, cdips_cat_vnum=0.6)
+    test_vetting_report(sector=14, cdips_cat_vnum=0.6)

@@ -64,6 +64,19 @@ def check_dependencies():
     assert int(wotanversiontuple[0]) >= 1
     assert int(wotanversiontuple[1]) >= 10, updatemsg
 
+    #
+    # TLS bleeding edge install for verbose kwarg, among others
+    #
+    from transitleastsquares.tls_constants import TLS_VERSION
+    tlsversion = TLS_VERSION.split(' ')[4].split('.')
+    updatemsg = (
+        'Need to update transitleastsquares. Please clone & setup.py '
+        'install https://github.com/hippke/tls'
+    )
+    assert int(tlsversion[0]) >= 1
+    assert int(tlsversion[1]) >= 0, updatemsg
+    assert int(tlsversion[2]) >= 28, updatemsg
+
     # check if pspline works with the expected number of args as of wotan v1.10
     # nb. also requires the bugfix with the stdev cut.
     rng = np.random.default_rng(42)
@@ -96,6 +109,13 @@ def check_dependencies():
     from notch_and_locor.core import rcomb
 
     print('testing.check_dependencies passed!')
+
+    #
+    # photutils: used in vetting report creation
+    # $ conda install -c conda-forge photutils
+    #
+    import photutils
+
 
 
 def assert_lsperiod_is_approx(time, flux, err, target_period, significant=4,

@@ -77,17 +77,16 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         ##########
         # page 1
         ##########
-        #FIXME FIXME FIXME FIXME TODO TODO TODO REFACTOR FROM HERE..
-        fluxap = 'IRM1' #FIXME: ??
+        rawap = 'IRM1'
         pcaap = 'PCA1'
         try:
-            fig, tlsp, _ = vp.two_periodogram_checkplot(
+            fig, tlsp, _, dtrdict = vp.two_periodogram_checkplot(
                 lc, hdr, supprow, pfrow, mask_orbit_edges=mask_orbit_edges,
-                fluxap=fluxap, nworkers=nworkers)
+                fluxap=pcaap, nworkers=nworkers)
         except Exception as e:
             # NOTE: if this is raised, probably a detrending singularity issue.
             # perhaps fine-tune the cutoff further.
-            raise(e)
+            raise('two_periodogram_checkplot failed: '+str(e))
             return
         pdf.savefig(fig)
         plt.close()
@@ -97,13 +96,9 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         ##########
         # page 2
         ##########
-        ap_index=2
+        ap_index=1
         time, rawmag, pcamag, bkgdval, pcatime = (
-            lc['TMID_BJD'],
-            lc['IRM2'],
-            lc[pcaap],
-            lc['BGV'],
-            lc['TMID_BJD']
+            lc['TMID_BJD'], lc[rawap], lc[pcaap], lc['BGV'], lc['TMID_BJD']
         )
 
         t0, per = tlsp['tlsresult'].T0, tlsp['tlsresult'].period
@@ -113,11 +108,13 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         tmag = hdr['TESSMAG']
         customstr = '\nT = {:.1f}'.format(float(tmag))
 
+        #FIXME FIXME TODO: err you might want to show the outlier points on
+        #this?
         fig = vp.plot_raw_pca_bkgd(time, rawmag, pcamag, bkgdval, ap_index,
                                    supprow, pfrow,
                                    obsd_midtimes=obsd_midtimes,
                                    xlabel='BJDTDB', customstr=customstr,
-                                   pcatime=pcatime, is_tfasr=True,
+                                   dtrdict=dtrdict,
                                    figsize=(30,20))
         pdf.savefig(fig)
         plt.close()
@@ -125,9 +122,10 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         ##########
         # page 3 -- it's a QLP ripoff
         ##########
+        stime, sflux = dtrdict['search_time'], dtrdict['search_flux']
         fig, infodict = vp.transitcheckdetails(
-            rawmag, time, tlsp, mdf, hdr, supprow, pfrow,
-            obsd_midtimes=obsd_midtimes, pcamag=pcasrmag, pcatime=pcatime,
+            stime, sflux, tlsp, mdf, hdr, supprow, pfrow, dtrdict,
+            obsd_midtimes=obsd_midtimes,
             figsize=(30,20)
         )
         pdf.savefig(fig)
@@ -146,17 +144,6 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
 
         ##########
         # page 5
-        ##########
-        #FIXME k13_notes_df to remove
-        fig, mmbr_dict = vp.cluster_membership_check(hdr, supprow, infodict,
-                                                     suppfulldf, mdf,
-                                                     k13_notes_df,
-                                                     figsize=(30,16))
-        pdf.savefig(fig)
-        plt.close()
-
-        ##########
-        # page 6
         ##########
 
         ra_obj, dec_obj = hdr['RA_OBJ'], hdr['DEC_OBJ']
@@ -217,13 +204,11 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         )
 
         ##########
-        # page 7
+        # page 6
         ##########
-        #FIXME k13_notes_df to remove
         info = (
              ini.get_group_and_neighborhood_information(
-                 sourceid, mmbr_dict=mmbr_dict, k13_notes_df=k13_notes_df,
-                 overwrite=0)
+                 sourceid, overwrite=0)
         )
 
         if isinstance(info, tuple):

@@ -40,10 +40,6 @@ k18_path_d = {
     'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/cluster_data/Kounkel_2018_orion_table2_cut_only_source_cluster.csv'
 }
 
-K13_GAIA_DIR = k13_dir_d[socket.gethostname()]
-KC19_PATH = kc19_path_d[socket.gethostname()]
-K18_PATH = k18_path_d[socket.gethostname()]
-
 #############
 # functions #
 #############
@@ -205,6 +201,12 @@ def get_group_and_neighborhood_information(
         generation will be forced without verifying that the target "source_id"
         is a member of the group.
     """
+
+    #FIXME will probably want to remove
+    K13_GAIA_DIR = k13_dir_d[socket.gethostname()]
+    KC19_PATH = kc19_path_d[socket.gethostname()]
+    K18_PATH = k18_path_d[socket.gethostname()]
+    #FIXME will probably want to remove
 
     row = get_cdips_pub_catalog_entry(source_id, ver=0.4)
 

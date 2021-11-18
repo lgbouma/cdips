@@ -1,8 +1,39 @@
+#############
+## LOGGING ##
+#############
+
+import logging
+from astrobase import log_sub, log_fmt, log_date_fmt
+
+DEBUG = False
+if DEBUG:
+    level = logging.DEBUG
+else:
+    level = logging.INFO
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig(
+    level=level,
+    style=log_sub,
+    format=log_fmt,
+    datefmt=log_date_fmt,
+)
+
+LOGDEBUG = LOGGER.debug
+LOGINFO = LOGGER.info
+LOGWARNING = LOGGER.warning
+LOGERROR = LOGGER.error
+LOGEXCEPTION = LOGGER.exception
+
+#############
+## IMPORTS ##
+#############
+
 from glob import glob
 import os, textwrap, re
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.colors import ListedColormap
+from copy import deepcopy
 
 from astrobase import periodbase, checkplot
 from astrobase.checkplot.png import _make_phased_magseries_plot
@@ -30,7 +61,6 @@ from astroquery.gaia import Gaia
 from astroquery.simbad import Simbad
 from astroquery.mast import Catalogs
 
-DEBUG = False
 import multiprocessing as mp
 nworkers = mp.cpu_count()
 
@@ -38,6 +68,7 @@ def _given_mag_get_flux(mag, err_mag=None):
     # wrapper to avoid breaking dependencies
     from cdips.utils.lcutils import _given_mag_get_flux
     return _given_mag_get_flux(mag, err_mag=err_mag)
+
 
 def _insert_newlines(string, every=64):
     lines = []
@@ -47,52 +78,50 @@ def _insert_newlines(string, every=64):
 
 
 def _get_a_given_P_and_Mstar(period, mstar):
-
     return (
         const.G * mstar / (4*np.pi*np.pi) * period**2
     )**(1/3.)
 
 
-def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
+def two_periodogram_checkplot(lc, hdr, supprow, pfrow,
                               mask_orbit_edges=True, fluxap=None,
                               nworkers=32):
 
-    time, mag = lc_sr['TMID_BJD'], lc_sr[fluxap]
+    time, mag = lc['TMID_BJD'], lc[fluxap]
 
-    #FIXME FIXME FIXME FIXME
-    #FIXME this all wrong. you want REVISED the DEFAULT DETRENDING that was
-    #implemented in the TLS period search here
-    try:
-        time, mag = moe.mask_orbit_start_and_end(
-            time, mag, raise_expectation_error=False
+    #
+    # detrend the light curve
+    #
+    dtr_dict = {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
+    lsp_options = {'period_min':0.1, 'period_max':20}
+    search_time, search_flux, dtr_stages_dict = (
+        dtr.clean_rotationsignal_tess_singlesector_light_curve(
+            time, mag, magisflux=False, dtr_dict=dtr_dict,
+            lsp_dict=None, maskorbitedge=mask_orbit_edges, lsp_options=lsp_options,
+            verbose=False
         )
-    except AssertionError:
-        # got more gaps than expected. ignore.
-        pass
+    )
 
-    flux = _given_mag_get_flux(mag)
+    #
+    # run the periodograms
+    #
+    time = deepcopy(search_time)
+    flux = deepcopy(search_flux)
     err = np.ones_like(flux)*1e-4
-
-    time, flux, err = sigclip_magseries(time, flux, err, magsarefluxes=True,
-                                        sigclip=[50,5])
-
-    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
-    if is_pspline_dtr:
-        flux, _ = dtr.detrend_flux(time, flux)
-    assert len(flux) == len(time)
 
     spdm = periodbase.stellingwerf_pdm(time, flux, err, magsarefluxes=True,
                                        startp=0.1, endp=19, nworkers=nworkers)
 
     try:
         tlsp = periodbase.tls_parallel_pfind(time, flux, err, magsarefluxes=True,
-                                             tls_rstar_min=0.1, tls_rstar_max=10,
-                                             tls_mstar_min=0.1, tls_mstar_max=5.0,
+                                             tls_rstar_min=0.1, tls_rstar_max=5,
+                                             tls_mstar_min=0.1, tls_mstar_max=3.0,
                                              tls_oversample=8, tls_mintransits=1,
                                              tls_transit_template='default',
                                              nbestpeaks=5, sigclip=[50.,5.],
                                              nworkers=nworkers)
     except ValueError as e:
+        LOGERROR(f'tls_parallel_pfind error:\n{e}\n. Escaping...')
         fig = plt.Figure(figsize=(30,24))
         return fig, np.nan, np.nan
 
@@ -128,23 +157,23 @@ def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
         ax.get_xaxis().set_tick_params(which='both', direction='in',
                                        labelsize='xx-large')
 
-    return fig, tlsp, spdm
+    return fig, tlsp, spdm, dtr_stages_dict
 
 
-
-def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
+def plot_raw_pca_bkgd(time, rawmag, pcamag, bkgdval, ap_index, supprow,
                       pfrow,
                       savpath=None, obsd_midtimes=None, xlabel='BJDTDB',
-                      customstr='', tfatime=None, returnfig=True,
-                      is_tfasr=True, figsize=(30,24)):
+                      customstr='', returnfig=True, dtrdict=None,
+                      figsize=(30,24)):
     """
-    Plot 3 row, 1 column plot with rows of:
+    Plot 4 row, 1 column plot with rows of:
         * raw flux vs time
-        * TFA flux vs time.
+        * pca flux vs time.
+        * detrended flux vs time.
         * bkgd val vs time.
 
     args:
-        time, rawmag, tfamag, tfamag (np.ndarray)
+        time, rawmag, pcamag, pcamag (np.ndarray)
 
         ap_index (int): integer, e.g., "2" for aperture #2.
 
@@ -155,111 +184,57 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
         customstr: string that goes on top right of plot, under a line that
         quotes the RMS
 
-        tfatime: if passed, "time" is used to plot rawmag and bkgdval,
-        "tfatime" is used to plot tfamag. Otherwise "time" is used for all of
-        them.
+        dtrdict: via detrend.clean_rotationsignal_tess_singlesector_light_curve
     """
 
-    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
-
-    # trim to orbit gaps
-    if isinstance(tfatime,np.ndarray):
-        try:
-            tfatime, tfamag = moe.mask_orbit_start_and_end(
-                tfatime, tfamag, raise_expectation_error=False
-            )
-        except AssertionError:
-            # got more gaps than expected. ignore.
-            pass
-    else:
-        raise NotImplementedError
-    try:
-        _, rawmag = moe.mask_orbit_start_and_end(
-            time, rawmag, raise_expectation_error=False
-        )
-        time, bkgdval = moe.mask_orbit_start_and_end(
-            time, bkgdval, raise_expectation_error=False
-        )
-
-    except AssertionError:
-        # got more gaps than expected. ignore.
-        pass
-
     rawflux = _given_mag_get_flux(rawmag)
-    tfaflux = _given_mag_get_flux(tfamag)
+    pcaflux = _given_mag_get_flux(pcamag)
 
-    tfatime, tfaflux, _ = sigclip_magseries(tfatime, tfaflux,
-                                            np.ones_like(tfaflux)*1e-4,
-                                            magsarefluxes=True, sigclip=[50,5])
-
-    if is_pspline_dtr:
-        flat_flux, trend_flux = dtr.detrend_flux(time, rawflux)
-        if len(time) != len(trend_flux):
-            raise ValueError('got length of array error')
+    trend_time, trend_flux = dtrdict['trend_time'], dtrdict['trend_flux']
+    search_time, search_flux = dtrdict['search_time'], dtrdict['search_flux']
 
     ##########################################
 
     plt.close('all')
-    nrows = 3 if not is_pspline_dtr else 4
+    nrows = 4
     fig, axs = plt.subplots(nrows=nrows, ncols=1, sharex=True, figsize=figsize)
 
     axs = axs.flatten()
 
     apstr = 'AP{:d}'.format(ap_index)
-    if is_tfasr and not is_pspline_dtr:
-        stagestrs = ( ['RM{:d}'.format(ap_index),
-                       'TF{:d}SR'.format(ap_index),
-                       'BKGD{:d}'.format(ap_index)] )
-    elif is_tfasr and is_pspline_dtr:
-        stagestrs = ( ['RM{:d}'.format(ap_index),
-                       'TF{:d}'.format(ap_index),
-                       'DTR{:d}'.format(ap_index),
-                       'BKGD{:d}'.format(ap_index)] )
-    else:
-        raise NotImplementedError('this case is never called')
+    stagestrs = ( ['RM{:d}'.format(ap_index),
+                   'PCA{:d}'.format(ap_index),
+                   'DTR{:d}'.format(ap_index),
+                   'BKGD{:d}'.format(ap_index)] )
 
-    if not is_pspline_dtr:
-        yvals = [rawflux,tfaflux,bkgdval]
-    else:
-        yvals = [rawflux,tfaflux,flat_flux,bkgdval]
+    yvals = [rawflux,pcaflux,search_flux,bkgdval]
+    xvals = [time,time,search_time,time]
     nums = list(range(len(yvals)))
 
     if DEBUG:
         df = pd.DataFrame({
-            'rawflux':rawflux,
-            'tfaflux':tfaflux,
-            'flat_flux':flat_flux,
-            'bkgdval':bkgdval,
             'time':time,
-            'tfatime':tfatime
+            'rawflux':rawflux,
+            'pcaflux':pcaflux,
+            'search_time':search_time,
+            'search_flux':search_flux,
+            'bkgdval':bkgdval
         })
         source_id = pfrow.source_id.squeeze()
         outpath = 'example_data_{}.csv'.format(source_id)
         df.to_csv(
             outpath, index=False
         )
-        print('made {}'.format(outpath))
+        LOGINFO('made {}'.format(outpath))
 
-    for ax, yval, txt, num in zip(axs, yvals, stagestrs, nums):
+    for ax, yval, xval, txt, num in zip(axs, yvals, xvals, stagestrs, nums):
 
-        if 'TF' in txt:
-            ax.scatter(tfatime, yval, c='black', alpha=0.9, zorder=2, s=50,
-                       rasterized=True, linewidths=0)
-        elif 'BKGD' in txt or 'RM' in txt or 'DTR' in txt:
-            if 'DTR' in txt:
-                stime, sflux, _ = sigclip_magseries(
-                    time, yval, np.ones_like(yval)*1e-4, magsarefluxes=True,
-                    sigclip=[50,3]
-                )
-                ax.scatter(stime, sflux, c='black', alpha=0.9, zorder=2, s=50,
-                           rasterized=True, linewidths=0)
-            else:
-                ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
-                           rasterized=True, linewidths=0)
+        ax.scatter(xval, yval, c='black', alpha=0.9, zorder=2, s=50,
+                   rasterized=True, linewidths=0)
 
-        if 'RM' in txt and len(stagestrs)==4:
-            ax.scatter(time, trend_flux, c='red', alpha=0.9, zorder=1, s=20,
-                       rasterized=True, linewidths=0)
+        if 'PCA' in txt and len(stagestrs)==4:
+            ax.scatter(trend_time, trend_flux, c='red', alpha=0.9, zorder=1,
+                       s=20, rasterized=True, linewidths=0)
 
         if num in [0]:
             txt_x, txt_y = 0.99, 0.98
@@ -301,15 +276,10 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
     ax_hidden.tick_params(labelcolor='none', top=False, bottom=False,
                           left=False, right=False)
 
-    if not is_pspline_dtr:
-        axs[0].set_ylabel('raw flux IRM2', fontsize='xx-large', labelpad=27)
-        axs[1].set_ylabel('detrended flux TFASR2', fontsize='xx-large', labelpad=27)
-        axs[2].set_ylabel('background [ADU]', fontsize='xx-large', labelpad=27)
-    else:
-        axs[0].set_ylabel('raw flux IRM2', fontsize='xx-large', labelpad=27)
-        axs[1].set_ylabel('tfa flux TFA2', fontsize='xx-large', labelpad=27)
-        axs[2].set_ylabel('detrended flux DTR2', fontsize='xx-large', labelpad=27)
-        axs[3].set_ylabel('background [ADU]', fontsize='xx-large', labelpad=27)
+    axs[0].set_ylabel(f'raw flux IRM{ap_index:d}', fontsize='xx-large', labelpad=27)
+    axs[1].set_ylabel(f'pca flux PCA{ap_index:d}', fontsize='xx-large', labelpad=27)
+    axs[2].set_ylabel(f'detrended flux DTR{ap_index:d}', fontsize='xx-large', labelpad=27)
+    axs[3].set_ylabel('background [ADU]', fontsize='xx-large', labelpad=27)
 
     if not savpath:
         savpath = 'temp_{:s}.png'.format(apstr)
@@ -319,10 +289,10 @@ def plot_raw_tfa_bkgd(time, rawmag, tfamag, bkgdval, ap_index, supprow,
         return fig
     else:
         fig.savefig(savpath, dpi=250, bbox_inches='tight')
-        print('%sZ: made plot: %s' % (datetime.utcnow().isoformat(), savpath))
+        LOGINFO(f'made plot: {savpath}')
 
 
-def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
+def scatter_increasing_ap_size(lc, pfrow, infodict=None, obsd_midtimes=None,
                                xlabel='BJDTDB', customstr='', figsize=(30,24),
                                returnfigdict=True, auto_depth_vs_apsize=False):
     """
@@ -341,63 +311,49 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
 
     axs = axs.flatten()
 
-    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
-    if not is_pspline_dtr:
-        stagestrs = ['TFASR1','TFASR2','TFASR3']
-    else:
-        stagestrs = ['IRM1','IRM2','IRM3']
+    stagestrs = ['PCA1','PCA2','PCA3']
 
-    time = lc_sr['TMID_BJD']
-    yvals = [_given_mag_get_flux(lc_sr[i]) for i in stagestrs]
+    times, fluxs = [], []
 
-    try:
-        masked_yvals = []
-        times = []
-        for yval in yvals:
-            masked_yvals.append(moe.mask_orbit_start_and_end(
-                time, yval, raise_expectation_error=False)[1])
-            times.append(moe.mask_orbit_start_and_end(
-                time, yval, raise_expectation_error=False)[0])
-        yvals = masked_yvals
-        time = times[0]
-    except AssertionError:
-        # got more gaps than expected. ignore.
-        pass
+    for i in stagestrs:
 
-    nums = list(range(len(yvals)))
+        pcamag = lc[i]
+        time = lc['TMID_BJD']
+
+        dtr_dict = {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
+        lsp_options = {'period_min':0.1, 'period_max':20}
+        search_time, search_flux, dtr_stages_dict = (
+            dtr.clean_rotationsignal_tess_singlesector_light_curve(
+                time, pcamag, magisflux=False, dtr_dict=dtr_dict,
+                lsp_dict=None, maskorbitedge=True,
+                lsp_options=lsp_options, verbose=False
+            )
+        )
+
+        times.append(search_time)
+        fluxs.append(search_flux)
+
+    nums = list(range(len(fluxs)))
 
     _plottimes, _plotfluxs = [], []
-    for ax, yval, txt, num in zip(axs, yvals, stagestrs, nums):
+    for ax, stime, sflux, txt, num in zip(axs, times, fluxs, stagestrs, nums):
 
-        if is_pspline_dtr and 'IRM' in txt:
-            yval, _ = dtr.detrend_flux(time, yval)
-            stime, syval, _ = sigclip_magseries(
-                time, yval, np.ones_like(yval)*1e-4, magsarefluxes=True,
-                sigclip=[50,3]
-            )
-            ax.scatter(stime, syval, c='black', alpha=0.9, zorder=2, s=50,
-                       rasterized=True, linewidths=0)
-            _plottimes.append(stime)
-            _plotfluxs.append(syval)
-
-        else:
-            ax.scatter(time, yval, c='black', alpha=0.9, zorder=2, s=50,
-                       rasterized=True, linewidths=0)
-            _plottimes.append(time)
-            _plotfluxs.append(yval)
+        ax.scatter(stime, sflux, c='black', alpha=0.9, zorder=2, s=50,
+                   rasterized=True, linewidths=0)
+        _plottimes.append(stime)
+        _plotfluxs.append(sflux)
 
         if num in [0]:
             txt_x, txt_y = 0.99, 0.98
-            mag = yval
-            stdmmag = np.nanstd(mag)*1e3
-            if stdmmag > 0.1:
-                stattxt = '$\sigma$ = {:.1f} mmag{}'.format(stdmmag, customstr)
+            stdppt = np.nanstd(sflux)*1e3
+            if stdppt > 0.1:
+                stattxt = '$\sigma$ = {:.1f} ppt{}'.format(stdppt, customstr)
                 ndigits = 2
-            elif stdmmag > 0.01:
-                stattxt = '$\sigma$ = {:.2f} mmag{}'.format(stdmmag, customstr)
+            elif stdppt > 0.01:
+                stattxt = '$\sigma$ = {:.2f} ppt{}'.format(stdppt, customstr)
                 ndigits = 3
             else:
-                stattxt = '$\sigma$ = {:.3f} mmag{}'.format(stdmmag, customstr)
+                stattxt = '$\sigma$ = {:.3f} ppt{}'.format(stdppt, customstr)
                 ndigits = 4
             _ = ax.text(txt_x, txt_y, stattxt, horizontalalignment='right',
                     verticalalignment='top', fontsize='xx-large', zorder=3,
@@ -421,14 +377,14 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
             try:
                 tlsp = periodbase.tls_parallel_pfind(
                     t, f, np.ones_like(f)*1e-4, magsarefluxes=True,
-                    tls_rstar_min=0.1, tls_rstar_max=10, tls_mstar_min=0.1,
-                    tls_mstar_max=5.0, tls_oversample=8, tls_mintransits=1,
+                    tls_rstar_min=0.1, tls_rstar_max=5, tls_mstar_min=0.1,
+                    tls_mstar_max=3.0, tls_oversample=8, tls_mintransits=1,
                     tls_transit_template='default', nbestpeaks=5, sigclip=[50.,5.],
                     nworkers=nworkers
                 )
                 tlsps.append(tlsp)
             except ValueError as e:
-                print(e)
+                LOGINFO(e)
                 return fig, None
 
         for tlsp in tlsps:
@@ -494,7 +450,7 @@ def scatter_increasing_ap_size(lc_sr, pfrow, infodict=None, obsd_midtimes=None,
     else:
         raise NotImplementedError
         fig.savefig(savpath, dpi=250, bbox_inches='tight')
-        print('%sZ: made plot: %s' % (datetime.utcnow().isoformat(), savpath))
+        LOGINFO('%sZ: made plot: %s' % (datetime.utcnow().isoformat(), savpath))
 
 
 def _get_full_infodict(tlsp, hdr, mdf):
@@ -601,36 +557,10 @@ def _get_full_infodict(tlsp, hdr, mdf):
     return megad
 
 
-def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
-                        pfrow,
-                        obsd_midtimes=None, tfamag=None, tfatime=None,
+def transitcheckdetails(stime, sflux, tlsp, mdf, hdr, supprow,
+                        pfrow, dtrdict,
+                        obsd_midtimes=None,
                         figsize=(30,24), returnfig=True, sigclip=[50,3]):
-
-    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
-    if not is_pspline_dtr:
-        startmag = tfamag
-        starttime = tfatime
-    assert len(starttime) == len(startmag)
-
-    try:
-        time, startmag = moe.mask_orbit_start_and_end(
-            starttime, startmag, raise_expectation_error=False
-        )
-    except AssertionError:
-        # got more gaps than expected. ignore.
-        time, startmag = starttime, startmag
-
-    flux = _given_mag_get_flux(startmag)
-
-    stime, sflux, _ = sigclip_magseries(time, flux, np.ones_like(flux)*1e-4,
-                                        magsarefluxes=True, sigclip=sigclip)
-
-    if is_pspline_dtr:
-        sflux, _ = dtr.detrend_flux(stime, sflux)
-        stime, sflux, _ = sigclip_magseries(
-            stime, sflux, np.ones_like(sflux)*1e-4, magsarefluxes=True,
-            sigclip=sigclip
-        )
 
     d = _get_full_infodict(tlsp, hdr, mdf)
 
@@ -694,10 +624,9 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
                 rasterized=True, linewidths=0)
     ax0.set_xlabel('BJDTDB', fontsize='xx-large')
     ax0.xaxis.get_offset_text().set_fontsize('xx-large')
-    if not is_pspline_dtr:
-        ax0.set_ylabel('TFASR2 flux', fontsize='xx-large')
-    else:
-        ax0.set_ylabel('DTR2 flux (TFA & PSPLINE)', fontsize='xx-large')
+
+    dtr_method_used = dtrdict['dtr_method_used'].replace('best-','').upper()
+    ax0.set_ylabel(f'DTR1 flux (PCA & {dtr_method_used})', fontsize='xx-large')
 
     if isinstance(obsd_midtimes, np.ndarray):
         ylim = ax0.get_ylim()
@@ -741,20 +670,16 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
 
     Cluster: {cluster:s}
     Reference: {reference:s}
-    Othername: {ext_catalog_name:s}
-    xmatchdist: {xmatchdist:s}
     """
     )
-    if d.has_key('reference'):
+
+    max_nchar = 30
+    if 'reference' in d:
         reference_val = d['reference'][:max_nchar]
-    elif d.has_key('reference_id'):
+    elif 'reference_id' in d:
         reference_val = d['reference_id'][:max_nchar]
     else:
         reference_val = ''
-    if d.has_key('ext_catalog_name'):
-        ext_catalog_name_val=d['ext_catalog_name'][:max_nchar]
-    else:
-        ext_catalog_name_val=''
     try:
         max_nchar = 20
         outstr = txt.format(
@@ -800,15 +725,11 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
             dist_pc=float(hdr['TICGDIST']),
             AstExcNoiseSig=d['AstExcNoiseSig'],
             cluster='N/A' if pd.isnull(d['cluster']) else d['cluster'][:max_nchar],
-            reference=reference_val,
-            ext_catalog_name=ext_catalog_name_val,
-            xmatchdist=','.join(
-                ['{:.1e}"'.format(3600*float(l)) for l in str(d['dist']).split(',')]
-            )[:max_nchar]
+            reference=reference_val
         )
     except Exception as e:
         outstr = 'ERR! transitcheckdetails: got bug {}'.format(e)
-        print(outstr)
+        LOGERROR(outstr)
 
     txt_x, txt_y = 0.01, 0.99
     #ax1.text(txt_x, txt_y, textwrap.dedent(outstr),
@@ -844,7 +765,7 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
         )
 
     except (TypeError, ValueError) as e:
-        print('ERR! phased magseries ax2 failed {}'.format(repr(e)))
+        LOGINFO('ERR! phased magseries ax2 failed {}'.format(repr(e)))
         pass
 
     #
@@ -863,7 +784,7 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
             plotphase, plotmags, zorder=0, color='gray'
         )
     except (TypeError, ValueError) as e:
-        print('ERR! phased magseries ax3 failed {}'.format(repr(e)))
+        LOGINFO('ERR! phased magseries ax3 failed {}'.format(repr(e)))
         pass
 
     #
@@ -899,7 +820,7 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
             plotphase, plotmags, zorder=0, color='gray'
         )
     except (TypeError, ValueError) as e:
-        print('ERR! phased magseries ax4 failed {}'.format(repr(e)))
+        LOGINFO('ERR! phased magseries ax4 failed {}'.format(repr(e)))
         pass
 
     #
@@ -919,7 +840,7 @@ def transitcheckdetails(startmag, starttime, tlsp, mdf, hdr, supprow,
             plotphase, plotmags, zorder=0, color='gray'
         )
     except (TypeError, ValueError) as e:
-        print('ERR! phased magseries ax4 failed {}'.format(repr(e)))
+        LOGINFO('ERR! phased magseries ax5 failed {}'.format(repr(e)))
         pass
 
     outstr = textwrap.dedent(outstr).lstrip('\n')
@@ -991,13 +912,13 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         if 'K13index' in why_not_in_k13:
             why_not_in_k13 = 'K13index extra info...'
 
-    if supprow.has_key('reference'):
+    if 'reference' in supprow:
         if ('Zari_2018_UMS' in supprow['reference'].iloc[0]
             or 'Zari_2018_PMS' in supprow['reference'].iloc[0]
         ):
 
             why_not_in_k13 = str(supprow['reference'].iloc[0])
-    elif supprow.has_key('reference_id'):
+    elif 'reference_id' in supprow:
         if ('Zari_2018_UMS' in supprow['reference_id'].iloc[0]
             or 'Zari_2018_PMS' in supprow['reference_id'].iloc[0]
         ):
@@ -1187,13 +1108,13 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     d = 1/$\omega_{{as}}$ = {dist_pc:.0f} pc
     """
     )
-    if d.has_key('reference'):
+    if 'reference' in d:
         reference_val = d['reference'][:max_nchar]
-    elif d.has_key('reference_id'):
+    elif 'reference_id' in d:
         reference_val = d['reference_id'][:max_nchar]
     else:
         reference_val = ''
-    if d.has_key('ext_catalog_name'):
+    if 'ext_catalog_name' in d:
         ext_catalog_name_val=d['ext_catalog_name'][:max_nchar]
     else:
         ext_catalog_name_val=''
@@ -1231,7 +1152,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         )
     except Exception as e:
         outstr = 'clusterdetails: got bug {}'.format(e)
-        print(outstr)
+        LOGINFO(outstr)
 
     outdict = {
         'k13dist':k13dist,
@@ -1379,7 +1300,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
             0
         )
     except Exception as e:
-        print('ERR! wcs all_world2pix got {}'.format(repr(e)))
+        LOGINFO('ERR! wcs all_world2pix got {}'.format(repr(e)))
         return None, None
 
     ticids = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['ID']
@@ -1524,17 +1445,15 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     cen_x, cen_y = (cd['ctds_oot_minus_intra'][:,0],
                     cd['ctds_oot_minus_intra'][:,1])
 
-    from photutils.centroids import fit_2dgaussian
+    from photutils.centroids import centroid_2dg
 
     img = cd['m_oot_minus_intra_flux']
     mask = np.ones((10,10))
     mask[1:9,1:9] -= 1
     try:
-        gfit = fit_2dgaussian(img, mask=mask.astype(bool))
-        x_ctd = gfit.x_mean.value
-        y_ctd = gfit.y_mean.value
+        x_ctd, y_ctd = centroid_2dg(img, mask=mask.astype(bool))
     except ValueError as e:
-        print('ERR! {}'.format(repr(e)))
+        LOGINFO('ERR! {}'.format(repr(e)))
         x_ctd = np.nan
         y_ctd = np.nan
 
@@ -1620,7 +1539,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
         )
     except Exception as e:
         outstr = 'centroid analysis: got bug {}'.format(e)
-        print(outstr)
+        LOGINFO(outstr)
 
     # TEMPLATE: outstr is like "\nSome stuff\nMore stuff\n"
     outstr = textwrap.dedent(outstr)
@@ -1689,7 +1608,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
                                      cachedir='~/.astrobase/stamp-cache',
                                      verbose=True, savewcsheader=True)
     except (OSError, IndexError, TypeError) as e:
-        print('downloaded FITS appears to be corrupt, retrying...')
+        LOGERROR('downloaded FITS appears to be corrupt, retrying...')
         try:
             dss, dss_hdr = skyview_stamp(ra, dec, survey='DSS2 Red',
                                          scaling='Linear', convolvewith=None,
@@ -1699,8 +1618,8 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
                                          forcefetch=True)
 
         except Exception as e:
-            print('failed to get DSS stamp ra {} dec {}, error was {}'.
-                  format(ra, dec, repr(e)))
+            LOGERROR('failed to get DSS stamp ra {} dec {}, error was {}'.
+                     format(ra, dec, repr(e)))
             return None, None
 
     # image 1: TESS mean OOT. (data: cd['m_oot_flux'], wcs: cutout_wcs)
@@ -2024,14 +1943,14 @@ def plot_group_neighborhood(
 
         if isinstance(source_id, int) or isinstance(source_id, str):
             row = get_cdips_pub_catalog_entry(source_id, ver=0.4)
-            if row.has_key('reference'):
+            if 'reference' in row:
                 references = row['reference'].iloc[0]
-            elif row.has_key('reference_id'):
+            elif 'reference_id' in row:
                 references = row['reference_id'].iloc[0]
             else:
                 references = 'N/A'
             clusters = row['cluster'].iloc[0]
-            if row.has_key('ext_catalog_name'):
+            if 'ext_catalog_name' in row:
                 ext_catalog_names = row['ext_catalog_name'].iloc[0]
             else:
                 ext_catalog_names = 'N/A'
@@ -2122,7 +2041,7 @@ def plot_group_neighborhood(
         )
 
         fig.savefig(outpath, dpi=300, bbox_inches='tight')
-        print('made {}'.format(outpath))
+        LOGINFO('made {}'.format(outpath))
 
 
 def plot_neighborhood_only(
@@ -2340,4 +2259,4 @@ def plot_neighborhood_only(
         )
 
         fig.savefig(outpath, dpi=300, bbox_inches='tight')
-        print('made {}'.format(outpath))
+        LOGINFO('made {}'.format(outpath))

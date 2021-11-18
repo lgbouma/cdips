@@ -5,7 +5,7 @@
 import logging
 from astrobase import log_sub, log_fmt, log_date_fmt
 
-DEBUG = False
+DEBUG = True #FIXME
 if DEBUG:
     level = logging.DEBUG
 else:
@@ -32,6 +32,7 @@ import multiprocessing as mp
 import numpy as np, pandas as pd
 from astropy.io import fits
 from cdips.vetting.make_vetting_multipg_pdf import make_vetting_multipg_pdf
+from cdips.testing import check_dependencies
 
 # NOTE (PERFORMANCE WARNING): possible slowdown here -- the multithreading is
 # happening over the periodfinding and similar tasks within each vetting
@@ -43,6 +44,8 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
                              supplementstatsdf, pfdf, toidf,
                              show_rvs=True,
                              sector=None, cdipsvnum=1):
+
+    check_dependencies()
 
     for lcpath in lcpaths:
 
@@ -91,9 +94,9 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
         suppfulldf = supplementstatsdf
 
         # don't make a report if the membership claim is insufficient
-        if supprow.has_key('reference'):
+        if 'reference' in supprow:
             reference = str(supprow['reference'].iloc[0])
-        elif supprow.has_key('reference_id'):
+        elif 'reference_id' in supprow:
             reference = str(supprow['reference_id'].iloc[0])
         referencesplt = reference.split(',')
         INSUFFICIENT = ['Zari_2018_UMS']
@@ -129,14 +132,21 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
             continue
 
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
-            try:
+            if DEBUG:
                 make_vetting_multipg_pdf(lcpath, outpath, mdf,
                                          sourceid, supprow, suppfulldf, pfdf,
                                          pfrow, toidf, sector,
                                          mask_orbit_edges=True,
                                          nworkers=nworkers, show_rvs=show_rvs)
-            except Exception as e:
-                LOGWARNING('WRN! {} continue.'.format(repr(e)))
+            else:
+                try:
+                    make_vetting_multipg_pdf(lcpath, outpath, mdf,
+                                             sourceid, supprow, suppfulldf, pfdf,
+                                             pfrow, toidf, sector,
+                                             mask_orbit_edges=True,
+                                             nworkers=nworkers, show_rvs=show_rvs)
+                except Exception as e:
+                    LOGWARNING('WRN! {} continue.'.format(repr(e)))
         else:
             LOGINFO('Found {}, continue'.format(outpath))
 
