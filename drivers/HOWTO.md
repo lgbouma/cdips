@@ -33,15 +33,14 @@ TO PRODUCE PLANET CANDIDATES FROM CDIPS LCS
 3. `do_initial_period_finding`: runs detrending, LS, and TLS.
     also writes `which_references_and_clusters_matter.txt`, to get familiar
     with the clusters in any given field. also makes plots that show the
-    distribution of results.
+    distribution of results, and automatically fine-tunes the criteria for
+    "signal detection".
 
-4. manually fine-tune your criteria for "signal detection" & update
-   `do_initial_period_finding.py` (w/ the sector number too).
+4. (DEPRECATED -- only used in v0 S1-S13 reductions)
+   `reconstructive_tfa/RunTFASR.sh` does signal reconstruction for TFA
+    lightcurves.
 
-5. (DEPRECATED in >=S14) `reconstructive_tfa/RunTFASR.sh` does signal
-   reconstruction for TFA lightcurves
-
-6. `make_all_vetting_reports`: make a multipage PDF with the information needed
+5. `make_all_vetting_reports`: make a multipage PDF with the information needed
    to make classifications for vetting.
 
     * Run it twice, and verify you made all of them with

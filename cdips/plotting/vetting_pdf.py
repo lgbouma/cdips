@@ -54,10 +54,14 @@ def _get_a_given_P_and_Mstar(period, mstar):
 
 
 def two_periodogram_checkplot(lc_sr, hdr, supprow, pfrow,
-                              mask_orbit_edges=True, fluxap='TFASR2',
+                              mask_orbit_edges=True, fluxap=None,
                               nworkers=32):
 
     time, mag = lc_sr['TMID_BJD'], lc_sr[fluxap]
+
+    #FIXME FIXME FIXME FIXME
+    #FIXME this all wrong. you want REVISED the DEFAULT DETRENDING that was
+    #implemented in the TLS period search here
     try:
         time, mag = moe.mask_orbit_start_and_end(
             time, mag, raise_expectation_error=False

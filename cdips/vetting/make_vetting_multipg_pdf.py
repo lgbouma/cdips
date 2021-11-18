@@ -20,16 +20,15 @@ from astroquery.vizier import Vizier
 
 DEBUG = 0
 
-def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
+def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
                              supprow, suppfulldf, pfdf, pfrow, toidf, sector,
-                             k13_notes_df, mask_orbit_edges=True, nworkers=40,
+                             mask_orbit_edges=True, nworkers=40,
                              show_rvs=False):
     """
     args:
 
-        tfa_sr_path: path to signal-reconstructed TFA lightcurve.
-
-        lcpath: path to "main" lightcurve.
+        lcpath: path to CDIPS HLSP lightcurve.  (preferred, since PCA1 is the
+        default aperture)
 
         outpath: where we're saving the vetting pdf, by default (if
         isobviouslynottransit is False)
@@ -68,20 +67,9 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         toidf: dataframe with alerted TOI results
     """
 
-    hdul_sr = fits.open(tfa_sr_path)
     hdul = fits.open(lcpath)
 
-    lc_sr = hdul_sr[1].data
     lc, hdr = hdul[1].data, hdul[0].header
-
-    # define "detrended mag". by default, this is the TFASR signal.  however,
-    # if residual stellar variability was found after TFA detrending, then,
-    # this is defined as the RAW LC + penalized spline detrending.
-
-    # NOTE: a possible hack to force detrending from the raw LC can be set
-    # below. By default, it's not.
-    # pfrow['pspline_detrended'].iloc[0] = True
-    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
 
     # Create the PdfPages object to which we will save the pages...
     with PdfPages(outpath) as pdf:
@@ -89,11 +77,12 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 1
         ##########
-        fluxap = 'IRM2' if is_pspline_dtr else 'TFASR2'
-        tfaap = 'TFA2' if is_pspline_dtr else 'TFASR2'
+        #FIXME FIXME FIXME FIXME TODO TODO TODO REFACTOR FROM HERE..
+        fluxap = 'IRM1' #FIXME: ??
+        pcaap = 'PCA1'
         try:
             fig, tlsp, _ = vp.two_periodogram_checkplot(
-                lc_sr, hdr, supprow, pfrow, mask_orbit_edges=mask_orbit_edges,
+                lc, hdr, supprow, pfrow, mask_orbit_edges=mask_orbit_edges,
                 fluxap=fluxap, nworkers=nworkers)
         except Exception as e:
             # NOTE: if this is raised, probably a detrending singularity issue.
@@ -109,12 +98,12 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # page 2
         ##########
         ap_index=2
-        time, rawmag, tfasrmag, bkgdval, tfatime = (
+        time, rawmag, pcamag, bkgdval, pcatime = (
             lc['TMID_BJD'],
             lc['IRM2'],
-            lc_sr[tfaap],
+            lc[pcaap],
             lc['BGV'],
-            lc_sr['TMID_BJD']
+            lc['TMID_BJD']
         )
 
         t0, per = tlsp['tlsresult'].T0, tlsp['tlsresult'].period
@@ -124,11 +113,11 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         tmag = hdr['TESSMAG']
         customstr = '\nT = {:.1f}'.format(float(tmag))
 
-        fig = vp.plot_raw_tfa_bkgd(time, rawmag, tfasrmag, bkgdval, ap_index,
+        fig = vp.plot_raw_pca_bkgd(time, rawmag, pcamag, bkgdval, ap_index,
                                    supprow, pfrow,
                                    obsd_midtimes=obsd_midtimes,
                                    xlabel='BJDTDB', customstr=customstr,
-                                   tfatime=tfatime, is_tfasr=True,
+                                   pcatime=pcatime, is_tfasr=True,
                                    figsize=(30,20))
         pdf.savefig(fig)
         plt.close()
@@ -138,7 +127,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         fig, infodict = vp.transitcheckdetails(
             rawmag, time, tlsp, mdf, hdr, supprow, pfrow,
-            obsd_midtimes=obsd_midtimes, tfamag=tfasrmag, tfatime=tfatime,
+            obsd_midtimes=obsd_midtimes, pcamag=pcasrmag, pcatime=pcatime,
             figsize=(30,20)
         )
         pdf.savefig(fig)
@@ -148,7 +137,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         # page 4 
         ##########
         fig, apdict = vp.scatter_increasing_ap_size(
-            lc_sr, pfrow, infodict=infodict, obsd_midtimes=obsd_midtimes,
+            lc, pfrow, infodict=infodict, obsd_midtimes=obsd_midtimes,
             customstr=customstr, xlabel='BJDTDB', figsize=(30,20),
             auto_depth_vs_apsize=True
         )
@@ -158,6 +147,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 5
         ##########
+        #FIXME k13_notes_df to remove
         fig, mmbr_dict = vp.cluster_membership_check(hdr, supprow, infodict,
                                                      suppfulldf, mdf,
                                                      k13_notes_df,
@@ -229,6 +219,7 @@ def make_vetting_multipg_pdf(tfa_sr_path, lcpath, outpath, mdf, sourceid,
         ##########
         # page 7
         ##########
+        #FIXME k13_notes_df to remove
         info = (
              ini.get_group_and_neighborhood_information(
                  sourceid, mmbr_dict=mmbr_dict, k13_notes_df=k13_notes_df,

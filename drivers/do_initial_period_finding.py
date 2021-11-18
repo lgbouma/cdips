@@ -383,7 +383,6 @@ def do_initial_period_finding(
 
     if not os.path.exists(outpath):
         with open(outpath, mode='w') as f:
-
             txt = (
             """
             ==========================================
@@ -411,15 +410,27 @@ def do_initial_period_finding(
             """
             ).format(
                 ntotal=len(mdf),
-                top20ref=repr(u_ref[np.argsort(u_ref_count)[::-1]][:20]),
-                top20refcounts=repr(u_ref_count[np.argsort(u_ref_count)[::-1]][:20]),
-                top20refcountsfrac=repr(u_ref_count[np.argsort(u_ref_count)[::-1]][:20]/len(mdf)),
-                top20cluster=repr(u_cluster[np.argsort(u_cluster_count)[::-1]][:20]),
-                top20clustercounts=repr(u_cluster_count[np.argsort(u_cluster_count)[::-1]][:20]),
-                top20clustercountsfrac=repr(u_cluster_count[np.argsort(u_cluster_count)[::-1]][:20]/len(mdf))
+                top20ref=repr(
+                    u_ref[np.argsort(u_ref_count)[::-1]][:20]
+                ),
+                top20refcounts=repr(
+                    u_ref_count[np.argsort(u_ref_count)[::-1]][:20]
+                ),
+                top20refcountsfrac=repr(
+                    u_ref_count[np.argsort(u_ref_count)[::-1]][:20]/len(mdf)
+                ),
+                top20cluster=repr(
+                    u_cluster[np.argsort(u_cluster_count)[::-1]][:20]
+                ),
+                top20clustercounts=repr(
+                    u_cluster_count[np.argsort(u_cluster_count)[::-1]][:20]
+                ),
+                top20clustercountsfrac=repr(
+                    u_cluster_count[np.argsort(u_cluster_count)[::-1]][:20]/len(mdf)
+                )
             )
             f.write(textwrap.dedent(txt))
-        LOGINFO('made {}'.format(outpath))
+        LOGINFO(f'made {outpath}')
     else:
         pass
 
