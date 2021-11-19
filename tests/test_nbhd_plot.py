@@ -23,18 +23,18 @@ def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.6,
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
-    (tfa_sr_paths, lcbasedir, resultsdir,
-    cddf, supplementstatsdf, pfdf, toidf,
-    k13_notes_df, sector) = (
-            ivri.initialize_vetting_report_information(sector, cdips_cat_vnum,
-                                                       baseresultsdir=outdir)
+    (lc_paths, lcbasedir, resultsdir, cdips_df, supplementstatsdf, pfdf, toidf,
+     sector) = (
+            ivri.initialize_vetting_report_information(
+                sector, cdips_cat_vnum, baseresultsdir=outdir
+            )
     )
 
     info = (
          ini.get_group_and_neighborhood_information(
-             source_id, mmbr_dict=None, k13_notes_df=k13_notes_df, overwrite=0,
-             force_references=force_references,
-             force_groupname=force_groupname)
+             source_id, overwrite=0, force_references=force_references,
+             force_groupname=force_groupname
+         )
     )
 
     if isinstance(info, tuple):
@@ -45,18 +45,15 @@ def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.6,
                 pickle.dump(info, f)
                 print('made {}'.format(picklepath))
 
-        (targetname, groupname, group_df_dr2, target_df, nbhd_df,
-         cutoff_probability, pmdec_min, pmdec_max, pmra_min, pmra_max,
-         group_in_k13, group_in_cg18, group_in_kc19, group_in_k18
+        (targetname, groupname, referencename, group_df_dr2, target_df,
+         nbhd_df, pmdec_min, pmdec_max, pmra_min, pmra_max
         ) = info
 
         fig = vp.plot_group_neighborhood(
-            targetname, groupname, group_df_dr2, target_df, nbhd_df,
-            cutoff_probability, pmdec_min=pmdec_min, pmdec_max=pmdec_max,
-            pmra_min=pmra_min, pmra_max=pmra_max,
-            group_in_k13=group_in_k13, group_in_cg18=group_in_cg18,
-            group_in_kc19=group_in_kc19, group_in_k18=group_in_k18,
-            source_id=source_id, figsize=(30,20), show_rvs=True
+            targetname, groupname, referencename, group_df_dr2, target_df,
+            nbhd_df, pmdec_min=pmdec_min, pmdec_max=pmdec_max,
+            pmra_min=pmra_min, pmra_max=pmra_max, source_id=source_id,
+            figsize=(30,20), show_rvs=True
         )
 
     elif info is None:
@@ -85,8 +82,6 @@ def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.6,
 
         raise NotImplementedError
 
-    #FIXME: implement this same pattern in the driver for making the vetting
-    # reports?
     outpath = os.path.join(outdir, '{}_nbhd_plot.png'.format(source_id))
     fig.savefig(outpath)
     print('made {}'.format(outpath))
@@ -101,8 +96,8 @@ if __name__ == "__main__":
     # force_references = "Kounkel_2018_Ori" # can be none
     # force_groupname = "k18orion_25Ori-1"
 
-    source_id = '2919143383943171200'
-    sector = 7
+    source_id =  '4516549232971506560'
+    sector = 14
     force_references = None
     force_groupname = None
 

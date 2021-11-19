@@ -656,7 +656,7 @@ def transitcheckdetails(stime, sflux, tlsp, mdf, hdr, supprow,
     $\delta_{{odd}}$ vs $\delta_{{even}}$ = {odd_even_mismatch:.1f} $\sigma$
     $\delta_{{tra}}/\delta_{{occ}}$ = {psdepthratio:.2f} $\pm$ {psdepthratioerr:.2f}
 
-    Star: DR2 {sourceid}
+    Star: DR2 {source_id}
     TIC {ticid:s} - ticdist {ticdist:.2f}"
     $R_\star$ = {rstar:s} $R_\odot$, $M_\star$ = {mstar:s} $M_\odot$
     Teff = {teff:s} K
@@ -697,7 +697,7 @@ def transitcheckdetails(stime, sflux, tlsp, mdf, hdr, supprow,
             snr=d['snr'],
             snr_pink_per_transit=np.nanmean(d['snr_pink_per_transit']),
             odd_even_mismatch=d['odd_even_mismatch'],
-            sourceid=hdr['Gaia-ID'],
+            source_id=hdr['Gaia-ID'],
             rstar=str(d['rstar']),
             mstar=str(d['mstar']),
             teff=str(d['teff']),
@@ -1098,7 +1098,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
     Expect $\omega_{{K13}}$ = {omegak13:.2f} mas
     Got $\omega_{{DR2}}$ = {plx_mas:.2f} $\pm$ {plx_mas_err:.2f} mas
 
-    Star: DR2 {sourceid}
+    Star: DR2 {source_id}
     $R_\star$ = {rstar:s} $R_\odot$, $M_\star$ = {mstar:s} $M_\odot$
     Teff = {teff:s} K
     RA = {ra:.3f}, DEC = {dec:.3f}
@@ -1127,7 +1127,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
             k13type=k13type[:max_nchar],
             k13dist=k13dist,
             omegak13=k13_plx_mas,
-            sourceid=hdr['Gaia-ID'],
+            source_id=hdr['Gaia-ID'],
             rstar=str(d['rstar']),
             mstar=str(d['mstar']),
             teff=str(d['teff']),
@@ -1526,14 +1526,14 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
 
     txt = (
     """
-    DR2 {sourceid}
+    DR2 {source_id}
     ctlg - <OOT-intra>: {sep:.1f}"
     ctlg - gauss(OOT-intra): {catalog_to_gaussian_sep_arcsec:.1f}"
     """
     )
     try:
         outstr = txt.format(
-            sourceid=hdr['Gaia-ID'],
+            source_id=hdr['Gaia-ID'],
             sep=sep,
             catalog_to_gaussian_sep_arcsec=catalog_to_gaussian_sep_arcsec
         )
@@ -1672,37 +1672,24 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
 
 
 def plot_group_neighborhood(
-        targetname, groupname, group_df_dr2, target_df, nbhd_df,
-        cutoff_probability,
+        targetname, groupname, referencename, group_df_dr2, target_df, nbhd_df,
         pmdec_min=None,
         pmdec_max=None,
         pmra_min=None,
         pmra_max=None,
-        group_in_k13=False,
-        group_in_cg18=True,
-        group_in_kc19=False,
-        group_in_k18=False,
         plx_ylim=None,
         return_figure=True,
         figsize=(30,30),
         source_id=None,
-        show_rvs=False
+        show_rvs=False,
+        cdips_cat_vnum=0.6,
     ):
     """
     source_id: optional, but recommended!
     show_rvs: usually not worthwhile
     """
 
-    if group_in_k18:
-        l = 'K18 P={:d}'.format(cutoff_probability)
-    elif group_in_cg18:
-        l = 'CG18 P>{}'.format(cutoff_probability)
-    elif group_in_kc19:
-        l = 'KC19 P={:d}'.format(cutoff_probability)
-    elif group_in_k13:
-        l = 'K13 P>{}'.format(cutoff_probability)
-    else:
-        raise NotImplementedError
+    l = f'{referencename}\n{groupname}'
 
     nrows, ncols = 3, 3
     if show_rvs:
@@ -1873,8 +1860,10 @@ def plot_group_neighborhood(
     ax.set_ylim((min(xlim),max(xlim)))
 
     # set M_omega y limits
-    min_y = np.nanmin(np.array([np.nanpercentile(nbhd_yval, 2), target_yval]))
-    max_y = np.nanmax(np.array([np.nanpercentile(nbhd_yval, 98), target_yval]))
+    min_y = np.nanmin(np.array([np.nanpercentile(nbhd_yval, 2),
+                                float(target_yval)]))
+    max_y = np.nanmax(np.array([np.nanpercentile(nbhd_yval, 98),
+                                float(target_yval)]))
     edge_y = 0.01*(max_y - min_y)
     momega_ylim = [max_y+edge_y, min_y-edge_y]
     ax.set_ylim(momega_ylim)
@@ -1913,22 +1902,24 @@ def plot_group_neighborhood(
             ax = axs[3,col_ix]
 
             ax.scatter(
-                nbhd_df['radial_velocity'], nbhd_df['parallax'], c='gray', alpha=0.9,
-                zorder=2, s=15, rasterized=True, linewidths=0, label='nbhd stars'
+                nbhd_df['radial_velocity'], nbhd_df['parallax'], c='gray',
+                alpha=0.9, zorder=2, s=15, rasterized=True, linewidths=0,
+                label='nbhd stars'
             )
             ax.plot(
-                target_df['radial_velocity'], target_df['parallax'], alpha=1, mew=0.5,
-                zorder=8, label=targetname, markerfacecolor='yellow',
+                target_df['radial_velocity'], target_df['parallax'], alpha=1,
+                mew=0.5, zorder=8, label=targetname, markerfacecolor='yellow',
                 markersize=22, marker='*', color='black', lw=0
             )
             if extra_overplot:
-                l += (
+                rvl = (
                     r' ($\langle$RV$\rangle$='+
                     '{:.1f})'.format(np.nanmean(group_df_dr2.radial_velocity))
                 )
                 ax.scatter(
-                    group_df_dr2['radial_velocity'], group_df_dr2['parallax'], c='k',
-                    alpha=0.9, zorder=3, s=30, rasterized=True, linewidths=0, label=l
+                    group_df_dr2['radial_velocity'], group_df_dr2['parallax'],
+                    c='k', alpha=0.9, zorder=3, s=30, rasterized=True,
+                    linewidths=0, label=rvl
                 )
 
             ax.legend(loc='best', fontsize='x-large')
@@ -1942,7 +1933,7 @@ def plot_group_neighborhood(
         ax = axs[3,2]
 
         if isinstance(source_id, int) or isinstance(source_id, str):
-            row = get_cdips_pub_catalog_entry(source_id, ver=0.4)
+            row = get_cdips_pub_catalog_entry(source_id, ver=cdips_cat_vnum)
             if 'reference' in row:
                 references = row['reference'].iloc[0]
             elif 'reference_id' in row:

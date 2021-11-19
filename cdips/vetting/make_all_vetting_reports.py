@@ -5,7 +5,7 @@
 import logging
 from astrobase import log_sub, log_fmt, log_date_fmt
 
-DEBUG = True #FIXME
+DEBUG = False
 if DEBUG:
     level = logging.DEBUG
 else:
@@ -49,8 +49,8 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
 
     for lcpath in lcpaths:
 
-        sourceid = int(lcpath.split('gaiatwo')[1].split('-')[0].lstrip('0'))
-        mdf = cdips_df[cdips_df['source_id']==sourceid]
+        source_id = int(lcpath.split('gaiatwo')[1].split('-')[0].lstrip('0'))
+        mdf = cdips_df[cdips_df['source_id']==source_id]
         if len(mdf) != 1:
             errmsg = 'expected exactly 1 source match in CDIPS cat'
             raise AssertionError(errmsg)
@@ -62,12 +62,12 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
 
         lcname = (
             'hlsp_cdips_tess_ffi_'
-            'gaiatwo{zsourceid}-{zsector}-cam{cam}-ccd{ccd}_'
+            'gaiatwo{zsource_id}-{zsector}-cam{cam}-ccd{ccd}_'
             'tess_v{zcdipsvnum}_llc.fits'
         ).format(
             cam=cam,
             ccd=ccd,
-            zsourceid=str(sourceid).zfill(22),
+            zsource_id=str(source_id).zfill(22),
             zsector=str(sector).zfill(4),
             zcdipsvnum=str(cdipsvnum).zfill(2)
         )
@@ -90,7 +90,7 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
             'vet_'+os.path.basename(lcpath).replace('.fits','.pdf')
         )
 
-        supprow = _get_supprow(sourceid, supplementstatsdf)
+        supprow = _get_supprow(source_id, supplementstatsdf)
         suppfulldf = supplementstatsdf
 
         # don't make a report if the membership claim is insufficient
@@ -99,22 +99,22 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
         elif 'reference_id' in supprow:
             reference = str(supprow['reference_id'].iloc[0])
         referencesplt = reference.split(',')
-        INSUFFICIENT = ['Zari_2018_UMS']
+        INSUFFICIENT = ['Zari_2018_UMS', 'Zari2018ums']
         is_insufficient = [c in INSUFFICIENT for c in referencesplt]
         if np.all(is_insufficient):
             msg = (
                 'Found {} had membership only in {}: was {}. Skip.'.
-                format(sourceid, repr(INSUFFICIENT), repr(referencesplt))
+                format(source_id, repr(INSUFFICIENT), repr(referencesplt))
             )
             LOGINFO(msg)
             continue
 
-        pfrow = pfdf.loc[pfdf['source_id']==sourceid]
+        pfrow = pfdf.loc[pfdf['source_id']==source_id]
         if len(pfrow) != 1:
             if len(pfrow) == 0:
                 errmsg = (
                     '{} expected 1 source match in period find df, got {}.'
-                    .format(sourceid, len(pfrow))
+                    .format(source_id, len(pfrow))
                 )
                 raise AssertionError(errmsg)
             else:
@@ -126,7 +126,7 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
         if float(pfrow.tls_depth) < DEPTH_CUTOFF:
             msg = (
                 'Found {} had TLS depth {}. Too low. Skip.'.
-                format(sourceid, float(pfrow.tls_depth))
+                format(source_id, float(pfrow.tls_depth))
             )
             LOGINFO(msg)
             continue
@@ -134,14 +134,14 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
         if not os.path.exists(outpath) and not os.path.exists(nottransitpath):
             if DEBUG:
                 make_vetting_multipg_pdf(lcpath, outpath, mdf,
-                                         sourceid, supprow, suppfulldf, pfdf,
+                                         source_id, supprow, suppfulldf, pfdf,
                                          pfrow, toidf, sector,
                                          mask_orbit_edges=True,
                                          nworkers=nworkers, show_rvs=show_rvs)
             else:
                 try:
                     make_vetting_multipg_pdf(lcpath, outpath, mdf,
-                                             sourceid, supprow, suppfulldf, pfdf,
+                                             source_id, supprow, suppfulldf, pfdf,
                                              pfrow, toidf, sector,
                                              mask_orbit_edges=True,
                                              nworkers=nworkers, show_rvs=show_rvs)
@@ -151,13 +151,13 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
             LOGINFO('Found {}, continue'.format(outpath))
 
 
-def _get_supprow(sourceid, supplementstatsdf):
+def _get_supprow(source_id, supplementstatsdf):
 
-    mdf = supplementstatsdf.loc[supplementstatsdf['lcobj']==sourceid]
+    mdf = supplementstatsdf.loc[supplementstatsdf['lcobj']==source_id]
 
     if len(mdf) > 1:
         LOGINFO('WRN! Got multiple supplementstatsdf entries for {}'.
-              format(sourceid))
+              format(source_id))
         # Case: multiple matches. Take whichever has the least NaNs. Maintain
         # it as a ~160 column, 1 row dataframe.
         mdf = pd.DataFrame(
@@ -165,6 +165,3 @@ def _get_supprow(sourceid, supplementstatsdf):
         ).T
 
     return mdf
-
-
-

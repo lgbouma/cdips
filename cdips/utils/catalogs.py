@@ -18,7 +18,7 @@ get_tic_star_information: Given TICID, query TICv8 for arbitrary columns.
 """
 
 import pandas as pd, numpy as np
-import socket, os, json
+import socket, os, json, csv
 from astrobase.services.mast import tic_objectsearch
 from cdips.utils import today_YYYYMMDD
 TODAYSTR = '-'.join([today_YYYYMMDD()[:4],
@@ -173,19 +173,36 @@ def get_cdips_pub_catalog_entry(source_id, ver=0.6):
 
     cdips_stars_dir = dir_d[socket.gethostname()]
 
-    cdips_stars_path = os.path.join(
-        cdips_stars_dir, 'OC_MG_FINAL_v{}_publishable.csv'.format(ver)
-    )
+    if ver <= 0.4:
+        cdips_stars_path = os.path.join(
+            cdips_stars_dir, 'OC_MG_FINAL_v{}_publishable.csv'.format(ver)
+        )
+        delim = ';'
+    else:
+        cdips_stars_path = os.path.join(
+            cdips_stars_dir,
+            f'cdips_targets_v{ver}_gaiasources_Rplt16_orclose.csv'
+        )
+        delim = ','
 
     colnames = r = os.popen(
         'head -n1 {}'.format(cdips_stars_path)
     ).read()
-    colnames = colnames.rstrip('\n').split(';')
+    colnames = colnames.rstrip('\n').split(delim)
 
     rowentry = r = os.popen(
         'grep {} {}'.format(source_id, cdips_stars_path)
     ).read()
-    rowentry = rowentry.rstrip('\n').split(';')
+    if delim == ',':
+        # comma-separated ages, references, etc. are protected with the
+        # quotechar.
+        rowentry = list(csv.reader(
+            [rowentry], delimiter=',', quotechar='"')
+        )[0]
+    elif delim == ';':
+        rowentry = rowentry.rstrip('\n').split(delim)
+    else:
+        raise NotImplementedError
 
     if len(rowentry) >= 1:
 

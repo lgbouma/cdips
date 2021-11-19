@@ -1,12 +1,12 @@
 """
 Contents:
 
-    make_votable_given_source_ids
-    given_votable_get_df
-
     given_source_ids_get_gaia_data
     query_neighborhood
     given_dr2_sourceids_get_edr3_xmatch
+
+    make_votable_given_source_ids
+    given_votable_get_df
 
     edr3_propermotion_to_ICRF
 
@@ -206,13 +206,11 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
 
 
 def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
-                       is_cg18_group=False, is_kc19_group=False,
-                       is_k13_group=False, is_k18_group=False,
-                       manual_gmag_limit=None):
+                       manual_gmag_limit=16, mstr='',
+                       use_bonus_quality_cuts=True):
     """
-    Given the bounds in position and parallx corresponding to some group (e.g.,
-    from Cantat-Gaudin+2018, Kounkel & Covey 2019, Kharchenko+13, Kounkel et al
-    2018 APOGEE, etc), get the DR2 stars from the group's neighborhood.
+    Given the bounds in position and parallax corresponding to a group in the
+    CDIPS target catalogs, get the DR2 stars from the group's neighborhood.
 
     The bounds are lower and upper in ra, dec, parallax, and there is a
     limiting G magnitude. A maximum number of stars, `n_max`, are selected from
@@ -227,32 +225,21 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
 
         n_max (int): maximum number of stars in the neighborhood to acquire.
 
-        is_kc19_group (bool): if the group is from Kounkel & Covey 2019,
-        slightly different query is required.
+        mstr (str): string used in the cached neighborhood pickle file.
+
+        use_bonus_quality_cuts (bool): default True. Imposes some things like
+        "there need to be at least 8 Gaia transits", and similar requirements.
 
     Returns:
         dataframe of DR2 stars within the bounds given. This is useful for
         querying stars that are in the neighborhood of some group.
     """
 
-    if is_k18_group:
-        g_mag_limit=18
-        mstr = '_k18'
-    elif is_cg18_group:
-        g_mag_limit=18
-        mstr = '_cg18'
-    elif is_kc19_group:
-        g_mag_limit=16
-        mstr = '_kc19'
-    elif is_k13_group:
-        g_mag_limit=16
-        mstr = '_k13'
-    else:
-        g_mag_limit=16
-        mstr = ''
-
     if manual_gmag_limit is not None:
         g_mag_limit = manual_gmag_limit
+    else:
+        g_mag_limit = 16
+        LOGINFO(f'Using default g_mag_limit of {g_mag_limit}')
 
     dlpath = os.path.join(
         gaiadir,'nbhd_group{}_matches{}.xml.gz'.format(groupname, mstr)
@@ -301,8 +288,9 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
             g_mag_limit=g_mag_limit
         )
 
-        if is_kc19_group:
-            # Kounkel & Covey impose some extra quality cuts.
+        if use_bonus_quality_cuts:
+            # Impose some extra quality cuts, originally from Kounkel & Covey
+            # 2019, but generally applicable.
             jobstr = (
             """
             select top {n_max:d}
@@ -323,7 +311,7 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
             and
                 g.ra < {ra_upper:.2f}
             and
-                g.phot_g_mean_mag < {g_mag_limit:d}
+                g.phot_g_mean_mag < {g_mag_limit:.1f}
             and
                 parallax > 1
             and

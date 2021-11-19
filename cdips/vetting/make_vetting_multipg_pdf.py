@@ -1,3 +1,32 @@
+#############
+## LOGGING ##
+#############
+
+import logging
+from astrobase import log_sub, log_fmt, log_date_fmt
+
+DEBUG = False
+if DEBUG:
+    level = logging.DEBUG
+else:
+    level = logging.INFO
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig(
+    level=level,
+    style=log_sub,
+    format=log_fmt,
+    datefmt=log_date_fmt,
+)
+
+LOGDEBUG = LOGGER.debug
+LOGINFO = LOGGER.info
+LOGWARNING = LOGGER.warning
+LOGERROR = LOGGER.error
+LOGEXCEPTION = LOGGER.exception
+
+#############
+## IMPORTS ##
+#############
 from glob import glob
 import datetime, os, pickle, shutil
 import numpy as np, pandas as pd
@@ -20,7 +49,7 @@ from astroquery.vizier import Vizier
 
 DEBUG = 0
 
-def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
+def make_vetting_multipg_pdf(lcpath, outpath, mdf, source_id,
                              supprow, suppfulldf, pfdf, pfrow, toidf, sector,
                              mask_orbit_edges=True, nworkers=40,
                              show_rvs=False):
@@ -36,7 +65,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         mdf: single row dataframe from CDIPS source catalog
 
         supprow: dataframe with LC statistics, Gaia xmatch info, CDIPS xmatch
-        info. Cut to match the sourceid of whatever object is getting the PDF
+        info. Cut to match the source_id of whatever object is getting the PDF
         made.  Columns include:
 
            'lcobj', 'cat_mag', 'med_rm1', 'mad_rm1', 'mean_rm1', 'stdev_rm1',
@@ -149,7 +178,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         ra_obj, dec_obj = hdr['RA_OBJ'], hdr['DEC_OBJ']
         c_obj = SkyCoord(ra_obj, dec_obj, unit=(u.deg), frame='icrs')
 
-        t0,per,dur,sourceid = (float(pfrow['tls_t0']),
+        t0,per,dur,source_id = (float(pfrow['tls_t0']),
                                float(pfrow['tls_period']),
                                float(pfrow['tls_duration']),
                                int(pfrow['source_id'].iloc[0]) )
@@ -158,7 +187,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
                  "sector-{}_TFA_SR_pkl".format(sector))
         if not os.path.exists(outdir):
             os.mkdir(outdir)
-        cd = cdva.measure_centroid(t0,per,dur,sector,sourceid,c_obj,outdir)
+        cd = cdva.measure_centroid(t0,per,dur,sector,source_id,c_obj,outdir)
 
         catalog_to_gaussian_sep_arcsec = None
         if isinstance(cd, dict):
@@ -184,7 +213,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
 
                 _pfdf = pfdf.loc[is_close]
                 _pfdf['seps_px'] = seps_px[is_close]
-                _pfdf = _pfdf[_pfdf['source_id'] != sourceid]
+                _pfdf = _pfdf[_pfdf['source_id'] != source_id]
 
             else:
                 _pfdf = None
@@ -207,30 +236,26 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         # page 6
         ##########
         info = (
-             ini.get_group_and_neighborhood_information(
-                 sourceid, overwrite=0)
+             ini.get_group_and_neighborhood_information(source_id, overwrite=0)
         )
 
         if isinstance(info, tuple):
 
             if DEBUG:
-                picklepath = 'nbhd_info_{}.pkl'.format(sourceid)
+                picklepath = 'nbhd_info_{}.pkl'.format(source_id)
                 with open(picklepath , 'wb') as f:
                     pickle.dump(info, f)
-                    print('made {}'.format(picklepath))
+                    LOGINFO('made {}'.format(picklepath))
 
-            (targetname, groupname, group_df_dr2, target_df, nbhd_df,
-             cutoff_probability, pmdec_min, pmdec_max, pmra_min, pmra_max,
-             group_in_k13, group_in_cg18, group_in_kc19, group_in_k18
+            (targetname, groupname, referencename, group_df_dr2, target_df,
+             nbhd_df, pmdec_min, pmdec_max, pmra_min, pmra_max
             ) = info
 
             fig = vp.plot_group_neighborhood(
-                targetname, groupname, group_df_dr2, target_df, nbhd_df,
-                cutoff_probability, pmdec_min=pmdec_min, pmdec_max=pmdec_max,
-                pmra_min=pmra_min, pmra_max=pmra_max,
-                group_in_k13=group_in_k13, group_in_cg18=group_in_cg18,
-                group_in_kc19=group_in_kc19, group_in_k18=group_in_k18,
-                source_id=sourceid, figsize=(30,20), show_rvs=show_rvs
+                targetname, groupname, referencename, group_df_dr2, target_df,
+                nbhd_df, pmdec_min=pmdec_min, pmdec_max=pmdec_max,
+                pmra_min=pmra_min, pmra_max=pmra_max, source_id=source_id,
+                figsize=(30,20), show_rvs=show_rvs
             )
 
             pdf.savefig(fig)
@@ -238,7 +263,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
 
         elif info is None:
 
-            info = ini.get_neighborhood_information(sourceid, overwrite=0,
+            info = ini.get_neighborhood_information(source_id, overwrite=0,
                                                     min_n_nbhrs=1000)
 
             if info is not None:
@@ -250,7 +275,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
                     targetname, groupname, target_df, nbhd_df,
                     pmdec_min=pmdec_min, pmdec_max=pmdec_max,
                     pmra_min=pmra_min, pmra_max=pmra_max,
-                    source_id=sourceid, figsize=(30,20),
+                    source_id=source_id, figsize=(30,20),
                 )
 
                 pdf.savefig(fig)
@@ -261,13 +286,11 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
             raise NotImplementedError
 
 
-
-
         ##########
         # set the file's metadata via the PdfPages object:
         ##########
         d = pdf.infodict()
-        d['Title'] = 'CDIPS vetting report for GAIADR2-{}'.format(sourceid)
+        d['Title'] = 'CDIPS vetting report for GAIADR2-{}'.format(source_id)
         d['Author'] = 'Luke Bouma'
         d['Keywords'] = 'stars | planets'
         d['CreationDate'] = datetime.today()
@@ -276,7 +299,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         picklepath = outpath.replace('pdfs','pkls').replace('.pdf','.pkl')
         with open(picklepath,'wb') as f:
             pickle.dump(infodict, f)
-            print('made {}'.format(picklepath))
+            LOGINFO('made {}'.format(picklepath))
 
         ##########
         # check if is obviously nottransit. this will be the case if:
@@ -296,7 +319,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         #   backgruond stars).
         ##########
 
-        time_key = 'logt' if 'logt' in list(supprow.columns) else 'k13_logt'
+        time_key = 'mean_age'
         logt = str(supprow[time_key].iloc[0])
 
         if not pd.isnull(logt):
@@ -351,32 +374,6 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
             isobviouslynottransit = True
             whynottransit.append('Rp > 3.5Rjup')
 
-        # NOTE this is a deprecated filter, b/c the Kharchenko parallaxes can
-        # be faulty. TIC 268 is a classic example.
-        filter_by_kharchenko_plx = False
-        if filter_by_kharchenko_plx:
-
-            # if clearly a background star according to gaia + kharchenko parallax
-            # comparison, remove.
-            omegak13 = float(mmbr_dict['omegak13'])
-            omega_dr2_median = float(np.nanmedian(group_df_dr2.parallax))
-            omega_dr2_std = float(np.nanstd(group_df_dr2.parallax))
-            plx_mas = float(mmbr_dict['plx_mas'])
-            plx_mas_err = float(mmbr_dict['plx_mas_err'])
-            params_are_ok = True
-            for param in [omegak13, omega_dr2, plx_mas, plx_mas_err]:
-                if pd.isnull(param):
-                    params_are_ok = False
-
-            N_sigma = 5
-            if params_are_ok:
-                if plx_mas + N_sigma*plx_mas_err < omegak13:
-                    isobviouslynottransit = True
-                    whynottransit.append(
-                        'star plx > {} sigma below K13 plx'.format(N_sigma)
-                    )
-
-
     if isobviouslynottransit:
 
         if len(whynottransit) > 1:
@@ -388,7 +385,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
             src = path
             dst = path.replace('pdfs','nottransitpdfs')
             shutil.move(src,dst)
-            print('found was nottransit. moved {} -> {}'.format(src,dst))
+            LOGINFO('found was nottransit. moved {} -> {}'.format(src,dst))
 
         # create text file that describes why it's been flagged as "not
         # transit".
@@ -399,4 +396,4 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, sourceid,
         )
         with open(writepath, 'w') as f:
             f.writelines(whynottransit)
-        print('Reason written to {}'.format(writepath))
+        LOGINFO('Reason written to {}'.format(writepath))
