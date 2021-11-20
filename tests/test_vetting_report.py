@@ -91,9 +91,14 @@ def test_vetting_report(sector=None, cdips_cat_vnum=None):
 
     if sector == 14:
         ids_to_test = [
-            '4516549232971506560', # PC; not auto-classified
-            '1821207356364973568', # "notransit"
-            '2021549198278632320', # iterative search through neighborhood
+            '2028660942571841152',
+            #'2069071980566847232', # verify group matching is working
+            #'2030626834970610688', # should be autoclassed nottransit
+            #'2038548472649717120', # centroid page all wonky
+            #'1048109222955337600',
+            # '4516549232971506560', # PC; not auto-classified
+            # '1821207356364973568', # "notransit"
+            # '2021549198278632320', # iterative search through neighborhood
         ]
 
     for id_to_test in ids_to_test:

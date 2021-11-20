@@ -1,3 +1,23 @@
+"""
+Contents:
+
+Plotting functions for CDIPS vetting reports:
+    two_periodogram_checkplot
+    plot_raw_pca_bkgd
+    scatter_increasing_ap_size
+    transitcheckdetails
+    centroid_plots
+    plot_group_neighborhood
+    plot_neighborhood_only
+
+Helpers:
+    _get_full_infodict
+    _insert_newlines
+    _get_a_given_P_and_Mstar
+
+Deprecated:
+    cluster_membership_check
+"""
 #############
 ## LOGGING ##
 #############
@@ -401,10 +421,15 @@ def scatter_increasing_ap_size(lc, pfrow, infodict=None, obsd_midtimes=None,
         a1_to_a2_increase = depths[0] + 2*depth_uncs[0] < depths[1]
         a2_to_a3_increase = depths[1] + 2*depth_uncs[1] < depths[2]
 
+        # For this test, require at least three transits, an increasing depth,
+        # and finite uncertainties in each aperture.
         if (
             np.all(nparr(tcounts) >= 3)
             and a1_to_a2_increase
             and a2_to_a3_increase
+            and (depth_uncs[0] > 1e-10)
+            and (depth_uncs[1] > 1e-10)
+            and (depth_uncs[2] > 1e-10)
         ):
             depth_vs_apsize_increasing = True
 
@@ -872,6 +897,9 @@ def transitcheckdetails(stime, sflux, tlsp, mdf, hdr, supprow,
 def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
                              k13_notes_df, figsize=(30,20)):
 
+    raise DeprecationWarning('This plot is deprecated.')
+    raise ValueError
+
     getfile = '../data/cluster_data/Kharchenko_2013_MWSC.vot'
     vot = parse(getfile)
     tab = vot.get_first_table().to_table()
@@ -1216,7 +1244,7 @@ def cluster_membership_check(hdr, supprow, infodict, suppfulldf, mdf,
         ax3.legend(loc='best')
         ax3.set_ylabel('G', fontsize='xx-large') # - $A_G$
         #ax3.set_ylabel('G + 5$\log_{{10}}\omega_{{\mathrm{{as}}}}$ + 5', fontsize='large') # - $A_G$
-        ax3.set_xlabel('Bp - Rp', fontsize='xx-large') #  - E(Bp-Rp)
+        ax3.set_xlabel('$G_{\mathrm{BP}} - G_{\mathrm{RP}}$', fontsize='xx-large') #  - E(Bp-Rp)
 
     #
     # ax4: spatial positions
@@ -1306,7 +1334,7 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     ticids = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['ID']
     tmags = nbhr_stars[nbhr_stars['Tmag'] < Tmag_cutoff]['Tmag']
 
-    sel = (px > 0) & (px < 10) & (py > 0) & (py < 10)
+    sel = (px > 0) & (px < 9.5) & (py > 0) & (py < 9.5)
     px,py = px[sel], py[sel]
     ticids, tmags = ticids[sel], tmags[sel]
 
@@ -1365,7 +1393,10 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     ax0.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
              markersize=25, marker='*', color='k', lw=0)
 
-    ax0.set_title('OOT (cyan o: centroid for each OOT window)', fontsize='xx-large')
+    ax0.set_title('OOT (cyan o: centroid for each OOT window)',
+                  fontsize='xx-large')
+    ax0.set_xlabel(' ')
+    ax0.set_ylabel(' ')
 
     cb0 = fig.colorbar(cset0, ax=ax0, extend='neither', fraction=0.046, pad=0.04)
 
@@ -1385,7 +1416,11 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     ax1.plot(target_x, target_y, mew=0.5, zorder=5, markerfacecolor='yellow',
              markersize=25, marker='*', color='k', lw=0)
 
-    ax1.set_title('in transit  (cyan o: centroid for each transit)', fontsize='xx-large')
+    ax1.set_title('in transit  (cyan o: centroid for each transit)',
+                  fontsize='xx-large')
+
+    ax1.set_xlabel(' ')
+    ax1.set_ylabel(' ')
 
     cb1 = fig.colorbar(cset1, ax=ax1, extend='neither', fraction=0.046, pad=0.04)
 
@@ -1438,6 +1473,9 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     cb2.ax.yaxis.set_visible(False)
     cb2.outline.set_linewidth(0)
 
+    ax2.set_xlabel(' ')
+    ax2.set_ylabel(' ')
+
     #
     # ax3: oot - intra
     # fit 2d gaussian to the inner 8x8 pixels to find centroid
@@ -1457,6 +1495,11 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
         x_ctd = np.nan
         y_ctd = np.nan
 
+    if x_ctd > 10 or y_ctd > 10:
+        # Centroiding failed. Default to target position to avoid poor sorting.
+        x_ctd = target_x
+        y_ctd = target_y
+
     cset3 = ax3.imshow(cd['m_oot_minus_intra_flux'], cmap='YlGnBu_r',
                        origin='lower', zorder=1)
 
@@ -1475,6 +1518,9 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
                                          (target_y - y_ctd)**2)
 
     cb3 = fig.colorbar(cset3, ax=ax3, extend='neither', fraction=0.046, pad=0.04)
+    ax3.set_xlabel(' ')
+    ax3.set_ylabel(' ')
+
 
     #
     # ax4 : OOT-intra SNR
@@ -1490,6 +1536,9 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
              markersize=25, marker='*', color='k', lw=0)
 
     cb4 = fig.colorbar(cset4, ax=ax4, extend='neither', fraction=0.046, pad=0.04)
+    ax4.set_xlabel(' ')
+    ax4.set_ylabel(' ')
+
 
     #
     # ITNERMEDIATE SINCE TESS IMAGES NOW PLOTTED
@@ -1633,6 +1682,8 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
     ax6.set_title('DSS2 Red linear', fontsize='xx-large')
     cb6 = fig.colorbar(cset6, ax=ax6, extend='neither', fraction=0.046,
                        pad=0.04)
+    ax6.set_xlabel(' ')
+    ax6.set_ylabel(' ')
 
     # DSS is ~1 arcsecond per pixel. overplot apertures on axes 6,7
     for ix, radius_px in enumerate([21,21*1.5,21*2.25]):
@@ -1661,9 +1712,11 @@ def centroid_plots(c_obj, cd, hdr, _pfdf, toidf, figsize=(30,20),
                             color='C{}'.format(ix), fill=False, zorder=5+ix)
         ax7.add_artist(circle)
 
+    ax7.set_xlabel(' ')
+    ax7.set_ylabel(' ')
 
     ##########################################
-    fig.tight_layout(pad=3.0, h_pad=1.7)
+    fig.tight_layout(pad=3.0, h_pad=3.5)
 
     ax5.text(txt_x, txt_y, outstr, ha='left', va='top',
              fontsize=22, zorder=2, transform=ax5.transAxes)
@@ -1816,7 +1869,7 @@ def plot_group_neighborhood(
 
     ax.legend(loc='best', fontsize='x-large')
     ax.set_ylabel('G', fontsize='xx-large')
-    ax.set_xlabel('Bp - Rp', fontsize='xx-large')
+    ax.set_xlabel('$G_{\mathrm{BP}} - G_{\mathrm{RP}}$', fontsize='xx-large')
 
     ylim = ax.get_ylim()
     ax.set_ylim((max(ylim),min(ylim)))
@@ -1852,7 +1905,7 @@ def plot_group_neighborhood(
 
     ax.legend(loc='best', fontsize='x-large')
     ax.set_ylabel('$G + 5\log_{10}(\omega_{\mathrm{as}}) + 5$', fontsize='xx-large')
-    ax.set_xlabel('Bp - Rp', fontsize='xx-large')
+    ax.set_xlabel('$G_{\mathrm{BP}} - G_{\mathrm{RP}}$', fontsize='xx-large')
 
     ylim = ax.get_ylim()
     ax.set_ylim((max(ylim),min(ylim)))
@@ -2145,8 +2198,8 @@ def plot_neighborhood_only(
     )
 
     ax.legend(loc='best', fontsize='x-large')
-    ax.set_ylabel('G', fontsize='xx-large')
-    ax.set_xlabel('Bp - Rp', fontsize='xx-large')
+    ax.set_ylabel('$G$', fontsize='xx-large')
+    ax.set_xlabel('$G_{\mathrm{BP}} - G_{\mathrm{RP}}$', fontsize='xx-large')
 
     ylim = ax.get_ylim()
     ax.set_ylim((max(ylim),min(ylim)))
@@ -2176,7 +2229,7 @@ def plot_neighborhood_only(
 
     ax.legend(loc='best', fontsize='x-large')
     ax.set_ylabel('$G + 5\log_{10}(\omega_{\mathrm{as}}) + 5$', fontsize='xx-large')
-    ax.set_xlabel('Bp - Rp', fontsize='xx-large')
+    ax.set_xlabel('$G_{\mathrm{BP}} - G_{\mathrm{RP}}$', fontsize='xx-large')
 
     ylim = ax.get_ylim()
     ax.set_ylim((max(ylim),min(ylim)))

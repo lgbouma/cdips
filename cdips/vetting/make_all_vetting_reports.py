@@ -148,7 +148,10 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
                 except Exception as e:
                     LOGWARNING('WRN! {} continue.'.format(repr(e)))
         else:
-            LOGINFO('Found {}, continue'.format(outpath))
+            if os.path.exists(outpath):
+                LOGINFO(f'Found {outpath}, continue')
+            elif os.path.exists(nottransitpath):
+                LOGINFO(f'Found {nottransitpath}, continue')
 
 
 def _get_supprow(source_id, supplementstatsdf):

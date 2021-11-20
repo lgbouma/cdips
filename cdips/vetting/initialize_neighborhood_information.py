@@ -285,10 +285,21 @@ def get_group_and_neighborhood_information(
     cdips_df = cdips_df[~pd.isnull(cdips_df.cluster)]
 
     group_df = cdips_df[
-        (cdips_df.cluster.str.contains(groupname))
+        # avoids e.g., "kc19group_981" matching on "kc19group_98". deals with
+        # cases beginning of string, middle of string, and end of string.
+        (
+            (cdips_df.cluster.str.contains(groupname+','))
+            |
+            (cdips_df.cluster.str.contains(','+groupname+','))
+            |
+            (cdips_df.cluster.str.contains(','+groupname+'$'))
+            |
+            (cdips_df.cluster == groupname)
+        )
         &
         (cdips_df.reference_id.str.contains(referencename))
     ]
+
     group_source_ids = np.array(group_df['source_id']).astype(np.int64)
     np.testing.assert_array_equal(group_df['source_id'], group_source_ids)
 
@@ -296,10 +307,10 @@ def get_group_and_neighborhood_information(
     # Given the source ids, get all the relevant Gaia information.
     #
     enforce_all_sourceids_viable = True
-    savstr = f'{groupname}_{referencename}'
+    savstr = f'_{groupname.replace(" ","_")}_{referencename}'
 
     group_df_dr2 = given_source_ids_get_gaia_data(
-        group_source_ids, groupname, overwrite=overwrite,
+        group_source_ids, groupname.replace(" ","_"), overwrite=overwrite,
         enforce_all_sourceids_viable=enforce_all_sourceids_viable,
         n_max=min((len(group_source_ids), 10000)),
         savstr=savstr
@@ -332,7 +343,7 @@ def get_group_and_neighborhood_information(
     else:
         n_std = 3
 
-    LOGINFO('bounding by {} stdevns'.format(n_std))
+    LOGINFO(f'bounding by {n_std} stdevns')
 
     for param in params:
         bounds[param+'_upper'] = np.minimum(
@@ -354,10 +365,10 @@ def get_group_and_neighborhood_information(
     n_max = min((50*len(group_df_dr2), 10000))
 
     if manual_gmag_limit is None:
-        manual_gmag_limit = np.nanmax(group_df_dr2.phot_g_mean_mag)
+        manual_gmag_limit = np.nanpercentile(group_df_dr2.phot_g_mean_mag,95)
 
     mstr = savstr
-    nbhd_df = query_neighborhood(bounds, groupname, n_max=n_max,
+    nbhd_df = query_neighborhood(bounds, groupname.replace(" ","_"), n_max=n_max,
                                  overwrite=overwrite,
                                  manual_gmag_limit=manual_gmag_limit,
                                  mstr=mstr)

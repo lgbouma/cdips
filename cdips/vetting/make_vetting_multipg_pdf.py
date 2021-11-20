@@ -47,8 +47,6 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astroquery.vizier import Vizier
 
-DEBUG = 0
-
 def make_vetting_multipg_pdf(lcpath, outpath, mdf, source_id,
                              supprow, suppfulldf, pfdf, pfrow, toidf, sector,
                              mask_orbit_edges=True, nworkers=40,
@@ -285,6 +283,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, source_id,
 
             raise NotImplementedError
 
+        LOGINFO(f'made {outpath}')
 
         ##########
         # set the file's metadata via the PdfPages object:
@@ -299,7 +298,7 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, source_id,
         picklepath = outpath.replace('pdfs','pkls').replace('.pdf','.pkl')
         with open(picklepath,'wb') as f:
             pickle.dump(infodict, f)
-            LOGINFO('made {}'.format(picklepath))
+            LOGINFO(f'made {picklepath}')
 
         ##########
         # check if is obviously nottransit. this will be the case if:
@@ -373,6 +372,29 @@ def make_vetting_multipg_pdf(lcpath, outpath, mdf, source_id,
         if float(infodict['rp']) > (3.5*u.Rjup).to(u.Rearth).value:
             isobviouslynottransit = True
             whynottransit.append('Rp > 3.5Rjup')
+
+        if isinstance(dtrdict, dict):
+
+            # If LS period and TLS period are within 2% of each other, it means
+            # that either a) it's an eclipse-dominated light curve (e.g., an
+            # eclipsing binary, or a hot Jupiter without any rotation signal),
+            # or that b) it's a rotation-dominated light curve that notch
+            # triggers on the peaks of.
+
+            ls_period = dtrdict['lsp_dict']['ls_period']
+            tls_period = float(pfrow['tls_period'])
+
+            cutoff = 2e-2
+
+            close_tls_ls_period = (
+                np.abs(tls_period - ls_period)/ls_period < cutoff
+            )
+
+            if close_tls_ls_period:
+                isobviouslynottransit = True
+                whynottransit.append(
+                    f'LS_period {ls_period:.4f} ~= TLS_period {tls_period:.4f}'
+                )
 
     if isobviouslynottransit:
 
