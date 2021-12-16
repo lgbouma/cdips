@@ -9,8 +9,6 @@ adapted based on the results.
 
 periodfindingworker: given lcpath, run periodograms and detrend
 
-    run_periodograms_and_detrend: given source_id, time, mag, find planet.
-
 get_tls_sde_versus_period_detection_boundary: given TLS SDE and TLS periods for
 "plausible planet detections", define the detection boundary.
 
@@ -68,6 +66,7 @@ from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils import lcutils as lcu
 from cdips.lcproc import mask_orbit_edges as moe
 from cdips.lcproc import detrend as dtr
+from cdips.lcproc.find_planets import run_periodograms_and_detrend
 from cdips.testing import check_dependencies
 from skim_cream import plot_initial_period_finding_results
 
@@ -87,84 +86,6 @@ def main():
             outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',
             OC_MG_CAT_ver=0.6
         )
-
-
-def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
-                                 period_min=0.5, period_max=27, orbitgap=1,
-                                 expected_norbits=2, orbitpadding=6/(24),
-                                 dtr_method='best'):
-    """
-    Given a source_id, time, and magnitude time-series, this function runs
-    clean_rotationsignal_tess_singlesector_light_curve to remove rotation
-    signals (via masking orbit edges, sigma slide clip, detrending, and
-    re-sigma slide clipping).  "Detrending" here means the "best" method
-    currently known, which is the notch + locor combination.
-    This was demonstrated through injection-recovery tests
-    (/tests/test_injrecov_with_detrending.py)
-
-    kwargs:
-
-        time, mag : time and magnitude vector of light-curve.  PCA is
-        preferred, since common instrumental systematics are removed.
-
-        dtr_dict : E.g.,
-            {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
-
-        orbitpadding (float): amount of time to clip near TESS perigee to
-        remove ramp signals. 12 data points = 6 hours = 0.25 days (and must
-        give in units of days).
-
-        dtr_method (str): any of ['notch', 'locor', 'pspline', 'best'].
-
-    Returns: list of
-        r = [source_id, ls_period, ls_fap, ls_amplitude, tls_period, tls_sde,
-             tls_t0, tls_depth, tls_duration, tls_distinct_transit_count,
-             tls_odd_even, dtr_method]
-    """
-
-    lsp_options = {'period_min':0.1, 'period_max':20}
-
-    search_time, search_flux, dtr_stages_dict = (
-        dtr.clean_rotationsignal_tess_singlesector_light_curve(
-            time, mag, magisflux=False, dtr_dict=dtr_dict,
-            lsp_dict=None, maskorbitedge=True, lsp_options=lsp_options,
-            verbose=False
-        )
-    )
-
-    # retrieve LS periodogram information
-    ls_period = dtr_stages_dict['lsp_dict']['ls_period']
-    ls_amplitude = np.abs(dtr_stages_dict['lsp_dict']['ls_amplitude'])
-    ls_fap = dtr_stages_dict['lsp_dict']['ls_fap']
-
-    # run the TLS periodogram
-    model = transitleastsquares(search_time, search_flux, verbose=False)
-    results = model.power(use_threads=1, show_progress_bar=False,
-                          R_star_min=0.1, R_star_max=5, M_star_min=0.1,
-                          M_star_max=3.0, period_min=period_min,
-                          period_max=period_max, n_transits_min=1,
-                          transit_template='default', oversampling_factor=5)
-
-    dtr_method = dtr_stages_dict['dtr_method_used']
-
-    r = {
-        'source_id': source_id,
-        'ls_period': ls_period,
-        'ls_fap': ls_fap,
-        'ls_amplitude': ls_amplitude,
-        'tls_period': results.period,
-        'tls_sde': results.SDE,
-        'tls_snr': results.snr,
-        'tls_t0': results.T0,
-        'tls_depth': results.depth,
-        'tls_duration': results.duration,
-        # The number of transits with intransit data points
-        'tls_distinct_transit_count': results.distinct_transit_count,
-        'tls_odd_even': results.odd_even_mismatch,
-        'dtr_method': dtr_method
-    }
-
-    return r
 
 
 def periodfindingworker(task):
