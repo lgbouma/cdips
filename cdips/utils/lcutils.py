@@ -28,6 +28,7 @@ Light curve miscellanea:
 from glob import glob
 import os
 import numpy as np
+from copy import deepcopy
 
 from astropy.io import fits
 from astropy.time import Time
@@ -203,24 +204,33 @@ def get_best_ap_number_given_lcpath(lcpath):
 
 
 def stitch_light_curves(
-    timelist,
-    maglist,
-    magerrlist,
-    extravecdict=None
+    timelist:list,
+    maglist:list,
+    magerrlist:list,
+    extravecdict:dict = None,
+    magsarefluxes:bool = False,
+    normstitch:bool = False
 ):
     """
-    Given lists of times, magnitudes, and mag errors (where each index is
-    presumably a TESS sector), returning stitched times, fluxes, and flux
+    Given lists of , returning stitched times, fluxes, and flux
     errors.
 
-    Kwargs:
+    Args:
 
-        extraveclists: list of lists of supplemental vectors. For instance,
+        timelist, maglist, magerrlist: lists of np.ndarrays of times,
+        magnitudes, and mag errors (where each list entry is a TESS sector,
+        Kepler quarter, etc.)
+
+        extravecdict: dict of lists of supplemental vectors. For instance,
         with two sectors, if you wanted to stitch BGV vectors as well, would
         be:
             {'BGV':[bgvlistsec0, bgvlistsec1],
              'XCC':[xcclistsec0, xcclistsec1]}
 
+        magsarefluxes: if True, does not convert mag to flux.
+
+        normstitch: normalize relative flux across sectors/quarters to keep 5th
+        to 95th percentile amplitude constant.
     """
     for l in [timelist, maglist, magerrlist]:
         assert isinstance(l, list)
@@ -228,13 +238,46 @@ def stitch_light_curves(
     # get median-normalized fluxes across each sector
     fluxlist, fluxerrlist = [], []
     for t, m, e in zip(timelist, maglist, magerrlist):
-        f, f_e = _given_mag_get_flux(m, e)
+        if magsarefluxes:
+            f, f_e = m, e
+        else:
+            f, f_e = _given_mag_get_flux(m, e)
         fluxlist.append(f)
         fluxerrlist.append(f_e)
 
     starttimes = [t[0] for t in timelist]
     if not np.all(np.diff(starttimes) > 0):
-        raise ValueError('expected timelist to already be sorted')
+        print('expected timelist to already be sorted -- will sort')
+        # re-sort timelist entries here by the starting time!
+        sortind = np.argsort(starttimes)
+        timelist = list(np.array(timelist, dtype=object)[sortind])
+        fluxlist = list(np.array(fluxlist, dtype=object)[sortind])
+        fluxerrlist = list(np.array(fluxerrlist, dtype=object)[sortind])
+
+    if normstitch:
+        # require 5th to 95th percentile to be constant in flux across
+        # sectors/quarters.
+        A_5_95 = [
+            np.nanpercentile(f,95) - np.nanpercentile(f,5) for f in fluxlist
+        ]
+        mean_A_5_95 = np.mean(A_5_95)
+        div_factor = A_5_95 / mean_A_5_95
+        normfluxlist = [f/div_f for f, div_f in zip(fluxlist, div_factor)]
+        norm_A_5_95 = np.array([
+            np.nanpercentile(f,95) - np.nanpercentile(f,5) for f in normfluxlist
+        ])
+        assert np.all(np.diff(norm_A_5_95) < 1e-14)
+
+        # renormalize around median of 1
+        offsets = [np.nanmedian(f)-1 for f in normfluxlist]
+        normfluxlist = [f-o for f,o in zip(normfluxlist, offsets)]
+
+        # assign to the actual flux
+        fluxlist = deepcopy(normfluxlist)
+
+        # propagate to stitched uncertainties
+        normfluxerrlist = [e/div_f for e, div_f in zip(fluxerrlist, div_factor)]
+        fluxerrlist = deepcopy(normfluxerrlist)
 
     time = np.hstack(timelist)
     flux = np.hstack(fluxlist)
