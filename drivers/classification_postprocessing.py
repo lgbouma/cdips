@@ -4,15 +4,21 @@ import pandas as pd, numpy as np
 from functools import reduce
 
 def main():
-    isfull = 0
-    iscollabsubclass = 1
+    isfull = 1
+    iscollabsubclass = 0
     organize_PCs = 0
 
-    sector = 2
-    today = '20200612'
+    sector = 14
+    today = '20211217'
+    sectorrange = [14,25] # None if single sector
 
     if isfull:
-        given_full_classifications_organize(sector=sector, today=today)
+        if sectorrange is None:
+            given_full_classifications_organize(sector=sector, today=today)
+        else:
+            for sector in range(sectorrange[0], sectorrange[1]):
+                given_full_classifications_organize(sector=sector, today=today)
+
     if iscollabsubclass:
         given_collab_subclassifications_merge(sector=sector)
     if organize_PCs:
@@ -322,16 +328,18 @@ def given_full_classifications_organize(
     # modify these
     outdir = os.path.join(
         os.path.expanduser('~'),
-        'Dropbox/proj/cdips/results/vetting_classifications/'
+        'Dropbox/proj/cdips/results/vetting_classifications/Sector14_through_Sector26'
     )
     classified_dir = os.path.join(
         outdir, 'sector_{}_{}_LGB_DONE/'.format(sector,today)
     )
     outtocollabdir = os.path.join(
-        outdir, '{}_sector-{}_{}'
+        outdir, 'collab_{}_sector-{}_{}'
     )
     outname = '{}_LGB_sector{}_classifications.csv'.format(today,sector)
     ##########################################
+
+    print(f'Sector {sector}: beginning organization...')
 
     outpath = os.path.join(outdir, outname)
 
@@ -371,20 +379,40 @@ def given_full_classifications_organize(
     if not os.path.exists(collabdir):
         os.mkdir(collabdir)
 
+    personaldir = os.path.join(
+        outdir, 'LGB_{}_sector-{}_{}'.format(today, sector, 'PC_cut')
+    )
+    if not os.path.exists(personaldir):
+        os.mkdir(personaldir)
+
+    print(f'Sector {sector}: beginning PC copying...')
     for n in outdf['Name']:
-        shutil.copyfile(
-            os.path.join(
-                os.path.expanduser('~'),
-                'local/cdips/vetting/sector-{}/pdfs/vet_'.format(sector)+str(n)+'_llc.pdf'
-            ),
-            os.path.join(collabdir,'vet_'+str(n)+'_llc.pdf')
-        )
+        # copies from local directory, assuming sshfs points to the original
+        # vetting folder on phtess systems
+
+        srcpaths = glob(os.path.join(
+            classified_dir, 'vet_'+n+"*pdf"
+        ))
+        assert len(srcpaths) == 1, 'Didnt find the target path'
+        srcpath = srcpaths[0]
+
+        srcbasename = os.path.basename(srcpath)
+        dstpath0 = os.path.join(collabdir,'vet_'+str(n)+'_llc.pdf')
+        dstpath1 = os.path.join(personaldir, srcbasename)
+
+        for dstpath in [dstpath0, dstpath1]:
+            if not os.path.exists(dstpath):
+                shutil.copyfile(srcpath, dstpath)
 
     # "good" (aka: interesting) object cut
     goodoutname = outname.replace('.csv','_good_cut.csv')
     outpath = os.path.join(outdir, goodoutname)
 
-    outdf = df[df['Tags'].str.contains('good', regex=False)]
+    outdf = df[
+        (df['Tags'].str.contains('good', regex=False))
+        |
+        (df['Tags'].str.contains('weird', regex=False))
+    ]
 
     if not os.path.exists(outpath):
         outdf.to_csv(outpath, index=False)
@@ -396,14 +424,16 @@ def given_full_classifications_organize(
     if not os.path.exists(collabdir):
         os.mkdir(collabdir)
 
+    print(f'Sector {sector}: beginning "good|weird" copying...')
     for n in outdf['Name']:
-        shutil.copyfile(
-            os.path.join(
-                os.path.expanduser('~'),
-                'local/cdips/vetting/sector-{}/pdfs/vet_'.format(sector)+str(n)+'_llc.pdf'
-            ),
-            os.path.join(collabdir,'vet_'+str(n)+'_llc.pdf')
-        )
+        srcpaths = glob(os.path.join(
+            classified_dir, 'vet_'+n+"*pdf"
+        ))
+        assert len(srcpaths) == 1, 'Didnt find the target path'
+        srcpath = srcpaths[0]
+        dstpath = os.path.join(collabdir,'vet_'+str(n)+'_llc.pdf')
+        if not os.path.exists(dstpath):
+            shutil.copyfile(srcpath, dstpath)
 
 
 if __name__ == '__main__':

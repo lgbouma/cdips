@@ -76,10 +76,14 @@ TO PROCESS VETTING CLASSIFICATIONS
 
     1. `given_full_classifications_organize`: LGB classifies everything, sends
        PCs to team
-    2. LGB gold/maybe/junk classification of PCs. Write output to e.g.,
-       `ls *pdf > 20190621_sector-6_PCs_LGB_class.txt`
+    2. LGB gold/maybe/junk classification of PCs. This might be partially
+       already done, so do it via TagSpaces in LGB_YYYYMMDD_sector-SS_PC_cut.
+       Write output to e.g., `ls *pdf > 20190621_sector-6_PCs_LGB_class.txt`
+
+    (DEPRECATE!?)
     3. `given_collab_subclassifications_merge`: team responds w/
        classifications (csvs and txt files). they must be merged
+
     4. `given_merged_gold_organize_PCs`: organize the results of the merge into
        objects that clear the classification cutoff threshold, and those that
        are not CDIPS objects, but still good.
