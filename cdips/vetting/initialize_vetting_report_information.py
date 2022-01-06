@@ -59,7 +59,11 @@ def initialize_vetting_report_information(
     except:
         toidf = get_exofop_toi_catalog()
 
-    lc_paths = pfdf[pfdf.abovelimit == 1].lcpath
+    try:
+        lc_paths = pfdf[pfdf.abovelimit == 1].lcpath
+    except AttributeError:
+        print(f'WRN! Did not get any light curves!')
+        lc_paths = None
 
     return (lc_paths, lcbasedir, resultsdir, cdips_df, supplementstatsdf, pfdf,
             toidf, sector)

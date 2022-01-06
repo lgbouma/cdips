@@ -55,7 +55,12 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
             errmsg = 'expected exactly 1 source match in CDIPS cat'
             raise AssertionError(errmsg)
 
-        hdul = fits.open(lcpath)
+        try:
+            hdul = fits.open(lcpath)
+        except FileNotFoundError:
+            LOGERROR(f'ERROR! Failed to find {lcpath}. skipping.')
+            continue
+
         hdr = hdul[0].header
         cam, ccd = hdr['CAMERA'], hdr['CCD']
         hdul.close()
@@ -120,7 +125,7 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
             else:
                 # If you have multiple hits for a given source (e.g., because
                 # of geometric camera overlap), take the max SDE.
-                pfrow = pd.DataFrame(pfrow.ix[pfrow.tls_sde.idxmax]).T
+                pfrow = pd.DataFrame(pfrow.loc[pfrow.tls_sde.idxmax()]).T
 
         DEPTH_CUTOFF = 0.75
         if float(pfrow.tls_depth) < DEPTH_CUTOFF:
@@ -152,6 +157,8 @@ def make_all_vetting_reports(lcpaths, lcbasedir, resultsdir, cdips_df,
                 LOGINFO(f'Found {outpath}, continue')
             elif os.path.exists(nottransitpath):
                 LOGINFO(f'Found {nottransitpath}, continue')
+
+    LOGINFO('Completed make_all_vetting_reports!')
 
 
 def _get_supprow(source_id, supplementstatsdf):
