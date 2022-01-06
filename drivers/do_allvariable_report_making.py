@@ -221,7 +221,7 @@ def do_allvariable_report_making(source_id, outdir=None,
 
         try:
             time, flux, fluxerr, vec_dict = lcu.stitch_light_curves(
-                timelist, maglist, magerrlist, extravecdict
+                timelist, maglist, magerrlist, extravecdict=extravecdict
             )
         except ValueError:
             lc_info = {'n_sectors': len(lcpaths), 'lcpaths': lcpaths,
