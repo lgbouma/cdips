@@ -23,6 +23,12 @@ def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.6,
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
+    outpath = os.path.join(outdir, f'{source_id}_nbhd_plot.png')
+
+    if os.path.exists(outpath):
+        print(f'Found {outpath}! continue.')
+        return 1
+
     (lc_paths, lcbasedir, resultsdir, cdips_df, supplementstatsdf, pfdf, toidf,
      sector) = (
             ivri.initialize_vetting_report_information(
@@ -82,7 +88,6 @@ def test_nbhd_plot(source_id, sector, cdips_cat_vnum=0.6,
 
         raise NotImplementedError
 
-    outpath = os.path.join(outdir, '{}_nbhd_plot.png'.format(source_id))
     fig.savefig(outpath)
     print('made {}'.format(outpath))
 

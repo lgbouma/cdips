@@ -139,12 +139,16 @@ def get_neighborhood_information(
                 float(target_df[param]) - mult*n_std*float(target_df[param + '_error'])
             )
 
-        if bounds['ra_upper'] > 360:
-            bounds['ra_upper'] = 359.99
-        if bounds['ra_lower'] < 0:
-            bounds['ra_lower'] = 0
         if bounds['parallax_lower'] < 0:
             bounds['parallax_lower'] = 0
+        if bounds['ra_upper'] > 360:
+            bounds['ra_upper'] = 359.999
+        if bounds['ra_lower'] < 0:
+            bounds['ra_lower'] = 0
+        if bounds['dec_upper'] > 90:
+            bounds['dec_upper'] = 89.999
+        if bounds['dec_lower'] < -90:
+            bounds['dec_lower'] = -89.999
 
         n_max = int(1e4)
 
@@ -346,17 +350,23 @@ def get_group_and_neighborhood_information(
     LOGINFO(f'bounding by {n_std} stdevns')
 
     for param in params:
-        bounds[param+'_upper'] = np.minimum(
-            group_df_dr2[param].mean() + n_std*group_df_dr2[param].std(),
-            360-1e-5
+        bounds[param+'_upper'] = (
+            group_df_dr2[param].mean() + n_std*group_df_dr2[param].std()
         )
-        bounds[param+'_lower'] = np.maximum(
-            group_df_dr2[param].mean() - n_std*group_df_dr2[param].std(),
-            1e-5
+        bounds[param+'_lower'] = (
+            group_df_dr2[param].mean() - n_std*group_df_dr2[param].std()
         )
 
     if bounds['parallax_lower'] < 0:
         bounds['parallax_lower'] = 0
+    if bounds['ra_upper'] > 360:
+        bounds['ra_upper'] = 359.999
+    if bounds['ra_lower'] < 0:
+        bounds['ra_lower'] = 0
+    if bounds['dec_upper'] > 90:
+        bounds['dec_upper'] = 89.999
+    if bounds['dec_lower'] < -90:
+        bounds['dec_lower'] = -89.999
 
     assert bounds['ra_upper'] < 360
     assert bounds['ra_lower'] > 0
