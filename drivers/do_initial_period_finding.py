@@ -80,7 +80,7 @@ def main():
 
     check_dependencies()
 
-    for s in range(14, 20):
+    for s in range(26, 27):
         do_initial_period_finding(
             sectornum=s, nworkers=nworkers, maxworkertasks=1000,
             outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_periodfinding',

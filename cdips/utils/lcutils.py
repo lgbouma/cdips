@@ -344,11 +344,11 @@ def make_calibration_list(
 
 
 def make_lc_list(
-    listpath='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/lc_list_20200818.txt',
+    listpath='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/lc_list_20220131.txt',
     sector_interval=None
 ):
     """
-    Make a TXT file consisting of the G_Rp<16 cluster light curves paths. This
+    Make a TXT file consisting of the CDIPS cluster light curves paths. This
     will almost always be run on phtess[N] machines, unless you collect the
     entire CDIPS reductions on some other system.  This TXT metadata file is
     useful for quickly retrieving files given a Gaia DR2 source_id.
