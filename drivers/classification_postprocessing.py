@@ -4,25 +4,24 @@ import pandas as pd, numpy as np
 from functools import reduce
 
 def main():
-    isfull = 1
+    isfull = 0
     iscollabsubclass = 0
-    organize_PCs = 0
+    organize_PCs = 1
 
-    sector = 14
+    sector = 26
     today = '20211217'
-    sectorrange = [14,25] # None if single sector
+    sectorrange = None #[14,25] # list (e.g., [14,25]), or None if single sector
 
-    if isfull:
-        if sectorrange is None:
+    if sectorrange is None:
+        sectorrange = [sector, sector]
+
+    for sector in range(sectorrange[0], sectorrange[1]+1):
+        if isfull:
             given_full_classifications_organize(sector=sector, today=today)
-        else:
-            for sector in range(sectorrange[0], sectorrange[1]):
-                given_full_classifications_organize(sector=sector, today=today)
-
-    if iscollabsubclass:
-        given_collab_subclassifications_merge(sector=sector)
-    if organize_PCs:
-        given_merged_organize_PCs(sector=sector)
+        if iscollabsubclass:
+            given_collab_subclassifications_merge(sector=sector)
+        if organize_PCs:
+            given_merged_organize_PCs(sector=sector)
 
 
 def ls_to_df(classfile, classifier='LGB'):
@@ -41,7 +40,7 @@ def ls_to_df(classfile, classifier='LGB'):
     return df
 
 
-def hartmanformat_to_df(classfile, classifier="JH"):
+def hartman2020format_to_df(classfile, classifier="JH"):
 
     with open(classfile, 'r') as f:
         lines = f.readlines()
@@ -49,6 +48,20 @@ def hartmanformat_to_df(classfile, classifier="JH"):
     pdfnames = [l.split(' ')[0] for l in lines]
 
     classes = [' '.join(l.split(' ')[1:]).rstrip('\n') for l in lines]
+
+    df = pd.DataFrame({'Name':pdfnames, classifier+'_Tags':classes})
+
+    return df
+
+
+def hartmanformat_to_df(classfile, classifier="JH"):
+
+    with open(classfile, 'r') as f:
+        lines = f.readlines()
+
+    pdfnames = [l.split(',')[0] for l in lines]
+
+    classes = [' '.join(l.split(',')[1:]).rstrip('\n') for l in lines]
 
     df = pd.DataFrame({'Name':pdfnames, classifier+'_Tags':classes})
 
@@ -122,20 +135,30 @@ def given_collab_subclassifications_merge(sector=6):
             os.path.join(datadir, '20200320_sector-13_PCs_JH_class.txt'),
             os.path.join(datadir, '20200320_sector-13_PCs_JNW_class.txt')
         ]
+    elif sector > 13:
+        classfiles = [
+            # made via given_LGB_PC_cut_get_class_files.py
+            os.path.join(datadir, 'Sector14_through_Sector26', 'LUKE_BOUMA', f'Sector{sector}_LGB_class.txt'),
+            # Emailed from Joel
+            os.path.join(datadir, 'Sector14_through_Sector26', 'JOEL_HARTMAN', f'Sector{sector}_class.csv')
+        ]
 
     outpath = os.path.join(
-        datadir, 'sector-{}_PCs_MERGED_SUBCLASSIFICATIONS.csv'.format(sector)
+        datadir, 'Sector14_through_Sector26', 'sector-{}_MERGED_SUBCLASSIFICATIONS.csv'.format(sector)
     )
     print('merging {}'.format(repr(classfiles)))
 
     dfs = []
     for classfile in classfiles:
-        if 'LGB' in classfile:
+        if 'LGB' in classfile or 'LUKE_BOUMA' in classfile:
             df = ls_to_df(classfile, classifier='LGB')
         elif 'JNW' in classfile:
             df = ls_to_df(classfile, classifier='JNW')
-        elif 'JH' in classfile:
-            df = hartmanformat_to_df(classfile, classifier='JH')
+        elif 'JH' in classfile or 'JOEL_HARTMAN' in classfile:
+            if sector <= 13:
+                df = hartman2020format_to_df(classfile, classifier='JH')
+            else:
+                df = hartmanformat_to_df(classfile, classifier='JH')
         dfs.append(df)
 
     # merge all the classication dataframes on Name to one dataframe
@@ -143,6 +166,17 @@ def given_collab_subclassifications_merge(sector=6):
 
     mdf.to_csv(outpath, sep=';', index=False)
     print('wrote {}'.format(outpath))
+
+    # cut to require at least LGB or JH labelling as a PC.
+    outpath = os.path.join(
+        datadir, 'Sector14_through_Sector26', 'sector-{}_PCs_MERGED_SUBCLASSIFICATIONS.csv'.format(sector)
+    )
+    sel = (
+        (mdf.LGB_Tags.str.contains('PC')) | (mdf.JH_Tags.str.contains('PC'))
+    )
+    mdf[sel].to_csv(outpath, sep=';', index=False)
+    print('wrote {}'.format(outpath))
+
 
 
 def given_merged_organize_PCs(sector=None):
@@ -155,7 +189,7 @@ def given_merged_organize_PCs(sector=None):
 
     datadir = os.path.join(
         os.path.expanduser('~'),
-        'Dropbox/proj/cdips/results/vetting_classifications/'
+        'Dropbox/proj/cdips/results/vetting_classifications/Sector14_through_Sector26'
     )
 
     inpath = os.path.join(
@@ -171,25 +205,37 @@ def given_merged_organize_PCs(sector=None):
 
         newcol = tag_colname.split('_')[0]+'_score'
 
+        is_PC = df[tag_colname].str.contains('PC').astype(int)
+
         classifier_isgold = np.array(
             df[tag_colname].str.lower().str.contains('gold')
+            |
+            df[tag_colname].str.lower().str.contains('good')
         )
         classifier_ismaybe = np.array(
             df[tag_colname].str.lower().str.contains('maybe')
         )
+
+        # by default, it's junk
         classifier_isjunk = np.array(
-            df[tag_colname].str.lower().str.contains('junk')
+            (df[tag_colname].str.lower().str.contains('junk'))
+            |
+            (df[tag_colname].str.lower().str.contains('ratty'))
+            |
+            ( (~df[tag_colname].str.lower().str.contains('good'))
+              & (~df[tag_colname].str.lower().str.contains('maybe'))
+            )
         )
 
         df[newcol] = (
             2*classifier_isgold +
             1*classifier_ismaybe +
             0*classifier_isjunk
-        )
+        )*is_PC
 
     df['average_score'] = (
-        df['LGB_score'] + df['JH_score']  + df['JNW_score']
-    ) / 3
+        df['LGB_score'] + df['JH_score']
+    ) / len(tag_colnames)
 
     threshold_cutoff = 1.0
 
@@ -200,7 +246,11 @@ def given_merged_organize_PCs(sector=None):
     #
 
     classifier_isnotcdipsstillgood = np.array(
-        df["LGB_Tags"].str.lower().str.contains('not_cdips_still_good')
+        (df["LGB_Tags"].str.lower().str.contains('PC'))
+        &
+        (df["LGB_Tags"].str.lower().str.contains('good'))
+        &
+        (df["LGB_Tags"].str.lower().str.contains('Non_CM'))
     )
 
     df['is_not_cdips_still_good'] = classifier_isnotcdipsstillgood
@@ -221,94 +271,97 @@ def given_merged_organize_PCs(sector=None):
     df_clears_threshold = df[df.clears_threshold & ~df.is_not_cdips_still_good]
     df_is_not_cdips_still_good = df[df.is_not_cdips_still_good]
 
-
-    #
-    # 1) CDIPS OBJECTS
-    #
     outpath = os.path.join(
         datadir, 'sector-{}_PCs_CLEAR_THRESHOLD.csv'.format(sector)
     )
     df_clears_threshold.to_csv(outpath, sep=';', index=False)
     print('made {}'.format(outpath))
 
-    # now copy to new directory
-    outdir = os.path.join(datadir, 'sector-{}_CLEAR_THRESHOLD'.format(sector))
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-
-    if sector==6:
-        srcdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/20190617_sector-6_PC_cut'
-    elif sector==7:
-        srcdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/20190618_sector-7_PC_cut'
-    elif sector in [8,9,10,11]:
-        # NB. I "remade" these vetting plots to add the neighborhood charts
-        srcdir = glob(
-            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2019????_sector-{}_PC_cut_remake'.
-            format(sector)
-        )
-        assert len(srcdir) == 1
-        srcdir = srcdir[0]
-    elif sector in [1,2,3,4,5,12,13,14]:
-        srcdir = glob(
-            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2020????_sector-{}_PC_cut'.
-            format(sector)
-        )
-        assert len(srcdir) == 1
-        srcdir = srcdir[0]
-
-    for n in df_clears_threshold['Name']:
-        src = os.path.join(srcdir, str(n))
-        dst = os.path.join(outdir, str(n))
-        if not os.path.exists(dst):
-            try:
-                shutil.copyfile(src, dst)
-                print('copied {} -> {}'.format(src, dst))
-            except FileNotFoundError:
-                print('WRN! DID NOT FIND {}'.format(src))
-        else:
-            print('found {}'.format(dst))
-
-    #
-    # 2) NOT_CDIPS_STILL_GOOD
-    #
     outpath = os.path.join(
         datadir, 'sector-{}_PCs_NOT_CDIPS_STILL_GOOD.csv'.format(sector)
     )
     df_is_not_cdips_still_good.to_csv(outpath, sep=';', index=False)
     print('made {}'.format(outpath))
 
-    # now copy to new directory
-    outdir = os.path.join(
-        datadir, 'sector-{}_NOT_CDIPS_STILL_GOOD'.format(sector)
-    )
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
+    return
 
-    if sector in [6,7]:
-        raise NotImplementedError
-    elif sector in [8,9,10,11]:
-        srcdir = glob(
-            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2019????_sector-{}_PC_cut_remake'.
-            format(sector)
-        )
-        assert len(srcdir) == 1
-        srcdir = srcdir[0]
-    elif sector in [1,2,3,4,5,12,13,14]:
-        srcdir = glob(
-            '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2020????_sector-{}_PC_cut'.
-            format(sector)
-        )
-        assert len(srcdir) == 1
-        srcdir = srcdir[0]
+    # Deprecated code for copying the relevant files to new directories.
 
-    for n in df_is_not_cdips_still_good['Name']:
-        src = os.path.join(srcdir, str(n))
-        dst = os.path.join(outdir, str(n))
-        if not os.path.exists(dst):
-            shutil.copyfile(src, dst)
-            print('copied {} -> {}'.format(src, dst))
-        else:
-            print('found {}'.format(dst))
+    # #
+    # # 1) CDIPS OBJECTS
+    # #
+
+
+    # # now copy to new directory
+    # outdir = os.path.join(datadir, 'sector-{}_CLEAR_THRESHOLD'.format(sector))
+    # if not os.path.exists(outdir):
+    #     os.mkdir(outdir)
+
+    # if sector==6:
+    #     srcdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/20190617_sector-6_PC_cut'
+    # elif sector==7:
+    #     srcdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/20190618_sector-7_PC_cut'
+    # elif sector in [8,9,10,11]:
+    #     # NB. I "remade" these vetting plots to add the neighborhood charts
+    #     srcdir = glob(
+    #         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2019????_sector-{}_PC_cut_remake'.format(sector)
+    #     )
+    #     assert len(srcdir) == 1
+    #     srcdir = srcdir[0]
+    # elif sector in [1,2,3,4,5,12,13]:
+    #     srcdir = glob(
+    #         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2020????_sector-{}_PC_cut'.format(sector)
+    #     )
+    #     assert len(srcdir) == 1
+    #     srcdir = srcdir[0]
+
+    # for n in df_clears_threshold['Name']:
+    #     src = os.path.join(srcdir, str(n))
+    #     dst = os.path.join(outdir, str(n))
+    #     if not os.path.exists(dst):
+    #         try:
+    #             shutil.copyfile(src, dst)
+    #             print('copied {} -> {}'.format(src, dst))
+    #         except FileNotFoundError:
+    #             print('WRN! DID NOT FIND {}'.format(src))
+    #     else:
+    #         print('found {}'.format(dst))
+
+    # #
+    # # 2) NOT_CDIPS_STILL_GOOD
+    # #
+    # # now copy to new directory
+    # outdir = os.path.join(
+    #     datadir, 'sector-{}_NOT_CDIPS_STILL_GOOD'.format(sector)
+    # )
+    # if not os.path.exists(outdir):
+    #     os.mkdir(outdir)
+
+    # if sector in [6,7]:
+    #     raise NotImplementedError
+    # elif sector in [8,9,10,11]:
+    #     srcdir = glob(
+    #         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2019????_sector-{}_PC_cut_remake'.
+    #         format(sector)
+    #     )
+    #     assert len(srcdir) == 1
+    #     srcdir = srcdir[0]
+    # elif sector in [1,2,3,4,5,12,13]:
+    #     srcdir = glob(
+    #         '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/vetting_classifications/2020????_sector-{}_PC_cut'.
+    #         format(sector)
+    #     )
+    #     assert len(srcdir) == 1
+    #     srcdir = srcdir[0]
+
+    # for n in df_is_not_cdips_still_good['Name']:
+    #     src = os.path.join(srcdir, str(n))
+    #     dst = os.path.join(outdir, str(n))
+    #     if not os.path.exists(dst):
+    #         shutil.copyfile(src, dst)
+    #         print('copied {} -> {}'.format(src, dst))
+    #     else:
+    #         print('found {}'.format(dst))
 
 
 

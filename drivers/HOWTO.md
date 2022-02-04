@@ -80,7 +80,6 @@ TO PROCESS VETTING CLASSIFICATIONS
        already done, so do it via TagSpaces in LGB_YYYYMMDD_sector-SS_PC_cut.
        Write output to e.g., `ls *pdf > 20190621_sector-6_PCs_LGB_class.txt`
 
-    (DEPRECATE!?)
     3. `given_collab_subclassifications_merge`: team responds w/
        classifications (csvs and txt files). they must be merged
 
