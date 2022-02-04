@@ -132,6 +132,3 @@ def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
         return r
     else:
         return r, search_time, search_flux, dtr_stages_dict
-
-
-

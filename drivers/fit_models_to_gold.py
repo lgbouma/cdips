@@ -41,44 +41,33 @@ LOGEXCEPTION = LOGGER.exception
 ## IMPORTS ##
 #############
 
-import os, pickle, h5py, json, shutil, requests, configparser, socket
+import numpy as np, matplotlib.pyplot as plt, pandas as pd
+import os, pickle, requests, socket
 from glob import glob
 import time as pytime
 
 import matplotlib as mpl
 mpl.use('Agg')
 
-import numpy as np, matplotlib.pyplot as plt, pandas as pd
-
 from numpy import array as nparr
-from scipy import optimize
-from scipy.interpolate import interp1d
 
 from astropy.coordinates import SkyCoord
-from astropy.io import fits
 from astropy import units as u, constants as const
 from astroquery.mast import Catalogs
 
 from astrobase import imageutils as iu
-from astrobase.lcmath import sigclip_magseries
 from astrobase.lcfit.transits import fivetransitparam_fit_magseries
 from astrobase.periodbase import htls
 
-from cdips.lcproc import (
-    detrend as dtr,
-    mask_orbit_edges as moe
-)
-from cdips.plotting import vetting_pdf as vp
 from cdips.utils import today_YYYYMMDD, str2bool
 from cdips.utils.pipelineutils import save_status, load_status
 from cdips.utils.catalogs import (
     get_cdips_catalog, get_toi_catalog, get_exofop_ctoi_catalog
 )
 from cdips.utils.mamajek import (
-    get_interp_mass_from_rstar,
-    get_interp_rstar_from_teff
+    get_interp_mass_from_rstar, get_interp_rstar_from_teff
 )
-
+from cdips.lcproc.find_planets import run_periodograms_and_detrend
 import cdips.vetting.make_all_vetting_reports as mavr
 
 ##########
@@ -368,18 +357,15 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
                 'break_tolerance':break_tolerance,
                 'window_length':window_length}
 
-    r = run_periodograms_and_detrend(
+    r, time, flux, dtr_stages_dict = run_periodograms_and_detrend(
         source_id, time, mag, dtr_dict, return_extras=True
     )
-
-
-
 
     #
     # define the paths. get the stellar parameters, and do the fit!
     #
     fit_savdir = os.path.dirname(outpath)
-    chain_savdir = os.path.dirname(outpath).replace('fitresults','samples')
+    chain_savdir = os.path.dirname(outpath).replace('fitresults', 'samples')
 
     try:
         teff, teff_err, rstar, rstar_err, logg, logg_err = (
@@ -388,7 +374,7 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
     except (NotImplementedError, ValueError) as e:
         LOGERROR(e)
         LOGERROR('did not get rstar for {}. MUST MANUALLY FIX.'.
-              format(source_id))
+                 format(source_id))
         try_mcmc = False
 
     #
@@ -513,15 +499,15 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
 
 
 def get_teff_rstar_logg(hdr):
-    #
-    # Given CDIPS header, acquire estimates of Teff, Rstar, logg from TICv8. If
-    # Teff fails, go with the Gaia DR2 Teff.  If Rstar fails, go with Gaia DR2
-    # Rstar.  If Rstar still fails, use Teff and Mamajek relation to
-    # interpolate Rstar.
-    #
-    # If logg fails, but you have Gaia DR2 Rstar, then go from Rstar to Mstar
-    # using Mamajek relation, and combine to estimate a ratty logg.
-    #
+    """
+    Given CDIPS header, acquire estimates of Teff, Rstar, logg from TICv8. If
+    Teff fails, go with the Gaia DR2 Teff.  If Rstar fails, go with Gaia DR2
+    Rstar.  If Rstar still fails, use Teff and Mamajek relation to
+    interpolate Rstar.
+
+    If logg fails, but you have Gaia DR2 Rstar, then go from Rstar to Mstar
+    using Mamajek relation, and combine to estimate a ratty logg.
+    """
     identifier = hdr['TICID']
     ra, dec = hdr['RA_OBJ'], hdr['DEC_OBJ']
     targetcoord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
