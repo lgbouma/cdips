@@ -363,10 +363,10 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
         lcu.get_lc_data(lcpath, mag_aperture=APNAME)
     )
 
-    try_dtr_method, try_break_tolerance, try_window_length = 'best', 0.5, 0.5
-    dtr_dict = {'method':try_dtr_method,
-                'break_tolerance':try_break_tolerance,
-                'window_length':try_window_length}
+    dtr_method, break_tolerance, window_length = 'best', 0.5, 0.5
+    dtr_dict = {'method':dtr_method,
+                'break_tolerance':break_tolerance,
+                'window_length':window_length}
 
     r = run_periodograms_and_detrend(
         source_id, time, mag, dtr_dict, return_extras=True
