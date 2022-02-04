@@ -101,8 +101,8 @@ if __name__ == "__main__":
     # force_references = "Kounkel_2018_Ori" # can be none
     # force_groupname = "k18orion_25Ori-1"
 
-    source_id =  '4516549232971506560'
-    sector = 14
+    source_id = None #'4516549232971506560'
+    sector = 99
     force_references = None
     force_groupname = None
 
@@ -116,8 +116,24 @@ if __name__ == "__main__":
     # force_references = "Kounkel_2019" # can be none
     # force_groupname = "kc19group_1091"
 
-    manual_gmag_limit=18
+    manual_gmag_limit=17
 
-    test_nbhd_plot(source_id, sector, force_references=force_references,
-                   force_groupname=force_groupname,
-                   manual_gmag_limit=manual_gmag_limit)
+    source_ids = ["2020089283003866624", "218545876102500096", "6199429191749977344",
+                  "5376067159192314240", "6083912679070170496", "420394942288749440",
+                  "604988891451223936", "5617412190575256448", "4469298957694642816",
+                  "2942380703200115200", "220489572141949568", "1972288603420863104",
+                  "5878638324948917760", "5420033090134127872", "1984191744484890240",
+                  "2899361864087217152", "3082564690530707328", "3433405450655641984",
+                  "5599919823877882496", "1957513636725425920", "222756009202731648",
+                  "4112191977761736448", "3291455819447952768", "659285833649720064",
+                  "5877202397180600832", "5606474390644345216", "139900347689740800",
+                  "3080104185367102592", "978017379613172864", "1810700285772906880",
+                  "344346876950576768", "3290593798035412480", "6658373007402886400",
+                  "6770698256306535296", "893550942158776832", "604915739569261184"
+             ]
+    source_ids = ["5236556416614488576", "5288535107223500928"]
+
+    for source_id in source_ids:
+        test_nbhd_plot(source_id, sector, force_references=force_references,
+                       force_groupname=force_groupname,
+                       manual_gmag_limit=manual_gmag_limit)
