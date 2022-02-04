@@ -81,8 +81,6 @@ from cdips.utils.mamajek import (
 
 import cdips.vetting.make_all_vetting_reports as mavr
 
-
-
 ##########
 # CONFIG #
 ##########
@@ -180,42 +178,19 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.6,
 
     """
 
-    lcbasedir, tfasrdir, resultsdir = _define_and_make_directories(
+    lcbasedir, resultsdir = _define_and_make_directories(
         sector, is_not_cdips_still_good=is_not_cdips_still_good)
 
-    df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf = _get_sector_metadata(
-        sector, cdips_cat_vnum=cdips_cat_vnum)
+    df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf = (
+        _get_sector_metadata(sector, cdips_cat_vnum=cdips_cat_vnum)
+    )
 
-    tfa_sr_paths = _get_lcpaths(df, tfasrdir)
+    lcpaths = _get_lcpaths(df, lcbasedir)
 
-    for tfa_sr_path in tfa_sr_paths:
+    for lcpath in lcpaths:
 
-        #
-        # given the TFASR LC path, get the complete LC path
-        #
-        source_id = np.int64(tfa_sr_path.split('gaiatwo')[1].split('-')[0].lstrip('0'))
-        mdf = cdips_df[cdips_df['source_id']==source_id]
-        if len(mdf) != 1:
-            errmsg = 'expected exactly 1 source match in CDIPS cat'
-            raise AssertionError(errmsg)
-
-        _hdr = iu.get_header_keyword_list(tfa_sr_path, ['CAMERA','CCD'], ext=0)
+        _hdr = iu.get_header_keyword_list(lcpath, ['CAMERA','CCD'], ext=0)
         cam, ccd = _hdr['CAMERA'], _hdr['CCD']
-
-        lcname = (
-            'hlsp_cdips_tess_ffi_'
-            'gaiatwo{zsource_id}-{zsector}-cam{cam}-ccd{ccd}_'
-            'tess_v{zcdipsvnum}_llc.fits'
-        ).format(
-            cam=cam,
-            ccd=ccd,
-            zsource_id=str(source_id).zfill(22),
-            zsector=str(sector).zfill(4),
-            zcdipsvnum=str(cdipsvnum).zfill(2)
-        )
-        lcpath = os.path.join(
-            lcbasedir, 'cam{}_ccd{}'.format(cam, ccd), lcname
-        )
 
         #
         # make fitresults and samples directories
@@ -226,6 +201,7 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.6,
         ]
         for outdir in outdirs:
             if not os.path.exists(outdir):
+                LOGINFO(f'Made {outdir}')
                 os.mkdir(outdir)
 
         #
@@ -249,7 +225,7 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.6,
         #
         if not os.path.exists(outpath):
 
-            _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
+            _fit_transit_model_single_sector(lcpath, outpath, mdf,
                                              source_id, supprow, suppfulldf,
                                              pfdf, pfrow, toidf, ctoidf,
                                              sector, nworkers,
@@ -329,11 +305,11 @@ def _define_and_make_directories(sector, is_not_cdips_still_good=0):
 
     if is_not_cdips_still_good:
         resultsdir = os.path.join(
-            resultsbase, 'fit_gold/sector-{}_NOT_CDIPS_STILL_GOOD'.format(sector)
+            resultsbase, f'fit_gold/sector-{sector}_NOT_CDIPS_STILL_GOOD'
         )
     else:
         resultsdir = os.path.join(
-            resultsbase, 'fit_gold/sector-{}_CLEAR_THRESHOLD'.format(sector)
+            resultsbase, f'fit_gold/sector-{sector}_CLEAR_THRESHOLD'
         )
     dirs = [resultsdir,
             os.path.join(resultsdir,'fitresults'),
@@ -344,16 +320,12 @@ def _define_and_make_directories(sector, is_not_cdips_still_good=0):
             LOGINFO(f'Making {_d}...')
             os.mkdir(_d)
 
-    tfasrdir = os.path.join(lcbase,
-                            'CDIPS_LCS/sector-{}_TFA_SR'.format(sector))
-    lcbasedir = os.path.join(lcbase,
-                             'CDIPS_LCS/sector-{}/'.format(sector))
+    lcbasedir = os.path.join(lcbase, f'CDIPS_LCS/sector-{sector}/')
 
-    return lcbasedir, tfasrdir, resultsdir
+    return lcbasedir, resultsdir
 
 
-def _get_lcpaths(df, tfasrdir):
-    # recall all LCs (both TFA SR'd and not) are in the tfasrdir
+def _get_lcpaths(df, lcbasedir):
 
     # vet_hlsp_cdips_tess_ffi_gaiatwo0003125263468681400320-0006-cam1-ccd1_tess_v01_llc.pdf
     lcnames = list(map(
@@ -362,7 +334,7 @@ def _get_lcpaths(df, tfasrdir):
     ))
 
     lcglobs = [
-        os.path.join(tfasrdir, lcname) for lcname in lcnames
+        os.path.join(lcbasedir, 'cam?_ccd?', lcname) for lcname in lcnames
     ]
 
     lcpaths = []
@@ -375,67 +347,33 @@ def _get_lcpaths(df, tfasrdir):
     return lcpaths
 
 
-def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
+def _fit_transit_model_single_sector(lcpath, outpath, mdf,
                                      source_id, supprow, suppfulldf, pfdf,
                                      pfrow, toidf, ctoidf, sector, nworkers,
                                      cdipsvnum=1, overwrite=1):
     try_mcmc = True
     identifier = source_id
+
     #
-    # read and re-detrend lc if needed. (recall: these planet candidates were
-    # found using a penalized spline detrending in most cases).
+    # get time & flux for detrended light curve. follows procedure from
+    # do_initial_period_finding.
     #
-    hdul_sr = fits.open(tfa_sr_path)
-    hdul = fits.open(lcpath)
-
-    lc_sr = hdul_sr[1].data
-    lc, hdr = hdul[1].data, hdul[0].header
-
-    # FIXME: logic needs updating in >=S14 processing
-    raise NotImplementedError
-    is_pspline_dtr = bool(pfrow['pspline_detrended'].iloc[0])
-
-    fluxap = 'IRM2' if is_pspline_dtr else 'TFASR2'
-
-    time, mag = lc_sr['TMID_BJD'], lc_sr[fluxap]
-    try:
-        time, mag = moe.mask_orbit_start_and_end(time, mag,
-                                                 raise_expectation_error=False)
-    except AssertionError:
-        raise AssertionError(
-            'moe.mask_orbit_start_and_end failed for {}'.format(tfa_sr_path)
-        )
-
-    flux = vp._given_mag_get_flux(mag)
-    err = np.ones_like(flux)*1e-4
-
-    time, flux, err = sigclip_magseries(
-        time, flux, err,magsarefluxes=True, sigclip=[50,5]
+    APNAME = 'PCA1'
+    source_id, time, mag, xcc, ycc, ra, dec, _, _ = (
+        lcu.get_lc_data(lcpath, mag_aperture=APNAME)
     )
 
-    if is_pspline_dtr or identifier in KNOWN_EXTRA_DETREND:
-        flux, _ = dtr.detrend_flux(time, flux)
+    try_dtr_method, try_break_tolerance, try_window_length = 'best', 0.5, 0.5
+    dtr_dict = {'method':try_dtr_method,
+                'break_tolerance':try_break_tolerance,
+                'window_length':try_window_length}
 
-    if identifier in KNOWN_EXTRA_DETREND:
-        fit_savdir = os.path.dirname(outpath)
-        dtrpath = os.path.join(fit_savdir, 'extra_detrend_lc.png')
+    r = run_periodograms_and_detrend(
+        source_id, time, mag, dtr_dict, return_extras=True
+    )
 
-        if not os.path.exists(dtrpath):
-            plt.close('all')
-            f,ax = plt.subplots(figsize=(6,3))
-            ax.scatter(time, flux, c='black', alpha=0.9, zorder=2, s=8,
-                       rasterized=True, linewidths=0)
-            ax.set_xlabel('bjdtdb')
-            ax.set_ylabel('detrended flux')
-            f.savefig(dtrpath, bbox_inches='tight')
-            raise AssertionError(
-                'U NEED TO MANUALLY LOOK AT {} AND VERIFY ITS OK'.
-                format(dtrpath)
-            )
-        else:
-            LOGWARNING('WRN! found {}. continuing to fit.'.
-                  format(dtrpath)
-            )
+
+
 
     #
     # define the paths. get the stellar parameters, and do the fit!
