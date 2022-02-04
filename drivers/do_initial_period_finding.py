@@ -98,36 +98,22 @@ def periodfindingworker(task):
 
     # NOTE: default search aperture: PCA1
     APNAME = 'PCA1'
-    source_id, time, mag, xcc, ycc, ra, dec, _, tfa_mag = (
+    source_id, time, mag, xcc, ycc, ra, dec, _, _ = (
         lcu.get_lc_data(lcpath, mag_aperture=APNAME, tfa_aperture='TFA1')
     )
 
-    try_dtr_method = 'best'
-    try_break_tolerance = 0.5
-    try_window_length = 0.5
+    try_dtr_method, try_break_tolerance, try_window_length = 'best', 0.5, 0.5
     dtr_dict = {'method':try_dtr_method,
                 'break_tolerance':try_break_tolerance,
                 'window_length':try_window_length}
 
     DEFAULTDICT = {
-        'source_id': source_id,
-        'lcpath': lcpath,
-        'tls_status': 'FAILED',
-        'ls_period': np.nan,
-        'ls_fap': np.nan,
-        'ls_amplitude': np.nan,
-        'tls_period': np.nan,
-        'tls_sde': np.nan,
-        'tls_snr': np.nan,
-        'tls_t0': np.nan,
-        'tls_depth': np.nan,
-        'tls_duration': np.nan,
-        'tls_distinct_transit_count': np.nan,
-        'tls_odd_even': np.nan,
-        'dtr_method': try_dtr_method,
-        'xcc': xcc,
-        'ycc': ycc,
-        'ra': ra,
+        'source_id': source_id, 'lcpath': lcpath, 'tls_status': 'FAILED',
+        'ls_period': np.nan, 'ls_fap': np.nan, 'ls_amplitude': np.nan,
+        'tls_period': np.nan, 'tls_sde': np.nan, 'tls_snr': np.nan,
+        'tls_t0': np.nan, 'tls_depth': np.nan, 'tls_duration': np.nan,
+        'tls_distinct_transit_count': np.nan, 'tls_odd_even': np.nan,
+        'dtr_method': try_dtr_method, 'xcc': xcc, 'ycc': ycc, 'ra': ra,
         'dec': dec
     }
 

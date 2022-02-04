@@ -80,7 +80,10 @@ def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
                  tls_t0, tls_depth, tls_duration, tls_distinct_transit_count,
                  tls_odd_even, dtr_method]
         else:
-            r, search_time, search_flux, dtr_stages_dict
+            tuple of: r, search_time, search_flux, dtr_stages_dict.
+            `dtr_stages_dict` contains np.ndarrays from each step of the
+            detrending process, and Lomb-Scargle information from the
+            pre-requisite rotation period check.
     """
 
     lsp_options = {'period_min':0.1, 'period_max':20}
