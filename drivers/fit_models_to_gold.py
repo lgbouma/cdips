@@ -1,10 +1,46 @@
-#
-# usage:
-# python -u fit_models_to_gold.py &> logs/20190815_fit_s6.log &
-#
-# docstring:
-# see main below.
-#
+"""
+usage:
+python -u fit_models_to_gold.py &> logs/YYYYMMDD_fit_s{sector}.log &
+
+contents:
+    main
+    _get_sector_metadata
+    _define_and_make_directories
+    _get_lcpaths
+    _fit_transit_model_single_sector
+    get_teff_rstar_logg
+    fit_results_to_ctoi_csv
+"""
+#############
+## LOGGING ##
+#############
+
+import logging
+from astrobase import log_sub, log_fmt, log_date_fmt
+
+DEBUG = False
+if DEBUG:
+    level = logging.DEBUG
+else:
+    level = logging.INFO
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig(
+    level=level,
+    style=log_sub,
+    format=log_fmt,
+    datefmt=log_date_fmt,
+)
+
+LOGDEBUG = LOGGER.debug
+LOGINFO = LOGGER.info
+LOGWARNING = LOGGER.warning
+LOGERROR = LOGGER.error
+LOGEXCEPTION = LOGGER.exception
+
+#############
+## IMPORTS ##
+#############
+
 import os, pickle, h5py, json, shutil, requests, configparser, socket
 from glob import glob
 import time as pytime
@@ -45,8 +81,10 @@ from cdips.utils.mamajek import (
 
 import cdips.vetting.make_all_vetting_reports as mavr
 
+
+
 ##########
-# config #
+# CONFIG #
 ##########
 
 DATADIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/data/mcmc_fitting_identifiers'
@@ -83,7 +121,7 @@ elif 'brik' in host:
 # main driver #
 ###############
 
-def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None,
+def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.6,
          is_not_cdips_still_good=False):
     """
     ------------------------------------------
@@ -145,7 +183,7 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None
     lcbasedir, tfasrdir, resultsdir = _define_and_make_directories(
         sector, is_not_cdips_still_good=is_not_cdips_still_good)
 
-    df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf = _get_data(
+    df, cdips_df, pfdf, supplementstatsdf, toidf, ctoidf = _get_sector_metadata(
         sector, cdips_cat_vnum=cdips_cat_vnum)
 
     tfa_sr_paths = _get_lcpaths(df, tfasrdir)
@@ -227,15 +265,17 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None
 
             fittype = 'fivetransitparam_fit'
             if str2bool(status[fittype]['is_converged']):
-                print('{} converged and already wrote wrote ctoi csv.'.
-                      format(source_id))
+                LOGINFO('{} converged and already wrote wrote ctoi csv.'.
+                        format(source_id))
 
             elif (
                 not str2bool(status[fittype]['is_converged'])
                 and int(source_id) in SKIP_CONVERGENCE_IDENTIFIERS
             ):
-                print('WRN! {} not converged, but wrote wrote ctoi csv b/c in '
-                      'SKIP_CONVERGENCE_IDENTIFIERS.'.format(source_id))
+                LOGWARNING(
+                    'WRN! {} not converged, but wrote wrote ctoi csv b/c in '
+                    'SKIP_CONVERGENCE_IDENTIFIERS.'.format(source_id)
+                )
 
             else:
                 raise ValueError(
@@ -244,7 +284,7 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=None
                 )
 
 
-def _get_data(sector, cdips_cat_vnum=None, is_not_cdips_still_good=0):
+def _get_sector_metadata(sector, cdips_cat_vnum=None, is_not_cdips_still_good=0):
 
     if is_not_cdips_still_good:
         classifxn_csv = os.path.join(
@@ -301,6 +341,7 @@ def _define_and_make_directories(sector, is_not_cdips_still_good=0):
            ]
     for _d in dirs:
         if not os.path.exists(_d):
+            LOGINFO(f'Making {_d}...')
             os.mkdir(_d)
 
     tfasrdir = os.path.join(lcbase,
@@ -392,7 +433,7 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
                 format(dtrpath)
             )
         else:
-            print('WRN! found {}. continuing to fit.'.
+            LOGWARNING('WRN! found {}. continuing to fit.'.
                   format(dtrpath)
             )
 
@@ -407,8 +448,8 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
             get_teff_rstar_logg(hdr)
         )
     except (NotImplementedError, ValueError) as e:
-        print(e)
-        print('did not get rstar for {}. MUST MANUALLY FIX.'.
+        LOGERROR(e)
+        LOGERROR('did not get rstar for {}. MUST MANUALLY FIX.'.
               format(source_id))
         try_mcmc = False
 
@@ -437,7 +478,7 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
     #   print a warning.
     #
     if identifier in KNOWN_MCMC_FAILS:
-        print('WRN! identifier {} requires manual fixing.'.
+        LOGWARNING('WRN! identifier {} requires manual fixing.'.
               format(identifier))
         try_mcmc = False
 
@@ -524,13 +565,13 @@ def _fit_transit_model_single_sector(tfa_sr_path, lcpath, outpath, mdf,
 
         ticid = int(hdr['TICID'])
         ra, dec = hdr['RA_OBJ'], hdr['DEC_OBJ']
-        print('{} converged. writing ctoi csv.'.format(identifier))
+        LOGINFO('{} converged. writing ctoi csv.'.format(identifier))
         fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf,
                                 ctoidf, teff, teff_err, rstar, rstar_err, logg,
                                 logg_err, cdipsvnum=cdipsvnum)
     else:
-        print('WRN! {} did not converge, after {} steps. MUST MANUALLY FIX.'.
-              format(identifier, status['n_steps_run']))
+        LOGWARNING('WRN! {} did not converge, after {} steps. MUST MANUALLY FIX.'.
+                   format(identifier, status['n_steps_run']))
 
 
 def get_teff_rstar_logg(hdr):
@@ -555,7 +596,7 @@ def get_teff_rstar_logg(hdr):
             radius=radius
         )
     except requests.exceptions.ConnectionError:
-        print('ERR! TIC query failed. trying again...')
+        LOGERROR('ERR! TIC query failed. trying again...')
         pytime.sleep(30)
         stars = Catalogs.query_region(
             "{} {}".format(float(targetcoord.ra.value),
@@ -593,18 +634,18 @@ def get_teff_rstar_logg(hdr):
         rstar_err = seltab['e_rad']
 
         if type(teff)==np.ma.core.MaskedConstant:
-            print('WRN! TIC teff nan. why? trying gaia value...')
+            LOGWARNING('WRN! TIC teff nan. why? trying gaia value...')
             teff = hdr['teff_val']
             teff_err = 100
 
         if type(rstar)==np.ma.core.MaskedConstant:
 
-            print('WRN! TIC rstar nan. why? trying gaia value...')
+            LOGWARNING('WRN! TIC rstar nan. why? trying gaia value...')
             rstar = hdr['radius_val']
 
             if rstar == 'NaN':
-                print('WRN! Gaia rstar also nan. Trying to interpolate from '
-                      'Teff...')
+                LOGWARNING('WRN! Gaia rstar also nan. Trying to interpolate from '
+                           'Teff...')
 
                 if teff == 'NaN':
                     raise NotImplementedError(
@@ -834,7 +875,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
     elif len(toidf[sel]) > 1:
         # get match within 0.5 days
-        print('WRN! MORE THAN 1 TOI')
+        LOGWARNING('WRN! MORE THAN 1 TOI')
         sel &= np.isclose(
             period,
             nparr(toidf[toidf['TIC']==ticid]['Orbital Period Value']),
@@ -861,7 +902,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
 
     elif len(ctoidf[sel]) > 1:
         # get match within 0.5 days
-        print('WRN! MORE THAN 1 cTOI')
+        LOGWARNING('WRN! MORE THAN 1 cTOI')
         sel &= np.isclose(
             period,
             nparr(ctoidf[ctoidf['TIC ID']==ticid]['Period (days)']),
@@ -1065,12 +1106,12 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, mafr, tlsr, outpath, toidf, ctoidf,
         import IPython; IPython.embed()
         assert 0
     df.to_csv(outpath,sep="|",index=False)
-    print('made {}'.format(outpath))
+    LOGINFO('made {}'.format(outpath))
 
 
 if __name__=="__main__":
 
-    sectors = [12,13]
+    sectors = range(14,27)
 
     for sector in sectors:
 
