@@ -87,12 +87,10 @@ import betty.plotting as bp
 
 DATADIR = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/data/mcmc_fitting_identifiers'
 
-mcmc_fails_df = pd.read_csv(
-    join(DATADIR, 'KNOWN_MCMC_FAILS.csv'), sep=';'
-)
-skip_convergence_df = pd.read_csv(
-    join(DATADIR, 'SKIP_CONVERGENCE_IDENTIFIERS.csv')
-)
+mcmc_fails_path = join(DATADIR, 'KNOWN_MCMC_FAILS.csv')
+mcmc_fails_df = pd.read_csv(mcmc_fails_path, sep=';')
+skip_convergence_path = join(DATADIR, 'SKIP_CONVERGENCE_IDENTIFIERS.csv')
+skip_convergence_df = pd.read_csv(skip_convergence_path)
 
 KNOWN_MCMC_FAILS = list(nparr(mcmc_fails_df.source_id))
 SKIP_CONVERGENCE_IDENTIFIERS = list(nparr(skip_convergence_df.source_id))
@@ -231,7 +229,8 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.6,
 
             _fit_transit_model_single_sector(
                 lcpath, outpath, mdf, source_id, supprow, suppfulldf, pfdf,
-                pfrow, toidf, ctoidf, sector, nworkers, cdipsvnum=cdipsvnum,
+                pfrow, toidf, ctoidf, sector, nworkers,
+                SKIP_CONVERGENCE_IDENTIFIERS, cdipsvnum=cdipsvnum,
                 overwrite=overwrite
             )
 
@@ -264,9 +263,9 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.6,
                 )
 
 
-def fit_results_to_ctoi_csv(ticid, ra, dec, m, summdf, outpath, posterior_csvpath, toidf, ctoidf,
-                            teff, teff_err, rstar, rstar_err, logg, logg_err,
-                            cdipsvnum=1):
+def fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, outpath,
+                            posterior_csvpath, toidf, ctoidf, teff, teff_err,
+                            rstar, rstar_err, logg, logg_err, cdipsvnum=1):
     """
     args:
 
@@ -337,14 +336,14 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, m, summdf, outpath, posterior_csvpat
     \ vsa_unc = velocity semi-amplitude uncertainty
     \ *tag = data tag number or name (e.g. YYYYMMDD_username_description_nnnnn)
     \ group = group name
-    \ *prop_period = proprietary period in months (0 or 12) 
+    \ *prop_period = proprietary period in months (0 or 12)
     \                Must be 0 if not associated with a group
     \                Must be 0 for new CTOIs
     \ *notes = notes about the values - maximum 120 characters
     \          (only required if new CTOI)
     """
 
-    extranote = ''
+    extranote = f'{msg_to_pass}. ' if len(msg_to_pass)>0 else ''
 
     # fitted simpletransit
     # ['logg_star', 'log_jitter', 't0', 'period', 'tess_mean', 'r_star', 'rho_star',
@@ -360,7 +359,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, m, summdf, outpath, posterior_csvpat
 
     b_lower, b_upper = _df.loc['b','hdi_3%'], _df.loc['b','hdi_97%']
     rp_lower, rp_upper = _df.loc['r_planet','hdi_3%'], _df.loc['r_planet','hdi_97%'] # rjup
-    extranote += f'Rp=({rp_lower:.2f}-{rp_upper:.2f})Rjup. '
+    extranote += f'Rp=({rp_lower:.2f}-{rp_upper:.2f})Rj. '
     extranote += f'b={b_lower:.2f}-{b_upper:.2f} (3-97pct). '
 
     #
@@ -569,7 +568,7 @@ def fit_results_to_ctoi_csv(ticid, ra, dec, m, summdf, outpath, posterior_csvpat
     else:
         notes = 'CDIPS: see vetting report.'
 
-    assert len(notes) < 120
+    assert len(notes) < 120, f'Got len(notes)={len(notes)}, notes={notes}'
 
     # finally write
     d = {
@@ -717,6 +716,7 @@ def _get_lcpaths(df, lcbasedir):
 def _fit_transit_model_single_sector(lcpath, outpath, mdf,
                                      source_id, supprow, suppfulldf, pfdf,
                                      pfrow, toidf, ctoidf, sector, nworkers,
+                                     SKIP_CONVERGENCE_IDENTIFIERS,
                                      cdipsvnum=1, overwrite=1):
     try_mcmc = True
     identifier = source_id
@@ -834,6 +834,10 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
     #   run 10000 samples, write status file.
     #
     # reload status file.
+    # if still not converged, but Rhat<1.1, add it to the list of things we're
+    # OK with not converging.  print a warning.
+    #
+    # reload status file.
     # if not converged:
     #   print a warning.
     #
@@ -851,6 +855,7 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
 
     modelid = 'simpletransit'
     pklpath = join(chain_savdir, f'{starid}_{modelid}.pkl')
+    msg_to_pass = ''
 
     if identifier in KNOWN_MCMC_FAILS:
         LOGWARNING(f'WRN! identifier {identifier} requires manual fixing.')
@@ -874,7 +879,7 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
     if (
         not str2bool(status['is_converged'])
         and int(status['n_steps_run']) != 10000
-        and float(status['mean_rhat']) < 1.1
+        and float(status['mean_rhat']) < 1.2
         and try_mcmc
     ):
         n_mcmc_steps = 10000
@@ -889,6 +894,23 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
             N_cores=os.cpu_count()
         )
         _update_status(m, priordict, status_file, modelid, n_mcmc_steps)
+
+    # If we failed to get convergence, then skip the convergence requirement to
+    # proceed.
+
+    status = load_status(status_file)[modelid]
+    if (
+        not str2bool(status['is_converged'])
+        and int(status['n_steps_run']) == 10000
+    ):
+        if np.int64(identifier) not in SKIP_CONVERGENCE_IDENTIFIERS:
+            with open(skip_convergence_path, mode='a') as f:
+                f.write('\n'+str(source_id))
+            LOGINFO(f'Appended {source_id} to {skip_convergence_path}')
+            SKIP_CONVERGENCE_IDENTIFIERS = SKIP_CONVERGENCE_IDENTIFIERS.append(
+                np.int64(source_id)
+            )
+        msg_to_pass = f"Not converged <R>={float(status['mean_rhat']):.2f}"
 
     status = load_status(status_file)[modelid]
     if (
@@ -947,7 +969,7 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
     ra, dec = hdr['RA_OBJ'], hdr['DEC_OBJ']
     LOGINFO(f'{identifier} converged. writing ctoi csv.')
     posterior_csvpath = posterior_texpath.replace(".tex", "_raw.csv")
-    fit_results_to_ctoi_csv(ticid, ra, dec, m, summdf, exofopcsvpath,
+    fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, exofopcsvpath,
                             posterior_csvpath, toidf, ctoidf, teff, teff_err,
                             rstar, rstar_err, logg, logg_err,
                             cdipsvnum=cdipsvnum)
@@ -1072,8 +1094,7 @@ def _update_status(m, priordict, status_file, modelid, n_mcmc_steps):
 
 if __name__=="__main__":
 
-    # sectors = range(14,27)
-    sectors = range(14,15)
+    sectors = range(14,27)
 
     for sector in sectors:
 
