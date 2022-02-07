@@ -907,10 +907,10 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
             with open(skip_convergence_path, mode='a') as f:
                 f.write('\n'+str(source_id))
             LOGINFO(f'Appended {source_id} to {skip_convergence_path}')
-            SKIP_CONVERGENCE_IDENTIFIERS = SKIP_CONVERGENCE_IDENTIFIERS.append(
+            SKIP_CONVERGENCE_IDENTIFIERS.append(
                 np.int64(source_id)
             )
-        msg_to_pass = f"Not converged <R>={float(status['mean_rhat']):.2f}"
+        msg_to_pass = f"Not converged <R>={float(status['mean_rhat']):.3f}"
 
     status = load_status(status_file)[modelid]
     if (
