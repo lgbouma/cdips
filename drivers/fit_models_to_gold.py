@@ -527,7 +527,7 @@ def fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, outpath,
             ctoiname = tdf['CTOI'].iloc[0]
             target = 'TIC'+str(ctoiname)
             flag = 'newparams'
-            extranote += "Same period and TICID as CTOI{}.".format(repr(ctoiname))
+            extranote += "Same period+TICID as CTOI{}.".format(repr(ctoiname))
             # disp = tdf['TOI Disposition'].iloc[0] #NOTE: don't update disposition
 
         elif (len(ctoidf[ctoidf['TIC ID']==ticid])==0
@@ -536,7 +536,7 @@ def fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, outpath,
         ):
             tdf = ctoidf[ctoisel]
             ctoiname = tdf['CTOI'].iloc[0]
-            extranote += "WRN! <2' from CTOI{} (diff period and TICID).".format(repr(ctoiname))
+            extranote += "<2' from CTOI{} (diff period+TICID).".format(repr(ctoiname))
 
         elif (len(ctoidf[ctoidf['TIC ID']==ticid])==0
             and
@@ -544,7 +544,7 @@ def fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, outpath,
         ):
             tdf = ctoidf[ctoisel]
             ctoiname = tdf['CTOI'].iloc[0]
-            extranote += "<2' from CTOI{}, matching period, but diff TICID. Blend?".format(repr(ctoiname))
+            extranote += "<2' from CTOI{}, same period, diff TICID. Blend?".format(repr(ctoiname))
             raise NotImplementedError('manually fix {}'.format(extranote))
 
         elif (len(ctoidf[ctoidf['TIC ID']==ticid])==1
@@ -555,7 +555,7 @@ def fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, outpath,
             ctoiname = tdf['CTOI'].iloc[0]
             target = 'TIC'+str(ctoiname)
             flag = 'newparams'
-            extranote += "Same TICID as CTOI{}; different period. New PC?".format(repr(ctoiname))
+            extranote += "==TICID/CTOI{}; diff period. New PC?".format(repr(ctoiname))
             raise NotImplementedError('manually fix {}'.format(extranote))
             # disp = tdf['TOI Disposition'].iloc[0] #NOTE: don't update disposition
 
@@ -563,10 +563,10 @@ def fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, outpath,
 
     if len(extranote) > 1:
         notes = (
-            f'CDIPS: see vetting report. {extranote}'
+            f'CDIPS: see PDF report. {extranote}'
         )
     else:
-        notes = 'CDIPS: see vetting report.'
+        notes = 'CDIPS: see PDF report.'
 
     assert len(notes) < 120, f'Got len(notes)={len(notes)}, notes={notes}'
 
@@ -910,7 +910,11 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
             SKIP_CONVERGENCE_IDENTIFIERS.append(
                 np.int64(source_id)
             )
-        msg_to_pass = f"Not converged <R>={float(status['mean_rhat']):.3f}"
+
+        if float(status['mean_rhat']) > 1.01:
+            msg_to_pass = f"Not converged <R>={float(status['mean_rhat']):.3f}"
+        else:
+            msg_to_pass = ''
 
     status = load_status(status_file)[modelid]
     if (
@@ -1058,7 +1062,7 @@ def get_teff_rstar_logg(hdr):
 
             if rstar != 'NaN':
                 # given rstar, get mass, so that you can get logg
-                rstar_err = 0.3*rstar
+                rstar_err = 0.25*rstar
                 mstar = get_interp_mass_from_rstar(rstar)
 
             if not isinstance(rstar, float):
@@ -1070,7 +1074,21 @@ def get_teff_rstar_logg(hdr):
 
             if type(logg)==np.ma.core.MaskedConstant:
                 logg = np.log10((const.G * _Mstar / _Rstar**2).cgs.value)
-                logg_err = 0.3*logg
+                logg_err = 0.25*logg
+
+        if np.isfinite(rstar) and not np.isfinite(rstar_err):
+            rstar_err = 0.25*rstar
+
+        if not np.isfinite(logg) or not np.isfinite(logg_err):
+            mstar = get_interp_mass_from_rstar(rstar)
+            _Mstar = mstar*u.Msun
+            _Rstar = rstar*u.Rsun
+
+        if not np.isfinite(logg):
+            logg = np.log10((const.G * _Mstar / _Rstar**2).cgs.value)
+
+        if not np.isfinite(logg_err):
+            logg_err = 0.25*logg
 
     else:
         raise ValueError('bad xmatch for {}'.format(hdr['GAIA-ID']))
@@ -1094,6 +1112,7 @@ def _update_status(m, priordict, status_file, modelid, n_mcmc_steps):
 
 if __name__=="__main__":
 
+    #sectors = range(14,27)
     sectors = range(14,27)
 
     for sector in sectors:
