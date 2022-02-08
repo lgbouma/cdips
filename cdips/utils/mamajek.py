@@ -41,8 +41,17 @@ def get_interp_mass_from_rstar(rstar):
     """
 
     mamadf = load_basetable()
+
+    sel = (
+        (mamadf['Msun'] != '...') &
+        (mamadf['R_Rsun'] != '...') &
+        (mamadf['Msun'] != '....')
+    )
+    mamadf = mamadf[sel] # finite mass and radius.
+
     mamarstar, mamamstar = (
-        nparr(mamadf['R_Rsun'])[::-1], nparr(mamadf['Msun'])[::-1]
+        nparr(mamadf['R_Rsun'])[::-1].astype(float),
+        nparr(mamadf['Msun'])[::-1].astype(float)
     )
 
     #
@@ -88,10 +97,19 @@ def get_interp_rstar_from_teff(teff):
     """
 
     mamadf = load_basetable()
+
+    sel = (
+        (mamadf['Msun'] != '...') &
+        (mamadf['Msun'] != '....') &
+        (mamadf['R_Rsun'] != '...') &
+        (mamadf['Teff'] != '...')
+    )
+    mamadf = mamadf[sel] # finite mass, radius, teff.
+
     mamarstar, mamamstar, mamateff = (
-        nparr(mamadf['R_Rsun'])[::-1],
-        nparr(mamadf['Msun'])[::-1],
-        nparr(mamadf['Teff'])[::-1]
+        nparr(mamadf['R_Rsun'])[::-1].astype(float),
+        nparr(mamadf['Msun'])[::-1].astype(float),
+        nparr(mamadf['Teff'])[::-1].astype(float)
     )
 
     #
