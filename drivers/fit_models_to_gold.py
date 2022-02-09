@@ -760,6 +760,15 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
         source_id, time, mag, dtr_dict, return_extras=True
     )
 
+    # initial (orbit-edge-masked) time and flux.
+    lc_csvpath = join(fit_savdir, f'{starid}_{modelid}_rawlc.csv')
+    outdf = pd.DataFrame({
+        'time': dtr_stages_dict['time'],
+        'flux_'+APNAME: dtr_stages_dict['flux'],
+    })
+    outdf.to_csv(lc_csvpath, index=False)
+    LOGINFO(f'Wrote {lc_csvpath}')
+
     #
     # define the paths. get the stellar parameters, and do the fit!
     #
