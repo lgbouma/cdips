@@ -34,12 +34,12 @@ import os, textwrap
 from glob import glob
 from datetime import datetime
 
-def mask_orbit_start_and_end(time, flux, orbitgap=1, expected_norbits=2,
+def mask_orbit_start_and_end(time, flux, flux_err=None, orbitgap=1, expected_norbits=2,
                              orbitpadding=6/(24),
                              raise_expectation_error=True,
                              return_inds=False, verbose=True):
     """
-    Ignore the times near the edges of orbits.
+    Trim out the times near the edges of orbits.
 
     args:
         time, flux
@@ -75,8 +75,14 @@ def mask_orbit_start_and_end(time, flux, orbitgap=1, expected_norbits=2,
 
     return_time = time[sel]
     return_flux = flux[sel]
+    if flux_err is not None:
+        return_flux_err = flux_err[sel]
 
-    if not return_inds:
+    if not return_inds and flux_err is None:
         return return_time, return_flux
-    elif return_inds:
+    elif return_inds and flux_err is None:
         return return_time, return_flux, sel
+    elif not return_inds and flux_err is not None:
+        return return_time, return_flux, return_flux_err
+    elif return_inds and flux_err is not None:
+        return return_time, return_flux, return_flux_err, sel
