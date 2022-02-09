@@ -797,7 +797,7 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
     # initialize prior; cache it to know what you did.
     #
     prior_path = join(
-        fit_savdir, f'{starid}_priors.py'
+        fit_savdir, f'{starid}_{modelid}_priors.py'
     )
     if not os.path.exists(prior_path):
         # period/t0: guess period known 1% precision TLS
