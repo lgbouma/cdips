@@ -826,6 +826,8 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
         'tess_mean': ('Normal', 1, 0.1),
         'log_jitter': ('Normal', r"\log\langle \sigma_f \rangle", 2.0),
         }
+        if modelid == 'localpolytransit':
+            del priordict['tess_mean'] # window-specific a0/a1/a2 to be constructed
 
         given_priordict_make_priorfile(priordict, prior_path)
     else:
