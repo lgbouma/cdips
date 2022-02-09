@@ -18,6 +18,8 @@ Light curve miscellanea:
 
     _given_mag_get_flux: self-descriptive.
 
+    p2p_rms: calculate point-to-point RMS of light curve.
+
     get_lc_data: given a CDIPS lcpath, return some key default vectors.
 
     get_best_ap_number_given_lcpath: self-descriptive.
@@ -387,3 +389,32 @@ def make_lc_list(
                 "\n".join(lcpaths)+"\n"
             )
         print(f'... appended them to {listpath}')
+
+
+def p2p_rms(flux):
+    """
+    e.g., section 2.6 of Nardiello+2020:
+        The point-to-point RMS is not sensitive to intrinsic stellar
+        variability.  It's obtained by calculating the 84th-50th percentile of
+        the distribution of the sorted residuals from the median value of
+        δF_j = F_{j} - F_{j+1}, where j is an epoch index.
+    """
+
+    dflux = np.diff(flux)
+
+    med_dflux = np.nanmedian(dflux)
+
+    up_p2p = (
+        np.nanpercentile( np.sort(dflux-med_dflux), 84 )
+        -
+        np.nanpercentile( np.sort(dflux-med_dflux), 50 )
+    )
+    lo_p2p = (
+        np.nanpercentile( np.sort(dflux-med_dflux), 50 )
+        -
+        np.nanpercentile( np.sort(dflux-med_dflux), 16 )
+    )
+
+    p2p = np.mean([up_p2p, lo_p2p])
+
+    return p2p
