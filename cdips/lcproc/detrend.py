@@ -253,16 +253,19 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     search_time = _time[sel0][sel1]
 
     dtr_stages_dict = {
-        # non-nan indices from clipped_flux
-        'sel0': sel0,
-        # non-nan indices from clipped_flat_flux
-        'sel1': sel1,
+        # initial (orbit-edge-masked) time and flux.
+        'time': _time,
+        'flux': _flux,
         # after initial window sigma_clip on flux, what is left?
         'clipped_flux': clipped_flux,
+        # non-nan indices from clipped_flux
+        'sel0': sel0,
         # after detrending, what is left?
         'flat_flux': flat_flux,
         # after window sigma_clip on flat_flux, what is left?
         'clipped_flat_flux': clipped_flat_flux,
+        # non-nan indices from clipped_flat_flux
+        'sel1': sel1,
         # what does the detrending algorithm give as the "trend"?
         'trend_flux': trend_flux,
         'trend_time': _time[sel0],
