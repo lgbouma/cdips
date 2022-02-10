@@ -56,6 +56,7 @@ from numpy import array as nparr
 from os.path import join
 from collections import OrderedDict
 from importlib.machinery import SourceFileLoader
+from copy import deepcopy
 
 from astropy.coordinates import SkyCoord
 from astropy import units as u, constants as const
@@ -259,6 +260,21 @@ def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.6,
                     'should never happen. for DR2 {}'.format(source_id)
                 )
 
+def get_approx_transit_depth_from_ror(_df):
+
+    ror = _df.loc['ror', 'median']
+    b = _df.loc['b','median']
+    u1 = _df.loc['u_star[0]','median']
+    u2 = _df.loc['u_star[1]','median']
+
+    arg = 1 - np.sqrt(1 - b**2)
+    f0 = 1 - 2 * u1 / 6.0 - 2 * u2 / 12.0
+    f = 1 - u1* arg - u2 * arg ** 2
+    factor = f0 / f
+
+    delta = ror**2 * (1/factor)
+
+    return delta
 
 def fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, outpath,
                             posterior_csvpath, toidf, ctoidf, teff, teff_err,
@@ -349,6 +365,14 @@ def fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, outpath,
     #  ['tess_roughdepth', 'r_planet', 'a_Rs', 'cosi', 'sini', 'T_14', 'T_13']
     _df = pd.read_csv(posterior_csvpath, index_col=0)
 
+    if 'tess_roughdepth' not in _df:
+        approx_depth = get_approx_transit_depth_from_ror(_df)
+        rp_rel_unc = _df.loc['r_planet','sd']/_df.loc['r_planet','mean']
+        approx_depth_unc = 2*approx_depth*rp_rel_unc
+    else:
+        approx_depth = _df.loc['tess_roughdepth','mean']
+        approx_depth_unc = _df.loc['tess_roughdepth','sd']
+
     period = _df.loc['period','mean']
     period_unc = _df.loc['period','sd']
     epoch = _df.loc['t0','mean']
@@ -357,7 +381,7 @@ def fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, outpath,
     b_lower, b_upper = _df.loc['b','hdi_3%'], _df.loc['b','hdi_97%']
     rp_lower, rp_upper = _df.loc['r_planet','hdi_3%'], _df.loc['r_planet','hdi_97%'] # rjup
     extranote += f'Rp=({rp_lower:.2f}-{rp_upper:.2f})Rj. '
-    extranote += f'b={b_lower:.2f}-{b_upper:.2f} (3-97pct). '
+    extranote += f'b={b_lower:.2f}-{b_upper:.2f} (3-97HDI). '
 
     #
     # determine target / flag / disp
@@ -576,8 +600,8 @@ def fit_results_to_ctoi_csv(msg_to_pass, ticid, ra, dec, m, summdf, outpath,
         'period_unc':_df.loc['period','sd'],
         'epoch':_df.loc['t0','mean'],
         'epoch_unc':_df.loc['t0','sd'],
-        'depth':1e6*_df.loc['tess_roughdepth','mean'],
-        'depth_unc':1e6*_df.loc['tess_roughdepth','sd'],
+        'depth':1e6*approx_depth,
+        'depth_unc':1e6*approx_depth_unc,
         'duration':_df.loc['T_14', 'mean'],
         'duration_unc':_df.loc['T_14', 'sd'],
         'inc':np.nan,
@@ -746,25 +770,39 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
     )
     err_mag = hdul[1].data['IRE1']
 
-    _, flux_err = lcu._given_mag_get_flux(mag, err_mag=err_mag)
 
     dtr_method, break_tolerance, window_length = 'best', 0.5, 0.5
     dtr_dict = {'method':dtr_method,
                 'break_tolerance':break_tolerance,
                 'window_length':window_length}
 
-    r, time, flux, dtr_stages_dict = run_periodograms_and_detrend(
+    r, dtr_time, dtr_flux, dtr_stages_dict = run_periodograms_and_detrend(
         source_id, time, mag, dtr_dict, return_extras=True
     )
 
-    # initial (orbit-edge-masked) time and flux.
-    lc_csvpath = join(fit_savdir, f'{starid}_{modelid}_rawlc.csv')
+    # save initial (orbit-edge-masked) time and flux, w/out detrending.
     outdf = pd.DataFrame({
         'time': dtr_stages_dict['time'],
         'flux_'+APNAME: dtr_stages_dict['flux'],
     })
+    lc_csvpath = join(fit_savdir, f'{starid}_{modelid}_rawlc.csv')
     outdf.to_csv(lc_csvpath, index=False)
     LOGINFO(f'Wrote {lc_csvpath}')
+
+    from betty.helpers import p2p_rms
+
+    # define the time, flux, flux_err to be used in the fitting.
+    if modelid == 'simpletransit':
+        # simpletransit fits the detrended light curve
+        time = deepcopy(dtr_time)
+        flux = deepcopy(dtr_flux)
+        flux_err = p2p_rms(flux)*np.ones_like(flux)
+
+    elif modelid == 'localpolytransit':
+        # localpolytransit fits the raw light curve, w/out detrending
+        time = deepcopy(dtr_stages_dict['time'])
+        flux = deepcopy(dtr_stages_dict['flux'])
+        flux_err = p2p_rms(flux)*np.ones_like(flux)
 
     #
     # define the paths. get the stellar parameters, and do the fit!
@@ -826,10 +864,18 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
         if modelid == 'localpolytransit':
             del priordict['tess_mean'] # window-specific a0/a1/a2 to be constructed
 
+        _init_priordict = deepcopy(priordict)
         given_priordict_make_priorfile(priordict, prior_path)
+
     else:
         prior_mod = SourceFileLoader('prior', prior_path).load_module()
         priordict = prior_mod.priordict
+
+        _init_priordict = deepcopy(priordict)
+        initkeylist = deepcopy(list(_init_priordict.keys()))
+        for k in initkeylist:
+            if k.startswith('tess_'):
+                del _init_priordict[k]
 
     #
     # LOGIC:
@@ -861,45 +907,61 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
             flux_err.astype(np.float64),
             tess_texp
         ]
-    elif modelid == 'localpolytransit':
-        #FIXME FIXME FIXME
-        import IPython; IPython.embed()
-        assert 0
 
+    elif modelid == 'localpolytransit':
+        # In this model, we fit local windows.  Define those windows, and the
+        # priors on the fitted parameters.
+
+        from betty.helpers import _subset_cut, _quicklcplot
+        from astrobase.lcmath import find_lc_timegroups
+
+        tdur_val = r['tls_duration'] # units: days
         period_val, period_err = r['tls_period'], 0.01*r['tls_period']
         t0_val, t0_err = r['tls_t0'], 30/(60*24)
-        # Rp/R*: log-uniform; lower 10x lower than TLS depth
-        depth = 1-r['tls_depth']
+
+        if tdur_val < (2/24):
+            n_tdurs = 5.0
+        elif tdur_val < (3/24):
+            n_tdurs = 4.5
+        elif tdur_val < (4/24):
+            n_tdurs = 4
+        else:
+            n_tdurs = 3.5
 
         # trim
-        n_tdurs = 5.0
+        outpath = join(fit_savdir, f'{starid}_{modelid}_rawlc.png')
+        _quicklcplot(time, flux, flux_err, outpath)
         time, flux, flux_err = _subset_cut(
-            time, flux, flux_err, n=n_tdurs, t0=EPHEMDICT[starid]['t0'],
-            per=EPHEMDICT[starid]['per'], tdur=EPHEMDICT[starid]['tdur']
+            time, flux, flux_err, n=n_tdurs, t0=t0_val,
+            per=period_val, tdur=tdur_val
         )
-        outpath = join(TESTRESULTSDIR, f'{starid}_rawtrimlc.png')
+        outpath = join(fit_savdir, f'{starid}_{modelid}_rawtrimlc.png')
         _quicklcplot(time, flux, flux_err, outpath)
 
         # given n*tdur omitted on each side of either transit, there is P-2*ntdur
         # space between each time group.
-        mingap = EPHEMDICT[starid]['per'] - 3*n_tdurs*EPHEMDICT[starid]['tdur']
+        mingap = period_val - 3*n_tdurs*tdur_val
         assert mingap > 0
         ngroups, groupinds = find_lc_timegroups(time, mingap=mingap)
 
         for ix, g in enumerate(groupinds):
             tess_texp = np.nanmedian(np.diff(time[g]))
-            datasets[f'tess_{ix}'] = [time[g], flux[g], flux_err[g], tess_texp]
+            datasets[f'tess_{ix}'] = [
+                time[g].astype(np.float64),
+                flux[g].astype(np.float64),
+                flux_err[g].astype(np.float64),
+                tess_texp
+            ]
 
-        for n, (name, (x, y, yerr, texp)) in enumerate(datasets.items()):
-            # mean + a1*(time-midtime) + a2*(time-midtime)^2.
-            priordict[f'{name}_mean'] = ('Normal', 1, 0.1)
-            priordict[f'{name}_a1'] = ('Uniform', -0.1, 0.1)
-            priordict[f'{name}_a2'] = ('Uniform', -0.1, 0.1)
+        if 'tess_0_mean' not in priordict.keys():
+            for n, (name, (x, y, yerr, texp)) in enumerate(datasets.items()):
+                # mean + a1*(time-midtime) + a2*(time-midtime)^2.
+                priordict[f'{name}_mean'] = ('Normal', 1, 0.1)
+                priordict[f'{name}_a1'] = ('Uniform', -0.1, 0.1)
+                priordict[f'{name}_a2'] = ('Uniform', -0.1, 0.1)
 
-        #FIXME FIXME FIXME
+        given_priordict_make_priorfile(priordict, prior_path)
 
-
-        pass
     else:
         raise NotImplementedError
 
@@ -990,7 +1052,8 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
                         kind='stats', stat_funcs={'median':np.nanmedian},
                         extend=True)
 
-    fitindiv = 1
+    fitindiv = 1 if modelid == 'simpletransit' else 0
+    fitindivpanels = 1 if modelid == 'localpolytransit' else 0
     phaseplot = 1
     cornerplot = 1
     posttable = 1
@@ -1001,7 +1064,12 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
 
     outpath = join(fit_savdir, f'{starid}_{modelid}_phaseplot.png')
     if phaseplot and not os.path.exists(outpath):
-        bp.plot_phasefold(m, summdf, outpath, modelid=modelid, inppt=1)
+        bp.plot_phasefold(m, summdf, outpath, modelid=modelid, inppt=1, binsize_minutes=15)
+
+    outpath = join(fit_savdir, f'{starid}_{modelid}_fitindivpanels.png')
+    if fitindivpanels:
+        bp.plot_fitindivpanels(m, summdf, outpath, modelid=modelid,
+                               singleinstrument='tess')
 
     outpath = join(fit_savdir, f'{starid}_{modelid}_fitindiv.png')
     if fitindiv and not os.path.exists(outpath):
@@ -1009,7 +1077,10 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
 
     outpath = join(fit_savdir, f'{starid}_{modelid}_cornerplot.png')
     if cornerplot and not os.path.exists(outpath):
-        bp.plot_cornerplot(list(priordict), m, outpath)
+        if modelid == 'simpletransit':
+            bp.plot_cornerplot(list(priordict), m, outpath)
+        elif modelid == 'localpolytransit':
+            bp.plot_cornerplot(list(_init_priordict), m, outpath)
 
     #
     # if converged or in the list of IDs for which its fine to skip convegence
