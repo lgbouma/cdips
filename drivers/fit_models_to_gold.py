@@ -4,6 +4,7 @@ python -u fit_models_to_gold.py &> logs/YYYYMMDD_fit_s{sector}.log &
 
 contents:
     main
+        _fit_transit_model_single_sector
     get_teff_rstar_logg
     fit_results_to_ctoi_csv
 
@@ -11,7 +12,6 @@ helpers:
     _get_sector_metadata
     _define_and_make_directories
     _get_lcpaths
-    _fit_transit_model_single_sector
     _update_status
 """
 #############
@@ -105,9 +105,6 @@ elif 'brik' in host:
     resultsbase = '/home/luke/Dropbox/proj/cdips/results/'
     database = '/home/luke/Dropbox/proj/cdips/data/'
 
-###############
-# main driver #
-###############
 
 def main(overwrite=0, sector=None, nworkers=40, cdipsvnum=1, cdips_cat_vnum=0.6,
          is_not_cdips_still_good=False):
@@ -724,7 +721,7 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
     fit_savdir = os.path.dirname(outpath)
     chain_savdir = os.path.dirname(outpath).replace('fitresults', 'samples')
 
-    modelid = 'simpletransit'
+    modelid = 'localpolytransit'
     starid = (
         os.path.basename(lcpath).
         replace('.fits','').
@@ -857,14 +854,55 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
     tess_texp = np.nanmedian(np.diff(time))
 
     datasets = OrderedDict()
-    datasets['tess'] = [
-        time.astype(np.float64),
-        flux.astype(np.float64),
-        flux_err.astype(np.float64),
-        tess_texp
-    ]
+    if modelid == 'simpletransit':
+        datasets['tess'] = [
+            time.astype(np.float64),
+            flux.astype(np.float64),
+            flux_err.astype(np.float64),
+            tess_texp
+        ]
+    elif modelid == 'localpolytransit':
+        #FIXME FIXME FIXME
+        import IPython; IPython.embed()
+        assert 0
 
-    modelid = 'simpletransit'
+        period_val, period_err = r['tls_period'], 0.01*r['tls_period']
+        t0_val, t0_err = r['tls_t0'], 30/(60*24)
+        # Rp/R*: log-uniform; lower 10x lower than TLS depth
+        depth = 1-r['tls_depth']
+
+        # trim
+        n_tdurs = 5.0
+        time, flux, flux_err = _subset_cut(
+            time, flux, flux_err, n=n_tdurs, t0=EPHEMDICT[starid]['t0'],
+            per=EPHEMDICT[starid]['per'], tdur=EPHEMDICT[starid]['tdur']
+        )
+        outpath = join(TESTRESULTSDIR, f'{starid}_rawtrimlc.png')
+        _quicklcplot(time, flux, flux_err, outpath)
+
+        # given n*tdur omitted on each side of either transit, there is P-2*ntdur
+        # space between each time group.
+        mingap = EPHEMDICT[starid]['per'] - 3*n_tdurs*EPHEMDICT[starid]['tdur']
+        assert mingap > 0
+        ngroups, groupinds = find_lc_timegroups(time, mingap=mingap)
+
+        for ix, g in enumerate(groupinds):
+            tess_texp = np.nanmedian(np.diff(time[g]))
+            datasets[f'tess_{ix}'] = [time[g], flux[g], flux_err[g], tess_texp]
+
+        for n, (name, (x, y, yerr, texp)) in enumerate(datasets.items()):
+            # mean + a1*(time-midtime) + a2*(time-midtime)^2.
+            priordict[f'{name}_mean'] = ('Normal', 1, 0.1)
+            priordict[f'{name}_a1'] = ('Uniform', -0.1, 0.1)
+            priordict[f'{name}_a2'] = ('Uniform', -0.1, 0.1)
+
+        #FIXME FIXME FIXME
+
+
+        pass
+    else:
+        raise NotImplementedError
+
     pklpath = join(chain_savdir, f'{starid}_{modelid}.pkl')
     msg_to_pass = ''
 
