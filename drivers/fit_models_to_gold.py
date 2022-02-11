@@ -921,9 +921,9 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
 
         if tdur_val < (2/24):
             n_tdurs = 5.0
-        elif tdur_val < (3/24):
+        elif tdur_val < (2.5/24):
             n_tdurs = 4.5
-        elif tdur_val < (4/24):
+        elif tdur_val < (3/24):
             n_tdurs = 4
         else:
             n_tdurs = 3.5
@@ -940,8 +940,9 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
 
         # given n*tdur omitted on each side of either transit, there is P-2*ntdur
         # space between each time group.
-        mingap = period_val - 3*n_tdurs*tdur_val
-        assert mingap > 0
+        mingap = period_val - 2.1*n_tdurs*tdur_val
+        msg = f"P={period_val}, N={n_tdurs}, Tdur={tdur_val}"
+        assert mingap > 0, msg
         ngroups, groupinds = find_lc_timegroups(time, mingap=mingap)
 
         for ix, g in enumerate(groupinds):
