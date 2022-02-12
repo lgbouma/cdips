@@ -15,6 +15,10 @@ Very useful:
     detrend_flux: a wrapper to wotan pspline or biweight detrending (given
         vectors of time and flux).
 
+    transit_window_polynomial_remover: given a light curve and good guesses for
+        {t0,P,t_14}, trim it to windows around each transit, mask out the
+        points in-transit, and fit (chi-squared) local polynomials to each.
+
 PCA / "shared systematic trend" detrending:
 
     detrend_systematics: removes systematic trends, by wrapping prepare_pca,
@@ -50,6 +54,7 @@ from glob import glob
 
 from numpy import array as nparr, all as npall, isfinite as npisfinite
 import numpy.lib.recfunctions as rfn
+from collections import OrderedDict
 
 from astrobase import imageutils as iu
 from astrobase.lcmath import find_lc_timegroups
@@ -1277,3 +1282,144 @@ def calculate_linear_model_mag(y, basisvecs, n_components,
                 pass
 
     return out_mag, n_comp
+
+
+def transit_mask(t, period, duration, T0):
+    """
+    :t: *(array)* Time series of the data (in units of days)
+    :period: *(float)* Transit period e.g. from results: ``period``
+    :duration: *(float)* Transit duration e.g. from results: ``duration``
+    :T0: *(float)* Mid-transit of first transit e.g. from results: ``T0``
+
+    Returns
+
+    :intransit: *(numpy array mask)* A numpy array mask (of True/False values)
+    for each data point in the time series. ``True`` values are in-transit.
+
+    Example usage:
+
+    ::
+
+        intransit = transit_mask(t, period, duration, T0)
+        print(intransit)
+        >>> [False False False ...]
+        plt.scatter(t[in_transit], y[in_transit], color='red')  # in-transit points in red
+        plt.scatter(t[~in_transit], y[~in_transit], color='blue')  # other points in blue
+    """
+    mask = np.abs((t - T0 + 0.5*period) % period - 0.5*period) < 0.5 * duration
+    return mask
+
+
+def transit_window_polynomial_remover(
+    time, flux, flux_err, t0, period, tdur, n_tdurs=5., method='poly_2',
+    plot_outpath=None, N_model_points=1000
+    ):
+    """
+    Given a light curve and good guesses for {t0,P,t_14}, trim it to windows
+    around each transit, mask out the points in-transit, and fit (chi-squared)
+    local polynomials to each window.
+
+    Args:
+        time, flux, flux_err (np.ndarray): self-described.
+
+        t0, period, tdur (float): self-described.  units: days.  tdur=t_14.
+
+        n_tdurs (float): n where selecting: [ t0 - n*tdur, t + n*tdur ]
+
+        method (str): 'poly_{N}' where N is Nth-order polynomial. E.g., poly_2,
+        to fit a local quadratic.
+
+        plot_outpath (None or str): if str, e.g,
+        '/path/to/TIC123_somestr.png', light curve plots before and after
+        trimming will be made (TIC123_somestr_rawlc.png and *rawtrimlc.png).
+
+    Returns:
+
+        OrderedDict with keys:
+
+        'time_{ix}', 'flux_{ix}', 'flux_err_{ix}': each {ix} is a transit
+            window, this is the data.
+
+        'trend_flux_{ix}', 'flat_flux_{ix}': the model, evaluated at time_{ix}.
+
+        'coeffs_{ix}': coefficients of the model
+
+        'mod_time_{ix}', 'mod_flux_{ix}': the model, evaluated over
+            N_model_points=1000 points in each transit window.  Used for
+            visualization purposes.
+
+        'ngroups', and 'groupinds'.
+    """
+
+    # check types
+    for p in [time, flux, flux_err]:
+        assert isinstance(p, np.ndarray)
+    for p in [t0, period, tdur]:
+        assert isinstance(p, (int, float))
+    if isinstance(plot_outpath, str):
+        assert plot_outpath.endswith('.png')
+    assert method.startswith('poly_')
+
+    # trim
+    from betty.helpers import _subset_cut, _quicklcplot
+
+    if isinstance(plot_outpath, str):
+        outpath = plot_outpath.replace('.png', '_rawlc.png')
+        _quicklcplot(time, flux, flux_err, outpath)
+
+    time, flux, flux_err = _subset_cut(
+        time, flux, flux_err, n=n_tdurs, t0=t0, per=period, tdur=tdur
+    )
+
+    if isinstance(plot_outpath, str):
+        outpath = plot_outpath.replace('.png', '_rawtrimlc.png')
+        _quicklcplot(time, flux, flux_err, outpath)
+
+    # construct mask
+    from astrobase.lcmath import find_lc_timegroups
+
+    mingap = period - 2.01*n_tdurs*tdur
+    msg = f"P={period}, N={n_tdurs}, Tdur={tdur}"
+    assert mingap > 0, msg
+    ngroups, groupinds = find_lc_timegroups(time, mingap=mingap)
+
+    datadict = OrderedDict()
+
+    import numpy.polynomial.polynomial as poly
+
+    for ix, g in enumerate(groupinds):
+
+        _t, _f, _e = (
+            time[g].astype(np.float64),
+            flux[g].astype(np.float64),
+            flux_err[g].astype(np.float64),
+        )
+        in_transit = transit_mask(_t, period, tdur, t0)
+
+        # chi-squared local polynomial to the points out of transit, in this
+        # window.
+        _tmid = np.nanmedian(_t)
+
+        poly_order = int(method.split("_")[1])
+        coeffs = poly.polyfit(_t[~in_transit]-_tmid, _f[~in_transit], poly_order)
+
+        _trend_flux = poly.polyval(_t - _tmid, coeffs)
+        _flat_flux = _f / _trend_flux
+
+        x_mod = np.linspace(_t.min(), _t.max(), N_model_points)
+        y_mod = poly.polyval(x_mod - _tmid, coeffs)
+
+        datadict[f'time_{ix}'] = _t
+        datadict[f'flux_{ix}'] = _f
+        datadict[f'flux_err_{ix}'] = _e
+        datadict[f'trend_flux_{ix}'] = _trend_flux
+        datadict[f'flat_flux_{ix}'] = _flat_flux
+        datadict[f'coeffs_{ix}'] = coeffs
+        datadict[f'mod_time_{ix}'] = x_mod
+        datadict[f'mod_flux_{ix}'] = y_mod
+
+
+    datadict['ngroups'] = ngroups
+    datadict['groupinds'] = groupinds
+
+    return datadict
