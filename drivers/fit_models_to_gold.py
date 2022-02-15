@@ -745,7 +745,7 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
     fit_savdir = os.path.dirname(outpath)
     chain_savdir = os.path.dirname(outpath).replace('fitresults', 'samples')
 
-    modelid = 'localpolytransit'
+    modelid = 'simpletransit'
     starid = (
         os.path.basename(lcpath).
         replace('.fits','').
@@ -758,8 +758,7 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
         return 1
 
     #
-    # get time & flux for detrended light curve. follows procedure from
-    # do_initial_period_finding.
+    # get time & flux. (follows procedure from do_initial_period_finding).
     #
     hdul = fits.open(lcpath)
     hdr = hdul[0].header
@@ -769,7 +768,6 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
         lcu.get_lc_data(lcpath, mag_aperture=APNAME)
     )
     err_mag = hdul[1].data['IRE1']
-
 
     dtr_method, break_tolerance, window_length = 'best', 0.5, 0.5
     dtr_dict = {'method':dtr_method,
@@ -793,10 +791,54 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
 
     # define the time, flux, flux_err to be used in the fitting.
     if modelid == 'simpletransit':
-        # simpletransit fits the detrended light curve
-        time = deepcopy(dtr_time)
-        flux = deepcopy(dtr_flux)
+
+        # # if you wanted to use the detrended light curve (distorted due to
+        # # notch), it would be the three below.  instead, we use the PCA light
+        # # curve data, and trim it to local windows around each transit (with
+        # # local polynomials removed).
+        # time = deepcopy(dtr_time)
+        # flux = deepcopy(dtr_flux)
+        # flux_err = p2p_rms(flux)*np.ones_like(flux)
+
+        # get the PCA light curve data
+        time = deepcopy(dtr_stages_dict['time'])
+        flux = deepcopy(dtr_stages_dict['flux'])
         flux_err = p2p_rms(flux)*np.ones_like(flux)
+
+        # get the trimming window priors
+        period_val = r['tls_period']
+        t0_val = r['tls_t0']
+        tdur_val = r['tls_duration']
+
+        # given n*tdur omitted on each side of either transit, there is P-2*ntdur
+        # space between each time group.
+        if tdur_val < (2/24):
+            n_tdurs = 5.0
+        elif tdur_val < (2.5/24):
+            n_tdurs = 4.5
+        elif tdur_val < (3/24):
+            n_tdurs = 4
+        else:
+            n_tdurs = 3.5
+        mingap = period_val - 2.1*n_tdurs*tdur_val
+        while mingap < 0:
+            n_tdurs -= 0.5
+            mingap = period_val - 2.1*n_tdurs*tdur_val
+        msg = f"P={period_val}, N={n_tdurs}, Tdur={tdur_val}"
+        assert mingap > 0, msg
+
+        # do the "local polynomial removal" around each transit window.
+        from cdips.lcproc.detrend import transit_window_polynomial_remover
+        outpath = join(fit_savdir, f'{starid}.png')
+        d = transit_window_polynomial_remover(
+            time, flux, flux_err, t0_val,
+            period_val, tdur_val, n_tdurs=n_tdurs,
+            method='poly_2', plot_outpath=outpath
+        )
+
+        time = np.hstack([d[f'time_{ix}'] for ix in range(d['ngroups'])])
+        flux = np.hstack([d[f'flat_flux_{ix}'] for ix in range(d['ngroups'])])
+        flux_err = np.hstack([d[f'flux_err_{ix}'] for ix in range(d['ngroups'])])
 
     elif modelid == 'localpolytransit':
         # localpolytransit fits the raw light curve, w/out detrending
@@ -813,8 +855,7 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
         )
     except (NotImplementedError, ValueError) as e:
         LOGERROR(e)
-        LOGERROR('did not get rstar for {}. MUST MANUALLY FIX.'.
-                 format(source_id))
+        LOGERROR(f'did not get rstar for {source_id}. MUST MANUALLY FIX.')
         try_mcmc = False
 
     #
@@ -928,6 +969,15 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
         else:
             n_tdurs = 3.5
 
+        # given n*tdur omitted on each side of either transit, there is P-2*ntdur
+        # space between each time group.
+        mingap = period_val - 2.1*n_tdurs*tdur_val
+        while mingap < 0:
+            n_tdurs -= 0.5
+            mingap = period_val - 2.1*n_tdurs*tdur_val
+        msg = f"P={period_val}, N={n_tdurs}, Tdur={tdur_val}"
+        assert mingap > 0, msg
+
         # trim
         outpath = join(fit_savdir, f'{starid}_{modelid}_rawlc.png')
         _quicklcplot(time, flux, flux_err, outpath)
@@ -938,11 +988,6 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
         outpath = join(fit_savdir, f'{starid}_{modelid}_rawtrimlc.png')
         _quicklcplot(time, flux, flux_err, outpath)
 
-        # given n*tdur omitted on each side of either transit, there is P-2*ntdur
-        # space between each time group.
-        mingap = period_val - 2.1*n_tdurs*tdur_val
-        msg = f"P={period_val}, N={n_tdurs}, Tdur={tdur_val}"
-        assert mingap > 0, msg
         ngroups, groupinds = find_lc_timegroups(time, mingap=mingap)
 
         for ix, g in enumerate(groupinds):
@@ -1061,16 +1106,21 @@ def _fit_transit_model_single_sector(lcpath, outpath, mdf,
 
     posterior_texpath = join(fit_savdir, f'{starid}_{modelid}_posteriortable.tex')
     if posttable and not os.path.exists(posterior_texpath):
-        make_posterior_table(pklpath, priordict, posterior_texpath, modelid, makepdf=1)
+        make_posterior_table(
+            pklpath, priordict, posterior_texpath, modelid, makepdf=1
+        )
 
     outpath = join(fit_savdir, f'{starid}_{modelid}_phaseplot.png')
     if phaseplot and not os.path.exists(outpath):
-        bp.plot_phasefold(m, summdf, outpath, modelid=modelid, inppt=1, binsize_minutes=15)
+        bp.plot_phasefold(
+            m, summdf, outpath, modelid=modelid, inppt=1, binsize_minutes=30
+        )
 
     outpath = join(fit_savdir, f'{starid}_{modelid}_fitindivpanels.png')
-    if fitindivpanels:
-        bp.plot_fitindivpanels(m, summdf, outpath, modelid=modelid,
-                               singleinstrument='tess')
+    if fitindivpanels and not os.path.exists(outpath):
+        bp.plot_fitindivpanels(
+            m, summdf, outpath, modelid=modelid, singleinstrument='tess'
+        )
 
     outpath = join(fit_savdir, f'{starid}_{modelid}_fitindiv.png')
     if fitindiv and not os.path.exists(outpath):
@@ -1233,7 +1283,6 @@ def _update_status(m, priordict, status_file, modelid, n_mcmc_steps):
 
 if __name__=="__main__":
 
-    #sectors = range(14,27)
     sectors = range(14,27)
 
     for sector in sectors:
