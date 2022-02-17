@@ -692,11 +692,11 @@ def _define_and_make_directories(sector, is_not_cdips_still_good=0):
 
     if is_not_cdips_still_good:
         resultsdir = join(
-            resultsbase, f'fit_gold/sector-{sector}_NOT_CDIPS_STILL_GOOD'
+            resultsbase, f'fit_gold/Year2_simpletransit_polyremove/sector-{sector}_NOT_CDIPS_STILL_GOOD'
         )
     else:
         resultsdir = join(
-            resultsbase, f'fit_gold/sector-{sector}_CLEAR_THRESHOLD'
+            resultsbase, f'fit_gold/Year2_simpletransit_polyremove/sector-{sector}_CLEAR_THRESHOLD'
         )
     dirs = [resultsdir,
             join(resultsdir,'fitresults'),
