@@ -38,8 +38,10 @@ convert tempphaseplot.png temptrimmedresized.png -append left.png
 convert left.png tempcorner.png +append 2.png
 rm temp*png
 
-# Create the new pdf page to append, and append it!
+# Create the new pdf page to append!
 convert 1.png 2.png -append page.png
 convert page.png -units pixelsperinch -density 131.4 +repage page.pdf
 rm 1.png 2.png
+
+# Append it!
 pdftk vet*pdf page.pdf output new_vet.pdf
