@@ -3,11 +3,40 @@ Usage:
 
 $(cdips) python merge_for_exofoptess.py
 """
-import os, socket
+#############
+## LOGGING ##
+#############
+import logging
+from astrobase import log_sub, log_fmt, log_date_fmt
+
+DEBUG = False
+if DEBUG:
+    level = logging.DEBUG
+else:
+    level = logging.INFO
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig(
+    level=level,
+    style=log_sub,
+    format=log_fmt,
+    datefmt=log_date_fmt,
+)
+
+LOGDEBUG = LOGGER.debug
+LOGINFO = LOGGER.info
+LOGWARNING = LOGGER.warning
+LOGERROR = LOGGER.error
+LOGEXCEPTION = LOGGER.exception
+
+#############
+## IMPORTS ##
+#############
+import os, socket, subprocess
 from glob import glob
 import numpy as np, pandas as pd
 from numpy import array as nparr
 from scipy.optimize import curve_fit
+from copy import deepcopy
 
 from astrobase import imageutils as iu
 from astrobase.timeutils import get_epochs_given_midtimes_and_period
@@ -17,6 +46,7 @@ from cdips.utils import find_rvs as fr
 from cdips.utils import get_vizier_catalogs as gvc
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils.pipelineutils import save_status, load_status
+from cdips.vetting.mcmc_vetting_report_page import make_mcmc_vetting_report_page
 
 ##########
 # config #
@@ -25,14 +55,9 @@ from cdips.utils.pipelineutils import save_status, load_status
 DEBUG = 1
 
 hostname = socket.gethostname()
-if 'phtess1' in hostname or 'phtess2' in hostname:
-    fitdir = "/home/lbouma/proj/cdips/results/fit_gold"
-    exofopdir = "/home/lbouma/proj/cdips/data/exoFOP_uploads"
-elif 'brik' in hostname:
-    fitdir = "/home/luke/Dropbox/proj/cdips/results/fit_gold"
-    exofopdir = "/home/luke/Dropbox/proj/cdips/data/exoFOP_uploads"
-else:
-    raise ValueError('where is fit_gold directory on {}?'.format(hostname))
+from cdips.paths import DATADIR, RESULTSDIR
+fitdir = os.path.join(RESULTSDIR, 'fit_gold')
+exofopdir = os.path.join(DATADIR, 'exoFOP_uploads')
 
 FORMATDICT = {
     'period': 8,
@@ -93,10 +118,11 @@ def linear_model(xdata, m, b):
 # main #
 ########
 
-def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
-         uploadnamestr='sectors_12_thru_13_clear_threshold'):
+def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.6,
+         uploadnamestr='s14_thru_s26_clear_threshold'):
     """
-    Put together a few useful CSV candidate summaries:
+    First, generate the extra vetting report page from MCMC results.
+    Then: put together a few useful CSV candidate summaries:
 
     * bulk uploads to exofop/tess
 
@@ -119,18 +145,25 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
     """
 
     #
+    # Make MCMC vetting report pages, and append to existing vetting reports.
+    #
+    dirnames = glob(os.path.join( fitdir, 'Year2', 'hlsp*_llc') )
+    for dirname in dirnames:
+        make_mcmc_vetting_report_page(dirname)
+
+    #
     # Read in the results from the fits
     #
     paramglob = os.path.join(
-        fitdir, "sector-*_CLEAR_THRESHOLD/fitresults/hlsp_*gaiatwo*_llc/*fitparameters.csv"
+        fitdir, "hlsp_*gaiatwo*_llc/*fitparameters.csv"
     )
     parampaths = glob(paramglob)
     statusglob = os.path.join(
-        fitdir, "sector-*_CLEAR_THRESHOLD/fitresults/hlsp_*gaiatwo*_llc/*.stat"
+        fitdir, "hlsp_*gaiatwo*_llc/*.stat"
     )
     statuspaths = glob(statusglob)
 
-    statuses = [dict(load_status(f)['fivetransitparam_fit'])
+    statuses = [dict(load_status(f)['simpletransit'])
                 for f in statuspaths]
 
     param_df = pd.concat((pd.read_csv(f, sep='|') for f in parampaths))
@@ -141,7 +174,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
     )
     param_df['param_path'] = parampaths
     param_df.to_csv(outpath, index=False, sep='|')
-    print('made {}'.format(outpath))
+    LOGINFO('made {}'.format(outpath))
 
     status_df = pd.DataFrame(statuses)
 
@@ -175,8 +208,8 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
         #
         if len(sel_status_df[sel_status_df['is_converged']=='False'])>0:
 
-            print('\nWRN! THE FOLLOWING CANDIDATES ARE NOT CONVERGED')
-            print(sel_status_df[sel_status_df['is_converged']=='False'])
+            LOGINFO('\nWRN! THE FOLLOWING CANDIDATES ARE NOT CONVERGED')
+            LOGINFO(sel_status_df[sel_status_df['is_converged']=='False'])
 
         param_gaiaids = list(map(
             lambda x: int(
@@ -194,16 +227,16 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
 
         if len(to_exofop_df) != len(manual_comment_df):
 
-            print('\nWRN! {} CANDIDATES DID NOT HAVE PARAMETERS'.format(
+            LOGINFO('\nWRN! {} CANDIDATES DID NOT HAVE PARAMETERS'.format(
                 len(manual_comment_df) - len(to_exofop_df)
             ))
-            print('They are...')
-            print(
+            LOGINFO('They are...')
+            LOGINFO(
                 manual_comment_df[
                     ~manual_comment_df.source_id.isin(to_exofop_df.source_id)
                 ]
             )
-            print('\n')
+            LOGINFO('\n')
 
         #
         # Duplicate entries in "to_exofop_df" are multi-sector. Average their
@@ -281,16 +314,16 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
                 use_period_err = pcov[0,0]**0.5
 
             if DEBUG:
-                print(
+                LOGINFO(
                     'init tmid {}, tmiderr {}\nperiod {}, perioderr {}'.
                     format(tmid, tmid_err, nparr(multisector_df[sel].period),
                            nparr(multisector_df[sel].period_unc))
                 )
-                print(
+                LOGINFO(
                     'use tmid {}, tmiderr {}\nperiod {}, perioderr {}'.
                     format(use_t0, use_t0_err, use_period, use_period_err)
                 )
-                print(10*'-')
+                LOGINFO(10*'-')
 
             ephem_d[ix] = {
                 'target': t, 'epoch': use_t0, 'epoch_unc': use_t0_err,
@@ -341,7 +374,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
             format(today_YYYYMMDD(), uploadnamestr)
         )
         to_exofop_df.to_csv(outpath, index=False, sep='|')
-        print('made {}'.format(outpath))
+        LOGINFO('made {}'.format(outpath))
 
         to_exofop_df = to_exofop_df.drop(['source_id'], axis=1)
 
@@ -355,17 +388,17 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
         to_exofop_df['depth'] = to_exofop_df['depth'].astype(int)
         to_exofop_df['depth_unc'] = to_exofop_df['depth_unc'].astype(int)
         to_exofop_df.to_csv(outpath, index=False, sep='|', header=False)
-        print('made {}'.format(outpath))
+        LOGINFO('made {}'.format(outpath))
 
         # manually check these...
-        print('\n'+42*'='+'\n')
-        print('\nPeriod uncertainties [minutes]')
-        print(to_exofop_df['period_unc']*24*60)
-        print('\nEpoch uncertainties [minutes]')
-        print(to_exofop_df['epoch_unc']*24*60)
-        print('\nPlanet radii [Rearth]')
-        print(to_exofop_df[['radius','radius_unc','notes']])
-        print('\n'+42*'='+'\n')
+        LOGINFO('\n'+42*'='+'\n')
+        LOGINFO('\nPeriod uncertainties [minutes]')
+        LOGINFO(to_exofop_df['period_unc']*24*60)
+        LOGINFO('\nEpoch uncertainties [minutes]')
+        LOGINFO(to_exofop_df['epoch_unc']*24*60)
+        LOGINFO('\nPlanet radii [Rearth]')
+        LOGINFO(to_exofop_df[['radius','radius_unc','notes']])
+        LOGINFO('\n'+42*'='+'\n')
 
     #
     # above is the format exofop-TESS wants. however it's not particularly
@@ -470,7 +503,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
                "{}_{}_fitparams_plus_observer_info.csv".
                format(today_YYYYMMDD(), uploadnamestr))
     param_df.to_csv(outpath, index=False, sep='|')
-    print('made {}'.format(outpath))
+    LOGINFO('made {}'.format(outpath))
 
     #
     # sparse observer info cut
@@ -486,7 +519,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
                "{}_{}_observer_info_sparse.csv".
                format(today_YYYYMMDD(), uploadnamestr))
     sparam_df.to_csv(outpath, index=False, sep='|')
-    print('made {}'.format(outpath))
+    LOGINFO('made {}'.format(outpath))
 
     #
     # full observer info cut
@@ -507,7 +540,7 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.4,
                "{}_{}_observer_info_full.csv".
                format(today_YYYYMMDD(), uploadnamestr))
     sparam_df.to_csv(outpath, index=False, sep='|')
-    print('made {}'.format(outpath))
+    LOGINFO('made {}'.format(outpath))
 
 
 if __name__=="__main__":
