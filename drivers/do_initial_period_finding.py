@@ -12,6 +12,9 @@ periodfindingworker: given lcpath, run periodograms and detrend
 get_tls_sde_versus_period_detection_boundary: given TLS SDE and TLS periods for
 "plausible planet detections", define the detection boundary.
 
+select_periodfinding_results_given_searchtype: defines the *stellar and TLS
+selection functions* for the CDIPS search that gets uploaded to ExoFOP.
+
 ----------
 run as (from phtess2 usually):
 $ python -u do_initial_period_finding.py &> logs/sector6_initial_period_finding.log &

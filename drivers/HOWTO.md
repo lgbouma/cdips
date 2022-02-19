@@ -91,7 +91,10 @@ TO PROCESS VETTING CLASSIFICATIONS
    parameters are used for CTOIs (and probably shouldn't be blindly believed in
    publications).
 
-3. `merge_for_exofoptess`: merge csv results from `fit_models_to_gold`
+3. `merge_for_exofoptess`:
+    A) uses results from `fit_models_to_gold` to make a MCMC-vetting page.
+    B) appends that page to the existing vetting reports.
+    C) merges csv results from `fit_models_to_gold`
 
 4. `collect_bulk_upload_files_for_exofoptess`
     1. (phtess2) /home/lbouma/proj/cdips/data/exoFOP_uploads/files_to_upload/collect_reports.sh
