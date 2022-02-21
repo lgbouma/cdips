@@ -127,11 +127,21 @@ def resolve_quality_metric(lgb, jh):
 
     return out
 
-def resolve_clustermember_metric(lgb, jh):
+def resolve_clustermember_metric(lgb, jh, reference_id, cluster):
     # LGB didn't label true CM positives
     out = []
-    for _l, _j in zip(lgb, jh):
-        if 'CM' in _j and not 'CM' in _l:
+    for _l, _j, _r, _c in zip(lgb, jh, reference_id, cluster):
+        # First, identify pre-main-sequence only stars.
+        pmsonly = ['Zari2018pms', 'SIMBAD_candYSO', 'Kerr2021']
+        is_pmsonly = [c in pmsonly for c in _r.split(',')]
+        clusternan = ['NaN', 'nan', 'SIMBAD_candYSO']
+        is_clusternan = [c in clusternan for c in str(_c).split(',')]
+        if np.all(is_pmsonly) and np.all(is_clusternan):
+            out.append('PMS?')
+        elif _c == 'Oh2017':
+            out.append('Oh2017')
+        # Next, classify actual cluster
+        elif 'CM' in _j and not 'CM' in _l:
             out.append('CM')
         elif 'pos_Non_CM' in _l:
             out.append('NotCM?')
@@ -139,6 +149,16 @@ def resolve_clustermember_metric(lgb, jh):
             out.append('NotCM')
         else:
             out.append('')
+    return out
+
+def resolve_age(mean_age):
+    out = []
+    for a in mean_age:
+        if not np.isfinite(a) or a == 'NaN':
+            out.append('')
+        else:
+            agestr = f'{10**a:.1e}yr'
+            out.append(agestr)
     return out
 
 def resolve_offtarget_metric(lgb, jh):
@@ -254,27 +274,40 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.6,
 
     smdf = mdf[sel]
 
-    qual_col = resolve_quality_metric(smdf.LGB_Tags, smdf.JH_Tags)
-    CM_col = resolve_clustermember_metric(smdf.LGB_Tags, smdf.JH_Tags)
-    offtarget_col = resolve_offtarget_metric(smdf.LGB_Tags, smdf.JH_Tags)
-    rotn_col = resolve_rotn_metrics(smdf.LGB_Tags, smdf.JH_Tags)
-
-    comment_col = [ ','.join([q,c,o,r]) for q,c,o,r in
-                   zip(qual_col, CM_col, offtarget_col, rotn_col)]
-    comment_col = [c.replace(',,',',') for c in comment_col]
-    comment_col = [c[:-1] if c.endswith(',') else c for c in comment_col]
-
-    smdf['c0'] = comment_col
-    smdf['temp'] = smdf['c0'] + '. '+ smdf['notes']
-
-    assert np.all(smdf.temp.apply(lambda x: len(x)) <= 119)
-
     smdf['source_id'] = smdf['param_path'].apply(
         lambda x:
         str(os.path.dirname(x).split('gaiatwo')[1].split('-')[0].lstrip('0'))
     )
 
-    smdf['notes'] = smdf['temp']
+    from cdips.utils.catalogs import get_cdips_catalog
+    cdipsdf = get_cdips_catalog(ver=0.6)
+    cdipsdf.source_id = cdipsdf.source_id.astype(str)
+    smdf = smdf.merge(cdipsdf, how='left', on='source_id')
+
+    # create the comment column.
+    qual_col = resolve_quality_metric(smdf.LGB_Tags, smdf.JH_Tags)
+    CM_col = resolve_clustermember_metric(smdf.LGB_Tags, smdf.JH_Tags,
+                                          smdf.reference_id, smdf.cluster)
+    age_col = resolve_age(smdf.mean_age)
+    offtarget_col = resolve_offtarget_metric(smdf.LGB_Tags, smdf.JH_Tags)
+    rotn_col = resolve_rotn_metrics(smdf.LGB_Tags, smdf.JH_Tags)
+
+    comment_col = [ ','.join([q,c,a,o,r]) for q,c,a,o,r in
+                   zip(qual_col, CM_col, age_col, offtarget_col, rotn_col)]
+    comment_col = [c.replace(',,',',') for c in comment_col]
+    comment_col = [c[:-1] if c.endswith(',') else c for c in comment_col]
+
+    smdf['c0'] = comment_col
+    smdf['_temp'] = smdf['c0'] + '. '+ smdf['notes']
+    smdf._temp = smdf._temp.apply(
+        lambda x: x.replace(',.','.').replace(',,',',')
+    )
+    smdf._temp = smdf._temp.apply(
+        lambda x: x.replace('<R>','mean(R)')
+    )
+    assert np.all(smdf._temp.apply(lambda x: len(x)) <= 119)
+
+    smdf['notes'] = smdf['_temp']
 
     outpath = os.path.join(
         fitdir, f"all_{today_YYYYMMDD()}_{uploadnamestr}_mergedfitparams.csv"
@@ -294,8 +327,6 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.6,
         lambda x:
         str(os.path.dirname(x).split('gaiatwo')[1].split('-')[0].lstrip('0'))
     )
-
-    to_exofop_df = smdf[COLUMN_ORDER]
 
     # NOTE: THIS PROCEDURE WILL GET THE EPOCHS ON MULTI-SECTOR PLANETS LESS
     # PRECISE THAN THEY CAN BE.  THIS IS OK, FOR NOW.  A MULTI-SECTOR SEARCH
@@ -419,6 +450,8 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.6,
     #    for c in comments:
     #        assert len(c)<=119
 
+    to_exofop_df = deepcopy(smdf)
+
     to_exofop_df = to_exofop_df.sort_values(by="source_id")
 
     to_exofop_df['tag'] = (
@@ -434,6 +467,9 @@ def main(is_dayspecific_exofop_upload=1, cdipssource_vnum=0.6,
         exofopdir, "{}_{}_w_sourceid.csv".
         format(today_YYYYMMDD(), uploadnamestr)
     )
+
+    to_exofop_df = to_exofop_df[COLUMN_ORDER]
+
     to_exofop_df.to_csv(outpath, index=False, sep='|')
     LOGINFO('made {}'.format(outpath))
 
