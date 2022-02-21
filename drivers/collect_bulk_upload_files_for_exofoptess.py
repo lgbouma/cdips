@@ -18,31 +18,22 @@ from cdips.utils.pipelineutils import save_status, load_status
 # config #
 ##########
 
-DATESTR = '20200413' # NOTE
+DATESTR = '20220219' # NOTE
 if DATESTR is None:
     DATESTR = today_YYYYMMDD()
 
-hostname = socket.gethostname()
-if 'phtess' in hostname:
-    fitdir = "/home/lbouma/proj/cdips/results/fit_gold"
-    exofopdir = "/home/lbouma/proj/cdips/data/exoFOP_uploads"
-elif 'brik' in hostname:
-    fitdir = "/home/luke/Dropbox/proj/cdips/results/fit_gold"
-    exofopdir = "/home/luke/Dropbox/proj/cdips/data/exoFOP_uploads"
-else:
-    raise ValueError('need to define directories on {}'.format(hostname))
+from cdips.paths import DATADIR, RESULTSDIR
+fitdir = os.path.join(RESULTSDIR, 'fit_gold')
+exofopdir = os.path.join(DATADIR, 'exoFOP_uploads')
 
-hlspreportdir = os.path.join(exofopdir, 'files_to_upload',
-                             'hlsp_vetting_reports', DATESTR)
-if not os.path.exists(hlspreportdir):
-    print('made {}'.format(hlspreportdir))
-    os.mkdir(hlspreportdir)
+# the directory where 'vetm_hlsp*.pdf' files live
+hlspreportdir = os.path.join(RESULTSDIR, 'fit_gold', 'Year2')
+assert os.path.exists(hlspreportdir)
 
-exofop_upload_dir = os.path.join(
-    exofopdir, 'files_to_upload',
-    'to_upload_{}'.format(DATESTR))
-
+exofop_upload_dir = os.path.join(exofopdir, 'files_to_upload',
+                                 f'to_upload_{DATESTR}')
 if not os.path.exists(exofop_upload_dir):
+    print(f"Made {exofop_upload_dir}")
     os.mkdir(exofop_upload_dir)
 
 uploadnumber = 1
@@ -64,7 +55,7 @@ while uploadnumber < 999:
 # main #
 ########
 
-def main(uploadnamestr='sectors_12_thru_13_clear_threshold'):
+def main(uploadnamestr='s14_thru_s26_clear_threshold'):
     """
     ----------
     Args:
@@ -101,7 +92,7 @@ def main(uploadnamestr='sectors_12_thru_13_clear_threshold'):
         # first, get and rename the vetting reports
         #
         reportpaths = glob(os.path.join(
-            hlspreportdir, '*{}*pdf'.format(source_id))
+            hlspreportdir, '*', 'vetm_hlsp*{}*pdf'.format(source_id))
         )
 
         if len(reportpaths) == 0:
@@ -127,7 +118,8 @@ def main(uploadnamestr='sectors_12_thru_13_clear_threshold'):
                 shutil.copyfile(reportpath, dstpath)
                 print('copy {} -> {}'.format(reportpath, dstpath))
             else:
-                print('found {}'.format(dstpath))
+                # note: this is OK! happens for multi-sector objects...
+                print('found {}; skip'.format(dstpath))
 
     df['ticstrs'] = ticstrs
 
@@ -149,11 +141,11 @@ def main(uploadnamestr='sectors_12_thru_13_clear_threshold'):
 
         sdf = df[df['ticstrs']==ticstr]
 
-        assert len(sdf)==1
+        assert len(sdf)>=1
 
         tags.append(str(sdf['tag'].iloc[0]))
 
-        if 'vet_gaia' in f:
+        if 'vetm_gaia' in f:
             sectornum = f.split('-')[2].lstrip('0')
             description.append('CDIPS pipeline report (S{})'.format(sectornum))
 
@@ -195,15 +187,19 @@ def main(uploadnamestr='sectors_12_thru_13_clear_threshold'):
             print('found {}'.format(dst))
         dsts.append(dst)
 
-    # FIXME
-    # NOTE: this is super annoying. you have to do something like
-    #
-    # cd ~/Dropbox/proj/cdips/data/exoFOP_uploads/files_to_upload/lb20190918-005
-    #
-    # tar cf lb20190918-005.tar *
-    #
-    # because exoFOPtess REQUIRES that tarball to directly inflate to the file
-    # level
+    # NOTE:
+    txt = ( """
+    Now do something like:
+
+    cd ~/Dropbox/proj/cdips/data/exoFOP_uploads/files_to_upload/lb20190918-005
+
+    tar cf lb20190918-005.tar *
+
+    because exoFOPtess REQUIRES that tarball to directly inflate to the file
+    level
+    """
+    )
+    print(txt)
 
 
 if __name__=="__main__":
