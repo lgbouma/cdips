@@ -96,10 +96,13 @@ TO PROCESS VETTING CLASSIFICATIONS
     B) appends that page to the existing vetting reports.
     C) merges csv results from `fit_models_to_gold`
 
-4. `collect_bulk_upload_files_for_exofoptess`
-    1. (phtess2) /home/lbouma/proj/cdips/data/exoFOP_uploads/files_to_upload/collect_reports.sh
-    2. (phtess2) Execute the main driver.
-    3. (brik) /home/luke/Dropbox/proj/cdips/data/exoFOP_uploads/pull_from_phtess2.sh
+4. `collect_bulk_upload_files_for_exofoptess`: run it to make the hyperspecific
+   tarballs needed to upload to ExoFOP.
+   There will ultimately be two:
+      exoFOP_uploads/files_to_upload/lb20220219-001/lb20220219-001.tar,
+   which contains all the vetting pdf files and a description text file.
+   And
+      exoFOP_uploads/params_planet_20220219_001.txt
 
 
 TO COMMUNICATE RESULTS
