@@ -43,6 +43,35 @@ Helper functions for the above:
 
     compute_scores: factor analysis and cross-validation PCA score helper.
 """
+#############
+## LOGGING ##
+#############
+
+import logging
+from astrobase import log_sub, log_fmt, log_date_fmt
+
+DEBUG = False
+if DEBUG:
+    level = logging.DEBUG
+else:
+    level = logging.INFO
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig(
+    level=level,
+    style=log_sub,
+    format=log_fmt,
+    datefmt=log_date_fmt,
+)
+
+LOGDEBUG = LOGGER.debug
+LOGINFO = LOGGER.info
+LOGWARNING = LOGGER.warning
+LOGERROR = LOGGER.error
+LOGEXCEPTION = LOGGER.exception
+
+#############
+## IMPORTS ##
+#############
 import matplotlib
 matplotlib.use("AGG")
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
@@ -55,6 +84,7 @@ from glob import glob
 from numpy import array as nparr, all as npall, isfinite as npisfinite
 import numpy.lib.recfunctions as rfn
 from collections import OrderedDict
+from copy import deepcopy
 
 from astrobase import imageutils as iu
 from astrobase.lcmath import find_lc_timegroups
@@ -410,7 +440,7 @@ def _run_locor(TIME, FLUX, dtr_dict, lsp_dict):
     # Get rotation period, if not available.  In most cases, it should be
     # passed in via lsp_dict.
     if not isinstance(lsp_dict, dict):
-        print(
+        LOGINFO(
             "Did not get period from lsp_dict: finding via Lomb Scargle. "
             "WARNING: it's better to feed via lsp_dict for cacheing speeds. "
         )
@@ -578,7 +608,7 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
             'WRN! {}. Probably have a short segment. Trying to nan it out.'
             .format(repr(e))
         )
-        print(msg)
+        LOGWARNING(msg)
 
         SECTION_CUTOFF = min([len(time[g]) for g in group_inds])
         for g in group_inds:
@@ -675,7 +705,7 @@ def detrend_systematics(lcpath, max_n_comp=5, infodict=None,
                     + 0.0324473)
 
         # a bit janky, but better than dealing with a TIC8 crossmatch for speed
-        print('WRN! Forcing TESSMAG to be Tmag_pred')
+        LOGWARNING('Forcing TESSMAG to be Tmag_pred')
         primaryhdr.set('TESSMAG', Tmag_pred)
 
 
@@ -744,7 +774,7 @@ def insert_nans_given_rstfc(mag, mag_rstfc, full_rstfc):
             '{} WRN!: found missing frameids. added NaNs'.
             format(datetime.utcnow().isoformat())
         )
-        print(wrn_msg)
+        LOGWARNING(wrn_msg)
 
         return full_mag
 
@@ -889,7 +919,7 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         comppath = os.path.join(pcadir,
                                 'principal_component_ap{}.txt'.format(ap))
         np.savetxt(comppath, eigenvecs)
-        print('saved {}'.format(comppath))
+        LOGINFO('saved {}'.format(comppath))
 
         eigveclist.append(eigenvecs)
 
@@ -949,8 +979,8 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
                 try:
                     reg.fit(_X.T, y)
                 except Exception as e:
-                    print(e)
-                    print(n_components)
+                    LOGEXCEPTION(e)
+                    LOGEXCEPTION(n_components)
                     continue
 
                 model_mag = reg.intercept_ + (reg.coef_ @ _X)
@@ -994,7 +1024,7 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
 
             f.tight_layout(h_pad=0, w_pad=0.5)
             f.savefig(savpath, dpi=350, bbox_inches='tight')
-            print('made {}'.format(savpath))
+            LOGINFO('made {}'.format(savpath))
 
         #
         # make plot to find optimal number of components. write output to...
@@ -1019,7 +1049,7 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         f.tight_layout(pad=0.2)
         savpath = os.path.join(pcadir, 'test_optimal_n_components.png')
         f.savefig(savpath, dpi=350, bbox_inches='tight')
-        print('made {}'.format(savpath))
+        LOGINFO('made {}'.format(savpath))
 
         #
         # write the factor analysis maximum to a dataframe
@@ -1027,15 +1057,15 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         n_components_pca_cv = n_components[np.argmax(pca_scores)]
         n_components_fa_cv = n_components[np.argmax(fa_scores)]
 
-        print('n_components_pca_cv: {}'.format(n_components_pca_cv))
-        print('n_components_fa_cv: {}'.format(n_components_fa_cv))
+        LOGINFO('n_components_pca_cv: {}'.format(n_components_pca_cv))
+        LOGINFO('n_components_fa_cv: {}'.format(n_components_fa_cv))
 
         optimal_n_comp['pca_cv_ap{}'.format(ap)] = n_components_pca_cv
         optimal_n_comp['fa_cv_ap{}'.format(ap)] = n_components_fa_cv
 
     optimal_n_comp_df = pd.DataFrame(optimal_n_comp, index=[0])
     optimal_n_comp_df.to_csv(csvpath, index=False)
-    print('made {}'.format(csvpath))
+    LOGINFO('made {}'.format(csvpath))
 
     return eigveclist, optimal_n_comp_df
 
@@ -1277,7 +1307,7 @@ def calculate_linear_model_mag(y, basisvecs, n_components,
     if verbose:
         if method == 'RidgeCV':
             try:
-                print(f'RidgeCV alpha: {reg.alpha_:.2e}')
+                LOGINFO(f'RidgeCV alpha: {reg.alpha_:.2e}')
             except AttributeError:
                 pass
 
@@ -1312,12 +1342,13 @@ def transit_mask(t, period, duration, T0):
 
 def transit_window_polynomial_remover(
     time, flux, flux_err, t0, period, tdur, n_tdurs=5., method='poly_2',
-    plot_outpath=None, N_model_points=1000
+    plot_outpath=None, N_model_points=1000, drop_badtransits=False
     ):
     """
     Given a light curve and good guesses for {t0,P,t_14}, trim it to windows
     around each transit, mask out the points in-transit, and fit (chi-squared)
-    local polynomials to each window.
+    local polynomials to each window.  Optionally, drop transits for which the
+    fit is determined to be "bad".
 
     Args:
         time, flux, flux_err (np.ndarray): self-described.
@@ -1332,6 +1363,12 @@ def transit_window_polynomial_remover(
         plot_outpath (None or str): if str, e.g,
         '/path/to/TIC123_somestr.png', light curve plots before and after
         trimming will be made (TIC123_somestr_rawlc.png and *rawtrimlc.png).
+
+        drop_badtransits (bool or dict): False or a dict.  Example dict would
+        be {'min_pts_in_transit':1, 'drop_worst_rms_percentile':0.9}, which
+        would require at least 1 point in transit, and would then also drop the
+        top 10% of transits according to the RMS of the residual after
+        subtracting the local quadratic.
 
     Returns:
 
@@ -1359,6 +1396,7 @@ def transit_window_polynomial_remover(
     if isinstance(plot_outpath, str):
         assert plot_outpath.endswith('.png')
     assert method.startswith('poly_')
+    assert drop_badtransits == False or isinstance(drop_badtransits, dict)
 
     # trim
     from betty.helpers import _subset_cut, _quicklcplot
@@ -1382,10 +1420,84 @@ def transit_window_polynomial_remover(
     msg = f"P={period}, N={n_tdurs}, Tdur={tdur}"
     assert mingap > 0, msg
     ngroups, groupinds = find_lc_timegroups(time, mingap=mingap)
+    if isinstance(drop_badtransits, dict):
+        init_ngroups = deepcopy(ngroups)
+        init_groupinds = deepcopy(groupinds)
 
-    datadict = OrderedDict()
+    # drop groups with less than a certain number of points *in-transit*.
+    if isinstance(drop_badtransits, dict):
+        N_in_transits = []
+        for ix, g in enumerate(groupinds):
+            _t, _f, _e = (
+                time[g].astype(np.float64),
+                flux[g].astype(np.float64),
+                flux_err[g].astype(np.float64),
+            )
+            in_transit = transit_mask(_t, period, tdur, t0)
+            N_in_transit = len(_t[in_transit])
+            N_in_transits.append(N_in_transit)
 
+        N_in_transits = np.array(N_in_transits)
+        N_CUT = drop_badtransits['min_pts_in_transit']
+        ok_transits = N_in_transits >= N_CUT
+
+        LOGINFO(f'Initially got {ngroups} transit windows...')
+        LOGINFO(f'Cut #1: Requiring >= {N_CUT} points in transit...')
+        LOGINFO(f'yields {np.sum(ok_transits)} transit windows...')
+
+        # apply the actual mask
+        ngroups = np.sum(ok_transits)
+        groupinds = [g for g,m in zip(groupinds,ok_transits) if m]
+        assert len(groupinds) == ngroups
+
+    # drop groups for which the polynomial fit yields RELATIVELY bad results --
+    # i.e., relative to the other transits
     import numpy.polynomial.polynomial as poly
+
+    if isinstance(drop_badtransits, dict):
+
+        oot_stdevs = []
+        for ix, g in enumerate(groupinds):
+
+            _t, _f, _e = (
+                time[g].astype(np.float64),
+                flux[g].astype(np.float64),
+                flux_err[g].astype(np.float64),
+            )
+            in_transit = transit_mask(_t, period, tdur, t0)
+
+            # chi-squared local polynomial to the points out of transit, in this
+            # window.
+            _tmid = np.nanmedian(_t)
+
+            poly_order = int(method.split("_")[1])
+            coeffs = poly.polyfit(_t[~in_transit]-_tmid, _f[~in_transit], poly_order)
+
+            _trend_flux = poly.polyval(_t - _tmid, coeffs)
+            _flat_flux = _f / _trend_flux
+
+            stdev_oot_flat_flux = np.nanstd( _flat_flux[~in_transit] )
+            oot_stdevs.append(stdev_oot_flat_flux)
+
+        oot_stdevs = np.array(oot_stdevs)
+        pctile = drop_badtransits['drop_worst_rms_percentile']
+        CUT_PERCENTILE = np.nanpercentile(oot_stdevs, pctile)
+        ok_transits = oot_stdevs <= CUT_PERCENTILE
+
+        LOGINFO(f'Cut #2: Requiring <={pctile:.1f} RMS pctile on OOT flat flux...')
+        LOGINFO(f'Translates to stdev(oot) <= {CUT_PERCENTILE:.6f}...')
+        LOGINFO(f'yields {np.sum(ok_transits)} transit windows...')
+
+        # apply the actual mask
+        ngroups = np.sum(ok_transits)
+        groupinds = [g for g,m in zip(groupinds,ok_transits) if m]
+        assert len(groupinds) == ngroups
+
+    #
+    # finally, construct the OrderedDict containing the trimmed data and the
+    # models over the transit windows
+    #
+    datadict = OrderedDict()
 
     for ix, g in enumerate(groupinds):
 
@@ -1418,8 +1530,10 @@ def transit_window_polynomial_remover(
         datadict[f'mod_time_{ix}'] = x_mod
         datadict[f'mod_flux_{ix}'] = y_mod
 
-
     datadict['ngroups'] = ngroups
     datadict['groupinds'] = groupinds
+    if isinstance(drop_badtransits,dict):
+        datadict['init_ngroups'] = init_ngroups
+        datadict['groupinds'] = groupinds
 
     return datadict
