@@ -1446,7 +1446,7 @@ def transit_window_polynomial_remover(
         LOGINFO(f'yields {np.sum(ok_transits)} transit windows...')
 
         # apply the actual mask
-        ngroups = np.sum(ok_transits)
+        ngroups = int(np.sum(ok_transits))
         groupinds = [g for g,m in zip(groupinds,ok_transits) if m]
         assert len(groupinds) == ngroups
 
@@ -1489,7 +1489,7 @@ def transit_window_polynomial_remover(
         LOGINFO(f'yields {np.sum(ok_transits)} transit windows...')
 
         # apply the actual mask
-        ngroups = np.sum(ok_transits)
+        ngroups = int(np.sum(ok_transits))
         groupinds = [g for g,m in zip(groupinds,ok_transits) if m]
         assert len(groupinds) == ngroups
 
@@ -1530,7 +1530,7 @@ def transit_window_polynomial_remover(
         datadict[f'mod_time_{ix}'] = x_mod
         datadict[f'mod_flux_{ix}'] = y_mod
 
-    datadict['ngroups'] = ngroups
+    datadict['ngroups'] = int(ngroups)
     datadict['groupinds'] = groupinds
     if isinstance(drop_badtransits,dict):
         datadict['init_ngroups'] = init_ngroups
