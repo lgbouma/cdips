@@ -1365,10 +1365,13 @@ def transit_window_polynomial_remover(
         trimming will be made (TIC123_somestr_rawlc.png and *rawtrimlc.png).
 
         drop_badtransits (bool or dict): False or a dict.  Example dict would
-        be {'min_pts_in_transit':1, 'drop_worst_rms_percentile':0.9}, which
-        would require at least 1 point in transit, and would then also drop the
-        top 10% of transits according to the RMS of the residual after
-        subtracting the local quadratic.
+        be {'min_pts_in_transit':1, 'drop_worst_rms_percentile':0.9,
+        'badtimewindows':[(1,2),(1001,1002)], 'x0':2457000}, which would require at least 1
+        point in transit, would then also drop the top 10% of transits
+        according to the RMS of the residual after subtracting the local
+        quadratic, and would drop times (in the same time system as `time`)
+        between 1-2 days, and 1001-1002 days.  If 'x0' is present, it'll be
+        applied as an offset to the times.
 
     Returns:
 
@@ -1409,6 +1412,29 @@ def transit_window_polynomial_remover(
         time, flux, flux_err, n=n_tdurs, t0=t0, per=period, tdur=tdur
     )
 
+    # drop bad times, if present
+    if isinstance(drop_badtransits, dict):
+        if 'badtimewindows' in drop_badtransits.keys():
+            if 'x0' in drop_badtransits.keys():
+                x0 = drop_badtransits['x0']
+            else:
+                x0 = 0
+
+            keep = np.ones_like(time).astype(bool)
+            for window in drop_badtransits['badtimewindows']:
+                t_lower = min(window) + x0
+                t_upper = max(window) + x0
+                keep &= ~( (time > t_lower) & (time < t_upper) )
+
+            LOGINFO(f"Dropping windows: {drop_badtransits['badtimewindows']}")
+            LOGINFO(f'Before drop, had {len(keep)} points')
+            LOGINFO(f'After drop, had {len(keep[keep])} points')
+            LOGINFO(42*'#')
+
+            time = time[keep]
+            flux = flux[keep]
+            flux_err = flux_err[keep]
+
     if isinstance(plot_outpath, str):
         outpath = plot_outpath.replace('.png', '_rawtrimlc.png')
         _quicklcplot(time, flux, flux_err, outpath)
@@ -1446,7 +1472,7 @@ def transit_window_polynomial_remover(
         LOGINFO(f'yields {np.sum(ok_transits)} transit windows...')
 
         # apply the actual mask
-        ngroups = np.sum(ok_transits)
+        ngroups = int(np.sum(ok_transits))
         groupinds = [g for g,m in zip(groupinds,ok_transits) if m]
         assert len(groupinds) == ngroups
 
@@ -1489,7 +1515,7 @@ def transit_window_polynomial_remover(
         LOGINFO(f'yields {np.sum(ok_transits)} transit windows...')
 
         # apply the actual mask
-        ngroups = np.sum(ok_transits)
+        ngroups = int(np.sum(ok_transits))
         groupinds = [g for g,m in zip(groupinds,ok_transits) if m]
         assert len(groupinds) == ngroups
 
@@ -1530,7 +1556,7 @@ def transit_window_polynomial_remover(
         datadict[f'mod_time_{ix}'] = x_mod
         datadict[f'mod_flux_{ix}'] = y_mod
 
-    datadict['ngroups'] = ngroups
+    datadict['ngroups'] = int(ngroups)
     datadict['groupinds'] = groupinds
     if isinstance(drop_badtransits,dict):
         datadict['init_ngroups'] = init_ngroups
