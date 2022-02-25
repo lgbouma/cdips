@@ -54,7 +54,7 @@ def get_nasa_exoplanet_archive_pscomppars(ver=TODAYSTR, N_max=int(1e4)):
         query = (
             f'select top {N_max} '+
             'pl_name, hostname, pl_letter, gaia_id, tic_id, ra, dec, '+
-            'discoverymethod, disc_year, pl_orbper, pl_orbsmax, pl_rade, '+
+            'discoverymethod, disc_year, disc_facility, pl_orbper, pl_orbsmax, pl_rade, '+
             'pl_radeerr1, pl_radeerr2, '+
             'pl_radjerr1, pl_radjerr2, '+
             'pl_radj, pl_bmasse, pl_bmasseerr1, pl_bmasseerr2, pl_bmassj, '+
@@ -64,7 +64,7 @@ def get_nasa_exoplanet_archive_pscomppars(ver=TODAYSTR, N_max=int(1e4)):
             'st_teff, st_rad, st_mass, st_met, st_logg, st_rotp, sy_dist, '+
             'sy_disterr1, sy_disterr2, sy_plx, sy_plxerr1, sy_plxerr2, '+
             'sy_vmag, sy_tmag, '+
-            'tran_flag, '+
+            'tran_flag, rv_flag, ima_flag, '+
             'st_age, st_ageerr1, st_ageerr2 from pscomppars'
         )
         print(query)
