@@ -189,8 +189,11 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
             print(wrnmsg)
         else:
             errmsg = (
-                'ERROR! got {} matches vs {} source id queries'.
-                format(len(df), len(source_ids))
+                f'ERROR! got {len(df)} matches vs {len(source_ids)} '
+                f'source id queries. '
+                f'\ngroupname was {groupname}; '
+                f'\nSource ids were: '
+                f'\n{source_ids}'
             )
             print(errmsg)
             raise AssertionError(errmsg)
@@ -525,7 +528,8 @@ def edr3_propermotion_to_ICRF(pmra, pmdec, ra, dec, G):
     return pmra -pmraCorr/1000., pmdec -pmdecCorr /1000.
 
 
-def parallax_to_distance_highsn(parallax_mas, e_parallax_mas=0, gaia_datarelease='gaia_edr3'):
+def parallax_to_distance_highsn(parallax_mas, e_parallax_mas=0,
+                                gaia_datarelease='gaia_edr3'):
     """
     Given a Gaia parallax in mas, get a zero-point corrected trigonometric
     parallax in parsecs.
