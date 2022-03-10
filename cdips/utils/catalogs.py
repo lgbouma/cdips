@@ -383,7 +383,7 @@ def ticid_to_toiid(tic_id):
 
 def get_tic_star_information(
     ticid,
-    desiredcols=['ID', 'GAIA', 'Bmag', 'Vmag', 'Jmag', 'Hmag', 'Kmag', 'Tmag',
+    desiredcols=['ID', 'GAIA', 'ra', 'dec', 'Bmag', 'Vmag', 'Jmag', 'Hmag', 'Kmag', 'Tmag',
                  'Teff', 'logg', 'rad', 'mass'],
     raise_error_on_multiple_match=True):
     """
