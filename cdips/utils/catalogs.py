@@ -381,6 +381,24 @@ def ticid_to_toiid(tic_id):
         return None
 
 
+def toiid_to_ticid(toi_id):
+
+    assert isinstance(toi_id, str)
+
+    toidf = get_exofop_toi_catalog()
+
+    sel = toidf['TOI'].astype(str) == toi_id
+
+    try:
+        tic_id = str(toidf[sel]['TIC ID'].iloc[0])
+        if len(tic_id) > 1:
+            return str(tic_id)
+        else:
+            return None
+    except:
+        return None
+
+
 def get_tic_star_information(
     ticid,
     desiredcols=['ID', 'GAIA', 'ra', 'dec', 'Bmag', 'Vmag', 'Jmag', 'Hmag', 'Kmag', 'Tmag',
