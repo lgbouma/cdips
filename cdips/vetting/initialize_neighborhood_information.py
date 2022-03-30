@@ -220,7 +220,7 @@ def get_group_and_neighborhood_information(
     cdips_df = get_cdips_pub_catalog(ver=CATALOG_VERSION)
     row = cdips_df[cdips_df.source_id == source_id]
 
-    if pd.isnull(row['cluster'].iloc[0]):
+    if len(row['cluster']) == 0:
         LOGWARNING(f'Did not find any group matches for GAIA DR2 {source_id}.')
         return None
 

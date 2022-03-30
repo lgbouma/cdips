@@ -132,6 +132,7 @@ if __name__ == "__main__":
                   "6770698256306535296", "893550942158776832", "604915739569261184"
              ]
     source_ids = ["5236556416614488576", "5288535107223500928"]
+    source_ids = ["181104928193233408"]
 
     for source_id in source_ids:
         test_nbhd_plot(source_id, sector, force_references=force_references,
