@@ -3,6 +3,7 @@
 Robust B-Spline regression with scikit-learn
 """
 
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as si
@@ -13,6 +14,7 @@ from sklearn.linear_model import LinearRegression, RANSACRegressor,\
 
 from sklearn.metrics import mean_squared_error
 
+from cdips.paths import RESULTSDIR
 
 class BSplineFeatures(TransformerMixin):
     def __init__(self, knots, degree=3, periodic=False):
@@ -71,8 +73,11 @@ def main():
     ax.legend(loc='upper right', framealpha=0.95, fontsize='xx-small')
     ax.set(ylim=(-2, 8), xlabel='time [s]', ylabel='amplitude')
     fig.tight_layout()
-    fig.savefig('../results/fitting_experiments/robust_bspline_regression.png',
-                bbox_inches='tight', dpi=300)
+    fig.savefig(
+        os.path.join(
+            RESULTSDIR, 'fitting_experiments/robust_bspline_regression.png'
+        ), bbox_inches='tight', dpi=300
+    )
 
 
 def get_bspline_basis(knots, degree=3, periodic=False):
