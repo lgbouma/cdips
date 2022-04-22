@@ -4,6 +4,7 @@ Contents:
     given_source_ids_get_gaia_data
     query_neighborhood
     given_dr2_sourceids_get_edr3_xmatch
+    given_dr3_sourceids_get_dr2_xmatch
 
     make_votable_given_source_ids
     given_votable_get_df
@@ -358,8 +359,9 @@ def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
     return df
 
 
-def given_dr2_sourceids_get_edr3_xmatch(dr2_source_ids, runid, overwrite=True,
-                                        enforce_all_sourceids_viable=True):
+def given_dr2_sourceids_get_edr3_xmatch(
+    dr2_source_ids, runid, overwrite=True,
+    enforce_all_sourceids_viable=True):
     """
     Use the dr2_neighborhood table to look up the EDR3 source_ids given DR2
     source_ids.
@@ -475,6 +477,104 @@ def given_dr2_sourceids_get_edr3_xmatch(dr2_source_ids, runid, overwrite=True,
         errmsg = (
             'ERROR! got {} matches vs {} dr2 source id queries'.
             format(len(df), len(dr2_source_ids))
+        )
+        print(errmsg)
+        raise AssertionError(errmsg)
+
+    return df
+
+
+def given_dr3_sourceids_get_dr2_xmatch(
+    dr3_source_ids, runid, overwrite=True,
+    enforce_all_sourceids_viable=True):
+    """
+    Use the dr2_neighborhood table to look up the DR2 source_ids given
+    the (E)DR3 source_ids.
+
+    See docstring for given_dr2_sourceids_get_edr3_xmatch.
+
+    Returns:
+
+        dr2_x_edr3_df (pd.DataFrame), containing:
+            ['source_id', 'dr2_source_id', 'dr3_source_id', 'angular_distance',
+            'magnitude_difference', 'proper_motion_propagation']
+
+        where "source_id" is the requested source_id, and the remaining columns
+        are matches from the dr2_neighborhood table.
+
+        This DataFrame should then be used to ensure e.g., that every REQUESTED
+        source_id provides only one MATCHED star.
+    """
+
+    if type(dr3_source_ids) != np.ndarray:
+        raise TypeError(
+            'source_ids must be np.ndarray of np.int64 Gaia DR2 source_ids'
+        )
+    if type(dr3_source_ids[0]) != np.int64:
+        raise TypeError(
+            'source_ids must be np.ndarray of np.int64 Gaia DR2 source_ids'
+        )
+    if not isinstance(runid, str):
+        raise TypeError(
+            'Expect runid to be a (preferentially unique among jobs) string.'
+        )
+
+    xmltouploadpath = os.path.join(
+        gaiadir, f'toupload_{runid}.xml'
+    )
+    dlpath = os.path.join(
+        gaiadir,f'{runid}_matches.xml.gz'
+    )
+
+    if overwrite:
+        if os.path.exists(xmltouploadpath):
+            os.remove(xmltouploadpath)
+
+    if not os.path.exists(xmltouploadpath):
+        make_votable_given_source_ids(dr3_source_ids, outpath=xmltouploadpath)
+
+    if os.path.exists(dlpath) and overwrite:
+        os.remove(dlpath)
+
+    if not os.path.exists(dlpath):
+
+        n_max = 2*len(dr3_source_ids)
+        print(f"Setting n_max = 2 * (number of dr3_source_ids) = {n_max}")
+
+        Gaia.login(credentials_file=credentials_file)
+
+        jobstr = (
+        '''
+        SELECT top {n_max:d} *
+        FROM tap_upload.foobar as u, gaiaedr3.dr2_neighbourhood AS g
+        WHERE u.source_id=g.dr3_source_id
+        '''
+        ).format(
+            n_max=n_max
+        )
+        query = jobstr
+
+        # might do async if this times out. but it doesn't.
+        j = Gaia.launch_job(query=query,
+                            upload_resource=xmltouploadpath,
+                            upload_table_name="foobar", verbose=True,
+                            dump_to_file=True, output_file=dlpath)
+
+        Gaia.logout()
+
+    df = given_votable_get_df(dlpath, assert_equal=None)
+
+    if len(df) > len(dr3_source_ids):
+        wrnmsg = (
+            'WRN! got {} matches vs {} source id queries. Fix via angular_distance or magnitude_difference'.
+            format(len(df), len(dr3_source_ids))
+        )
+        print(wrnmsg)
+
+    if len(df) < len(dr3_source_ids) and enforce_all_sourceids_viable:
+        errmsg = (
+            'ERROR! got {} matches vs {} dr2 source id queries'.
+            format(len(df), len(dr3_source_ids))
         )
         print(errmsg)
         raise AssertionError(errmsg)
