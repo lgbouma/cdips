@@ -8,6 +8,7 @@ Contents:
     get_interp_BmV_from_Teff
     get_interp_BpmRp_from_Teff
     get_interp_BmV_from_BpmRp
+    get_interp_SpType_from_teff
     get_SpType_BpmRp_correspondence
     get_SpType_GmRp_correspondence
 """
@@ -144,6 +145,50 @@ def get_interp_rstar_from_teff(teff):
 
     rstar = rstar_val
     return rstar
+
+
+def get_interp_SpType_from_teff(teff, verbose=True):
+    """
+    Given an effective temperature, use the Pecaut & Mamajek (2013) table from
+    http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt to
+    interpolate the spectral type. Assumes the star is a dwarf, which may not
+    be true. This should obviously not be trusted to better than 1 or 2
+    spectral subtypes. Worse if it's pre-main-sequence.
+    """
+
+    mamadf = load_basetable()
+
+    sel = (
+        (mamadf['Msun'] != '...') &
+        (mamadf['Msun'] != '....') &
+        (mamadf['R_Rsun'] != '...') &
+        (mamadf['Teff'] != '...')
+    )
+    mamadf = mamadf[sel] # finite mass, radius, teff.
+
+    mamateff, mamaspt = (
+        nparr(mamadf['Teff'])[::-1].astype(float),
+        nparr(mamadf['SpT'])[::-1]
+    )
+
+    closest_spt = mamaspt[np.argmin(np.abs(mamateff - teff))]
+    closest_teff = mamateff[np.argmin(np.abs(mamateff - teff))]
+
+    # hotter end
+    closest_spt_m1 = mamaspt[np.argmin(np.abs(mamateff - teff))+1]
+    closest_teff_m1 = mamateff[np.argmin(np.abs(mamateff - teff))+1]
+
+    # cooler end
+    closest_spt_p1 = mamaspt[np.argmin(np.abs(mamateff - teff))-1]
+    closest_teff_p1 = mamateff[np.argmin(np.abs(mamateff - teff))-1]
+
+    if verbose:
+        print(f'Target Teff: {teff}')
+        print(f'Closest Teff: {closest_teff} (SpT = {closest_spt})')
+        print(f'Next-highest Teff: {closest_teff_m1} (SpT = {closest_spt_m1})')
+        print(f'Next-lowest Teff: {closest_teff_p1} (SpT = {closest_spt_p1})')
+
+    return closest_spt
 
 
 def get_interp_BmV_from_Teff(teff):
