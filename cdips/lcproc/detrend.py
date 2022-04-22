@@ -1174,12 +1174,18 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
     return dtrvecs, sysvecs, ap, primaryhdr, data, eigenvecs, smooth_eigenvecs
 
 
-def eigvec_smooth_fn(time, eigenvec):
+def eigvec_smooth_fn(time, eigenvec, window_length=1, cval=6):
+    """
+    lower cval: includes less data
+    the biweight a cval of 6 includes data up to 4 standard deviations (6
+    median absolute deviations) from the central location and has an
+    efficiency of 98%
+    """
 
     _, smoothed = flatten(
         time-np.nanmin(time), 1+eigenvec,
         break_tolerance=0.5,
-        method='biweight', window_length=1, cval=6, edge_cutoff=0,
+        method='biweight', window_length=window_length, cval=cval, edge_cutoff=0,
         return_trend=True
     )
 
