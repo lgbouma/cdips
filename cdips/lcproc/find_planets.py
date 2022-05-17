@@ -154,7 +154,152 @@ def run_periodograms_and_detrend(star_id, time, mag, dtr_dict,
         'dtr_method': dtr_method
     }
 
+    if isinstance(cachepath, str):
+        outdict = {
+            'r':r,
+            'search_time':search_time,
+            'search_flux':search_flux,
+            'dtr_stages_dict':dtr_stages_dict
+        }
+        with open(cachepath, 'wb') as f:
+            pickle.dump(
+                outdict, f
+            )
+            LOGINFO(f"Wrote {cachepath}")
+
     if not return_extras:
         return r
     else:
         return r, search_time, search_flux, dtr_stages_dict
+
+
+def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
+                       r=None, instrument='tess', cdipslcpath=None):
+
+    assert instrument in ['tess', 'kepler']
+
+    if 'lsp_dict' in dtr_stages_dict:
+        dtr_dict['ls_period'] = dtr_stages_dict['lsp_dict']['ls_period']
+        dtr_dict['ls_amplitude'] = dtr_stages_dict['lsp_dict']['ls_amplitude']
+        dtr_dict['ls_fap'] = dtr_stages_dict['lsp_dict']['ls_fap']
+
+    time, flux = dtr_stages_dict['time'], dtr_stages_dict['flux']
+    sel0 = dtr_stages_dict['sel0']
+    clipped_flux = dtr_stages_dict['clipped_flux']
+    trend_flux = dtr_stages_dict['trend_flux']
+    search_time = dtr_stages_dict['search_time'],
+    search_flux = dtr_stages_dict['search_flux']
+
+    if cdipslcpath is not None:
+        hdrlist =  (
+            'CDCLSTER,CDIPSAGE,TESSMAG,phot_bp_mean_mag,phot_rp_mean_mag'.
+            split(',')
+        )
+        infodict = iu.get_header_keyword_list(lcpath, hdrlist)
+        cluster = infodict['CDCLSTER']
+        age = float(infodict['CDIPSAGE'])
+        tmag = float(infodict['TESSMAG'])
+        bpmrp = (
+            float(infodict['phot_bp_mean_mag']) -
+            float(infodict['phot_rp_mean_mag'])
+        )
+        titlestr = (
+            f"{star_id}: {cluster[:16]}, logt={age:.2f}, "
+            f"T={tmag:.2f}, Bp-Rp={bpmrp:.2f}"
+        )
+        outname = (
+            f'tmag{tmag:.2f}_'+
+            str(star_id)+
+            "_method-{}".format(dtr_dict['method'])+
+            '_windowlength-{}'.format(dtr_dict['window_length'])+
+            ".png"
+        )
+
+    else:
+        outname =  (
+            str(star_id)+
+            "_method-{}".format(dtr_dict['method'])+
+            '_windowlength-{}'.format(dtr_dict['window_length'])+
+            ".png"
+        )
+
+    # for kepler, visualize quarter-by-quarter.
+    # for tess, just do everything at once.
+    if instrument == 'kepler':
+        from cdips.paths import DATADIR
+        csvpath = os.path.join(
+            DATADIR, 'spacecraft', 'time_to_kepler_quarter.csv'
+        )
+        time_df = pd.read_csv(csvpath)
+        segment_id = time_df.quarter
+        segment_start = np.array(time_df.tstart)
+        segment_stop = np.array(time_df.tstop)
+
+    elif instrument == 'tess':
+        segment_id = ['tess']
+        segment_start = [np.nanmin(time)]
+        segment_stop = [np.nanmax(time)]
+
+    for _segid, _start, _stop in zip(segment_id, segment_start, segment_stop):
+
+        if instrument == 'kepler': _segid = f"Q{_segid}"
+        outname =  (
+            f"{star_id}"
+            f"_{_segid}"
+            f"_method-{dtr_dict['method']}"
+            f"_windowlength-{dtr_dict['window_length']}"
+            ".png"
+        )
+
+        outpng = os.path.join(outdir, outname)
+
+        if os.path.exists(outpng):
+            LOGINFO(f"Found {outpng}, continue.")
+            continue
+
+        f,axs = plt.subplots(nrows=2, sharex=True, figsize=(12,7))
+        # lower: "raw" data; upper: sigma-clipped
+        axs[0].scatter(
+            time, clipped_flux, c='black', s=1, zorder=2,
+            rasterized=True
+        )
+        axs[0].scatter(
+            time, flux, c='red', s=1, zorder=1, rasterized=True
+        )
+        axs[0].plot(time[sel0], trend_flux, c='C0')
+        axs[1].scatter(
+            search_time, search_flux, c='black', s=1,
+            zorder=2, rasterized=True, label='searched flux'
+        )
+
+        titlestr = (
+            f"{star_id}"
+        )
+
+        if r is not None:
+            period_val = r['tls_period']
+            t0_val = r['tls_t0']
+            tdur_val = r['tls_duration']
+
+            midtimes = t0_val + np.arange(-2000,2000,1)*period_val
+
+            for ax in axs:
+                ylim = ax.get_ylim()
+                ax.vlines(midtimes, min(ylim), max(ylim), color='orangered',
+                          linestyle='--', zorder=1, lw=2, alpha=0.3)
+                ax.set_ylim((min(ylim), max(ylim)))
+
+            txtstr = f"P: {period_val:.5f}, t0: {t0_val:.4f}"
+            titlestr = titlestr + ' ' + txtstr
+
+        axs[1].legend(loc='best',fontsize='xx-small')
+        axs[0].set_ylabel(f'flux')
+        axs[0].set_title(titlestr, fontsize='x-small')
+        axs[1].set_ylabel('flattened')
+        axs[1].set_xlabel('time [days]')
+
+        axs[0].set_xlim([_start, _stop])
+        axs[1].set_xlim([_start, _stop])
+
+        f.savefig(outpng, dpi=300)
+        LOGINFO(f"Made {outpng}")
