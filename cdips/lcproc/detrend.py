@@ -175,7 +175,8 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     #
     if maskorbitedge:
         _time, _flux = moe.mask_orbit_start_and_end(
-            time, flux, raise_expectation_error=False, verbose=verbose
+            time, flux, raise_expectation_error=False, verbose=verbose,
+            orbitgap=1, orbitpadding=6/(24)
         )
     else:
         _time, _flux = time, flux
@@ -253,8 +254,8 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
     elif dtr_method == 'best':
 
-        # for stars with Prot < 1 day, use LOCOR.  for stars with Prot > 1 day,
-        # use Notch.  (or pspline?).
+        # for stars with Prot < 1 day, use LOCOR.
+        # for stars with Prot > 1 day, use Notch.
         PERIOD_CUTOFF = 1.0
 
         if lsp_dict['ls_period'] > PERIOD_CUTOFF:
@@ -377,6 +378,8 @@ def _run_notch(TIME, FLUX, dtr_dict, verbose=False):
     data.qual[:] = 0
 
     # Run notch
+    if verbose:
+        LOGINFO('Beginning notch run...')
     fittimes, depth, detrend, polyshape, badflag = (
         sliding_window(
             data, windowsize=dtr_dict['window_length'],
@@ -385,6 +388,8 @@ def _run_notch(TIME, FLUX, dtr_dict, verbose=False):
             show_progress=show_progress
         )
     )
+    if verbose:
+        LOGINFO('Completed notch run.')
 
     assert len(fittimes) == len(TIME)
 
