@@ -62,6 +62,11 @@ def run_periodograms_and_detrend(
     demonstrated via /tests/test_injrecov_with_detrending.py). TLS is then run
     on the flux residuals from the detrending (not e.g., the BIC time-series).
 
+    Note: TLS runtime is ~1 minute for single-sector TESS volumes, and ~100
+    minute for all-quarter Kepler volumes (cf the Hippke paper).  The speedup
+    from multithreading is sub-linear (factor of 5.5x going from 1->16 cores,
+    in my testing).
+
     kwargs:
 
         star_id: used for bookkeeping, can be any int/str.
@@ -239,7 +244,7 @@ def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
             DATADIR, 'spacecraft', 'time_to_kepler_quarter.csv'
         )
         time_df = pd.read_csv(csvpath)
-        segment_id = time_df.quarter
+        segment_id = np.array(time_df.quarter.apply(lambda x: str(x).zfill(2)))
         segment_start = np.array(time_df.tstart)
         segment_stop = np.array(time_df.tstop)
 
@@ -265,23 +270,28 @@ def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
             LOGINFO(f"Found {outpng}, continue.")
             continue
 
-        f,axs = plt.subplots(nrows=2, sharex=True, figsize=(12,7))
+        f,axs = plt.subplots(nrows=2, sharex=True, figsize=(14,7))
         # lower: "raw" data; upper: sigma-clipped
+        norm_y = lambda y: 1e3*(y-1)
+
         axs[0].scatter(
-            time, clipped_flux, c='black', s=1, zorder=2,
+            time, norm_y(clipped_flux), c='black', s=1, zorder=2,
             rasterized=True
         )
         axs[0].scatter(
-            time, flux, c='red', s=1, zorder=1, rasterized=True
+            time, norm_y(flux), c='red', s=1, zorder=1, rasterized=True
         )
-        axs[0].plot(time[sel0], trend_flux, c='C0')
+        axs[0].plot(
+            time[sel0], norm_y(trend_flux), c='C0'
+        )
+
         axs[1].scatter(
-            search_time, search_flux, c='black', s=1,
-            zorder=2, rasterized=True, label='searched flux'
+            search_time, norm_y(search_flux), c='black', s=1,
+            zorder=2, rasterized=True
         )
 
         titlestr = (
-            f"{star_id}"
+            f"{star_id} ({_segid})"
         )
 
         if r is not None:
@@ -291,23 +301,31 @@ def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
 
             midtimes = t0_val + np.arange(-2000,2000,1)*period_val
 
-            for ax in axs:
-                ylim = ax.get_ylim()
-                ax.vlines(midtimes, min(ylim), max(ylim), color='orangered',
-                          linestyle='--', zorder=1, lw=2, alpha=0.3)
-                ax.set_ylim((min(ylim), max(ylim)))
+            for _f, ax in zip([norm_y(flux), norm_y(search_flux)], axs):
+
+                med = np.nanmedian(_f)
+                std = np.nanstd(_f)
+                y_diff = np.nanpercentile(_f,90) - np.nanpercentile(_f,10)
+
+                y_lo = med - 1.4*y_diff
+                y_hi = med + 1.1*y_diff
+
+                ax.vlines(midtimes, y_lo, y_hi, color='orangered',
+                          linestyle='--', zorder=1, lw=1, alpha=0.3)
+                ax.set_ylim((y_lo, y_hi))
 
             txtstr = f"P: {period_val:.5f}, t0: {t0_val:.4f}"
-            titlestr = titlestr + ' ' + txtstr
+            titlestr = titlestr + ', ' + txtstr
 
-        axs[1].legend(loc='best',fontsize='xx-small')
-        axs[0].set_ylabel(f'flux')
+        #axs[1].legend(loc='best',fontsize='xx-small')
+        axs[0].set_ylabel('pdcsap [ppt]')
         axs[0].set_title(titlestr, fontsize='x-small')
-        axs[1].set_ylabel('flattened')
+        axs[1].set_ylabel('notch [ppt]')
         axs[1].set_xlabel('time [days]')
 
         axs[0].set_xlim([_start, _stop])
         axs[1].set_xlim([_start, _stop])
 
+        f.tight_layout()
         f.savefig(outpng, dpi=300)
         LOGINFO(f"Made {outpng}")
