@@ -41,12 +41,18 @@ from cdips.lcproc import detrend as dtr
 import multiprocessing as mp
 nworkers = mp.cpu_count()
 
-def run_periodograms_and_detrend(star_id, time, mag, dtr_dict,
-                                 period_min=0.5, period_max=27, orbitgap=1,
-                                 expected_norbits=2, orbitpadding=6/(24),
-                                 dtr_method='best', n_threads=1,
-                                 return_extras=False, magisflux=False,
-                                 cachepath=None, verbose=False):
+def run_periodograms_and_detrend(
+    star_id, time, mag, dtr_dict,
+    period_min=0.5, period_max=27,
+    R_star_min=0.1, R_star_max=5,
+    M_star_min=0.1, M_star_max=3.0,
+    n_transits_min=1, oversampling_factor=5,
+    orbitgap=1,
+    expected_norbits=2, orbitpadding=6/(24),
+    dtr_method='best', n_threads=1,
+    return_extras=False, magisflux=False,
+    cachepath=None, verbose=False
+    ):
     """
     Given a star_id, time, and magnitude time-series, this function runs
     clean_rotationsignal_tess_singlesector_light_curve to remove rotation
@@ -130,10 +136,12 @@ def run_periodograms_and_detrend(star_id, time, mag, dtr_dict,
     # run the TLS periodogram
     model = transitleastsquares(search_time, search_flux, verbose=verbose)
     results = model.power(use_threads=n_threads, show_progress_bar=verbose,
-                          R_star_min=0.1, R_star_max=5, M_star_min=0.1,
-                          M_star_max=3.0, period_min=period_min,
-                          period_max=period_max, n_transits_min=1,
-                          transit_template='default', oversampling_factor=5)
+                          R_star_min=R_star_min, R_star_max=R_star_max,
+                          M_star_min=M_star_min, M_star_max=M_star_max,
+                          period_min=period_min, period_max=period_max,
+                          n_transits_min=n_transits_min,
+                          transit_template='default',
+                          oversampling_factor=oversampling_factor)
 
     dtr_method = dtr_stages_dict['dtr_method_used']
 
