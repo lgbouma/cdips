@@ -1,6 +1,6 @@
 """
 Contents:
-    run_periodograms_and_detrend: given source_id, time, mag, find planet.
+    run_periodograms_and_detrend: given star_id, time, mag, find planet.
 """
 #############
 ## LOGGING ##
@@ -34,28 +34,31 @@ LOGEXCEPTION = LOGGER.exception
 
 from transitleastsquares import transitleastsquares
 
-import os
-import numpy as np, pandas as pd
+import os, pickle
+import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from cdips.lcproc import detrend as dtr
 
 import multiprocessing as mp
 nworkers = mp.cpu_count()
 
-def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
+def run_periodograms_and_detrend(star_id, time, mag, dtr_dict,
                                  period_min=0.5, period_max=27, orbitgap=1,
                                  expected_norbits=2, orbitpadding=6/(24),
-                                 dtr_method='best', return_extras=False,
-                                 magisflux=False):
+                                 dtr_method='best', n_threads=1,
+                                 return_extras=False, magisflux=False,
+                                 cachepath=None, verbose=False):
     """
-    Given a source_id, time, and magnitude time-series, this function runs
+    Given a star_id, time, and magnitude time-series, this function runs
     clean_rotationsignal_tess_singlesector_light_curve to remove rotation
     signals (via masking orbit edges, sigma slide clip, detrending, and
     re-sigma slide clipping).  "Detrending" here means the "best" method
-    currently known, which is the notch + locor combination.
-    This was demonstrated through injection-recovery tests
-    (/tests/test_injrecov_with_detrending.py)
+    currently known, which is the notch + locor combination (which was
+    demonstrated via /tests/test_injrecov_with_detrending.py). TLS is then run
+    on the flux residuals from the detrending (not e.g., the BIC time-series).
 
     kwargs:
+
+        star_id: used for bookkeeping, can be any int/str.
 
         time, mag : time and magnitude vector of light-curve.  PCA is
         preferred, since common instrumental systematics are removed.
@@ -74,9 +77,12 @@ def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
 
         magisflux (bool): default False
 
+        cachepath (str): if a pickle file path is passed, results (tuple case
+        described below) will be cached to this pickle file.
+
     Returns:
         If return_extras is False:
-            r = [source_id, ls_period, ls_fap, ls_amplitude, tls_period, tls_sde,
+            r = [star_id, ls_period, ls_fap, ls_amplitude, tls_period, tls_sde,
                  tls_t0, tls_depth, tls_duration, tls_distinct_transit_count,
                  tls_odd_even, dtr_method]
         else:
@@ -86,13 +92,33 @@ def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
             pre-requisite rotation period check.
     """
 
-    lsp_options = {'period_min':0.1, 'period_max':20}
+    # if this has been run before, load from a cache.  notch is pretty slow.
+    if isinstance(cachepath, str):
 
+        assert cachepath.endswith(".pkl")
+
+        if os.path.exists(cachepath):
+
+            LOGINFO(f"Found {cachepath}, loading results.")
+
+            with open(cachepath, 'rb') as f:
+                d = pickle.load(f)
+
+            if return_extras:
+                return (
+                    d['r'], d['search_time'], d['search_flux'],
+                    d['dtr_stages_dict']
+                )
+            else:
+                return d['r']
+
+    # otherwise, run the detrending
+    lsp_options = {'period_min':0.1, 'period_max':20}
     search_time, search_flux, dtr_stages_dict = (
         dtr.clean_rotationsignal_tess_singlesector_light_curve(
             time, mag, magisflux=magisflux, dtr_dict=dtr_dict,
             lsp_dict=None, maskorbitedge=True, lsp_options=lsp_options,
-            verbose=False
+            verbose=verbose
         )
     )
 
@@ -102,8 +128,8 @@ def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
     ls_fap = dtr_stages_dict['lsp_dict']['ls_fap']
 
     # run the TLS periodogram
-    model = transitleastsquares(search_time, search_flux, verbose=False)
-    results = model.power(use_threads=1, show_progress_bar=False,
+    model = transitleastsquares(search_time, search_flux, verbose=verbose)
+    results = model.power(use_threads=n_threads, show_progress_bar=verbose,
                           R_star_min=0.1, R_star_max=5, M_star_min=0.1,
                           M_star_max=3.0, period_min=period_min,
                           period_max=period_max, n_transits_min=1,
@@ -112,7 +138,7 @@ def run_periodograms_and_detrend(source_id, time, mag, dtr_dict,
     dtr_method = dtr_stages_dict['dtr_method_used']
 
     r = {
-        'source_id': source_id,
+        'star_id': star_id,
         'ls_period': ls_period,
         'ls_fap': ls_fap,
         'ls_amplitude': ls_amplitude,
