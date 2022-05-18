@@ -1,6 +1,8 @@
 """
 Contents:
     run_periodograms_and_detrend: given star_id, time, mag, find planet.
+    plot_detrend_check: visualize detrending from run_periodograms_and_detrend.
+    plot_tls_results: visualize TLS results from run_periodograms_and_detrend.
 """
 #############
 ## LOGGING ##
@@ -170,6 +172,7 @@ def run_periodograms_and_detrend(
     if isinstance(cachepath, str):
         outdict = {
             'r':r,
+            'tls_results': results,
             'search_time':search_time,
             'search_flux':search_flux,
             'dtr_stages_dict':dtr_stages_dict
@@ -188,6 +191,10 @@ def run_periodograms_and_detrend(
 
 def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
                        r=None, instrument='tess', cdipslcpath=None):
+    """
+    Plots of raw and detrended flux from run_periodograms_and_detrend, with
+    vertical lines showing the preferred TLS period.
+    """
 
     assert instrument in ['tess', 'kepler']
 
@@ -230,7 +237,7 @@ def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
 
     else:
         outname =  (
-            str(star_id)+
+            f"{star_id}_detrending"
             "_method-{}".format(dtr_dict['method'])+
             '_windowlength-{}'.format(dtr_dict['window_length'])+
             ".png"
@@ -258,7 +265,7 @@ def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
         if instrument == 'kepler': _segid = f"Q{_segid}"
         outname =  (
             f"{star_id}"
-            f"_{_segid}"
+            f"_{_segid}_detrending"
             f"_method-{dtr_dict['method']}"
             f"_windowlength-{dtr_dict['window_length']}"
             ".png"
@@ -329,3 +336,259 @@ def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
         f.tight_layout()
         f.savefig(outpng, dpi=300)
         LOGINFO(f"Made {outpng}")
+
+
+def plot_tls_results(star_id, outdir, cachepath, dtr_dict,
+                     instrument='kepler'):
+    """
+    Plots of phase-folded flux from run_periodograms_and_detrend, with other
+    diagnostics (including odd-evens).
+    """
+
+    assert instrument in ['tess', 'kepler']
+    assert os.path.exists(cachepath)
+
+    with open(cachepath, 'rb') as f:
+        d = pickle.load(f)
+
+    r = d['r']
+    tlsr = d['tls_results']
+    search_time = d['search_time']
+    search_flux = d['search_flux']
+    dtr_stages_dict = d['dtr_stages_dict']
+
+    if dtr_stages_dict is not None:
+        time, flux = dtr_stages_dict['time'], dtr_stages_dict['flux']
+        sel0 = dtr_stages_dict['sel0']
+        clipped_flux = dtr_stages_dict['clipped_flux']
+        trend_flux = dtr_stages_dict['trend_flux']
+        search_time = dtr_stages_dict['search_time']
+        search_flux = dtr_stages_dict['search_flux']
+
+    # for kepler, show quarter roll times.
+    if instrument == 'kepler':
+        from cdips.paths import DATADIR
+        csvpath = os.path.join(
+            DATADIR, 'spacecraft', 'time_to_kepler_quarter.csv'
+        )
+        time_df = pd.read_csv(csvpath)
+        segment_id = np.array(time_df.quarter.apply(lambda x: str(x).zfill(2)))
+        segment_start = np.array(time_df.tstart)
+        segment_stop = np.array(time_df.tstop)
+
+    elif instrument == 'tess':
+        segment_id = ['tess']
+        segment_start = [np.nanmin(time)]
+        segment_stop = [np.nanmax(time)]
+
+    outname =  (
+        f"{star_id}_tls"
+        f"_method-{dtr_dict['method']}"
+        f"_windowlength-{dtr_dict['window_length']}"
+        ".png"
+    )
+
+    outpng = os.path.join(outdir, outname)
+
+    if os.path.exists(outpng):
+        LOGINFO(f"Found {outpng}, continue.")
+        return 1
+
+    fig = plt.figure(figsize=(14,15))
+    axd = fig.subplot_mosaic(
+        """
+        000
+        112
+        342
+        562
+        """
+    )
+
+    # ax0: light curve
+    # ax1: tls periodogram
+    # ax2: text on right
+    # ax3: primary transit
+    # ax4: occultation
+    # ax5: odd
+    # ax6: even
+    ax0 = axd['0']
+    ax1 = axd['1']
+    ax2 = axd['2']
+    ax3 = axd['3']
+    ax4 = axd['4']
+    ax5 = axd['5']
+    ax6 = axd['6']
+
+    # ax0
+    ax = ax0
+    norm_y = lambda y: 1e3*(y-1)
+
+    ax.scatter(
+        search_time, norm_y(search_flux), c='black', s=2, zorder=2,
+        rasterized=True, linewidths=0, marker='.'
+    )
+
+    period_val = r['tls_period']
+    t0_val = r['tls_t0']
+    tdur_val = r['tls_duration']
+    midtimes = t0_val + np.arange(-2000,2000,1)*period_val
+
+    _f = norm_y(search_flux)
+    med = np.nanmedian(_f)
+    std = np.nanstd(_f)
+    y_diff = np.nanpercentile(_f,90) - np.nanpercentile(_f,10)
+    y_lo = med - 1.8*y_diff
+    y_hi = med + 1.4*y_diff
+    ax.vlines(midtimes, y_lo, y_hi, color='orangered',
+              linestyle='--', zorder=1, lw=0.5, alpha=0.3)
+    ax.set_ylim((y_lo, y_hi))
+
+    ax.set_xlim((np.nanmin(search_time)-10, np.nanmax(search_time)+10))
+
+    ax.update({'ylabel':'notch [ppt]', 'xlabel': 'time [days]'})
+
+    # ax1
+    ax = ax1
+
+    ax.plot(tlsr['periods'], tlsr['power'], c='k', lw=0.5)
+    ax.axvline(tlsr['period'], alpha=0.4, lw=2, c='C0', label='TLS (Porb)')
+    for n in [2,3,4,5]:
+        ax.axvline(n * tlsr['period'], alpha=0.4, lw=0.5, ls="--", c='C0')
+        ax.axvline(tlsr['period'] / n, alpha=0.4, lw=0.5, ls="--", c='C0')
+
+    ls_period = r['ls_period']
+    ax.axvline(ls_period, alpha=0.4, lw=2, c='C1', label='LS (Prot)')
+    for n in [2]:
+        ax.axvline(n * ls_period, alpha=0.4, lw=0.5, ls="--", c='C1')
+        ax.axvline(ls_period / n, alpha=0.4, lw=0.5, ls="--", c='C1')
+
+    ax.legend(loc='best', fontsize='x-small')
+    ax.update({'ylabel':'SDE', 'xlabel': 'period [days]',
+               'xlim':[0.99*min(tlsr['periods']), 1.01*max(tlsr['periods'])],
+               'xscale': 'log'})
+
+    # ax2
+    ax = ax2
+
+    txt = (
+        f"{star_id}\n"
+        f"dtr method: {dtr_stages_dict['dtr_method_used']}\n"
+        f"windowlength: {dtr_dict['window_length']} days\n"
+        f"LS period (raw): {ls_period:.3f} days\n"
+        f"\n"
+        f"TLS results:\n"
+        f"SDE: {tlsr['SDE']:.1f}\n"
+        f"SNR: {tlsr['snr']:.1f}\n"
+        f"P: {tlsr['period']:.4f} ± {tlsr['period_uncertainty']:.4f} days\n"
+        f"t0: {tlsr['T0']:.4f}\n"
+        f"dur: {24*tlsr['duration']:.1f} hr\n"
+        f"δ: {1e3*(1-tlsr['depth_mean'][0]):.2f} ± {1e3*(tlsr['depth_mean'][1]):.2f} ppt\n"
+        f"δeven: {1e3*(1-tlsr['depth_mean_even'][0]):.2f} ± {1e3*(tlsr['depth_mean_even'][1]):.2f} ppt\n"
+        f"δodd: {1e3*(1-tlsr['depth_mean_odd'][0]):.2f} ± {1e3*(tlsr['depth_mean_odd'][1]):.2f} ppt\n"
+        f"odd-even sig: {tlsr['odd_even_mismatch']:.1f}σ\n"
+        f"Rp/R*: {tlsr['rp_rs']:.4f}\n"
+        f"Ntra: {tlsr['transit_count']}\n"
+        f"Nobs: {tlsr['distinct_transit_count']}\n"
+    )
+
+    ax.text(0, 0.5, txt, ha='left', va='center', fontsize='x-large', zorder=2,
+            transform=ax.transAxes)
+    ax.set_axis_off()
+
+    # ax3: primary transit
+    from astrobase.checkplot.png import _make_phased_magseries_plot
+    from astrobase.lcmath import phase_magseries
+    ax = ax3
+
+    phasebin = 1e-3
+    minbinelems=2
+    phasems = 2.0
+    phasebinms = 6.0
+    tdur_by_period=tlsr['duration']/tlsr['period']
+    plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
+    _make_phased_magseries_plot(ax, 0, search_time, norm_y(search_flux),
+                                np.ones_like(search_flux)/1e4,
+                                tlsr['period'], tlsr['T0'], True, True,
+                                phasebin, minbinelems, plotxlim, 'tls',
+                                xliminsetmode=False, magsarefluxes=True,
+                                phasems=phasems, phasebinms=phasebinms,
+                                verbose=True, lowerleftstr='primary',
+                                lowerleftfontsize='small')
+
+    model_time = tlsr['model_lightcurve_time']
+    model_y = tlsr['model_lightcurve_model']
+
+    phasedlc = phase_magseries(model_time, model_y, tlsr['period'],
+                               tlsr['T0'], wrap=True, sort=True)
+    plotphase = phasedlc['phase']
+    plotmags = phasedlc['mags']
+    ax.plot(plotphase, norm_y(plotmags), zorder=0, color='gray')
+    ax.set_ylabel('flux [ppt]')
+    ax.set_ylim((y_lo, y_hi))
+
+    # ax4: occultation
+    ax = ax4
+    plotxlim=(-2.0*tdur_by_period+0.5,2.0*tdur_by_period+0.5)
+    _make_phased_magseries_plot(ax, 0, search_time, norm_y(search_flux),
+                                np.ones_like(search_flux)/1e4,
+                                tlsr['period'], tlsr['T0'], True, True,
+                                phasebin, minbinelems, plotxlim, 'tls',
+                                xliminsetmode=False, magsarefluxes=True,
+                                phasems=phasems, phasebinms=phasebinms,
+                                verbose=True, lowerleftstr='secondary',
+                                lowerleftfontsize='small')
+    ax.plot(plotphase, norm_y(plotmags), zorder=0, color='gray')
+    ax.set_ylabel('flux [ppt]')
+    ax.set_ylim((y_lo, y_hi))
+
+    # ax5: odd
+    ax = ax5
+    sel = (tlsr['per_transit_count'] >= 1)
+    obsd_midtimes = np.array(tlsr['transit_times'])[sel]
+
+    even_midtimes = obsd_midtimes[::2]
+    odd_midtimes = obsd_midtimes[1::2]
+
+    delta_t = 0.245*tlsr['period']
+    even_windows = np.array((even_midtimes - delta_t, even_midtimes+delta_t))
+
+    even_mask = np.zeros_like(search_time).astype(bool)
+    for even_window in even_windows.T:
+        even_mask |= np.array(
+            (search_time > np.min(even_window)) & (search_time < np.max(even_window))
+        )
+    odd_mask = ~even_mask
+
+    plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
+    _make_phased_magseries_plot(ax, 0, search_time[odd_mask],
+                                norm_y(search_flux[odd_mask]),
+                                np.ones_like(search_flux[odd_mask])/1e4,
+                                tlsr['period'], tlsr['T0'], True, True,
+                                phasebin, minbinelems, plotxlim, 'tls',
+                                xliminsetmode=False, magsarefluxes=True,
+                                phasems=phasems, phasebinms=phasebinms,
+                                verbose=True, lowerleftstr='odd',
+                                lowerleftfontsize='small')
+    ax.plot(plotphase, norm_y(plotmags), zorder=0, color='gray')
+    ax.set_ylabel('flux [ppt]')
+    ax.set_ylim((y_lo, y_hi))
+
+    # ax6: even
+    ax = ax6
+    plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
+    _make_phased_magseries_plot(ax, 0, search_time[even_mask],
+                                norm_y(search_flux[even_mask]),
+                                np.ones_like(search_flux[even_mask])/1e4,
+                                tlsr['period'], tlsr['T0'], True, True,
+                                phasebin, minbinelems, plotxlim, 'tls',
+                                xliminsetmode=False, magsarefluxes=True,
+                                phasems=phasems, phasebinms=phasebinms,
+                                verbose=True, lowerleftstr='even',
+                                lowerleftfontsize='small')
+    ax.plot(plotphase, norm_y(plotmags), zorder=0, color='gray')
+    ax.set_ylabel('flux [ppt]')
+    ax.set_ylim((y_lo, y_hi))
+
+    fig.tight_layout()
+    fig.savefig(outpng, dpi=300)
+    LOGINFO(f"Made {outpng}")
