@@ -190,7 +190,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         _time, _flux, window_length=clip_window, low=20, high=3,
         method='mad', center='median'
     )
-    sel0 = ~np.isnan(clipped_flux)
+    sel0 = ~np.isnan(clipped_flux) & (clipped_flux != 0)
 
     #
     # for "best" or LOCOR detrending, you need to know the stellar rotation
