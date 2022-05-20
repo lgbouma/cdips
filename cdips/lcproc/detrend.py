@@ -283,7 +283,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
         _time[sel0], flat_flux, window_length=clip_window, low=20, high=3,
         method='mad', center='median'
     )
-    sel1 = ~np.isnan(clipped_flat_flux)
+    sel1 = ~np.isnan(clipped_flat_flux) & (clipped_flat_flux != 0)
 
     search_flux = clipped_flat_flux[sel1]
     search_time = _time[sel0][sel1]

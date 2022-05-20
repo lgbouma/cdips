@@ -49,6 +49,7 @@ def run_periodograms_and_detrend(
     R_star_min=0.1, R_star_max=5,
     M_star_min=0.1, M_star_max=3.0,
     n_transits_min=1, oversampling_factor=5,
+    transit_depth_min=10e-6, # 10ppm
     orbitgap=1,
     expected_norbits=2, orbitpadding=6/(24),
     dtr_method='best', n_threads=1,
@@ -90,8 +91,14 @@ def run_periodograms_and_detrend(
 
         magisflux (bool): default False
 
-        cachepath (str): if a pickle file path is passed, results (tuple case
-        described below) will be cached to this pickle file.
+        cachepath (str): if a pickle file path is passed, detrending and TLS
+        results will be cached to this pickle file.  The detrending results
+        will also be cached to a separate (internal) pickle file for speed-up.
+
+        (period_min, period_max, R_star_min,
+        R_star_max, M_star_min, M_star_max, n_transits_min,
+        oversampling_factor, transit_depth_min): ...
+            These are all TLS kwargs.
 
     Returns:
         If return_extras is False:
@@ -107,33 +114,42 @@ def run_periodograms_and_detrend(
 
     # if this has been run before, load from a cache.  notch is pretty slow.
     if isinstance(cachepath, str):
-
         assert cachepath.endswith(".pkl")
-
         if os.path.exists(cachepath):
-
             LOGINFO(f"Found {cachepath}, loading results.")
-
             with open(cachepath, 'rb') as f:
                 d = pickle.load(f)
-
-            if return_extras:
-                return (
-                    d['r'], d['search_time'], d['search_flux'],
-                    d['dtr_stages_dict']
-                )
-            else:
+            if not return_extras:
                 return d['r']
+            return (d['r'], d['search_time'], d['search_flux'],
+                    d['dtr_stages_dict'])
 
-    # otherwise, run the detrending
+    dtrcachepath = cachepath.replace(".pkl", "_dtrcache.pkl")
     lsp_options = {'period_min':0.1, 'period_max':20}
-    search_time, search_flux, dtr_stages_dict = (
-        dtr.clean_rotationsignal_tess_singlesector_light_curve(
-            time, mag, magisflux=magisflux, dtr_dict=dtr_dict,
-            lsp_dict=None, maskorbitedge=True, lsp_options=lsp_options,
-            verbose=verbose
+    if os.path.exists(dtrcachepath):
+        LOGINFO(f"Found {dtrcachepath}, loading results.")
+        with open(dtrcachepath, 'rb') as f:
+            d = pickle.load(f)
+        search_time, search_flux, dtr_stages_dict = (
+            d['search_time'], d['search_flux'], d['dtr_stages_dict']
         )
-    )
+    else:
+        # otherwise, run the detrending; cache results
+        search_time, search_flux, dtr_stages_dict = (
+            dtr.clean_rotationsignal_tess_singlesector_light_curve(
+                time, mag, magisflux=magisflux, dtr_dict=dtr_dict,
+                lsp_dict=None, maskorbitedge=True, lsp_options=lsp_options,
+                verbose=verbose
+            )
+        )
+        outdict = {
+            'search_time':search_time,
+            'search_flux':search_flux,
+            'dtr_stages_dict':dtr_stages_dict
+        }
+        with open(dtrcachepath, 'wb') as f:
+            pickle.dump(outdict, f)
+            LOGINFO(f"Wrote {dtrcachepath}")
 
     # retrieve LS periodogram information
     ls_period = dtr_stages_dict['lsp_dict']['ls_period']
@@ -148,6 +164,7 @@ def run_periodograms_and_detrend(
                           period_min=period_min, period_max=period_max,
                           n_transits_min=n_transits_min,
                           transit_template='default',
+                          transit_depth_min=transit_depth_min,
                           oversampling_factor=oversampling_factor)
 
     dtr_method = dtr_stages_dict['dtr_method_used']
@@ -178,9 +195,7 @@ def run_periodograms_and_detrend(
             'dtr_stages_dict':dtr_stages_dict
         }
         with open(cachepath, 'wb') as f:
-            pickle.dump(
-                outdict, f
-            )
+            pickle.dump(outdict, f)
             LOGINFO(f"Wrote {cachepath}")
 
     if not return_extras:
@@ -429,6 +444,9 @@ def plot_tls_results(star_id, outdir, cachepath, dtr_dict,
     )
 
     period_val = r['tls_period']
+    if np.isnan(period_val):
+        LOGWARNING(f'Got NaN TLS period for {star_id}.  Escaping.')
+        return 0
     t0_val = r['tls_t0']
     tdur_val = r['tls_duration']
     midtimes = t0_val + np.arange(-2000,2000,1)*period_val
