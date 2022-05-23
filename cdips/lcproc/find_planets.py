@@ -6,6 +6,8 @@ Contents:
         visualize detrending from run_periodograms_and_detrend.
     plot_planet_finding_results:
         viz BLS or TLS results from run_periodograms_and_detrend.
+Helpers:
+    p2p_rms
 """
 #############
 ## LOGGING ##
@@ -59,7 +61,8 @@ def run_periodograms_and_detrend(
     expected_norbits=2, orbitpadding=6/(24),
     dtr_method='best', n_threads=1,
     return_extras=False, magisflux=False,
-    cachepath=None, verbose=False
+    cachepath=None, verbose=False,
+    slide_clip_lo=20, slide_clip_hi=3
     ):
     """
     Given a star_id, time, and magnitude time-series, this function runs
@@ -154,7 +157,8 @@ def run_periodograms_and_detrend(
             dtr.clean_rotationsignal_tess_singlesector_light_curve(
                 time, mag, magisflux=magisflux, dtr_dict=dtr_dict,
                 lsp_dict=None, maskorbitedge=True, lsp_options=lsp_options,
-                verbose=verbose
+                verbose=verbose, slide_clip_lo=slide_clip_lo,
+                slide_clip_hi=slide_clip_hi
             )
         )
         outdict = {
@@ -175,15 +179,19 @@ def run_periodograms_and_detrend(
     blsdict = {}
     if search_method == 'tls':
         # run the TLS periodogram
-        model = transitleastsquares(search_time, search_flux, verbose=verbose)
-        results = model.power(use_threads=n_threads, show_progress_bar=verbose,
-                              R_star_min=R_star_min, R_star_max=R_star_max,
-                              M_star_min=M_star_min, M_star_max=M_star_max,
-                              period_min=period_min, period_max=period_max,
-                              n_transits_min=n_transits_min,
-                              transit_template='default',
-                              transit_depth_min=transit_depth_min,
-                              oversampling_factor=oversampling_factor)
+        dy = np.ones_like(search_time)*p2p_rms(search_flux)
+        model = transitleastsquares(
+            search_time, search_flux, dy=dy, verbose=verbose
+        )
+        results = model.power(
+            use_threads=n_threads, show_progress_bar=verbose,
+            R_star_min=R_star_min, R_star_max=R_star_max,
+            M_star_min=M_star_min, M_star_max=M_star_max,
+            period_min=period_min, period_max=period_max,
+            n_transits_min=n_transits_min, transit_template='default',
+            transit_depth_min=transit_depth_min,
+            oversampling_factor=oversampling_factor
+        )
 
     elif search_method == 'bls':
         dy = np.ones_like(search_time)*p2p_rms(search_flux)
@@ -194,9 +202,10 @@ def run_periodograms_and_detrend(
             autofreq=True, nbestpeaks=5, nworkers=n_threads, get_stats=True
         )
 
-        # the stats functions in bls_parallel_pfind have some issues, including
-        # that the t0 fit is usally wrong.  use the TLS stats functions to fix
-        # this.  [NOTE patching astrobase would be the best long-term solution]
+        # the stats functions in bls_parallel_pfind have issues, especially
+        # that the t0 fit is usally wrong.  a possible TODO here is to use the
+        # TLS stats functions to fix this.  [NOTE patching astrobase would be
+        # the best long-term solution]
         from transitleastsquares.stats import (
             final_T0_fit, intransit_stats
         )
@@ -210,32 +219,16 @@ def run_periodograms_and_detrend(
         init_tdur = blsdict['blsresult'][np.argmax(powers)]['transduration']*24
         init_depth = 1-blsdict['blsresult'][np.argmax(powers)]['transdepth']
         init_period = blsdict['bestperiod']
+        raise NotImplementedError(
+            "astrobase BLS t0-finder still needs patching."
+        )
 
-        #FIXME FIXME FIXME TODO:
-        # follow the logic of "final_T0_fit", and implement your own version of
-        # this to get the best-fit T0 over a grid from [t_min, t_min+period].
-
-        # import IPython; IPython.embed()
-        # assert 0
-        # T0 = final_T0_fit(
-        #     signal=lc_arr[best_row],
-        #     depth=init_depth,
-        #     t=search_time,
-        #     y=search_flux,
-        #     dy=dy,
-        #     period=init_period,
-        #     T0_fit_margin=0.01,
-        #     show_progress_bar=False,
-        #     verbose=True
-        # )
-        # transit_times = all_transit_times(T0, self.t, period)
-
-        # transit_duration_in_days = calculate_transit_duration_in_days(
-        #     self.t, period, transit_times, duration
-        # )
-
-        # NOTE: after, could reimplement transitleastsquares.stats
-        # functions too... to get the odd-even stats!
+        # TODO:
+        # follow the logic of "final_T0_fit" in transitleastsquares, and
+        # implement your own version of this to get the best-fit T0 over a grid
+        # from [t_min, t_min+period].
+        # NOTE: after, could reimplement transitleastsquares.stats functions
+        # too... to get the odd-even stats!
 
     dtr_method = dtr_stages_dict['dtr_method_used']
 
@@ -272,6 +265,7 @@ def run_periodograms_and_detrend(
             'bls_results': blsdict,
             'search_time':search_time,
             'search_flux':search_flux,
+            'dy':dy,
             'dtr_stages_dict':dtr_stages_dict,
         }
         with open(cachepath, 'wb') as f:
