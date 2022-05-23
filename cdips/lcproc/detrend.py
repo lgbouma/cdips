@@ -109,7 +109,7 @@ assert int(wotanversiontuple[1]) >= 9
 def clean_rotationsignal_tess_singlesector_light_curve(
     time, mag, magisflux=False, dtr_dict=None, lsp_dict=None,
     maskorbitedge=True, lsp_options={'period_min':0.1, 'period_max':20},
-    verbose=True):
+    verbose=True, slide_clip_lo=20, slide_clip_hi=3):
     """
     The goal of this function is to remove a stellar rotation signal from a
     single TESS light curve (ideally one without severe insturmental
@@ -187,8 +187,8 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     #
     clip_window = 3
     clipped_flux = slide_clip(
-        _time, _flux, window_length=clip_window, low=20, high=3,
-        method='mad', center='median'
+        _time, _flux, window_length=clip_window, low=slide_clip_lo,
+        high=slide_clip_hi, method='mad', center='median'
     )
     sel0 = ~np.isnan(clipped_flux) & (clipped_flux != 0)
 
@@ -280,8 +280,8 @@ def clean_rotationsignal_tess_singlesector_light_curve(
     #
     clip_window = 3
     clipped_flat_flux = slide_clip(
-        _time[sel0], flat_flux, window_length=clip_window, low=20, high=3,
-        method='mad', center='median'
+        _time[sel0], flat_flux, window_length=clip_window, low=slide_clip_lo,
+        high=slide_clip_hi, method='mad', center='median'
     )
     sel1 = ~np.isnan(clipped_flat_flux) & (clipped_flat_flux != 0)
 
