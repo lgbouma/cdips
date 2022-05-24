@@ -14,6 +14,10 @@ Light curve retrieval:
     make_lc_list: make a metadata file consisting of the G_Rp<16 cluster light
     curves paths.
 
+Injection-recovery:
+
+    inject_transit_signal
+
 Light curve miscellanea:
 
     _given_mag_get_flux: self-descriptive.
@@ -418,3 +422,54 @@ def p2p_rms(flux):
     p2p = np.mean([up_p2p, lo_p2p])
 
     return p2p
+
+
+def inject_transit_signal(time, flux, inj_dict, exp_time_minutes=30.):
+    """
+    Inject transit signal into median-normalized flux time-series.
+
+    args:
+        inj_dict: dictionary with keys ['period', 'epoch', 'depth'].
+        exp_time_minutes: exposure time used to smear analytic model.
+    """
+
+    keylist = ['period', 'epoch', 'depth']
+    for key in keylist:
+        assert key in inj_dict
+
+    # initialize model to inject: 90 degrees, LD coeffs for 5000 K dwarf star
+    # in TESS band (Claret 2018) no eccentricity, random phase, b=0, stellar
+    # density set to 1.5x solar.  Eq (30) Winn 2010 to get a/Rstar.
+    import batman
+    params = batman.TransitParams()
+
+    density_sun = 3*u.Msun / (4*np.pi*u.Rsun**3)
+    density_star = 1.5*density_sun
+    a_by_rstar = ( ( c.G * (inj_dict['period']*u.day)**2 /
+                     (3*np.pi) * density_star )**(1/3) ).cgs.value
+
+    params.inc = 90.
+    q1, q2 = 0.4, 0.2
+    params.ecc = 0
+    params.limb_dark = "quadratic"
+    params.u = [q1,q2]
+    w = np.random.uniform(low=np.rad2deg(-np.pi), high=np.rad2deg(np.pi))
+    params.w = w
+    params.per = inj_dict['period']
+    t0 = np.nanmin(time) + inj_dict['epoch']
+    params.t0 = t0
+    params.rp = np.sqrt(inj_dict['depth'])
+    params.a = a_by_rstar
+
+    exp_time_days = exp_time_minutes / (24.*60)
+    ss_factor = 10
+
+    m_toinj = batman.TransitModel(params, time,
+                                  supersample_factor=ss_factor,
+                                  exp_time=exp_time_days)
+
+    # calculate light curve and inject
+    flux_toinj = m_toinj.light_curve(params)
+    inj_flux = flux + (flux_toinj-1.)*np.nanmedian(flux)
+
+    return time, inj_flux, t0

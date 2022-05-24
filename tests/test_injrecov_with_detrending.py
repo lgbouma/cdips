@@ -12,7 +12,6 @@ main
         inj_recov_worker
     get_random_lc_paths
     get_cluster_lc_paths
-    inject_signal
 """
 
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
@@ -235,8 +234,19 @@ def inj_recov_worker(task):
     #
     try:
 
-        # convert mag to flux. mask orbit edges. inject signal.
-        inj_time, inj_flux, t0 = inject_signal(time, ap_mag, inj_dict)
+        # mags to flux
+        f_x0 = 1e4
+        m_x0 = 10
+        ap_flux = f_x0 * 10**( -0.4 * (ap_mag - m_x0) )
+        ap_flux /= np.nanmedian(ap_flux)
+
+        # ignore the times near the edges of orbits for TLS.
+        time, flux = moe.mask_orbit_start_and_end(
+            time, ap_flux, raise_expectation_error=False
+        )
+
+        # inject signal.
+        inj_time, inj_flux, t0 = lcu.inject_transit_signal(time, flux, inj_dict)
         inj_dict['epoch'] = t0
 
         search_time, search_flux, dtr_stages_dict = (
@@ -564,57 +574,6 @@ def get_cluster_lc_paths(N_lcs=100):
     lcpaths = np.random.choice(lcpaths,size=N_lcs)
 
     return lcpaths
-
-
-def inject_signal(time, ap_mag, inj_dict):
-
-    # mags to flux
-    f_x0 = 1e4
-    m_x0 = 10
-    ap_flux = f_x0 * 10**( -0.4 * (ap_mag - m_x0) )
-    ap_flux /= np.nanmedian(ap_flux)
-
-    # ignore the times near the edges of orbits for TLS.
-    time, flux= moe.mask_orbit_start_and_end(
-        time, ap_flux, raise_expectation_error=False
-    )
-
-    # initialize model to inject: 90 degrees, LD coeffs for 5000 K dwarf star
-    # in TESS band (Claret 2018) no eccentricity, random phase, b=0, stellar
-    # density set to 1.5x solar.  Eq (30) Winn 2010 to get a/Rstar.
-    params = batman.TransitParams()
-
-    density_sun = 3*u.Msun / (4*np.pi*u.Rsun**3)
-    density_star = 1.5*density_sun
-    a_by_rstar = ( ( c.G * (inj_dict['period']*u.day)**2 /
-                     (3*np.pi) * density_star )**(1/3) ).cgs.value
-
-    params.inc = 90.
-    q1, q2 = 0.4, 0.2
-    params.ecc = 0
-    params.limb_dark = "quadratic"
-    params.u = [q1,q2]
-    w = np.random.uniform(low=np.rad2deg(-np.pi), high=np.rad2deg(np.pi))
-    params.w = w
-    params.per = inj_dict['period']
-    t0 = np.nanmin(time) + inj_dict['epoch']
-    params.t0 = t0
-    params.rp = np.sqrt(inj_dict['depth'])
-    params.a = a_by_rstar
-
-    exp_time_minutes = 30.
-    exp_time_days = exp_time_minutes / (24.*60)
-    ss_factor = 10
-
-    m_toinj = batman.TransitModel(params, time,
-                                  supersample_factor=ss_factor,
-                                  exp_time=exp_time_days)
-
-    # calculate light curve and inject
-    flux_toinj = m_toinj.light_curve(params)
-    inj_flux = flux + (flux_toinj-1.)*np.nanmedian(flux)
-
-    return time, inj_flux, t0
 
 
 def main():
