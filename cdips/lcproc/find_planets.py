@@ -1073,6 +1073,7 @@ def plot_iterative_planet_finding_results(
                 f"{star_id}\n"
                 f"dtr method: {dtr_stages_dict['dtr_method_used']}\n"
                 f"search method: {search_method}\n"
+                f"iteration: {iter_key}\n"
                 f"windowlength: {dtr_dict['window_length']} days\n"
                 f"LS period (raw): {ls_period:.3f} days\n"
                 f"\n"
