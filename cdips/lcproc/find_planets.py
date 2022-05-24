@@ -451,7 +451,8 @@ def run_periodograms_and_detrend(
 
 
 def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
-                       r=None, instrument='tess', cdipslcpath=None):
+                       r=None, instrument='tess', cdipslcpath=None,
+                       overwrite=False):
     """
     Plots of raw and detrended flux from run_periodograms_and_detrend, with
     vertical lines showing the preferred TLS/BLS period.
@@ -534,7 +535,7 @@ def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
 
         outpng = os.path.join(outdir, outname)
 
-        if os.path.exists(outpng):
+        if os.path.exists(outpng) and not overwrite:
             LOGINFO(f"Found {outpng}, continue.")
             continue
 
@@ -1214,29 +1215,5 @@ def plot_iterative_planet_finding_results(
 # helpers #
 ###########
 def _p2p_rms(flux):
-    """
-    e.g., section 2.6 of Nardiello+2020:
-        The point-to-point RMS is not sensitive to intrinsic stellar
-        variability.  It's obtained by calculating the 84th-50th percentile of
-        the distribution of the sorted residuals from the median value of
-        δF_j = F_{j} - F_{j+1}, where j is an epoch index.
-    """
-
-    dflux = np.diff(flux)
-
-    med_dflux = np.nanmedian(dflux)
-
-    up_p2p = (
-        np.nanpercentile( np.sort(dflux-med_dflux), 84 )
-        -
-        np.nanpercentile( np.sort(dflux-med_dflux), 50 )
-    )
-    lo_p2p = (
-        np.nanpercentile( np.sort(dflux-med_dflux), 50 )
-        -
-        np.nanpercentile( np.sort(dflux-med_dflux), 16 )
-    )
-
-    p2p = np.mean([up_p2p, lo_p2p])
-
-    return p2p
+    import cdips.utils.lcutils as lcu
+    return lcu.p2p_rms(flux)
