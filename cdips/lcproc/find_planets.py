@@ -1,13 +1,17 @@
 """
 Contents:
     run_periodograms_and_detrend:
-        given star_id, time, mag, find planet.
+        given star_id, time, mag, find a single planet.
+    detrend_and_iterative_tls:
+        given star_id, time, mag, find many planets.
     plot_detrend_check:
         visualize detrending from run_periodograms_and_detrend.
     plot_planet_finding_results:
         viz BLS or TLS results from run_periodograms_and_detrend.
+    plot_iterative_planet_finding_results:
+        viz TLS results, from detrend_and_iterative_tls
 Helpers:
-    p2p_rms
+    _p2p_rms
 """
 #############
 ## LOGGING ##
@@ -40,6 +44,7 @@ LOGEXCEPTION = LOGGER.exception
 #############
 
 from transitleastsquares import transitleastsquares
+from transitleastsquares import transit_mask, cleaned_array
 from astrobase.periodbase import kbls
 
 import os, pickle
@@ -48,6 +53,164 @@ from cdips.lcproc import detrend as dtr
 
 import multiprocessing as mp
 nworkers = mp.cpu_count()
+
+def detrend_and_iterative_tls(
+    star_id, time, mag, dtr_dict,
+    search_method='tls',
+    max_tls_iterations=3,
+    period_min=0.5, period_max=27,
+    R_star_min=0.1, R_star_max=5,
+    M_star_min=0.1, M_star_max=3.0,
+    n_transits_min=3, oversampling_factor=5,
+    transit_depth_min=10e-6, # 10ppm
+    orbitgap=1,
+    expected_norbits=2, orbitpadding=6/(24),
+    dtr_method='best', n_threads=1,
+    magisflux=False,
+    cachepath=None, verbose=False,
+    slide_clip_lo=20, slide_clip_hi=3
+    ):
+    """
+    This function is a clone of run_periodograms_and_detrend, but TLS is
+    performed iteratively up to a maximum number of attempts, or a S/N cutoff.
+
+    kwargs:
+
+        as in run_periodograms_and_detrend, except for `max_tls_iterations`,
+        which is self-explanatory.
+
+    Returns:
+        "outdicts": keys are TLS iterations (plus dtr_stages_dict).  Each TLS
+        iteration value contains
+            (r, tls_results, search_time, search_flux, dy), for
+            r = [star_id, ls_period, ls_fap, ls_amplitude, tls_period, tls_sde,
+                 tls_t0, tls_depth, tls_duration, tls_distinct_transit_count,
+                 tls_odd_even, dtr_method]
+    """
+
+    assert search_method == 'tls'
+
+    # if this has been run before, load from a cache.  notch+TLS are slow.
+    if isinstance(cachepath, str):
+        assert cachepath.endswith(".pkl")
+        if os.path.exists(cachepath):
+            LOGINFO(f"Found {cachepath}, loading results.")
+            with open(cachepath, 'rb') as f:
+                d = pickle.load(f)
+            return d
+
+    dtrcachepath = cachepath.replace(".pkl", "_dtrcache.pkl")
+    lsp_options = {'period_min':0.1, 'period_max':20}
+    if os.path.exists(dtrcachepath):
+        LOGINFO(f"Found {dtrcachepath}, loading results.")
+        with open(dtrcachepath, 'rb') as f:
+            d = pickle.load(f)
+        search_time, search_flux, dtr_stages_dict = (
+            d['search_time'], d['search_flux'], d['dtr_stages_dict']
+        )
+    else:
+        # otherwise, run the detrending; cache results
+        search_time, search_flux, dtr_stages_dict = (
+            dtr.clean_rotationsignal_tess_singlesector_light_curve(
+                time, mag, magisflux=magisflux, dtr_dict=dtr_dict,
+                lsp_dict=None, maskorbitedge=True, lsp_options=lsp_options,
+                verbose=verbose, slide_clip_lo=slide_clip_lo,
+                slide_clip_hi=slide_clip_hi
+            )
+        )
+        outdict = {
+            'search_time':search_time,
+            'search_flux':search_flux,
+            'dtr_stages_dict':dtr_stages_dict
+        }
+        with open(dtrcachepath, 'wb') as f:
+            pickle.dump(outdict, f)
+            LOGINFO(f"Wrote {dtrcachepath}")
+
+    # retrieve LS periodogram information
+    ls_period = dtr_stages_dict['lsp_dict']['ls_period']
+    ls_amplitude = np.abs(dtr_stages_dict['lsp_dict']['ls_amplitude'])
+    ls_fap = dtr_stages_dict['lsp_dict']['ls_fap']
+
+    results = {}
+
+    dtr_method = dtr_stages_dict['dtr_method_used']
+    count = 0
+    outdicts = {}
+    outdicts['dtr_stages_dict'] = dtr_stages_dict
+
+    # run the TLS periodograms
+    while count < max_tls_iterations:
+
+        dy = np.ones_like(search_time)*_p2p_rms(search_flux)
+
+        if verbose:
+            LOGINFO(f'Running TLS itern {count} w/ {len(search_time)} points')
+
+        model = transitleastsquares(
+            search_time, search_flux, dy=dy, verbose=verbose
+        )
+        results = model.power(
+            use_threads=n_threads, show_progress_bar=verbose,
+            R_star_min=R_star_min, R_star_max=R_star_max,
+            M_star_min=M_star_min, M_star_max=M_star_max,
+            period_min=period_min, period_max=period_max,
+            n_transits_min=n_transits_min, transit_template='default',
+            transit_depth_min=transit_depth_min,
+            oversampling_factor=oversampling_factor
+        )
+
+        r = {
+            'star_id': star_id,
+            'dtr_method': dtr_method,
+            'search_method': search_method,
+            #
+            'ls_period': ls_period,
+            'ls_fap': ls_fap,
+            'ls_amplitude': ls_amplitude,
+            #
+            'tls_period': results.get('period', None),
+            'tls_sde': results.get('SDE', None),
+            'tls_snr': results.get('snr', None),
+            'tls_t0': results.get('T0', None),
+            'tls_depth': results.get('depth', None),
+            'tls_duration': results.get('duration', None),
+            'tls_distinct_transit_count': results.get('distinct_transit_count', None),
+            'tls_odd_even': results.get('odd_even_mismatch', None),
+        }
+
+        outdict = {
+            'r':r,
+            'tls_results': results,
+            'search_time': search_time,
+            'search_flux': search_flux,
+            'dy':dy,
+        }
+
+        outdicts[count] = outdict
+
+        if r['tls_sde'] < 10:
+            LOGINFO('Found TLS_SDE < 10. Halting periodogram search.')
+            break
+
+        # iteratively mask out transits.
+        intransit = transit_mask(
+            search_time, results.period, 2*results.duration, results.T0
+        )
+        search_flux = search_flux[~intransit]
+        search_time = search_time[~intransit]
+        search_time, search_flux = cleaned_array(search_time, search_flux)
+
+        count += 1
+
+    if isinstance(cachepath, str):
+        with open(cachepath, 'wb') as f:
+            pickle.dump(outdicts, f)
+            LOGINFO(f"Wrote {cachepath}")
+
+    return outdicts
+
+
 
 def run_periodograms_and_detrend(
     star_id, time, mag, dtr_dict,
@@ -130,7 +293,7 @@ def run_periodograms_and_detrend(
 
     assert search_method in ['bls', 'tls']
 
-    # if this has been run before, load from a cache.  notch is pretty slow.
+    # if this has been run before, load from a cache.  notch+TLS are slow.
     if isinstance(cachepath, str):
         assert cachepath.endswith(".pkl")
         if os.path.exists(cachepath):
@@ -179,7 +342,7 @@ def run_periodograms_and_detrend(
     blsdict = {}
     if search_method == 'tls':
         # run the TLS periodogram
-        dy = np.ones_like(search_time)*p2p_rms(search_flux)
+        dy = np.ones_like(search_time)*_p2p_rms(search_flux)
         model = transitleastsquares(
             search_time, search_flux, dy=dy, verbose=verbose
         )
@@ -194,7 +357,7 @@ def run_periodograms_and_detrend(
         )
 
     elif search_method == 'bls':
-        dy = np.ones_like(search_time)*p2p_rms(search_flux)
+        dy = np.ones_like(search_time)*_p2p_rms(search_flux)
         blsdict = kbls.bls_parallel_pfind(
             search_time, search_flux, dy,
             magsarefluxes=True, startp=period_min, endp=period_max,
@@ -258,16 +421,17 @@ def run_periodograms_and_detrend(
         'bls_npoints_in_transit': blsdict['stats'][0].get('npoints_in_transit', None),
     }
 
+    outdict = {
+        'r':r,
+        'tls_results': results,
+        'bls_results': blsdict,
+        'search_time':search_time,
+        'search_flux':search_flux,
+        'dy':dy,
+        'dtr_stages_dict':dtr_stages_dict,
+    }
+
     if isinstance(cachepath, str):
-        outdict = {
-            'r':r,
-            'tls_results': results,
-            'bls_results': blsdict,
-            'search_time':search_time,
-            'search_flux':search_flux,
-            'dy':dy,
-            'dtr_stages_dict':dtr_stages_dict,
-        }
         with open(cachepath, 'wb') as f:
             pickle.dump(outdict, f)
             LOGINFO(f"Wrote {cachepath}")
@@ -430,7 +594,7 @@ def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
 
 def plot_planet_finding_results(
     star_id, search_method, outdir, cachepath, dtr_dict, instrument='kepler'
-):
+    ):
     """
     Plots of phase-folded flux from run_periodograms_and_detrend, with other
     diagnostics (including odd-evens).
@@ -736,7 +900,312 @@ def plot_planet_finding_results(
     LOGINFO(f"Made {outpng}")
 
 
-def p2p_rms(flux):
+def plot_iterative_planet_finding_results(
+    star_id, search_method, outdir, cachepath, dtr_dict, instrument='kepler'
+    ):
+    """
+    Plots of phase-folded flux from detrend_and_iterative_tls, with other
+    diagnostics (including odd-evens).
+    """
+
+    assert instrument in ['tess', 'kepler']
+    assert search_method in ['tls']
+    assert os.path.exists(cachepath)
+
+    with open(cachepath, 'rb') as f:
+        d = pickle.load(f)
+
+    dtr_stages_dict = d['dtr_stages_dict']
+
+    iter_keys = sorted([int(k) for k in d.keys() if k != 'dtr_stages_dict'])
+    n_iter = max(iter_keys) + 1
+
+    # for kepler, show quarter roll times.
+    if instrument == 'kepler':
+        from cdips.paths import DATADIR
+        csvpath = os.path.join(
+            DATADIR, 'spacecraft', 'time_to_kepler_quarter.csv'
+        )
+        time_df = pd.read_csv(csvpath)
+        segment_id = np.array(time_df.quarter.apply(lambda x: str(x).zfill(2)))
+        segment_start = np.array(time_df.tstart)
+        segment_stop = np.array(time_df.tstop)
+
+    elif instrument == 'tess':
+        segment_id = ['tess']
+        segment_start = [np.nanmin(time)]
+        segment_stop = [np.nanmax(time)]
+
+    outname =  (
+        f"{star_id}_{search_method}"
+        f"_method-{dtr_dict['method']}"
+        f"_windowlength-{dtr_dict['window_length']}"
+        ".pdf"
+    )
+
+    outpdf = os.path.join(outdir, outname)
+
+    if os.path.exists(outpdf):
+        LOGINFO(f"Found {outpdf}, continue.")
+        return 1
+
+    from matplotlib.backends.backend_pdf import PdfPages
+
+    with PdfPages(outpdf) as pdf:
+
+        for iter_key in iter_keys:
+
+            r = d[iter_key]['r']
+            pgr = d[iter_key]['tls_results']
+            tlsr = d[iter_key]['tls_results']
+
+            search_time = d[iter_key]['search_time']
+            search_flux = d[iter_key]['search_flux']
+
+            time, flux = dtr_stages_dict['time'], dtr_stages_dict['flux']
+            sel0 = dtr_stages_dict['sel0']
+            clipped_flux = dtr_stages_dict['clipped_flux']
+            trend_flux = dtr_stages_dict['trend_flux']
+            search_time = dtr_stages_dict['search_time']
+            search_flux = dtr_stages_dict['search_flux']
+
+            fig = plt.figure(figsize=(14,15))
+            axd = fig.subplot_mosaic(
+                """
+                000
+                112
+                342
+                562
+                """
+            )
+
+            # ax0: light curve
+            # ax1: tls periodogram
+            # ax2: text on right
+            # ax3: primary transit
+            # ax4: occultation
+            # ax5: odd
+            # ax6: even
+            ax0 = axd['0']
+            ax1 = axd['1']
+            ax2 = axd['2']
+            ax3 = axd['3']
+            ax4 = axd['4']
+            ax5 = axd['5']
+            ax6 = axd['6']
+
+            # ax0
+            ax = ax0
+            norm_y = lambda y: 1e3*(y-1)
+
+            ax.scatter(
+                search_time, norm_y(search_flux), c='black', s=2, zorder=2,
+                rasterized=True, linewidths=0, marker='.'
+            )
+
+            period, t0, dur = tlsr['period'], tlsr['T0'], tlsr['duration']
+            tdur_by_period = dur / period
+
+            if np.isnan(period):
+                LOGWARNING(
+                    f'Got NaN {search_method} period for {star_id}. '
+                    'Escaping.'
+                )
+                return 0
+            midtimes = t0 + np.arange(-2000,2000,1)*period
+
+            _f = norm_y(search_flux)
+            med = np.nanmedian(_f)
+            std = np.nanstd(_f)
+            y_diff = np.nanpercentile(_f,90) - np.nanpercentile(_f,10)
+            y_lo = med - 1.8*y_diff
+            y_hi = med + 1.4*y_diff
+            ax.vlines(midtimes, y_lo, y_hi, color='orangered',
+                      linestyle='--', zorder=1, lw=0.5, alpha=0.3)
+            ax.set_ylim((y_lo, y_hi))
+
+            ax.set_xlim((np.nanmin(search_time)-10, np.nanmax(search_time)+10))
+
+            ax.update({'ylabel':'notch [ppt]', 'xlabel': 'time [days]'})
+
+            # ax1
+            ax = ax1
+
+            powerkey = 'power'
+            bestperiodkey = 'period'
+            ax.plot(pgr['periods'], pgr[powerkey], c='k', lw=0.5)
+            ax.axvline(pgr[bestperiodkey], alpha=0.4, lw=2, c='C0',
+                       label=f'{search_method} (Porb)')
+            for n in [2,3,4,5,6,7]:
+                ax.axvline(n * pgr[bestperiodkey], alpha=0.4, lw=0.5,
+                           ls="--", c='C0')
+                ax.axvline(pgr[bestperiodkey] / n, alpha=0.4, lw=0.5,
+                           ls="--", c='C0')
+
+            ls_period = r['ls_period']
+            ax.axvline(ls_period, alpha=0.4, lw=2, c='C1', label='LS (Prot)')
+            for n in [2,3,4]:
+                ax.axvline(n * ls_period, alpha=0.4, lw=0.5, ls="--", c='C1')
+                ax.axvline(ls_period / n, alpha=0.4, lw=0.5, ls="--", c='C1')
+
+            ax.legend(loc='best', fontsize='x-small')
+            ax.update({'ylabel':'power', 'xlabel': 'period [days]',
+                       'xlim':[0.99*min(pgr['periods']), 1.01*max(pgr['periods'])],
+                       'xscale': 'log'})
+
+            # ax2
+            ax = ax2
+
+            txt = (
+                f"{star_id}\n"
+                f"dtr method: {dtr_stages_dict['dtr_method_used']}\n"
+                f"search method: {search_method}\n"
+                f"windowlength: {dtr_dict['window_length']} days\n"
+                f"LS period (raw): {ls_period:.3f} days\n"
+                f"\n"
+                f"TLS results:\n"
+                f"SDE: {tlsr['SDE']:.1f}\n"
+                f"SNR: {tlsr['snr']:.1f}\n"
+                f"P: {tlsr['period']:.4f} ± {tlsr['period_uncertainty']:.4f} days\n"
+                f"t0: {tlsr['T0']:.4f}\n"
+                f"dur: {24*tlsr['duration']:.1f} hr\n"
+                f"δ: {1e3*(1-tlsr['depth_mean'][0]):.2f} ± {1e3*(tlsr['depth_mean'][1]):.2f} ppt\n"
+                f"δeven: {1e3*(1-tlsr['depth_mean_even'][0]):.2f} ± {1e3*(tlsr['depth_mean_even'][1]):.2f} ppt\n"
+                f"δodd: {1e3*(1-tlsr['depth_mean_odd'][0]):.2f} ± {1e3*(tlsr['depth_mean_odd'][1]):.2f} ppt\n"
+                f"odd-even sig: {tlsr['odd_even_mismatch']:.1f}σ\n"
+                f"Rp/R*: {tlsr['rp_rs']:.4f}\n"
+                f"Ntra: {tlsr['transit_count']}\n"
+                f"Nobs: {tlsr['distinct_transit_count']}\n"
+            )
+
+            ax.text(0, 0.5, txt, ha='left', va='center', fontsize='x-large',
+                    zorder=2, transform=ax.transAxes)
+            ax.set_axis_off()
+
+            # ax3: primary transit
+            from astrobase.checkplot.png import _make_phased_magseries_plot
+            from astrobase.lcmath import phase_magseries
+            ax = ax3
+
+            phasebin = 1e-3
+            minbinelems = 2
+            phasems = 2.0
+            phasebinms = 6.0
+
+            plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
+            _make_phased_magseries_plot(ax, 0, search_time,
+                                        norm_y(search_flux),
+                                        np.ones_like(search_flux)/1e4, period,
+                                        t0, True, True, phasebin, minbinelems,
+                                        plotxlim, search_method,
+                                        xliminsetmode=False,
+                                        magsarefluxes=True, phasems=phasems,
+                                        phasebinms=phasebinms, verbose=True,
+                                        lowerleftstr='primary',
+                                        lowerleftfontsize='small')
+
+            model_time = tlsr['model_lightcurve_time']
+            model_y = tlsr['model_lightcurve_model']
+            phasedlc = phase_magseries(
+                model_time, model_y, period, t0, wrap=True, sort=True
+            )
+            plotphase = phasedlc['phase']
+            plotmags = phasedlc['mags']
+
+            ax.plot(plotphase, norm_y(plotmags), zorder=0, color='gray')
+            ax.set_ylabel('flux [ppt]')
+            ax.set_ylim((y_lo, y_hi))
+
+            # ax4: occultation
+            ax = ax4
+            plotxlim=(-2.0*tdur_by_period+0.5,2.0*tdur_by_period+0.5)
+            _make_phased_magseries_plot(ax, 0, search_time,
+                                        norm_y(search_flux),
+                                        np.ones_like(search_flux)/1e4, period,
+                                        t0, True, True, phasebin, minbinelems,
+                                        plotxlim, search_method,
+                                        xliminsetmode=False,
+                                        magsarefluxes=True, phasems=phasems,
+                                        phasebinms=phasebinms, verbose=True,
+                                        lowerleftstr='secondary',
+                                        lowerleftfontsize='small')
+            ax.plot(plotphase, norm_y(plotmags), zorder=0, color='gray')
+            ax.set_ylabel('flux [ppt]')
+            ax.set_ylim((y_lo, y_hi))
+
+            # ax5: odd
+            ax = ax5
+
+            all_midtimes = t0 + period*np.arange(-10000,10000,1)
+            obsd_midtimes = all_midtimes[
+                (all_midtimes > np.nanmin(search_time))
+                &
+                (all_midtimes < np.nanmax(search_time))
+            ]
+
+            even_midtimes = obsd_midtimes[::2]
+            odd_midtimes = obsd_midtimes[1::2]
+
+            delta_t = 0.245*period
+            even_windows = np.array(
+                (even_midtimes - delta_t, even_midtimes+delta_t)
+            )
+
+            even_mask = np.zeros_like(search_time).astype(bool)
+            for even_window in even_windows.T:
+                even_mask |= np.array(
+                    (search_time > np.min(even_window)) &
+                    (search_time < np.max(even_window))
+                )
+            odd_mask = ~even_mask
+
+            plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
+            _make_phased_magseries_plot(ax, 0, search_time[odd_mask],
+                                        norm_y(search_flux[odd_mask]),
+                                        np.ones_like(search_flux[odd_mask])/1e4,
+                                        period, t0, True, True, phasebin,
+                                        minbinelems, plotxlim, search_method,
+                                        xliminsetmode=False,
+                                        magsarefluxes=True, phasems=phasems,
+                                        phasebinms=phasebinms, verbose=True,
+                                        lowerleftstr='odd',
+                                        lowerleftfontsize='small')
+            ax.plot(plotphase, norm_y(plotmags), zorder=0, color='gray')
+            ax.set_ylabel('flux [ppt]')
+            ax.set_ylim((y_lo, y_hi))
+
+            # ax6: even
+            ax = ax6
+            plotxlim=(-2.0*tdur_by_period,2.0*tdur_by_period)
+            _make_phased_magseries_plot(ax, 0, search_time[even_mask],
+                                        norm_y(search_flux[even_mask]),
+                                        np.ones_like(search_flux[even_mask])/1e4,
+                                        period, t0, True, True, phasebin,
+                                        minbinelems, plotxlim, search_method,
+                                        xliminsetmode=False,
+                                        magsarefluxes=True, phasems=phasems,
+                                        phasebinms=phasebinms, verbose=True,
+                                        lowerleftstr='even',
+                                        lowerleftfontsize='small')
+            ax.plot(plotphase, norm_y(plotmags), zorder=0, color='gray')
+            ax.set_ylabel('flux [ppt]')
+            ax.set_ylim((y_lo, y_hi))
+
+            fig.tight_layout()
+
+            # finish this *page*
+            pdf.savefig(fig, dpi=300, bbox_inches='tight')
+            plt.close()
+
+        # finish the multi-page pdf report
+        LOGINFO(f"Made {outpdf}")
+
+
+
+###########
+# helpers #
+###########
+def _p2p_rms(flux):
     """
     e.g., section 2.6 of Nardiello+2020:
         The point-to-point RMS is not sensitive to intrinsic stellar
