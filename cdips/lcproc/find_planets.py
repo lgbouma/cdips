@@ -412,14 +412,22 @@ def run_periodograms_and_detrend(
         'tls_duration': results.get('duration', None),
         'tls_distinct_transit_count': results.get('distinct_transit_count', None),
         'tls_odd_even': results.get('odd_even_mismatch', None),
-        #
-        'bls_period': blsdict.get('bestperiod', None),
-        'bls_t0': blsdict['stats'][0].get('epoch', None),
-        'bls_duration': blsdict['stats'][0].get('transitduration', None),
-        'bls_snr': blsdict['stats'][0].get('snr', None),
-        'bls_depth': blsdict['stats'][0].get('transitdepth', None),
-        'bls_npoints_in_transit': blsdict['stats'][0].get('npoints_in_transit', None),
     }
+
+    if 'stats' in blsdict:
+        r['bls_period'] = blsdict.get('bestperiod', None)
+        r['bls_t0'] = blsdict['stats'][0].get('epoch', None)
+        r['bls_duration'] = blsdict['stats'][0].get('transitduration', None)
+        r['bls_snr'] = blsdict['stats'][0].get('snr', None)
+        r['bls_depth'] = blsdict['stats'][0].get('transitdepth', None)
+        r['bls_npoints_in_transit'] = blsdict['stats'][0].get('npoints_in_transit', None)
+    else:
+        r['bls_period'] = None
+        r['bls_t0'] = None
+        r['bls_duration'] = None
+        r['bls_snr'] = None
+        r['bls_depth'] = None
+        r['bls_npoints_in_transit'] = None
 
     outdict = {
         'r':r,
