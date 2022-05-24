@@ -145,7 +145,8 @@ def detrend_and_iterative_tls(
         dy = np.ones_like(search_time)*_p2p_rms(search_flux)
 
         if verbose:
-            LOGINFO(f'Running TLS itern {count} w/ {len(search_time)} points')
+            LOGINFO(f'Running TLS iteration {count} '
+                    f'w/ {len(search_time)} points')
 
         model = transitleastsquares(
             search_time, search_flux, dy=dy, verbose=verbose
@@ -191,6 +192,9 @@ def detrend_and_iterative_tls(
 
         if r['tls_sde'] < 10:
             LOGINFO('Found TLS_SDE < 10. Halting periodogram search.')
+            break
+        else:
+            LOGINFO(f'Found TLS_SDE = {r["tls_sde"]:.1f}. Continuing search.')
             break
 
         # iteratively mask out transits.
