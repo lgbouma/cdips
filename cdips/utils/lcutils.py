@@ -441,6 +441,7 @@ def inject_transit_signal(time, flux, inj_dict, exp_time_minutes=30.):
     # in TESS band (Claret 2018) no eccentricity, random phase, b=0, stellar
     # density set to 1.5x solar.  Eq (30) Winn 2010 to get a/Rstar.
     import batman
+    from astropy import units as u, constants as c
     params = batman.TransitParams()
 
     density_sun = 3*u.Msun / (4*np.pi*u.Rsun**3)
