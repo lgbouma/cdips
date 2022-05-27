@@ -917,7 +917,8 @@ def plot_planet_finding_results(
 
 
 def plot_iterative_planet_finding_results(
-    star_id, search_method, outdir, cachepath, dtr_dict, instrument='kepler'
+    star_id, search_method, outdir, cachepath, dtr_dict, instrument='kepler',
+    overwrite=False
     ):
     """
     Plots of phase-folded flux from detrend_and_iterative_tls, with other
