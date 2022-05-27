@@ -183,7 +183,9 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
     #
     # sliding sigma clip asymmetric [20,3]*MAD, about median. use a 3-day
-    # window, to give ~100 to 150 data points. mostly to avoid big flares.
+    # window, to give ~100 to 150 data points at 30-minute cadence. mostly
+    # avoids big flares, provided restrictive slide_clip_lo and slide_clip_hi
+    # are given.
     #
     clip_window = 3
     clipped_flux = slide_clip(

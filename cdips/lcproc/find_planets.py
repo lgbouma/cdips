@@ -59,6 +59,7 @@ def detrend_and_iterative_tls(
     search_method='tls',
     max_tls_iterations=3,
     period_min=0.5, period_max=27,
+    R_star=1.0, M_star=1.0,
     R_star_min=0.1, R_star_max=5,
     M_star_min=0.1, M_star_max=3.0,
     n_transits_min=3, oversampling_factor=5,
@@ -153,8 +154,8 @@ def detrend_and_iterative_tls(
         )
         results = model.power(
             use_threads=n_threads, show_progress_bar=verbose,
-            R_star_min=R_star_min, R_star_max=R_star_max,
-            M_star_min=M_star_min, M_star_max=M_star_max,
+            R_star=R_star, R_star_min=R_star_min, R_star_max=R_star_max,
+            M_star=M_star, M_star_min=M_star_min, M_star_max=M_star_max,
             period_min=period_min, period_max=period_max,
             n_transits_min=n_transits_min, transit_template='default',
             transit_depth_min=transit_depth_min,
@@ -220,6 +221,7 @@ def run_periodograms_and_detrend(
     star_id, time, mag, dtr_dict,
     search_method='tls',
     period_min=0.5, period_max=27,
+    R_star=1.0, M_star=1.0,
     R_star_min=0.1, R_star_max=5,
     M_star_min=0.1, M_star_max=3.0,
     n_transits_min=1, oversampling_factor=5,
@@ -352,6 +354,7 @@ def run_periodograms_and_detrend(
         )
         results = model.power(
             use_threads=n_threads, show_progress_bar=verbose,
+            R_star=R_star, M_star=M_star,
             R_star_min=R_star_min, R_star_max=R_star_max,
             M_star_min=M_star_min, M_star_max=M_star_max,
             period_min=period_min, period_max=period_max,
