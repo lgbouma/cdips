@@ -196,7 +196,6 @@ def detrend_and_iterative_tls(
             break
         else:
             LOGINFO(f'Found TLS_SDE = {r["tls_sde"]:.1f}. Continuing search.')
-            break
 
         # iteratively mask out transits.
         intransit = transit_mask(
@@ -609,7 +608,8 @@ def plot_detrend_check(star_id, outdir, dtr_dict, dtr_stages_dict,
 
 
 def plot_planet_finding_results(
-    star_id, search_method, outdir, cachepath, dtr_dict, instrument='kepler'
+    star_id, search_method, outdir, cachepath, dtr_dict, instrument='kepler',
+    overwrite=0
     ):
     """
     Plots of phase-folded flux from run_periodograms_and_detrend, with other
@@ -961,7 +961,7 @@ def plot_iterative_planet_finding_results(
 
     outpdf = os.path.join(outdir, outname)
 
-    if os.path.exists(outpdf):
+    if os.path.exists(outpdf) and not overwrite:
         LOGINFO(f"Found {outpdf}, continue.")
         return 1
 
@@ -970,6 +970,8 @@ def plot_iterative_planet_finding_results(
     with PdfPages(outpdf) as pdf:
 
         for iter_key in iter_keys:
+
+            LOGINFO(f"{star_id}: beginning iter {iter_key} of PDF report.")
 
             r = d[iter_key]['r']
             pgr = d[iter_key]['tls_results']
