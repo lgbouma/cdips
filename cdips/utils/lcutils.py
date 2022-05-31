@@ -16,7 +16,10 @@ Light curve retrieval:
 
 Injection-recovery:
 
-    inject_transit_signal
+    inject_transit_signal: inject transit signal into a light curve.
+
+    determine_if_recovered: given TLS output and knowledge of the signal that
+    was injected, check whether signal was recovered.
 
 Light curve miscellanea:
 
@@ -32,7 +35,7 @@ Light curve miscellanea:
 """
 
 from glob import glob
-import os
+import os, pickle
 import numpy as np
 from copy import deepcopy
 
@@ -474,3 +477,54 @@ def inject_transit_signal(time, flux, inj_dict, exp_time_minutes=30.):
     inj_flux = flux + (flux_toinj-1.)*np.nanmedian(flux)
 
     return time, inj_flux, t0
+
+
+def determine_if_recovered(cachepath, inj_dict):
+    """
+    Given a cachepath from cdips.lcproc.find_planets.detrend_and_iterative_tls,
+    and the dictionary with key of injected parameters, determine whether an
+    injected signal was recovered.
+
+    NOTE: only really useful in the context of an injection-recovery pipeline
+    that uses TLS, the way that it is currently implemented.
+    """
+
+    with open(cachepath, "rb") as f:
+        d = pickle.load(f)
+
+    iter_keys = sorted([int(k) for k in d.keys() if k != 'dtr_stages_dict'])
+    n_iter = max(iter_keys) + 1
+
+    r_periods = [d[i]['r']['tls_period'] for i in range(n_iter)]
+    r_t0s = [d[i]['r']['tls_t0'] for i in range(n_iter)]
+
+    # If TLS recovers the injected period within +/- 0.1 days of the injected
+    # period, and recovers t0 (mod P) within +/- 5% of the injected values, the
+    # injected signal is "recovered". Otherwise, it is not.
+
+    atol = 0.1 # days
+    rtol = 0.05 # percent
+
+    reldiffs = np.array([
+        np.abs(r_t0 - inj_dict['epoch']) % inj_dict['period'] for r_t0 in r_t0s
+    ])
+    reldiff_match = reldiffs < rtol
+
+    absdiffs = np.array([
+        np.abs(r_period - inj_dict['period']) for r_period in r_periods
+    ])
+    absdiff_match = absdiffs < atol
+
+    # e.g., for 3 iterations, this sum will look like array([0, 2, 0]) if both
+    # the period and epoch criteria are met.
+    was_signal_recovered = (
+        np.any(np.vstack([reldiff_match, absdiff_match]).sum(axis=0) == 2)
+    )
+
+    # e.g., period is right, epoch is wrong.
+    was_signal_partially_recovered = (
+        np.any(np.vstack([reldiff_match, absdiff_match]).sum(axis=0) == 1)
+    )
+
+    # true means the signal was recovered
+    return was_signal_recovered, was_signal_partially_recovered
