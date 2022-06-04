@@ -50,14 +50,15 @@ def find_cdips_lc_paths(
     source_id,
     LCDIR='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS',
     raise_error=True,
+    raise_warning=True,
     use_calib=False,
     try_mast=False
 ):
     """
-    Given a Gaia source ID, return list of all available CDIPS light curves
-    (i.e., their paths) for that star. For this to be useful, the
-    paths need to be on disk. However this function works by searching
-    a metadata file.  If no matches are found, returns None.
+    Given a Gaia source ID (str or np.int64), return list of all available
+    CDIPS light curves (i.e., their paths) for that star. For this to be
+    useful, the paths need to be on disk. However this function works by
+    searching a metadata file.  If no matches are found, returns None.
 
     kwargs:
 
@@ -67,9 +68,11 @@ def find_cdips_lc_paths(
 
         raise_error (bool): will raise an error if no light curves are found.
 
-        use_calib (bool): if this is True, searches for "calibration"
-        light curves instead (the Rp<13 sample, PLUS the Rp<16 cluster
-        sample).
+        raise_warning (bool): will print a warning if no light curves are
+        found.
+
+        use_calib (bool): if this is True, searches for "calibration" light
+        curves instead (the Rp<13 sample, PLUS the Rp<16 cluster sample).
 
         try_mast (bool): default False. If True, will run an astroquery search
         through the MAST portal, and will download any available CDIPS light
@@ -126,7 +129,7 @@ def find_cdips_lc_paths(
         )
         if raise_error:
             raise ValueError(errmsg)
-        else:
+        elif raise_warning:
             print('WRN! ' + errmsg)
 
         return None
