@@ -277,6 +277,38 @@ def get_interp_BmV_from_BpmRp(BpmRp):
     return fn_BpmRp_to_BmV(BpmRp)
 
 
+def get_interp_Rstar_from_BpmRp(BpmRp):
+    """
+    Given a Bp-Rp color, get expected Rstar.
+    """
+
+    mamadf = load_basetable()
+    mamadf = mamadf[22:-6] # finite, monotonic BpmRp
+
+    sel = (
+        (mamadf['Bp-Rp'] != '...') &
+        (mamadf['Msun'] != '...') &
+        (mamadf['Msun'] != '....') &
+        (mamadf['R_Rsun'] != '...') &
+        (mamadf['Teff'] != '...')
+    )
+
+    mamaRstar, mamaBpmRp = (
+        nparr(mamadf['R_Rsun'][sel])[::-1].astype(float),
+        nparr(mamadf['Bp-Rp'][sel])[::-1].astype(float)
+    )
+
+    # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
+    # yvals. so remove anything where diff not strictly greater than...
+    isbad = (mamaBpmRp > 4.2)
+
+    fn_BpmRp_to_Rstar = interp1d(mamaBpmRp[~isbad], mamaRstar[~isbad],
+                                 kind='quadratic', bounds_error=False,
+                                 fill_value='extrapolate')
+
+    return fn_BpmRp_to_Rstar(BpmRp)
+
+
 def get_SpType_BpmRp_correspondence(
     sptypes=['A0V','F0V','G0V','K2V','K5V','M0V','M3V','M5V'],
     return_absG=False

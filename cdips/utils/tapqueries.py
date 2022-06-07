@@ -162,6 +162,3 @@ def given_source_ids_get_tic8_data(source_ids, queryname, n_max=10000,
         print(wrnmsg)
 
     return df
-
-
-
