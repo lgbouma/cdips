@@ -2,6 +2,8 @@
 Contents:
 
     given_source_ids_get_gaia_data
+    gaia2read_given_df
+
     query_neighborhood
     given_dr2_sourceids_get_edr3_xmatch
     given_dr3_sourceids_get_dr2_xmatch
@@ -17,6 +19,7 @@ Contents:
 # imports #
 ###########
 import os
+import uuid
 import numpy as np, matplotlib.pyplot as plt, pandas as pd
 
 from astropy.io.votable import from_table, writeto, parse
@@ -580,6 +583,43 @@ def given_dr3_sourceids_get_dr2_xmatch(
         raise AssertionError(errmsg)
 
     return df
+
+
+def gaia2read_given_df(df, cachedir):
+    """
+    Given a dataframe of Gaia DR2 sources with key "dr2_source_id", run
+    `gaia2read` to get all Gaia columns for the source list.   This assumes
+    `gaia2read` is installed and working.
+    The output is cached at {cachedir}/{randomstring}_gaia2read.csv
+    """
+
+    idstr = str(uuid.uuid4())
+    srcpath = os.path.join(cachedir, f'{idstr}_sources_only.csv')
+    dstpath = os.path.join(cachedir, f'{idstr}_gaia2read.csv')
+
+    assert 'dr2_source_id' in df
+    df['dr2_source_id'].to_csv(srcpath, index=False, header=False)
+
+    if not os.path.exists(dstpath):
+        gaia2readcmd = f"gaia2read --header --extra --idfile {srcpath} --out {dstpath}"
+        print(f'Beginning {gaia2readcmd}')
+        returncode = os.system(gaia2readcmd)
+        if returncode != 0: raise AssertionError('gaia2read cmd failed!!')
+        print(f'Ran {gaia2readcmd}')
+    else:
+        print(f'Found {dstpath}')
+
+    gdf = pd.read_csv(dstpath, delim_whitespace=True)
+    gdf = gdf.rename({
+        '#Gaia-ID[1]':'dr2_source_id',
+        'RA[deg][2]':'ra',
+        'Dec[deg][3]':'dec',
+        'phot_g_mean_mag[20]':'phot_g_mean_mag',
+        'phot_bp_mean_mag[25]':'phot_bp_mean_mag',
+        'phot_rp_mean_mag[30]':'phot_rp_mean_mag',
+    }, axis='columns')
+
+    return gdf
 
 
 def edr3_propermotion_to_ICRF(pmra, pmdec, ra, dec, G):
