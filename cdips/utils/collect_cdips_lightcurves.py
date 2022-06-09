@@ -114,19 +114,42 @@ def symlink_cdips_lcs(
     ccds=range(1,4+1,1),
     basedir='/nfs/phtess2/ar0/TESS/FFI/LC/FULL/',
     cdipssymlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS',
-    lcglob='*_llc.fits'):
+    lcglob='*_llc.fits',
+    isrereduc=False):
+    """
+    Symlink light curves of stars in a given np.array of dr2_source_ids
+    (`cdips_ids`) from `basedir` to `cdipssymlinkdir`.
+
+    By default, these are assumed to be stars in the CDIPS target list.
+    However as-implemented they can be any list of dr2_source_ids.
+    """
 
     for sector in sectors:
         for cam in cams:
             for ccd in ccds:
 
-                sstr = 's'+str(sector).zfill(4)
-                projid = given_sector_cam_ccd_get_projid(sector,cam,ccd)
-                dirstr = 'ISP_{}-{}-{}'.format(cam,ccd,projid)
+                if not isrereduc:
+                    # default CDIPS reduction paths
+                    sstr = 's'+str(sector).zfill(4)
+                    projid = given_sector_cam_ccd_get_projid(sector,cam,ccd)
+                    dirstr = 'ISP_{}-{}-{}'.format(cam,ccd,projid)
+                    lcpaths = np.array(
+                        glob(os.path.join(basedir, sstr, dirstr, lcglob))
+                    )
+                else:
+                    # re-reduction paths
+                    sstr = 's'+str(sector).zfill(4)
+                    projid = given_sector_cam_ccd_get_projid(sector,cam,ccd)
+                    dirstr = f"{sstr}-{cam}-{ccd}-{projid}"
 
-                lcpaths = np.array(
-                    glob(os.path.join(basedir, sstr, dirstr, lcglob))
-                )
+                    lcpaths = np.array(
+                        glob(os.path.join(basedir, dirstr, lcglob))
+                    )
+
+                if len(lcpaths) == 0:
+                    print(f'WRN! No light curves found to symlink for '
+                          f'sector{sector} (cam{cam} ccd{ccd}).')
+                    continue
 
                 have_ids = np.array([
                     os.path.basename(lcpath).split('_llc.fits')[0]
