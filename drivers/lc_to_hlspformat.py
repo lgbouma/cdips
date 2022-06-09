@@ -16,7 +16,7 @@ import os, shutil
 from glob import glob
 import multiprocessing as mp
 
-import trex_lc_to_mast_lc as tlml
+from cdips.lcproc import trex_lc_to_mast_lc as tlml
 import get_cdips_lc_stats as get_cdips_lc_stats
 from how_many_cdips_stars_on_silicon import how_many_cdips_stars_on_silicon
 from do_initial_period_finding import do_initial_period_finding

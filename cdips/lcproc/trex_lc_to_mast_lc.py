@@ -8,10 +8,16 @@ CDIPS project. they include:
 
     * copying from these symlinks, while reformatting the headers to reflect
     the additional knowledge we have about them (i.e. what cluster are they in?
-    according to who?). further, during this reformatting: add any niceties
+    according to who?). further, during this reformatting: add the niceties
     needed for public use.
 
-python -u -W"ignore" trex_lc_to_mast_lc.py &> logs/reformat_trex_to_mast_s6_cam1to4_ccd1to4.log &
+Expected usage:
+
+    python -u -W"ignore" trex_lc_to_mast_lc.py &> logs/reformat_trex_to_mast_s6_cam1to4_ccd1to4.log &
+
+or (more likely):
+
+    call from cdips.drivers.lc_to_hlspformat
 """
 
 import os, shutil
