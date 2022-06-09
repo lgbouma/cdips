@@ -151,6 +151,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
                      eigveclist=None, n_comp_df=None, max_n_comp=5):
     """
     Worker function for `reformat_headers`
+    Includes calculation of the PCA light curves.
     """
 
     hdul = fits.open(lcpath)
@@ -242,33 +243,39 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
         referencekey = ''
 
     if referencekey != '':
-        primaryhdr.set('CDIPSREF',
-                       info[referencekey].iloc[0],
-                       'Catalog(s) w/ cluster membrshp [,sep]')
+        if len(info[referencekey]) > 0:
+            primaryhdr.set('CDIPSREF',
+                           info[referencekey].iloc[0],
+                           'Catalog(s) w/ cluster membrshp [,sep]')
 
-    primaryhdr.set('CDCLSTER',
-                   str(info['cluster'].iloc[0]),
-                   'Cluster name(s) in CDIPSREF [,sep]')
+    if len(info['cluster']) > 0:
+        primaryhdr.set('CDCLSTER',
+                       str(info['cluster'].iloc[0]),
+                       'Cluster name(s) in CDIPSREF [,sep]')
 
     if 'ext_catalog_name' in info:
-        primaryhdr.set('CDEXTCAT',
-                       info['ext_catalog_name'].iloc[0],
-                       'Star name(s) in CDIPSREF [,sep]')
+        if len(info['ext_catalog_name']) > 0:
+            primaryhdr.set('CDEXTCAT',
+                           info['ext_catalog_name'].iloc[0],
+                           'Star name(s) in CDIPSREF [,sep]')
 
     if 'reference_bibcode' in info:
-        primaryhdr.set('CDREFBIB',
-                       info['reference_bibcode'].iloc[0],
-                       'Bibcode(s) for Membership Catalog(s) [,sep]')
+        if len(info['reference_bibcode']) > 0:
+            primaryhdr.set('CDREFBIB',
+                           info['reference_bibcode'].iloc[0],
+                           'Bibcode(s) for Membership Catalog(s) [,sep]')
 
     if 'mean_age' in info:
-        primaryhdr.set('CDIPSAGE',
-                       _NaN_as_str(info['mean_age'].iloc[0]),
-                       'Average age across references that provide an age')
+        if len(info['mean_age']) > 0:
+            primaryhdr.set('CDIPSAGE',
+                           _NaN_as_str(info['mean_age'].iloc[0]),
+                           'Average age across references that provide an age')
 
     if 'dist' in info:
-        primaryhdr.set('CDXMDIST',
-                       str(info['dist'].iloc[0]),
-                       '[deg] DIST btwn CDIPSREF & GAIADR2 locn')
+        if len(info['dist']) > 0:
+            primaryhdr.set('CDXMDIST',
+                           str(info['dist'].iloc[0]),
+                           '[deg] DIST btwn CDIPSREF & GAIADR2 locn')
 
     #
     # info for MAST
@@ -392,7 +399,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
                     int(np.where(np.in1d(np.array(selstars['GAIA']).astype(int),
                                          np.array(int(primaryhdr['GAIA-ID']))))[0].flatten()[0])
                 )
-                
+
             mrow = selstars[ind]
 
         else:
