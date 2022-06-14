@@ -43,6 +43,31 @@ def _get_tic(mrow, key):
     else:
         return mrow[key]
 
+def _get_TIC8_neighborhood_cone(targetcoord, radius=1.0*u.arcminute):
+
+    try:
+        stars = Catalogs.query_region(
+            "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
+            catalog="TIC",
+            radius=radius
+        )
+    except (
+        requests.exceptions.ConnectionError,
+        json.decoder.JSONDecodeError
+    ) as e:
+        print('ERR! {}. TIC query failed. trying again...'.format(e))
+        time.sleep(60)
+        stars = Catalogs.query_region(
+            "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
+            catalog="TIC",
+            radius=radius
+        )
+
+    sel = ~stars['GAIA'].mask
+    selstars = stars[sel]
+
+    return selstars
+
 def _map_timeseries_key_to_comment(k):
     kcd = {
         "tmid_utc": "Exp mid-time in JD_UTC (from DATE-OBS,DATE-END)",
@@ -341,45 +366,18 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
     # for TICv8, search within 1 arcminute, then require my Gaia-DR2 ID be
     # equal to the TICv8 gaia ID.
     #
+
     ra, dec = primaryhdr['RA_OBJ'], primaryhdr['DEC_OBJ']
     targetcoord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
-    radius = 1.0*u.arcminute
+    selstars = _get_TIC8_neighborhood_cone(targetcoord, radius=1.0*u.arcminute)
 
-    try:
-        stars = Catalogs.query_region(
-            "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
-            catalog="TIC",
-            radius=radius
-        )
-    except (
-        requests.exceptions.ConnectionError,
-        json.decoder.JSONDecodeError
-    ) as e:
-        print('ERR! {}. TIC query failed. trying again...'.format(e))
-        time.sleep(60)
-        stars = Catalogs.query_region(
-            "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
-            catalog="TIC",
-            radius=radius
-        )
-
-    Tmag_pred = (primaryhdr['phot_g_mean_mag']
-                - 0.00522555 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**3
-                + 0.0891337 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**2
-                - 0.633923 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])
-                + 0.0324473)
-
-    #
-    # search for neighbors within 1 arcminute, with finite Gaia-DR2 entry values.
-    #
-    sel = ~stars['GAIA'].mask
-    selstars = stars[sel]
     isgaiaid=True
     try:
         int(primaryhdr['GAIA-ID'])
     except:
-        isgaiaid=False
-    if len(selstars)>=1 and isgaiaid:
+        isgaiaid = False
+
+    if len(selstars) >= 1 and isgaiaid:
 
         #
         # TICv8 rebased on GaiaDR2: enforce that my Gaia-DR2 to TICv8 xmatch is
@@ -391,22 +389,60 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
         ):
             try:
                 ind = (
-                    int(np.where(np.in1d(np.array(selstars['GAIA']).astype(int),
-                                         np.array(int(primaryhdr['GAIA-ID']))))[0])
+                    int(np.where(np.in1d(
+                        np.array(selstars['GAIA']).astype(int),
+                        np.array(int(primaryhdr['GAIA-ID']))))[0]
+                    )
                 )
             except:
                 ind = (
-                    int(np.where(np.in1d(np.array(selstars['GAIA']).astype(int),
-                                         np.array(int(primaryhdr['GAIA-ID']))))[0].flatten()[0])
+                    int(np.where(np.in1d(
+                        np.array(selstars['GAIA']).astype(int),
+                        np.array(int(primaryhdr['GAIA-ID']))))[0].flatten()[0]
+                    )
                 )
 
             mrow = selstars[ind]
 
         else:
+            #
+            # High proper motion sometimes needs a bigger radius.  E.g.,
+            # Kapteyn's star.  Some code duplication, but this is OK.
+            #
+            selstars = _get_TIC8_neighborhood_cone(
+                targetcoord, radius=10.*u.arcminute
+            )
 
-            errmsg = 'FAILED TO GET TIC MATCH. CRITICAL ERROR. PLZ SOLVE.'
-            import IPython; IPython.embed()
-            raise NotImplementedError(errmsg)
+            if np.any(
+                np.in1d(np.array(selstars['GAIA']).astype(int),
+                        np.array(int(primaryhdr['GAIA-ID'])))
+            ):
+                try:
+                    ind = (
+                        int(np.where(np.in1d(
+                            np.array(selstars['GAIA']).astype(int),
+                            np.array(int(primaryhdr['GAIA-ID']))))[0]
+                        )
+                    )
+                except:
+                    ind = (
+                        int(np.where(np.in1d(
+                            np.array(selstars['GAIA']).astype(int),
+                            np.array(int(primaryhdr['GAIA-ID']))))[0].flatten()[0]
+                        )
+                    )
+
+                mrow = selstars[ind]
+
+            else:
+
+                errmsg = (
+                    f"FAILED TO GET TIC MATCH "
+                    f"{(int(primaryhdr['GAIA-ID']))}. "
+                    "CRITICAL ERROR. PLZ SOLVE."
+                )
+                import IPython; IPython.embed()
+                raise NotImplementedError(errmsg)
 
         primaryhdr.set('TICVER',
                        mrow['version'],
@@ -419,6 +455,12 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
         primaryhdr.set('TESSMAG',
                        mrow['Tmag'],
                        '[mag] TIC catalog magnitude of xmatch')
+
+        Tmag_pred = (primaryhdr['phot_g_mean_mag']
+                    - 0.00522555 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**3
+                    + 0.0891337 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**2
+                    - 0.633923 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])
+                    + 0.0324473)
 
         primaryhdr.set('TMAGPRED',
                        Tmag_pred,
@@ -459,8 +501,6 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
         primaryhdr.set('TICEBmV',
                        _get_tic(mrow, 'ebv'),
                        '[mag] TIC E(B-V) color excess')
-
-
 
     else:
         primaryhdr.set('TICVER',
