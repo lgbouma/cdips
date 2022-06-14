@@ -9,7 +9,8 @@ parallel_reformat_headers
 """
 
 import pandas as pd, numpy as np
-import os, requests, time, json
+import os, requests, json
+import time as systime
 from astropy.io import fits
 from datetime import datetime
 from astroquery.mast import Catalogs
@@ -56,7 +57,7 @@ def _get_TIC8_neighborhood_cone(targetcoord, radius=1.0*u.arcminute):
         json.decoder.JSONDecodeError
     ) as e:
         print('ERR! {}. TIC query failed. trying again...'.format(e))
-        time.sleep(60)
+        systime.sleep(60)
         stars = Catalogs.query_region(
             "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
             catalog="TIC",
