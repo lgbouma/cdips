@@ -55,9 +55,11 @@ def trex_lc_to_mast_lc(
 ):
 
     if make_symlinks:
-        ccl.make_local_lc_directories(sectors=sectors, cams=cams, ccds=ccds)
+        ccl.make_local_lc_directories(sectors=sectors, cams=cams, ccds=ccds,
+                                      cdipssymlinkdir=symlinkdir)
         cdips_sourceids = ccl.get_cdips_sourceids(ver=OC_MG_CAT_ver)
-        ccl.symlink_cdips_lcs(cdips_sourceids, sectors=sectors, cams=cams, ccds=ccds)
+        ccl.symlink_cdips_lcs(cdips_sourceids, sectors=sectors, cams=cams,
+                              ccds=ccds, cdipssymlinkdir=symlinkdir)
 
     if make_plots:
         ccl.plot_cdips_lcs(sectors=sectors, cams=cams)
