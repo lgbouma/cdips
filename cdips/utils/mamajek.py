@@ -8,6 +8,7 @@ Contents:
     get_interp_BmV_from_Teff
     get_interp_BpmRp_from_Teff
     get_interp_BmV_from_BpmRp
+    get_interp_BpmRp_from_BmV
     get_interp_SpType_from_teff
     get_SpType_BpmRp_correspondence
     get_SpType_GmRp_correspondence
@@ -275,6 +276,36 @@ def get_interp_BmV_from_BpmRp(BpmRp):
                                fill_value='extrapolate')
 
     return fn_BpmRp_to_BmV(BpmRp)
+
+
+def get_interp_BpmRp_from_BmV(BmV):
+    """
+    Given B-V, get BP-RP
+    """
+
+    mamadf = load_basetable()
+    mamadf = mamadf[22:-6] # finite, monotonic BpmRp
+
+    sel = (
+        (mamadf['B-V'] != '...')
+        &
+        (mamadf['Bp-Rp'] != '...')
+    )
+
+    mamaBmV, mamaBpmRp = (
+        nparr(mamadf['B-V'][sel])[::-1].astype(float),
+        nparr(mamadf['Bp-Rp'][sel])[::-1].astype(float)
+    )
+
+    # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
+    # BmVs. so remove anything where diff not strictly greater than...
+    isbad = np.insert(np.diff(mamaBpmRp) == 0, False, 0)
+
+    fn_BmV_to_BpmRp = interp1d(mamaBmV[~isbad], mamaBpmRp[~isbad],
+                               kind='quadratic', bounds_error=False,
+                               fill_value='extrapolate')
+
+    return fn_BmV_to_BpmRp(BmV)
 
 
 def get_interp_Rstar_from_BpmRp(BpmRp):
