@@ -80,6 +80,7 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
                                    enforce_all_sourceids_viable=True,
                                    savstr='',
                                    whichcolumns='*',
+                                   table_name='gaia_source',
                                    gaia_datarelease='gaiadr2',
                                    getdr2ruwe=False):
     """
@@ -148,13 +149,14 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         jobstr = (
         '''
         SELECT top {n_max:d} {whichcolumns}
-        FROM tap_upload.foobar as u, {gaia_datarelease:s}.gaia_source AS g
+        FROM tap_upload.foobar as u, {gaia_datarelease:s}.{table_name} AS g
         WHERE u.source_id=g.source_id
         '''
         ).format(
             whichcolumns=whichcolumns,
             n_max=n_max,
-            gaia_datarelease=gaia_datarelease
+            gaia_datarelease=gaia_datarelease,
+            table_name=table_name
         )
     else:
         assert gaia_datarelease == 'gaiadr2'
