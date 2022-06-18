@@ -675,9 +675,14 @@ def parallax_to_distance_highsn(parallax_mas, e_parallax_mas=0,
     """
     Given a Gaia parallax in mas, get a zero-point corrected trigonometric
     parallax in parsecs.
+
+    gaia_datarelease must be in ['gaia_edr3', 'gaia_dr3', 'gaia_dr2', 'none'],
+    where "none" means the offset correction is not applied.
     """
 
-    if gaia_datarelease == 'gaia_edr3':
+    assert gaia_datarelease in ['gaia_edr3', 'gaia_dr3', 'gaia_dr2', 'none']
+
+    if gaia_datarelease in ['gaia_edr3', 'gaiadr3']:
         # Applicable to 5-parameter solutions (and more or less to 6-parameter
         # too) e.g., https://arxiv.org/abs/2103.16096,
         # https://arxiv.org/abs/2101.09691
@@ -685,6 +690,8 @@ def parallax_to_distance_highsn(parallax_mas, e_parallax_mas=0,
     elif gaia_datarelease == 'gaia_dr2':
         # Lindegren+2018, as used by e.g., Gagne+2020 ApJ 903 96
         offset = -0.029 # mas
+    elif gaia_datarelease == 'none':
+        offset = 0 # mas
     else:
         raise NotImplementedError
 
