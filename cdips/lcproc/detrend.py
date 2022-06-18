@@ -1242,7 +1242,7 @@ def calculate_linear_model_mag(y, basisvecs, n_components,
         out_mag = y
         n_comp = 'nan'
 
-    elif np.sum(~pd.isnull(y2)) < 10:
+    elif np.sum(~pd.isnull(y2)) <= 10:
         # fewer than 10 non-nan points.  treat as all nan for PCA.
         out_mag = np.ones_like(y)*np.nan
         n_comp = 'nan'
