@@ -14,6 +14,8 @@ Contents:
     edr3_propermotion_to_ICRF
 
     parallax_to_distance_highsn
+
+    dr3_activityindex_espcs_to_RprimeIRT
 """
 ###########
 # imports #
@@ -101,7 +103,8 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         savstr (str); optional string that will be included in the path to
         the downloaded vizier table.
 
-        whichcolumns (str): ADQL column getter string. For instance "*", or "
+        whichcolumns (str): ADQL column getter string. For instance "*", or
+        "ra, dec, parallax, pmra, pmdec, phot_g_mean_mag".
 
         gaia_datarelease (str): 'gaiadr2' or 'gaiaedr3'. Default is Gaia DR2.
 
@@ -705,3 +708,58 @@ def parallax_to_distance_highsn(parallax_mas, e_parallax_mas=0,
         return dist_trig_pc, upper_unc, lower_unc
 
     return dist_trig_pc
+
+
+def dr3_activityindex_espcs_to_RprimeIRT(alpha, Teff, M_H=0.):
+    """
+    Use the coefficients from Table 1 of Lanzafame+2022 (Gaia DR3 Ca IRT
+    validation paper) to convert the activity index ("activityindex_espcs") for
+    Ca IRT to a R'_IRT value.
+
+    Args:
+        alpha: activityindex_espcs np.ndarray
+        Teff: effective temperature np.nddary
+
+    Kwargs:
+        M_H: the weakly dependent metallicity term.  Not obvious that including
+        this does much useful, so by default this function adopts the solar
+        metallicity.  A "todo" would be to add an interpolation step here.
+
+    Returns:
+        log10_RprimeIRT
+    """
+
+    θ = np.log10(Teff)
+    log10_alpha = np.log10(alpha)
+
+    # Table 1: key [M/H], vals C0, C1, C2, C3
+    c_dict = {
+        -0.5: [-3.3391, -0.1564, -0.1046, 0.0311],
+         0.0: [-3.3467, -0.1989, -0.1020, 0.0349],
+         0.25: [-3.3501, -0.2137, -0.1029, 0.0357],
+         0.5: [-3.3527, -0.2219, -0.1056, 0.0353],
+    }
+
+    if isinstance(M_H, (int, float)):
+
+        vals = c_dict[float(M_H)]
+        C0, C1, C2, C3 = vals
+
+    else:
+
+        errmsg = (
+            'Need to add an interpolator over metallicity. '
+            'This is not very hard!'
+        )
+        raise NotImplementedError(errmsg)
+
+
+    print('WARNING!  In RprimeIRT it would be best to interpolate over metallcity, rather '
+          'than assuming solar!!!')
+    log10_RprimeIRT = (
+        (C0 + C1*θ + C2*θ**2 + C3*θ**3)
+        +
+        log10_alpha
+    )
+
+    return log10_RprimeIRT
