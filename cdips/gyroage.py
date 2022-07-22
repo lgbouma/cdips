@@ -7,6 +7,8 @@ Interpolation between (BP-RP)_0 and rotation period.
     PleiadesInterpModel
     PraesepeInterpModel
     NGC6811InterpModel
+Convective turnover time estimation formulae
+    given_Teff_get_tconv_CS11
 """
 import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
@@ -145,5 +147,16 @@ def NGC6811InterpModel(BpmRp0, bounds_error=True):
     return Protmod
 
 
+def given_Teff_get_tconv_CS11(teff):
+    """
+    Eq 36 from Cranmer and Saar 2011
+
+    Given teff, returns t_convective-turnover in units of days, for Teffs from
+    3300K to 7000K.
+    """
+    arg = -(teff/1952.5) - (teff/6250)**18
+    return 314.24 * np.exp(arg) + 0.002
+
 if __name__ == "__main__":
     plot_Prot_BpmRp0()
+
