@@ -27,7 +27,7 @@ TODAYSTR = '-'.join([today_YYYYMMDD()[:4],
 
 from cdips.paths import LOCALDIR
 
-def get_nasa_exoplanet_archive_pscomppars(ver=TODAYSTR, N_max=int(1e4)):
+def get_nasa_exoplanet_archive_pscomppars(ver=TODAYSTR, N_max=int(2e4)):
     """
     If newestpossible is True, will download the latest NEA pscomppars table,
     from today. Otherwise, it'll take the most recent from those already
