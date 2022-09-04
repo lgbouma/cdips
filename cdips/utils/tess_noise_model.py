@@ -36,6 +36,7 @@ import astropy.units as units
 
 import cdips as cd
 datadir = os.path.join(os.path.dirname(cd.__path__[0]), 'data')
+resultsdir = os.path.join(os.path.dirname(cd.__path__[0]), 'results')
 
 ###############################################################################
 # Fixed TESS properties are kept as globals.
@@ -117,7 +118,7 @@ def get_sky_bkgnd(coords, exptime):
     glat = coords.galactic.b.value
     glon = coords.galactic.l.value
     glon -= 180 # Winn's eq 7 (below) requires longitude from -180 to 180
-    assert np.all(glon > 0) and np.all(glon < 180)
+    assert np.all(glon > -180) and np.all(glon < 180)
 
     # Solid area of a pixel (arcsec^2).
     omega_pix = pix_scale ** 2.
@@ -319,5 +320,25 @@ if __name__ == '__main__':
                 'noise_sys':out[5,:]
                 })
 
-        df.to_csv('../results/selected_noise_model_{:s}_coords.csv'.format(name),
-                index=False, float_format='%.4g')
+        outdir = os.path.join(resultsdir, 'tess_noise_model')
+        if not os.path.exists(outdir): os.mkdir(outdir)
+        outpath = os.path.join(outdir, f'selected_noise_model_{name:s}_coords.csv')
+        df.to_csv(outpath, index=False, float_format='%.4g')
+
+        plt.close('all')
+        fig, ax = plt.subplots(figsize=(4,3))
+        ax.plot(df.T_mag, 1e6*df.noise, c='k', label='total')
+        ax.plot(df.T_mag, 1e6*df.noise_star, c='C0', label='shot noise', lw=0.5)
+        ax.plot(df.T_mag, 1e6*df.noise_sky, c='C1', label='sky', lw=0.5)
+        ax.plot(df.T_mag, 1e6*df.noise_ro, c='C2', label='readout', lw=0.5)
+        ax.plot(df.T_mag, 1e6*df.noise_sys, c='C3', label='sys', lw=0.5)
+        ax.legend(loc='best', fontsize='xx-small')
+        ax.grid(ls='--', lw=0.5)
+        ax.update({
+            'xlabel': 'T [mag]',
+            'ylabel': 'σ [ppm hr$^{1/2}$]',
+            'yscale': 'log',
+            'ylim': [1,1e4]
+        })
+        outpath = os.path.join(outdir, f'smex_noise_model_{name:s}.png')
+        plt.savefig(outpath, dpi=300, bbox_inches='tight')
