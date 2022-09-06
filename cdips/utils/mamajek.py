@@ -189,7 +189,35 @@ def get_interp_SpType_from_teff(teff, verbose=True):
         print(f'Next-highest Teff: {closest_teff_m1} (SpT = {closest_spt_m1})')
         print(f'Next-lowest Teff: {closest_teff_p1} (SpT = {closest_spt_p1})')
 
-    return closest_spt
+    if teff <= closest_teff:
+
+        dT_interval = closest_teff - closest_teff_p1
+        dT = closest_teff - teff
+        endstr = str( np.round(dT/dT_interval, 1) )[1:]
+        outstr = closest_spt[:-1] + endstr + "V"
+
+    else:
+
+        dT_interval = closest_teff_m1 - closest_teff
+        dT = teff - closest_teff
+        endstr = str( np.round(1-dT/dT_interval, 1) )[1:]
+        outstr = closest_spt_m1[:-1] + endstr + "V"
+
+    # clean-up for M-dwarf case, e.g., "M1.5.3V" becomes "M.165V" ==
+    # "M.16V" after rounding.
+    if np.sum(np.array(list(outstr)) == '.') == 2:
+        to_add = float(outstr.split('.')[-1][0]) / 2
+        outstr = (
+            outstr[:3]
+            +
+            str(int(
+                np.round(float(outstr.split('.')[1]) + to_add, 0))
+            )
+            +
+            "V"
+        )
+
+    return outstr
 
 
 def get_interp_BmV_from_Teff(teff):
