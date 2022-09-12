@@ -25,7 +25,7 @@ datadir = os.path.join(os.path.dirname(cd.__path__[0]), 'data')
 def load_basetable():
 
     mamajekpath = os.path.join(datadir, 'LITERATURE_DATA',
-                               'EEM_dwarf_UBVIJHK_colors_Teff_20210302.txt')
+                               'EEM_dwarf_UBVIJHK_colors_Teff_20220416.txt')
     mamadf = pd.read_csv(
         mamajekpath, comment='#', delim_whitespace=True
     )
@@ -424,3 +424,24 @@ def get_SpType_GmRp_correspondence(
         return np.array(sptypes), np.array(GmRps)
     else:
         return np.array(sptypes), np.array(AbsGs), np.array(Msuns)
+
+
+def get_SpType_Teff_correspondence(
+    sptypes=['A0V','F0V','G0V','K2V','K5V','M0V','M3V','M5V'],
+    ):
+
+    mamadf = load_basetable()
+
+    sel = (
+        (mamadf['Bp-Rp'] != '...')
+    )
+
+    sdf = mamadf[sel]
+
+    Teffs = []
+    for sptype in sptypes:
+        Teffs.append(float(sdf.loc[sdf.SpT==sptype]['Teff']))
+
+    sptypes = [s.replace('V','') for s in sptypes]
+
+    return np.array(sptypes), np.array(Teffs)
