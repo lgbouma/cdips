@@ -2,8 +2,8 @@
 Contents:
 
     given_source_ids_get_gaia_data
+    given_source_ids_get_neighbor_counts
     gaia2read_given_df
-
     query_neighborhood
     given_dr2_sourceids_get_edr3_xmatch
     given_dr3_sourceids_get_dr2_xmatch
@@ -60,7 +60,21 @@ def make_votable_given_source_ids(source_ids, outpath=None):
     votable = from_table(t)
 
     writeto(votable, outpath)
-    print('made {}'.format(outpath))
+    print(f'made {outpath}')
+
+    return outpath
+
+
+def make_votable_given_vector_dict(vectordict, outpath=None):
+
+    t = Table()
+    for k,v in vectordict.items():
+        t[k] = v
+
+    votable = from_table(t)
+
+    writeto(votable, outpath)
+    print(f'made {outpath}')
 
     return outpath
 
@@ -81,7 +95,7 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
                                    overwrite=True,
                                    enforce_all_sourceids_viable=True,
                                    savstr='',
-                                   whichcolumns='*',
+                                   which_columns='*',
                                    table_name='gaia_source',
                                    gaia_datarelease='gaiadr2',
                                    getdr2ruwe=False):
@@ -103,8 +117,8 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         savstr (str); optional string that will be included in the path to
         the downloaded vizier table.
 
-        whichcolumns (str): ADQL column getter string. For instance "*", or
-        "ra, dec, parallax, pmra, pmdec, phot_g_mean_mag".
+        which_columns (str): ADQL column getter string. For instance "*", or
+        "g.ra, g.dec, g.parallax, g.pmra, g.pmdec, g.phot_g_mean_mag".
 
         gaia_datarelease (str): 'gaiadr2' or 'gaiaedr3'. Default is Gaia DR2.
 
@@ -124,11 +138,11 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
 
     if type(source_ids) != np.ndarray:
         raise TypeError(
-            'source_ids must be np.ndarray of np.int64 Gaia DR2 source_ids'
+            'source_ids must be np.ndarray of np.int64 Gaia source_ids'
         )
     if type(source_ids[0]) != np.int64:
         raise TypeError(
-            'source_ids must be np.ndarray of np.int64 Gaia DR2 source_ids'
+            'source_ids must be np.ndarray of np.int64 Gaia source_ids'
         )
 
     xmltouploadpath = os.path.join(
@@ -151,12 +165,12 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
     if not getdr2ruwe:
         jobstr = (
         '''
-        SELECT top {n_max:d} {whichcolumns}
+        SELECT top {n_max:d} {which_columns}
         FROM tap_upload.foobar as u, {gaia_datarelease:s}.{table_name} AS g
         WHERE u.source_id=g.source_id
         '''
         ).format(
-            whichcolumns=whichcolumns,
+            which_columns=which_columns,
             n_max=n_max,
             gaia_datarelease=gaia_datarelease,
             table_name=table_name
@@ -215,6 +229,149 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         print(wrnmsg)
 
     return df
+
+
+def given_source_ids_get_neighbor_counts(
+    source_ids, dGmag, sep_arcsec, runid, n_max=20000, overwrite=True,
+    enforce_all_sourceids_viable=True,
+    gaia_datarelease='gaiadr3'):
+    """
+    Given a list of Gaia source_ids, return a dataframe containing the count of
+    the number of sources within `dGmag` magnitudes and `sep_arcsec` arcseconds
+    away from each source.  This vectorizes the slow serial cone-search
+    implementation available in astroquery.
+
+    Args:
+
+        source_ids (np.ndarray) of np.int64 Gaia DR2/EDR3 source_ids. Default
+        assumed is (E)DR3.
+
+        runid (str): identifyin string
+
+        overwrite: if True, and finds that this crossmatch has already run,
+        deletes previous cached output and reruns anyway.
+
+        enforce_all_sourceids_viable: if True, will raise an assertion error if
+        every source id does not return a result. (Unless the query returns
+        n_max entries, in which case only a warning will be raised).
+
+        gaia_datarelease (str): 'gaiadr2' or 'gaiaedr3'. Default is Gaia DR2.
+
+    Returns:
+
+        tuple of two dataframes: (count_df, df).  `count_df` has columns
+        "source_id" (the input source_ids) and "nbhr_count".  `df` actually
+        specifies the matches, including their source_id, ra, dec,
+        phot_g_mean_mag, distance in arcseconds, and difference in g_mag
+        relative to each target star.
+    """
+
+    if n_max > int(5e4):
+        raise NotImplementedError(
+            'the gaia archive / astroquery seems to give invalid results past '
+            '50000 source_ids in this implementation...'
+        )
+
+    if type(source_ids) != np.ndarray:
+        raise TypeError(
+            'source_ids must be np.ndarray of np.int64 Gaia source_ids'
+        )
+    if type(source_ids[0]) != np.int64:
+        raise TypeError(
+            'source_ids must be np.ndarray of np.int64 Gaia source_ids'
+        )
+
+    gdf0 = given_source_ids_get_gaia_data(
+        source_ids, runid+"_initial_query", n_max=n_max, overwrite=overwrite,
+        enforce_all_sourceids_viable=enforce_all_sourceids_viable,
+        which_columns='g.source_id, g.ra, g.dec, g.phot_g_mean_mag',
+        table_name='gaia_source', gaia_datarelease=gaia_datarelease
+    )
+
+    xmltouploadpath = os.path.join(
+        gaiadir, f'toupload_nbhrcount_{runid}_{gaia_datarelease}.xml'
+    )
+    dlpath = os.path.join(
+        gaiadir, f'nbhrcount_group{runid}_matches_{gaia_datarelease}.xml.gz'
+    )
+
+    if overwrite:
+        if os.path.exists(xmltouploadpath):
+            os.remove(xmltouploadpath)
+
+    if not os.path.exists(xmltouploadpath):
+        d = {
+            'source_id': np.array(gdf0.source_id).astype(np.int64),
+            'ra': np.array(gdf0.ra),
+            'dec': np.array(gdf0.dec),
+            'phot_g_mean_mag': np.array(gdf0.phot_g_mean_mag)
+        }
+        make_votable_given_vector_dict(d, outpath=xmltouploadpath)
+
+    if os.path.exists(dlpath) and overwrite:
+        os.remove(dlpath)
+
+    from astropy import units as u
+    sep_deg = (sep_arcsec*u.arcsec).to(u.deg).value
+
+    jobstr = (
+    """
+    SELECT top {n_max:d}
+    u.source_id, g.source_id, g.ra, g.dec, g.phot_g_mean_mag,
+    3600*DISTANCE(POINT('ICRS', u.ra, u.dec), POINT('ICRS', g.ra, g.dec)) as dist_arcsec,
+    g.phot_g_mean_mag - u.phot_g_mean_mag as d_gmag
+    FROM
+    tap_upload.foobar as u, {gaia_datarelease:s}.gaia_source as g
+    WHERE
+    1 = CONTAINS(POINT('ICRS', u.ra, u.dec), CIRCLE('ICRS', g.ra, g.dec, {sep_deg}))
+    AND
+    g.phot_g_mean_mag - u.phot_g_mean_mag < {dGmag}
+    AND
+    u.source_id != g.source_id
+    ORDER BY
+    u.source_id, dist_arcsec ASC
+    """
+    ).format(
+        n_max=n_max,
+        gaia_datarelease=gaia_datarelease,
+        sep_deg=sep_deg,
+        dGmag=dGmag
+    )
+
+    query = jobstr
+
+    if not os.path.exists(dlpath):
+
+        Gaia.login(credentials_file=credentials_file)
+
+        # might do async if this times out. but it doesn't.
+        j = Gaia.launch_job(query=query,
+                            upload_resource=xmltouploadpath,
+                            upload_table_name="foobar", verbose=True,
+                            dump_to_file=True, output_file=dlpath)
+
+        Gaia.logout()
+
+    df = given_votable_get_df(dlpath, assert_equal=None)
+    df = df.rename({'source_id_2':'nbhr_source_id'})
+
+    from collections import Counter
+
+    r = Counter(df['source_id'])
+
+    foo_df = pd.DataFrame(
+        {"source_id":source_ids, "nbhr_count_0":np.zeros(len(source_ids))}
+    )
+    temp_df = pd.DataFrame(
+        {"source_id":r.keys(), "nbhr_count_1":r.values()}
+    )
+    count_df = foo_df.merge(temp_df, how='left', on='source_id')
+    count_df['nbhr_count'] = np.nanmax(
+        [count_df.nbhr_count_0, count_df.nbhr_count_1], axis=0
+    ).astype(int)
+    count_df = count_df[['source_id', 'nbhr_count']]
+
+    return count_df, df
 
 
 def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
