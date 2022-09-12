@@ -7,7 +7,6 @@ import numpy as np, pandas as pd
 
 from cdips.utils import collect_cdips_lightcurves as ccl
 from cdips.utils.catalogs import get_toi_catalog, get_exofop_toi_catalog
-from astroquery.vizier import Vizier
 
 def initialize_vetting_report_information(
     sector, cdips_cat_vnum,
