@@ -12,6 +12,7 @@ Contents:
     get_interp_SpType_from_teff
     get_SpType_BpmRp_correspondence
     get_SpType_GmRp_correspondence
+    given_VmKs_get_Teff
 """
 import os
 import numpy as np, pandas as pd
@@ -26,13 +27,13 @@ def load_basetable():
 
     mamajekpath = os.path.join(datadir, 'LITERATURE_DATA',
                                'EEM_dwarf_UBVIJHK_colors_Teff_20220416.txt')
-    mamadf = pd.read_csv(
+    mamajek_df = pd.read_csv(
         mamajekpath, comment='#', delim_whitespace=True
     )
-    mamadf = mamadf[mamadf.Teff < 41000]
-    mamadf = mamadf.reset_index(drop=True)
+    mamajek_df = mamajek_df[mamajek_df.Teff < 41000]
+    mamajek_df = mamajek_df.reset_index(drop=True)
 
-    return mamadf
+    return mamajek_df
 
 def get_interp_mass_from_rstar(rstar):
     """
@@ -42,18 +43,18 @@ def get_interp_mass_from_rstar(rstar):
     true. This should obviously not be trusted to better than 50%.
     """
 
-    mamadf = load_basetable()
+    mamajek_df = load_basetable()
 
     sel = (
-        (mamadf['Msun'] != '...') &
-        (mamadf['R_Rsun'] != '...') &
-        (mamadf['Msun'] != '....')
+        (mamajek_df['Msun'] != '...') &
+        (mamajek_df['R_Rsun'] != '...') &
+        (mamajek_df['Msun'] != '....')
     )
-    mamadf = mamadf[sel] # finite mass and radius.
+    mamajek_df = mamajek_df[sel] # finite mass and radius.
 
     mamarstar, mamamstar = (
-        nparr(mamadf['R_Rsun'])[::-1].astype(float),
-        nparr(mamadf['Msun'])[::-1].astype(float)
+        nparr(mamajek_df['R_Rsun'])[::-1].astype(float),
+        nparr(mamajek_df['Msun'])[::-1].astype(float)
     )
 
     #
@@ -98,20 +99,20 @@ def get_interp_rstar_from_teff(teff):
     be true. This should obviously not be trusted to better than 50%.
     """
 
-    mamadf = load_basetable()
+    mamajek_df = load_basetable()
 
     sel = (
-        (mamadf['Msun'] != '...') &
-        (mamadf['Msun'] != '....') &
-        (mamadf['R_Rsun'] != '...') &
-        (mamadf['Teff'] != '...')
+        (mamajek_df['Msun'] != '...') &
+        (mamajek_df['Msun'] != '....') &
+        (mamajek_df['R_Rsun'] != '...') &
+        (mamajek_df['Teff'] != '...')
     )
-    mamadf = mamadf[sel] # finite mass, radius, teff.
+    mamajek_df = mamajek_df[sel] # finite mass, radius, teff.
 
     mamarstar, mamamstar, mamateff = (
-        nparr(mamadf['R_Rsun'])[::-1].astype(float),
-        nparr(mamadf['Msun'])[::-1].astype(float),
-        nparr(mamadf['Teff'])[::-1].astype(float)
+        nparr(mamajek_df['R_Rsun'])[::-1].astype(float),
+        nparr(mamajek_df['Msun'])[::-1].astype(float),
+        nparr(mamajek_df['Teff'])[::-1].astype(float)
     )
 
     #
@@ -157,19 +158,19 @@ def get_interp_SpType_from_teff(teff, verbose=True):
     spectral subtypes. Worse if it's pre-main-sequence.
     """
 
-    mamadf = load_basetable()
+    mamajek_df = load_basetable()
 
     sel = (
-        (mamadf['Msun'] != '...') &
-        (mamadf['Msun'] != '....') &
-        (mamadf['R_Rsun'] != '...') &
-        (mamadf['Teff'] != '...')
+        (mamajek_df['Msun'] != '...') &
+        (mamajek_df['Msun'] != '....') &
+        (mamajek_df['R_Rsun'] != '...') &
+        (mamajek_df['Teff'] != '...')
     )
-    mamadf = mamadf[sel] # finite mass, radius, teff.
+    mamajek_df = mamajek_df[sel] # finite mass, radius, teff.
 
     mamateff, mamaspt = (
-        nparr(mamadf['Teff'])[::-1].astype(float),
-        nparr(mamadf['SpT'])[::-1]
+        nparr(mamajek_df['Teff'])[::-1].astype(float),
+        nparr(mamajek_df['SpT'])[::-1]
     )
 
     closest_spt = mamaspt[np.argmin(np.abs(mamateff - teff))]
@@ -226,15 +227,15 @@ def get_interp_BmV_from_Teff(teff):
     color.
     """
 
-    mamadf = load_basetable()
-    sel = (mamadf['B-V'] != '...')
-    mamadf = mamadf[sel] # finite, monotonic BmV
+    mamajek_df = load_basetable()
+    sel = (mamajek_df['B-V'] != '...')
+    mamajek_df = mamajek_df[sel] # finite, monotonic BmV
 
     mamarstar, mamamstar, mamateff, mamaBmV = (
-        nparr(mamadf['R_Rsun'])[::-1],
-        nparr(mamadf['Msun'])[::-1],
-        nparr(mamadf['Teff'])[::-1],
-        nparr(mamadf['B-V'])[::-1].astype(float)
+        nparr(mamajek_df['R_Rsun'])[::-1],
+        nparr(mamajek_df['Msun'])[::-1],
+        nparr(mamajek_df['Teff'])[::-1],
+        nparr(mamajek_df['B-V'])[::-1].astype(float)
     )
 
     # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
@@ -254,15 +255,15 @@ def get_interp_BpmRp_from_Teff(teff):
     Bp-Rp color.
     """
 
-    mamadf = load_basetable()
-    mamadf = mamadf[22:-6] # finite, monotonic BpmRp
-    mamadf = mamadf[(mamadf['Bp-Rp'] != '...')] # finite!
+    mamajek_df = load_basetable()
+    mamajek_df = mamajek_df[22:-6] # finite, monotonic BpmRp
+    mamajek_df = mamajek_df[(mamajek_df['Bp-Rp'] != '...')] # finite!
 
     mamarstar, mamamstar, mamateff, mamaBpmRp = (
-        nparr(mamadf['R_Rsun'])[::-1],
-        nparr(mamadf['Msun'])[::-1],
-        nparr(mamadf['Teff'])[::-1],
-        nparr(mamadf['Bp-Rp'])[::-1].astype(float)
+        nparr(mamajek_df['R_Rsun'])[::-1],
+        nparr(mamajek_df['Msun'])[::-1],
+        nparr(mamajek_df['Teff'])[::-1],
+        nparr(mamajek_df['Bp-Rp'])[::-1].astype(float)
     )
 
     # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
@@ -281,18 +282,18 @@ def get_interp_BmV_from_BpmRp(BpmRp):
     Given a Bp-Rp color, get expected B-V color.
     """
 
-    mamadf = load_basetable()
-    mamadf = mamadf[22:-6] # finite, monotonic BpmRp
+    mamajek_df = load_basetable()
+    mamajek_df = mamajek_df[22:-6] # finite, monotonic BpmRp
 
     sel = (
-        (mamadf['B-V'] != '...')
+        (mamajek_df['B-V'] != '...')
         &
-        (mamadf['Bp-Rp'] != '...')
+        (mamajek_df['Bp-Rp'] != '...')
     )
 
     mamaBmV, mamaBpmRp = (
-        nparr(mamadf['B-V'][sel])[::-1].astype(float),
-        nparr(mamadf['Bp-Rp'][sel])[::-1].astype(float)
+        nparr(mamajek_df['B-V'][sel])[::-1].astype(float),
+        nparr(mamajek_df['Bp-Rp'][sel])[::-1].astype(float)
     )
 
     # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
@@ -311,18 +312,18 @@ def get_interp_BpmRp_from_BmV(BmV):
     Given B-V, get BP-RP
     """
 
-    mamadf = load_basetable()
-    mamadf = mamadf[22:-6] # finite, monotonic BpmRp
+    mamajek_df = load_basetable()
+    mamajek_df = mamajek_df[22:-6] # finite, monotonic BpmRp
 
     sel = (
-        (mamadf['B-V'] != '...')
+        (mamajek_df['B-V'] != '...')
         &
-        (mamadf['Bp-Rp'] != '...')
+        (mamajek_df['Bp-Rp'] != '...')
     )
 
     mamaBmV, mamaBpmRp = (
-        nparr(mamadf['B-V'][sel])[::-1].astype(float),
-        nparr(mamadf['Bp-Rp'][sel])[::-1].astype(float)
+        nparr(mamajek_df['B-V'][sel])[::-1].astype(float),
+        nparr(mamajek_df['Bp-Rp'][sel])[::-1].astype(float)
     )
 
     # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
@@ -341,20 +342,20 @@ def get_interp_Rstar_from_BpmRp(BpmRp):
     Given a Bp-Rp color, get expected Rstar.
     """
 
-    mamadf = load_basetable()
-    mamadf = mamadf[22:-6] # finite, monotonic BpmRp
+    mamajek_df = load_basetable()
+    mamajek_df = mamajek_df[22:-6] # finite, monotonic BpmRp
 
     sel = (
-        (mamadf['Bp-Rp'] != '...') &
-        (mamadf['Msun'] != '...') &
-        (mamadf['Msun'] != '....') &
-        (mamadf['R_Rsun'] != '...') &
-        (mamadf['Teff'] != '...')
+        (mamajek_df['Bp-Rp'] != '...') &
+        (mamajek_df['Msun'] != '...') &
+        (mamajek_df['Msun'] != '....') &
+        (mamajek_df['R_Rsun'] != '...') &
+        (mamajek_df['Teff'] != '...')
     )
 
     mamaRstar, mamaBpmRp = (
-        nparr(mamadf['R_Rsun'][sel])[::-1].astype(float),
-        nparr(mamadf['Bp-Rp'][sel])[::-1].astype(float)
+        nparr(mamajek_df['R_Rsun'][sel])[::-1].astype(float),
+        nparr(mamajek_df['Bp-Rp'][sel])[::-1].astype(float)
     )
 
     # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
@@ -373,13 +374,13 @@ def get_SpType_BpmRp_correspondence(
     return_absG=False
     ):
 
-    mamadf = load_basetable()
+    mamajek_df = load_basetable()
 
     sel = (
-        (mamadf['Bp-Rp'] != '...')
+        (mamajek_df['Bp-Rp'] != '...')
     )
 
-    sdf = mamadf[sel]
+    sdf = mamajek_df[sel]
 
     BpmRps = []
     AbsGs = []
@@ -402,13 +403,13 @@ def get_SpType_GmRp_correspondence(
     return_absG=False
     ):
 
-    mamadf = load_basetable()
+    mamajek_df = load_basetable()
 
     sel = (
-        (mamadf['G-Rp'] != '...')
+        (mamajek_df['G-Rp'] != '...')
     )
 
-    sdf = mamadf[sel]
+    sdf = mamajek_df[sel]
 
     GmRps = []
     AbsGs = []
@@ -430,13 +431,13 @@ def get_SpType_Teff_correspondence(
     sptypes=['A0V','F0V','G0V','K2V','K5V','M0V','M3V','M5V'],
     ):
 
-    mamadf = load_basetable()
+    mamajek_df = load_basetable()
 
     sel = (
-        (mamadf['Bp-Rp'] != '...')
+        (mamajek_df['Bp-Rp'] != '...')
     )
 
-    sdf = mamadf[sel]
+    sdf = mamajek_df[sel]
 
     Teffs = []
     for sptype in sptypes:
@@ -445,3 +446,40 @@ def get_SpType_Teff_correspondence(
     sptypes = [s.replace('V','') for s in sptypes]
 
     return np.array(sptypes), np.array(Teffs)
+
+
+def given_VmKs_get_Teff(VmKs):
+    """
+    Interpolate effective temperatures from the Mamajek table and (V-Ks)0.
+    (less reddening dependence than B-V).
+    """
+    mamajekpath = os.path.join(DATADIR, "literature",
+                               "EEM_dwarf_UBVIJHK_colors_Teff_20220416.txt")
+    mamajek_df = pd.read_csv(
+        mamajekpath, comment='#', delim_whitespace=True
+    )
+    sel = (
+        (mamajek_df['V-Ks'] != ".....")
+        &
+        (mamajek_df['V-Ks'] != "....")
+        &
+        (mamajek_df['V-Ks'] != "...")
+        &
+        (mamajek_df["Teff"] > 3300)
+        &
+        (mamajek_df["Teff"] < 7400)
+    )
+    mamajek_df = mamajek_df[sel]
+    mamajek_df = mamajek_df.reset_index(drop=True)
+
+    poly_model = np.polyfit(
+        mamajek_df['V-Ks'].astype(float), mamajek_df['Teff'].astype(float), 7
+    )
+    testmodel = np.polyval(poly_model, mamajek_df['V-Ks'].astype(float))
+
+    Teff = np.polyval(poly_model, VmKs)
+
+    return Teff
+
+
+
