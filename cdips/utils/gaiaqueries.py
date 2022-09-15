@@ -646,6 +646,8 @@ def given_dr2_sourceids_get_edr3_xmatch(
         print(errmsg)
         raise AssertionError(errmsg)
 
+    df['abs_magnitude_difference'] = np.abs(df['magnitude_difference'])
+
     return df
 
 
@@ -743,6 +745,8 @@ def given_dr3_sourceids_get_dr2_xmatch(
         )
         print(errmsg)
         raise AssertionError(errmsg)
+
+    df['abs_magnitude_difference'] = np.abs(df['magnitude_difference'])
 
     return df
 
