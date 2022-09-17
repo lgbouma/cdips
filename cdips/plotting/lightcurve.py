@@ -23,9 +23,11 @@ def plot_simple_cdips_lc(
     source_id = hdr['Gaia-ID']
     Tmag = hdr['TESSMAG']
     bpmrp = hdr['phot_bp_mean_Mag'] - hdr['phot_rp_mean_mag']
+    sector = hdr['SECTOR']
+    sectorstr = str(sector).zfill(4)
 
     if outname is None:
-        outname = f"bpmrp{bpmrp:.2f}_GDR2_{source_id}.png"
+        outname = f"bpmrp{bpmrp:.2f}_GDR2_{source_id}_{sectorstr}.png"
     outpath = os.path.join(outdir, outname)
 
     if os.path.exists(outpath):
@@ -44,7 +46,7 @@ def plot_simple_cdips_lc(
 
     axs[-1].set_xlabel("TMID_BJD")
 
-    titlestr = f"GDR2 {source_id}, T={Tmag:.1f}, BP-RP={bpmrp:.1f}"
+    titlestr = f"GDR2 {source_id}, {sectorstr}, T={Tmag:.1f}, BP-RP={bpmrp:.1f}"
 
     axs[0].set_title(titlestr)
 
@@ -52,5 +54,6 @@ def plot_simple_cdips_lc(
         outpath, bbox_inches='tight', dpi=300
     )
 
+    plt.close("all")
     print(f"Wrote {outpath}")
     return 1
