@@ -247,9 +247,8 @@ def run_periodograms_and_detrend(
     Hippke paper).  The speedup from multithreading is sub-linear (factor of
     5.5x going from 1->16 cores, in my testing).
 
-    Note: TLS default grid seems to fail on Kepler data
-    https://github.com/hippke/tls/issues/102 -- for such cases,
-    search_method='bls' preferred.
+    Note: The uncertainties are evaluated using the p2p_rms, per the discussion
+    at https://github.com/hippke/tls/issues/102.
 
     kwargs:
 
@@ -260,6 +259,7 @@ def run_periodograms_and_detrend(
 
         dtr_dict : E.g.,
             {'method':'best', 'break_tolerance':0.5, 'window_length':0.5}
+            {'method':'notch', 'break_tolerance':0.5, 'window_length':0.3}
 
         search_method : 'tls' or 'bls', for transitleastsqaures or the
         astrobase Kovacs+02 multithreaded BLS implementation.
@@ -309,6 +309,10 @@ def run_periodograms_and_detrend(
                 return d['r']
             return (d['r'], d['search_time'], d['search_flux'],
                     d['dtr_stages_dict'])
+    else:
+        cachedir = os.path.join(os.path.expanduser("~"), ".cdips")
+        if not os.path.exists(cachedir): os.mkdir(cachedir)
+        cachepath = os.path.join(cachedir, f"{star_id}.pkl")
 
     dtrcachepath = cachepath.replace(".pkl", "_dtrcache.pkl")
     lsp_options = {'period_min':0.1, 'period_max':20}
