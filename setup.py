@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-
 """
-setup.py - Luke Bouma (luke@astro.princeton.edu) - Apr 2019
+setup.py - Luke Bouma (luke@astro.caltech.edu) - Apr 2019
 
 Stolen from the astrobase setup.py
 """
-__version__ = '0.0.0'
-
 import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
@@ -58,25 +55,26 @@ EXTRAS_REQUIRE = {
 ###############
 
 # run setup.
+version = 0.2
 setup(
     name='cdips',
-    version=__version__,
-    description=('Python modules and scripts '
-                 'used for CDIPS project.'),
+    version=version,
+    description=('Python modules and scripts used for CDIPS project.'),
     long_description=readme(),
     long_description_content_type="text/markdown",
     classifiers=[
-        'Development Status :: 1 - Alpha',
+        'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Astronomy",
         "Operating System :: OS Independent",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
     ],
     keywords='astronomy',
     url='https://github.com/lgbouma/cdips',
+    download_url=f'https://github.com/lgbouma/cdips/archive/refs/tags/v{str(version).replace(".","")}.tar.gz',
     author='Luke Bouma',
-    author_email='luke@astro.princeton.edu',
+    author_email='luke@astro.caltech.edu',
     license='MIT',
     packages=[
         'cdips',

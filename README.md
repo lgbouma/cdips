@@ -45,6 +45,8 @@ MIT
 
 ## Install
 
+`pip install cdips`
+
 `git clone https://github.com/lgbouma/cdips`
 `python setup.py install`
 
