@@ -662,14 +662,15 @@ def detrend_systematics(lcpath, max_n_comp=5, infodict=None,
         from cdips.utils import given_lcpath_get_infodict
         infodict = given_lcpath_get_infodict(lcpath)
 
-    eigveclist, n_comp_df = prepare_pca(
+    eigveclist, smooth_eigveclist, n_comp_df = prepare_pca(
         infodict['CAMERA'], infodict['CCD'],
         infodict['SECTOR'], infodict['PROJID']
     )
 
     sysvecnames = ['BGV']
-    dtrvecs, sysvecs, ap, primaryhdr, data, eigenvecs, smooth_eigenvecs = (
-        get_dtrvecs(lcpath, eigveclist, sysvecnames=sysvecnames)
+    dtrvecs, sysvecs, ap, primaryhdr, data, eigenvecs = (
+        get_dtrvecs(lcpath, eigveclist, smooth_eigveclist,
+                    sysvecnames=sysvecnames)
     )
     time, y = data['TMID_BJD'], data[f'IRM{ap}']
 
@@ -835,17 +836,25 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         os.mkdir(pcadir)
 
     csvpath = os.path.join(pcadir, 'optimal_n_components.csv')
-    if os.path.exists(csvpath):
 
-        comppaths = [os.path.join(pcadir,
-                                  'principal_component_ap{}.txt'.format(ap))
-                     for ap in range(1,4)]
+    comppaths = [
+        os.path.join(pcadir, f'principal_component_ap{ap}.txt')
+        for ap in range(1,4)
+    ]
+    smoothpaths = [
+        os.path.join(pcadir, f'principal_component_ap{ap}_smoothed.txt')
+        for ap in range(1,4)
+    ]
+    comppaths_exist = np.all([os.path.exists(p) for p in comppaths])
+    smoothpaths_exist = np.all([os.path.exists(p) for p in smoothpaths])
+
+    if os.path.exists(csvpath) and comppaths_exist and smoothpaths_exist:
 
         eigveclist = [np.genfromtxt(f) for f in comppaths]
-
+        smooth_eigveclist = [np.genfromtxt(f) for f in smoothpaths]
         n_comp_df = pd.read_csv(csvpath)
 
-        return eigveclist, n_comp_df
+        return eigveclist, smooth_eigveclist, n_comp_df
 
     #
     # path, x, y. space-separated. for all ~30k light curves to do TFA on.
@@ -856,11 +865,11 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
     #
     datestfa_path = os.path.join(statsdir,'dates_tfa.txt')
 
-    eigveclist, optimal_n_comp = [], {}
+    eigveclist, smooth_eigveclist, optimal_n_comp = [], [], {}
     for ap in [1,2,3]:
 
         #
-        # path, x ,y. space-separated. for 200 TFA template stars.
+        # path, x, y. space-separated. for 200 TFA template stars.
         #
         trendname = 'trendlist_tfa_ap{}.txt'.format(ap)
         trendlisttfa = os.path.join(statsdir,trendname)
@@ -901,6 +910,28 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         )
 
         #
+        # construct a "mean time" vector in order to smooth the eigenvectors --
+        # call it mean_tmid_bjd.  require that average time-difference across
+        # the reference light curves is not more than one second.
+        #
+        tmid_bjd =  nparr(
+            list(
+                map(iu.get_data_keyword,
+                    nparr(df_template_stars['path']), # file,
+                    np.repeat('TMID_BJD', len(df_template_stars)), # keyword
+                    np.repeat(1, len(df_template_stars)) # extension
+                   )
+            )
+        )
+        TOLERANCE_SEC = 1
+        assert (
+            np.abs(np.diff(tmid_bjd, axis=0).mean(axis=0)).max() * 24*60*60
+            <
+            TOLERANCE_SEC
+        )
+        mean_tmid_bjd = tmid_bjd.mean(axis=0)
+
+        #
         # for the fit, require that for each tempalte light curve is only made
         # of finite values. this might drop a row or two.
         #
@@ -923,12 +954,37 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
 
         eigenvecs = pca.components_
 
-        comppath = os.path.join(pcadir,
-                                'principal_component_ap{}.txt'.format(ap))
-        np.savetxt(comppath, eigenvecs)
-        LOGINFO('saved {}'.format(comppath))
+        #
+        # Save all 200 PCA eigenvectors.
+        #
+        comppath = os.path.join(pcadir, f'principal_component_ap{ap}.txt')
+        if not os.path.exists(comppath):
+            np.savetxt(comppath, eigenvecs)
+            LOGINFO(f'saved {comppath}')
+        else:
+            LOGINFO(f'found {comppath}')
 
         eigveclist.append(eigenvecs)
+
+        #
+        # Smooth the eigenvectors and cache the result as well.
+        #
+        smooth_eigenvecs = []
+        for e in eigenvecs:
+            smooth_eigenvec = eigvec_smooth_fn(mean_tmid_bjd, e)
+            smooth_eigenvecs.append(smooth_eigenvec-1)
+        smooth_eigenvecs = np.array(smooth_eigenvecs)
+        assert not np.any(pd.isnull(smooth_eigenvecs))
+        assert smooth_eigenvecs.shape == eigenvecs.shape
+
+        smoothpath = os.path.join(pcadir, f'principal_component_ap{ap}_smoothed.txt')
+        if not os.path.exists(smoothpath):
+            np.savetxt(smoothpath, smooth_eigenvecs)
+            LOGINFO(f'saved {smoothpath}')
+        else:
+            LOGINFO(f'found {smoothpath}')
+
+        smooth_eigveclist.append(eigenvecs)
 
         #
         # plot a sequence of reconstructions, for a set of random light curves
@@ -1074,10 +1130,10 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
     optimal_n_comp_df.to_csv(csvpath, index=False)
     LOGINFO('made {}'.format(csvpath))
 
-    return eigveclist, optimal_n_comp_df
+    return eigveclist, smooth_eigveclist, optimal_n_comp_df
 
 
-def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
+def get_dtrvecs(lcpath, eigveclist, smooth_eigveclist, sysvecnames=['BGV'],
                 use_smootheigvecs=True, ap=None):
     """
     Given a CDIPS light curve file, and the PCA eigenvectors for this
@@ -1089,6 +1145,8 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
 
         eigveclist: list of np.ndarray PCA eigenvectors, length 3, calculated
         by a call to cdips.lcutils.detrend.prepare_pca.
+
+        smooth_eigveclist: as above, but smoothed using `eigvec_smooth_fn`
 
         sysvecnames: list of vector names to also be decorrelated against.
         E.g., ['BGV', 'CCDTEMP', 'XIC', 'YIC']. Default is just ['BGV'].
@@ -1106,6 +1164,10 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
     """
 
     from cdips.utils.lcutils import get_best_ap_number_given_lcpath
+
+    if DEBUG:
+        _t = datetime.utcnow().isoformat()
+        LOGDEBUG(f'{_t}: ap {ap}, lcpath {lcpath}: started get_dtrvecs')
 
     hdul = fits.open(lcpath)
     primaryhdr, hdr, data = (
@@ -1137,16 +1199,15 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
         raise ValueError('got nans in eigvecs. bad!')
 
     if use_smootheigvecs:
-        smooth_eigenvecs = []
-        for e in eigenvecs:
-            smooth_eigenvec = eigvec_smooth_fn(data['TMID_BJD'], e)
-            smooth_eigenvecs.append(smooth_eigenvec-1)
-        smooth_eigenvecs = np.array(smooth_eigenvecs)
-        assert not np.any(pd.isnull(smooth_eigenvecs))
+        smooth_eigenvecs = smooth_eigveclist[ap-1]
     else:
         smooth_eigenvecs = None
 
     use_sysvecs = True if isinstance(sysvecnames, list) else False
+
+    if DEBUG:
+        _t = datetime.utcnow().isoformat()
+        LOGDEBUG(f'{_t} ap {ap}, lcpath {lcpath}: begin scaling')
 
     if use_sysvecs:
 
@@ -1177,6 +1238,10 @@ def get_dtrvecs(lcpath, eigveclist, sysvecnames=['BGV'],
             dtrvecs = smooth_eigenvecs
         else:
             dtrvecs = eigenvecs
+
+    if DEBUG:
+        _t = datetime.utcnow().isoformat()
+        LOGDEBUG(f'{_t} ap {ap}, lcpath {lcpath}: end scaling')
 
     return dtrvecs, sysvecs, ap, primaryhdr, data, eigenvecs, smooth_eigenvecs
 

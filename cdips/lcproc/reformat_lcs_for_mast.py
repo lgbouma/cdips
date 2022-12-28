@@ -202,15 +202,16 @@ def _map_timeseries_key_to_unit(k):
 
 
 def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
-                     eigveclist=None, n_comp_df=None, max_n_comp=5):
+                     eigveclist=None, smooth_eigveclist=None, n_comp_df=None,
+                     max_n_comp=5):
     """
     Worker function for `reformat_headers`
     Includes calculation of the PCA light curves.
     """
 
     if DEBUG:
-        t0 = datetime.utcnow().isoformat()
-        LOGINFO(f'{t0}: beginning reformat for {lcpath}')
+        _t = datetime.utcnow().isoformat()
+        LOGDEBUG(f'{_t}: beginning reformat for {lcpath}')
 
     hdul = fits.open(lcpath)
     primaryhdr, hdr, data = (
@@ -242,8 +243,10 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
         #
         sysvecnames = ['BGV']
         dtrvecs, _, _, _, _, _, _ = (
-            dtr.get_dtrvecs(lcpath, eigveclist, sysvecnames=sysvecnames,
-                            use_smootheigvecs=True, ap=ap)
+            dtr.get_dtrvecs(
+                lcpath, eigveclist, smooth_eigveclist, sysvecnames=sysvecnames,
+                use_smootheigvecs=True, ap=ap
+            )
         )
         if DEBUG:
             t2 = datetime.utcnow().isoformat()
@@ -720,7 +723,7 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
 
 
 def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, OC_MG_CAT_ver,
-                     eigveclist=None, n_comp_df=None):
+                     eigveclist=None, smooth_eigveclist=None, n_comp_df=None):
     """
     Reformat headers into HLSP-compliant format, and also compute PCA-detrended
     light curves.
@@ -752,6 +755,7 @@ def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, OC_MG_CAT_ver,
         if not os.path.exists(outfile):
             _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd,
                              cdipsvnum, eigveclist=eigveclist,
+                             smooth_eigveclist=smooth_eigveclist,
                              n_comp_df=n_comp_df)
         else:
-            LOGINFO('found {}'.format(outfile))
+            LOGINFO(f'found {outfile}')
