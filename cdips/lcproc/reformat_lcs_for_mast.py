@@ -7,7 +7,35 @@ reformat_headers: mostly driven by _reformat_header
 reformat_worker
 parallel_reformat_headers
 """
+#############
+## LOGGING ##
+#############
 
+import logging
+from astrobase import log_sub, log_fmt, log_date_fmt
+
+DEBUG = False
+if DEBUG:
+    level = logging.DEBUG
+else:
+    level = logging.INFO
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig(
+    level=level,
+    style=log_sub,
+    format=log_fmt,
+    datefmt=log_date_fmt,
+)
+
+LOGDEBUG = LOGGER.debug
+LOGINFO = LOGGER.info
+LOGWARNING = LOGGER.warning
+LOGERROR = LOGGER.error
+LOGEXCEPTION = LOGGER.exception
+
+#############
+## IMPORTS ##
+#############
 import pandas as pd, numpy as np
 import os, requests, json
 import time as systime
@@ -56,7 +84,7 @@ def _get_TIC8_neighborhood_cone(targetcoord, radius=1.0*u.arcminute):
         requests.exceptions.ConnectionError,
         json.decoder.JSONDecodeError
     ) as e:
-        print('ERR! {}. TIC query failed. trying again...'.format(e))
+        LOGERROR('ERR! {}. TIC query failed. trying again...'.format(e))
         systime.sleep(60)
         stars = Catalogs.query_region(
             "{} {}".format(float(targetcoord.ra.value), float(targetcoord.dec.value)),
@@ -180,6 +208,10 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
     Includes calculation of the PCA light curves.
     """
 
+    if DEBUG:
+        t0 = datetime.utcnow().isoformat()
+        LOGINFO(f'{t0}: beginning reformat for {lcpath}')
+
     hdul = fits.open(lcpath)
     primaryhdr, hdr, data = (
         hdul[0].header, hdul[1].header, hdul[1].data
@@ -200,7 +232,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
         ap = ix+1
 
         if np.any(pd.isnull(eigenvecs)):
-            print('got nans in eigvecs. bad!')
+            LOGERROR('got nans in eigvecs. bad!')
             import IPython; IPython.embed()
 
         #
@@ -213,6 +245,10 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
             dtr.get_dtrvecs(lcpath, eigveclist, sysvecnames=sysvecnames,
                             use_smootheigvecs=True, ap=ap)
         )
+        if DEBUG:
+            t2 = datetime.utcnow().isoformat()
+            LOGINFO(f'{t2}: got dtrvecs for {lcpath}')
+
         time, y = data['TMID_BJD'], data[f'IRM{ap}']
 
         # Set maximum number of PCA eigenvectors.
@@ -223,6 +259,9 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
         pca_mag, n_comp = dtr.calculate_linear_model_mag(
             y, dtrvecs, n_components, method='LinearRegression'
         )
+        if DEBUG:
+            t3 = datetime.utcnow().isoformat()
+            LOGINFO(f'{t3}: got pca_mag for {lcpath}')
 
         pca_mags[f'PCA{ap}'] = pca_mag
 
@@ -370,7 +409,16 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
 
     ra, dec = primaryhdr['RA_OBJ'], primaryhdr['DEC_OBJ']
     targetcoord = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
+
+    if DEBUG:
+        t4 = datetime.utcnow().isoformat()
+        LOGINFO(f'{t4}: starting TIC8 cone search for {lcpath}')
+
     selstars = _get_TIC8_neighborhood_cone(targetcoord, radius=1.0*u.arcminute)
+
+    if DEBUG:
+        t5 = datetime.utcnow().isoformat()
+        LOGINFO(f'{t5}: finish TIC8 cone search for {lcpath}')
 
     isgaiaid=True
     try:
@@ -612,8 +660,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
     test.verify_lightcurve(outhdulist)
 
     outhdulist.writeto(outfile, overwrite=False)
-    print('{}: reformatted {}, wrote to {}'.format(
-        datetime.utcnow().isoformat(), lcpath, outfile))
+    LOGINFO(f'reformatted {lcpath}, wrote to {outfile}')
 
     outhdulist.close()
     inhdulist.close()
@@ -656,8 +703,7 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
 
     tasks = [(x, cdips_df, outdir, sectornum, cdipsvnum) for x in lcpaths[:300]]
 
-    print('%sZ: %s files to reformat' %
-          (datetime.utcnow().isoformat(), len(lcpaths)))
+    LOGINFO(f"{len(lcpaths)} files to reformat")
 
     pool = mp.Pool(nworkers, maxtasksperchild=maxworkertasks)
 
@@ -668,7 +714,7 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
     pool.close()
     pool.join()
 
-    print('%sZ: finished reformatting' (datetime.utcnow().isoformat()))
+    LOGINFO(f"Finished reformatting!")
 
     return {result for result in results}
 
@@ -708,4 +754,4 @@ def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, OC_MG_CAT_ver,
                              cdipsvnum, eigveclist=eigveclist,
                              n_comp_df=n_comp_df)
         else:
-            print('found {}'.format(outfile))
+            LOGINFO('found {}'.format(outfile))
