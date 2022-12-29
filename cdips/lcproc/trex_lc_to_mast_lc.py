@@ -87,13 +87,16 @@ def trex_lc_to_mast_lc(
 
                         projid = iu.get_header_keyword(lcpaths[0], 'PROJID')
 
-                        eigveclist, n_comp_df = dtr.prepare_pca(
-                            cam, ccd, sector, projid)
+                        eigveclist, smooth_eigveclist, n_comp_df = (
+                            dtr.prepare_pca(cam, ccd, sector, projid)
+                        )
 
-                        rlm.reformat_headers(lcpaths, camccddir, sector,
-                                             cdipsvnum, OC_MG_CAT_ver,
-                                             eigveclist=eigveclist,
-                                             n_comp_df=n_comp_df)
+                        rlm.reformat_headers(
+                            lcpaths, camccddir, sector, cdipsvnum,
+                            OC_MG_CAT_ver, eigveclist=eigveclist,
+                            smooth_eigveclist=smooth_eigveclist,
+                            n_comp_df=n_comp_df
+                        )
 
 
 if __name__ == "__main__":
