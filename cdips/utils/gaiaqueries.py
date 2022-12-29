@@ -40,7 +40,8 @@ homedir = os.path.expanduser("~")
 credentials_file = os.path.join(homedir, '.gaia_credentials')
 if not os.path.exists(credentials_file):
     raise AssertionError(
-        'need gaia dr2 credentials file at {}'.format(credentials_file)
+        f'need gaia dr2 credentials file at {credentials_file}.\n'
+        f'format should be two lines, with username and password.'
     )
 
 gaiadir = os.path.join(homedir, '.gaia_cache')
@@ -528,7 +529,7 @@ def given_dr2_sourceids_get_edr3_xmatch(
     dr2_source_ids, runid, overwrite=True,
     enforce_all_sourceids_viable=True):
     """
-    Use the dr2_neighborhood table to look up the EDR3 source_ids given DR2
+    Use the dr2_neighborhood table to look up the (E)DR3 source_ids given DR2
     source_ids.
 
     "The only safe way to compare source records between different Data
@@ -879,7 +880,7 @@ def dr3_activityindex_espcs_to_RprimeIRT(alpha, Teff, M_H=0.):
 
     Args:
         alpha: activityindex_espcs np.ndarray
-        Teff: effective temperature np.nddary
+        Teff: effective temperature np.nddary (calibrated on teff_gspphot)
 
     Kwargs:
         M_H: the weakly dependent metallicity term.  Not obvious that including
