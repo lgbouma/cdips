@@ -365,6 +365,9 @@ def make_lc_list(
     entire CDIPS reductions on some other system.  This TXT metadata file is
     useful for quickly retrieving files given a Gaia DR2 source_id.
 
+    This looks for the *latest* light curves -- i.e., it will make a list
+    including the v02 "PCA re-reduction" light curves for cycle 2.
+
     Args:
         listpath (str): where the list of light curve paths will be written.
 
@@ -380,12 +383,23 @@ def make_lc_list(
 
     assert sector_end > sector_start
 
-    BASEDIR = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS"
+    BASEDIRCYCLE1 = "/nfs/phtess3/ar0/TESS/PROJ/lbouma/CYCLE1PCAV2/LC"
+    BASEDIRCYCLE2 = "/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS"
+    assert sector_end <= 26
+
     LCGLOB = "hlsp_cdips_*_llc.fits"
 
     for sector in range(sector_start, sector_end+1):
+
         print(42*'-')
         print(f'Beginning LC retrieval for sector {sector}...')
+
+        if sector <= 13:
+            BASEDIR = BASEDIRCYCLE1
+        elif sector <= 26:
+            BASEDIR = BASEDIRCYCLE2
+        else:
+            raise NotImplementedError
 
         lcpaths = glob(os.path.join(
             BASEDIR, f"sector-{sector}", "cam*_ccd*", LCGLOB
