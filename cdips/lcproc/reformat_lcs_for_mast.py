@@ -508,11 +508,17 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
                        mrow['Tmag'],
                        '[mag] TIC catalog magnitude of xmatch')
 
-        Tmag_pred = (primaryhdr['phot_g_mean_mag']
-                    - 0.00522555 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**3
-                    + 0.0891337 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**2
-                    - 0.633923 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])
-                    + 0.0324473)
+        try:
+            Tmag_pred = (primaryhdr['phot_g_mean_mag']
+                        - 0.00522555 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**3
+                        + 0.0891337 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])**2
+                        - 0.633923 * (primaryhdr['phot_bp_mean_mag'] - primaryhdr['phot_rp_mean_mag'])
+                        + 0.0324473)
+        except TypeError as e:
+            msg = f"ERROR: Gaia DR2 {primaryhdr['GAIA-ID']}: Tmag_pred failed!"
+            print(msg)
+            print(e)
+            Tmag_pred = -99
 
         primaryhdr.set('TMAGPRED',
                        Tmag_pred,
@@ -565,7 +571,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
                        'nan',
                        '[mag] TIC catalog magnitude of xmatch')
         primaryhdr.set('TMAGPRED',
-                       Tmag_pred,
+                       -99,
                        '[mag] predicted Tmag via Stassun+19 Eq1')
         primaryhdr.set('TICCONT',
                        'nan',
