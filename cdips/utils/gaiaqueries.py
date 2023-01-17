@@ -1,21 +1,23 @@
 """
 Contents:
 
-    given_source_ids_get_gaia_data
-    given_source_ids_get_neighbor_counts
-    gaia2read_given_df
-    query_neighborhood
-    given_dr2_sourceids_get_edr3_xmatch
-    given_dr3_sourceids_get_dr2_xmatch
+    | given_source_ids_get_gaia_data
+    | given_source_ids_get_neighbor_counts
+    | gaia2read_given_df
+    | query_neighborhood
+    | given_dr2_sourceids_get_edr3_xmatch
+    | given_dr3_sourceids_get_dr2_xmatch
 
-    make_votable_given_source_ids
-    given_votable_get_df
+    | make_votable_given_source_ids
+    | given_votable_get_df
 
-    edr3_propermotion_to_ICRF
+    Auxiliary utilies:
+    | edr3_propermotion_to_ICRF
+    | parallax_to_distance_highsn
+    | dr3_activityindex_espcs_to_RprimeIRT
 
-    parallax_to_distance_highsn
-
-    dr3_activityindex_espcs_to_RprimeIRT
+    Photometric conversion:
+    | dr3_bprp_to_gv
 """
 ###########
 # imports #
@@ -931,3 +933,18 @@ def dr3_activityindex_espcs_to_RprimeIRT(alpha, Teff, M_H=0.):
     )
 
     return log10_RprimeIRT
+
+
+def dr3_bprp_to_gv(bp_rp):
+    """
+    Given Gaia DR3 BP-RP, return Johnson-Cousins G-V
+    (and therefore, you can get V).
+    https://gea.esac.esa.int/archive/documentation/GDR3/Data_processing/chap_cu5pho/cu5pho_sec_photSystem/cu5/Figures/cu5pho_PhotTransf_GVvsBPRP_Stetson.png
+    """
+    x = bprp
+    c0 = -0.02704
+    c1 = 0.01424
+    c2 = -0.2156
+    c3 = 0.01426
+    y = c0 + c1*x + c2*x**2 + c3*x**3
+    return y
