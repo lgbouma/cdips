@@ -752,20 +752,26 @@ def given_dr3_sourceids_get_dr2_xmatch(
     return df
 
 
-def gaia2read_given_df(df, cachedir):
+def gaia2read_given_df(df, cachedir, cache_id=None):
     """
     Given a dataframe of Gaia DR2 sources with key "dr2_source_id", run
     `gaia2read` to get all Gaia columns for the source list.   This assumes
     `gaia2read` is installed and working.
-    The output is cached at {cachedir}/{randomstring}_gaia2read.csv
+
+    The output is cached at either {cachedir}/{cache_id}_gaia2read.csv or if
+    cache_id is None, at {cachedir}/{randomstring}_gaia2read.csv
     """
 
-    idstr = str(uuid.uuid4())
+    if cache_id is None:
+        idstr = str(uuid.uuid4())
+    else:
+        idstr = cache_id
     srcpath = os.path.join(cachedir, f'{idstr}_sources_only.csv')
     dstpath = os.path.join(cachedir, f'{idstr}_gaia2read.csv')
 
-    assert 'dr2_source_id' in df
-    df['dr2_source_id'].to_csv(srcpath, index=False, header=False)
+    if not os.path.exists(srcpath):
+        assert 'dr2_source_id' in df
+        df['dr2_source_id'].to_csv(srcpath, index=False, header=False)
 
     if not os.path.exists(dstpath):
         gaia2readcmd = f"gaia2read --header --extra --idfile {srcpath} --out {dstpath}"
