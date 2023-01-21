@@ -3,16 +3,18 @@
 http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
 
 Contents:
-    get_interp_mass_from_rstar
-    get_interp_rstar_from_teff
-    get_interp_BmV_from_Teff
-    get_interp_BpmRp_from_Teff
-    get_interp_BmV_from_BpmRp
-    get_interp_BpmRp_from_BmV
-    get_interp_SpType_from_teff
-    get_SpType_BpmRp_correspondence
-    get_SpType_GmRp_correspondence
-    given_VmKs_get_Teff
+    | ``load_basetable``
+    | ``get_interp_mass_from_rstar``
+    | ``get_interp_rstar_from_teff``
+    | ``get_interp_BmV_from_Teff``
+    | ``get_interp_BpmRp_from_Teff``
+    | ``get_interp_BmV_from_BpmRp``
+    | ``get_interp_BpmRp_from_BmV``
+    | ``get_interp_SpType_from_teff``
+    | ``get_SpType_BpmRp_correspondence``
+    | ``get_SpType_GmRp_correspondence``
+    | ``get_SpType_Teff_correspondence``
+    | ``given_VmKs_get_Teff``
 """
 import os
 import numpy as np, pandas as pd
@@ -27,6 +29,11 @@ def load_basetable():
 
     mamajekpath = os.path.join(datadir, 'LITERATURE_DATA',
                                'EEM_dwarf_UBVIJHK_colors_Teff_20220416.txt')
+    if not os.path.exists(mamajekpath):
+        mamajekpath = (
+            "https://www.dropbox.com/s/qfhes2nfey8bj0d/EEM_dwarf_UBVIJHK_colors_Teff_20220416.txt?dl=1"
+        )
+
     mamajek_df = pd.read_csv(
         mamajekpath, comment='#', delim_whitespace=True
     )
