@@ -55,7 +55,7 @@ EXTRAS_REQUIRE = {
 ###############
 
 # run setup.
-version = 0.3
+version = 0.4
 setup(
     name='cdips',
     version=version,
