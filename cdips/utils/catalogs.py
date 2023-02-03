@@ -96,7 +96,8 @@ def get_cdips_catalog(ver=0.6):
         'phtess3':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'phn12':'/nfs/phtess1/ar1/TESS/PROJ/lbouma/',
         'PU-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/',
-        'marduk.local':'/Users/luke/local/cdips/catalogs/'
+        'marduk.local':'/Users/luke/local/cdips/catalogs/',
+        'dhcp-194-240.caltech.edu':'/Users/luke/local/cdips/catalogs/'
     }
 
     cdips_stars_dir = dir_d[socket.gethostname()]
