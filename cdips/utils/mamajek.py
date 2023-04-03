@@ -7,6 +7,7 @@ Contents:
     | ``get_interp_mass_from_rstar``
     | ``get_interp_rstar_from_teff``
     | ``get_interp_BmV_from_Teff``
+    | ``get_interp_Teff_from_BmV``
     | ``get_interp_BpmRp_from_Teff``
     | ``get_interp_BmV_from_BpmRp``
     | ``get_interp_BpmRp_from_BmV``
@@ -254,6 +255,36 @@ def get_interp_BmV_from_Teff(teff):
                               fill_value='extrapolate')
 
     return fn_teff_to_BmV(teff)
+
+
+def get_interp_Teff_from_BmV(teff):
+    """
+    Given B-V get Teff
+    """
+
+    mamajek_df = load_basetable()
+    sel = (mamajek_df['B-V'] != '...')
+    mamajek_df = mamajek_df[sel] # finite, monotonic BmV
+
+    mamarstar, mamamstar, mamateff, mamaBmV = (
+        nparr(mamajek_df['R_Rsun'])[::-1],
+        nparr(mamajek_df['Msun'])[::-1],
+        nparr(mamajek_df['Teff'])[::-1],
+        nparr(mamajek_df['B-V'])[::-1].astype(float)
+    )
+
+    # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
+    # BmVs. so remove anything where diff not strictly greater than...
+    isbad = np.insert(np.diff(mamaBmV) == 0, False, 0)
+
+    fn_BmV_to_Teff = interp1d(mamaBmV[~isbad], mamateff[~isbad],
+                              kind='quadratic', bounds_error=False,
+                              fill_value='extrapolate')
+
+    return fn_BmV_to_Teff(teff)
+
+
+
 
 
 def get_interp_BpmRp_from_Teff(teff):
