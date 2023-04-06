@@ -203,7 +203,7 @@ def _map_timeseries_key_to_unit(k):
 
 def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
                      eigveclist=None, smooth_eigveclist=None, n_comp_df=None,
-                     max_n_comp=5):
+                     max_n_comp=5, skiptfa=False):
     """
     Worker function for `reformat_headers`
     Includes calculation of the PCA light curves.
@@ -666,7 +666,7 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
 
     outfile = os.path.join(outdir, outname)
 
-    test.verify_lightcurve(outhdulist)
+    test.verify_lightcurve(outhdulist, skiptfa=skiptfa)
 
     outhdulist.writeto(outfile, overwrite=False)
     LOGINFO(f'reformatted {lcpath}, wrote to {outfile}')
@@ -729,7 +729,8 @@ def parallel_reformat_headers(lcpaths, outdir, sectornum, cdipsvnum,
 
 
 def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, OC_MG_CAT_ver,
-                     eigveclist=None, smooth_eigveclist=None, n_comp_df=None):
+                     eigveclist=None, smooth_eigveclist=None, n_comp_df=None,
+                     skiptfa=False):
     """
     Reformat headers into HLSP-compliant format, and also compute PCA-detrended
     light curves.
@@ -762,6 +763,6 @@ def reformat_headers(lcpaths, outdir, sectornum, cdipsvnum, OC_MG_CAT_ver,
             _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd,
                              cdipsvnum, eigveclist=eigveclist,
                              smooth_eigveclist=smooth_eigveclist,
-                             n_comp_df=n_comp_df)
+                             n_comp_df=n_comp_df, skiptfa=skiptfa)
         else:
             LOGINFO(f'found {outfile}')
