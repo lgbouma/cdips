@@ -13,13 +13,15 @@ def test_single_lc():
         verify_lightcurve(hdulist)
 
 
-def test_length_of_data(hdulist):
+def test_length_of_data(hdulist, skiptfa=0):
     """
     all flux vector should have same length as time vector.
     """
 
     keys = ['TMID_BJD', 'IRM1', 'IRM2', 'IRM3', 'PCA1', 'PCA2', 'PCA3',
             'TFA1', 'TFA2', 'TFA3']
+    if skiptfa:
+        keys = ['TMID_BJD', 'IRM1', 'IRM2', 'IRM3', 'PCA1', 'PCA2', 'PCA3']
 
     N_entries = [len(hdulist[1].data[k]) for k in keys]
 
@@ -30,7 +32,7 @@ def test_length_of_data(hdulist):
         print('verified flux vectors have same length as time vector')
 
 
-def test_nan_placement(hdulist):
+def test_nan_placement(hdulist, skiptfa=0):
     """
     there should not be finite values in detrended lightcurve indices if there
     were nans in the raw light curves.
@@ -64,25 +66,26 @@ def test_nan_placement(hdulist):
         #
         # do the same for IRM to TFA
         #
-        if np.any(
-            np.in1d(
-                np.argwhere(np.isnan(hdulist[1].data[irm_key])),
-                np.argwhere(~np.isnan(hdulist[1].data[tfa_key]))
-            )
-        ):
-            errmsg = (
-                'got nan values in {irm_key} LC that are NOT nan in {tfa_key} LC'.
-                format(irm_key=irm_key, tfa_key=tfa_key)
-            )
-            print(errmsg)
-            import IPython; IPython.embed()
-            raise AssertionError(errmsg)
-        else:
-            print('verified that no nans in {irm_key} are NOT nan in {tfa_key}'.
-                  format(irm_key=irm_key, tfa_key=tfa_key))
+        if not skiptfa:
+            if np.any(
+                np.in1d(
+                    np.argwhere(np.isnan(hdulist[1].data[irm_key])),
+                    np.argwhere(~np.isnan(hdulist[1].data[tfa_key]))
+                )
+            ):
+                errmsg = (
+                    'got nan values in {irm_key} LC that are NOT nan in {tfa_key} LC'.
+                    format(irm_key=irm_key, tfa_key=tfa_key)
+                )
+                print(errmsg)
+                import IPython; IPython.embed()
+                raise AssertionError(errmsg)
+            else:
+                print('verified that no nans in {irm_key} are NOT nan in {tfa_key}'.
+                      format(irm_key=irm_key, tfa_key=tfa_key))
 
 
-def verify_lightcurve(hdulist):
+def verify_lightcurve(hdulist, skiptfa=0):
     """
     all flux vector should have same length as time vector.
 
@@ -90,9 +93,9 @@ def verify_lightcurve(hdulist):
     were nans in the raw light curves.
     """
 
-    test_length_of_data(hdulist)
+    test_length_of_data(hdulist, skiptfa=skiptfa)
 
-    test_nan_placement(hdulist)
+    test_nan_placement(hdulist, skiptfa=skiptfa)
 
 
 
