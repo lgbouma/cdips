@@ -22,7 +22,10 @@ def plot_simple_cdips_lc(
     d = hdul[1].data
     source_id = hdr['Gaia-ID']
     Tmag = hdr['TESSMAG']
-    bpmrp = hdr['phot_bp_mean_Mag'] - hdr['phot_rp_mean_mag']
+    try:
+        bpmrp = hdr['phot_bp_mean_Mag'] - hdr['phot_rp_mean_mag']
+    except TypeError:
+        bpmrp = -99.
     sector = hdr['SECTOR']
     sectorstr = str(sector).zfill(4)
 
