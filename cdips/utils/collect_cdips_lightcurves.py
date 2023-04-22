@@ -73,8 +73,8 @@ def make_local_lc_directories(
 
 def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
 
+    # cycle 1
     projid = 1650
-
     d = {}
     for snum in [1,2,3,4,5]:
         d[snum] = {}
@@ -83,9 +83,7 @@ def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
             for ccd in range(1,5):
                 d[snum][cam][ccd] = projid
                 projid += 1
-
     projid = 1500
-
     for snum in [6,7,8,9,10,11,12,13]:
         d[snum] = {}
         for cam in range(1,5):
@@ -94,8 +92,8 @@ def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
                 d[snum][cam][ccd] = projid
                 projid += 1
 
+    # cycle 2
     projid = 1750
-
     for snum in [14,15,16,17,18,19,20,21,22,23,24,25,26]:
         d[snum] = {}
         for cam in range(1,5):
@@ -103,6 +101,17 @@ def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
             for ccd in range(1,5):
                 d[snum][cam][ccd] = projid
                 projid += 1
+
+    # cycle 4
+    projid = 4000
+    for snum in range(40,56):
+        d[snum] = {}
+        for cam in range(1,5):
+            d[snum][cam] = {}
+            for ccd in range(1,5):
+                d[snum][cam][ccd] = projid
+                projid += 1
+
 
     return d[_sector][_cam][_ccd]
 
@@ -188,19 +197,8 @@ def get_toi_catalog(ver='2019-12-05'):
 
 def get_cdips_sourceids(ver=0.6):
 
-    if ver < 0.6:
-        cdips_stars_path = (
-            '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.format(ver)
-        )
-
-        df = pd.read_csv(cdips_stars_path, sep=';')
-
-    else:
-        cdips_stars_path = (
-            '/nfs/phtess1/ar1/TESS/PROJ/lbouma/cdips_targets_v{}_gaiasources_Rplt16_orclose.csv'.format(ver)
-        )
-
-        df = pd.read_csv(cdips_stars_path, sep=',')
+    from cdips.utils.catalogs import get_cdips_pub_catalog
+    df = get_cdips_pub_catalog(ver=ver)
 
     cdips_sourceids = np.array(df['source_id']).astype(str)
 

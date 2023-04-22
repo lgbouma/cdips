@@ -605,8 +605,8 @@ def _reformat_header(lcpath, cdips_df, outdir, sectornum, cam, ccd, cdipsvnum,
     # who dun it
     #
     primaryhdr.set('ORIGIN',
-                   'Bouma&Hartman|CDIPS|Princeton',
-                   'Author|Project|Institution')
+                   'Bouma&Hartman|CDIPS',
+                   'Author|Project')
 
     #
     # set timeseries extension header key comments. also set the units.

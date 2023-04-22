@@ -23,8 +23,16 @@ from how_many_cdips_stars_on_silicon import how_many_cdips_stars_on_silicon
 def main():
 
     ##########################################
-    sector = 15
-    outdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
+    sector = 40
+    ## on phtess[N] systems
+    #outdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/'
+    #symlinkdir = '/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS/'
+    #lcbasedir = '/nfs/phtess2/ar0/TESS/FFI/LC/FULL/'
+    ## on wh1
+    outdir = '/ar1/PROJ/luke/proj/CDIPS_LCS/'
+    symlinkdir = '/ar1/PROJ/luke/proj/CDIPS_SYMLINKS/'
+    lcbasedir = '/ar1/TESS/FFI/LC/FULL'
+
     overwrite = 0
     cams = [1,2,3,4]
     ccds = [1,2,3,4]
@@ -39,10 +47,11 @@ def main():
 
     # turn cdips-pipeline light curves to HLSP light curves
     if len(lcpaths) == 0 or overwrite:
-        tlml.trex_lc_to_mast_lc(sectors=[sector], cams=cams, ccds=ccds,
-                                make_symlinks=1, reformat_lcs=1,
-                                OC_MG_CAT_ver=OC_MG_CAT_ver,
-                                cdipsvnum=cdipsvnum, outdir=outdir)
+        tlml.trex_lc_to_mast_lc(
+            sectors=[sector], cams=cams, ccds=ccds, make_symlinks=1,
+            reformat_lcs=1, OC_MG_CAT_ver=OC_MG_CAT_ver, cdipsvnum=cdipsvnum,
+            outdir=outdir, symlinkdir=symlinkdir, lcbasedir=lcbasedir
+        )
     else:
         print('found {} HLSP LCs; wont reformat'.format(len(lcpaths)))
 

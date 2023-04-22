@@ -50,6 +50,7 @@ def trex_lc_to_mast_lc(
     ccds=None,
     symlinkdir='/nfs/phtess1/ar1/TESS/PROJ/lbouma/CDIPS_SYMLINKS/',
     outdir='/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/',
+    lcbasedir='/nfs/phtess2/ar0/TESS/FFI/LC/FULL/',
     OC_MG_CAT_ver=None,
     cdipsvnum=1
 ):
@@ -59,7 +60,8 @@ def trex_lc_to_mast_lc(
                                       cdipssymlinkdir=symlinkdir)
         cdips_sourceids = ccl.get_cdips_sourceids(ver=OC_MG_CAT_ver)
         ccl.symlink_cdips_lcs(cdips_sourceids, sectors=sectors, cams=cams,
-                              ccds=ccds, cdipssymlinkdir=symlinkdir)
+                              ccds=ccds, cdipssymlinkdir=symlinkdir,
+                              basedir=lcbasedir)
 
     if make_plots:
         ccl.plot_cdips_lcs(sectors=sectors, cams=cams)
@@ -74,8 +76,9 @@ def trex_lc_to_mast_lc(
             for cam in cams:
                 for ccd in ccds:
 
-                    camccddir = os.path.join(sectordir,
-                                             'cam{}_ccd{}'.format(cam,ccd))
+                    camccddir = os.path.join(
+                        sectordir, 'cam{}_ccd{}'.format(cam,ccd)
+                    )
                     if not os.path.exists(camccddir):
                         os.mkdir(camccddir)
 

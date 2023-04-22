@@ -1,5 +1,5 @@
 """
-detrend.py - Luke Bouma (bouma.luke@gmail) - Jul 2019, Nov 2020
+detrend.py - Luke Bouma (bouma.luke@gmail)
 
 Contents:
 
@@ -78,7 +78,7 @@ import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from astropy.io import fits
 
 from datetime import datetime
-import os, shutil
+import os, shutil, socket
 from glob import glob
 
 from numpy import array as nparr, all as npall, isfinite as npisfinite
@@ -826,10 +826,20 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
     components matched to each LC.
     """
 
-    lcdir = ('/nfs/phtess2/ar0/TESS/FFI/LC/FULL/s{}/ISP_{}-{}-{}/'.
-             format(str(sector).zfill(4), cam, ccd, projid))
+    dir_d = {
+        'phtess1':'/nfs/phtess2/ar0/TESS/FFI/LC/FULL/',
+        'phtess2':'/nfs/phtess2/ar0/TESS/FFI/LC/FULL/',
+        'phtess3':'/nfs/phtess2/ar0/TESS/FFI/LC/FULL/',
+        'wh1':'/ar1/TESS/FFI/LC/FULL'
+    }
+    lcbasedir = dir_d[socket.gethostname()]
+
+    lcdir = (os.path.join(lcbasedir, 's{}/ISP_{}-{}-{}/'.
+             format(str(sector).zfill(4), cam, ccd, projid)))
 
     statsdir = os.path.join(lcdir, 'stats_files')
+    if not os.path.exists(statsdir):
+        os.mkdir(statsdir)
 
     pcadir = os.path.join(statsdir, 'pca_data')
     if not os.path.exists(pcadir):
