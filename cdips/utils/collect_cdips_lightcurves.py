@@ -102,6 +102,16 @@ def given_sector_cam_ccd_get_projid(_sector,_cam,_ccd):
                 d[snum][cam][ccd] = projid
                 projid += 1
 
+    # cycle 3
+    for snum in range(27, 40):
+        d[snum] = {}
+        for cam in range(1,5):
+            d[snum][cam] = {}
+            for ccd in range(1,5):
+                d[snum][cam][ccd] = projid
+                projid += 1
+    assert d[34][4][4] == 2085
+
     # cycle 4
     projid = 4000
     for snum in range(40,56):
