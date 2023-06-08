@@ -8,6 +8,8 @@ Contents:
     | given_dr2_sourceids_get_edr3_xmatch
     | given_dr3_sourceids_get_dr2_xmatch
 
+    | given_dr3_sourceids_get_rvs_spectra
+
     | make_votable_given_source_ids
     | given_votable_get_df
 
@@ -23,6 +25,7 @@ Contents:
 # imports #
 ###########
 import os
+from os.path import join
 import uuid
 import numpy as np, matplotlib.pyplot as plt, pandas as pd
 
@@ -948,3 +951,98 @@ def dr3_bprp_to_gv(bp_rp):
     c3 = 0.01426
     y = c0 + c1*x + c2*x**2 + c3*x**3
     return y
+
+
+def given_dr3_sourceids_get_rvs_spectra(source_ids, cache_id):
+    """
+    For a list of GDR3 source_id's for which you know RVS spectra exist,
+    download the spectra.
+
+    Largely lifted from the Gaia docs:
+    https://www.cosmos.esa.int/web/gaia-users/archive/datalink-products#datalink_jntb_get_above_lim
+
+        source_ids (np.ndarray) of np.int64 Gaia DR3 source_ids.
+
+        cache_id (str): spectra are written to ~/.gaia_cache/RVS/{cache_id}
+
+    """
+
+    def chunks(lst, n):
+        ""
+        "Split an input list into multiple chunks of size =< n"
+        ""
+        for i in range(0, len(lst), n):
+            yield lst[i:i + n]
+
+    Gaia.login(credentials_file=credentials_file)
+
+    # DataLink server threshold. It is not possible to download products for more than 5000 sources in one single call.
+    dl_threshold = 5000
+    ids          = list(source_ids)
+    ids_chunks   = list(chunks(ids, dl_threshold))
+    datalink_all = []
+
+    print(f'* Input list contains {len(ids)} source_IDs')
+    print(f'* This list is split into {len(ids_chunks)} chunks of <= {dl_threshold} elements each')
+
+    # Options are: 'EPOCH_PHOTOMETRY', 'MCMC_GSPPHOT', 'MCMC_MSC', 'XP_SAMPLED', 'XP_CONTINUOUS', 'RVS' 
+    retrieval_type = 'RVS'
+
+    # Options are: 'INDIVIDUAL', 'COMBINED', 'RAW' - but as explained above, we strongly recommend to use COMBINED for massive downloads.
+    data_structure = 'COMBINED'
+
+    # Options are: 'Gaia DR3' (default), 'Gaia DR2'
+    data_release   = 'Gaia DR3'
+
+    dl_key         = f'{retrieval_type}_{data_structure}.xml'
+
+    ii = 0
+    for chunk in ids_chunks:
+        ii = ii + 1
+        print(f'Downloading Chunk #{ii}; N_files = {len(chunk)}')
+        datalink  = Gaia.load_data(
+            ids=chunk, data_release=data_release,
+            retrieval_type=retrieval_type, format='votable',
+            data_structure=data_structure
+        )
+        datalink_all.append(datalink)
+
+    if 'RVS' in dl_key or 'XP_SAMPLED'  in dl_key:
+        product_list_tb  = [item                                    for sublist in datalink_all for item in sublist[dl_key]]
+        product_list_ids = [item.get_field_by_id("source_id").value for sublist in datalink_all for item in sublist[dl_key]]
+
+        rvsdir = join(gaiadir, "RVS")
+        if not os.path.exists(rvsdir): os.mkdir(rvsdir)
+        rvsdir = join(gaiadir, "RVS", cache_id)
+        if not os.path.exists(rvsdir): os.mkdir(rvsdir)
+
+        for t, dr3_source_id in zip(product_list_tb, product_list_ids):
+
+            outpath = join(
+                rvsdir, f"gdr3_{dr3_source_id}_rvs.csv.gz"
+            )
+            if os.path.exists(outpath):
+                print(f"Found {outpath}, continue")
+                continue
+
+            t.to_table().to_pandas().to_csv(outpath, index=False)
+            print(f"Wrote {outpath}...")
+
+    Gaia.logout()
+
+
+def run_query_to_get_rvs_spectra():
+
+    query = (
+        "SELECT g.source_id "
+        "FROM gaiadr3.gaia_source_lite as g "
+        "WHERE g.has_rvs = 'True' AND g.bp_rp>=2 AND g.parallax>=50"
+    )
+    cache_id = 'bprp_gt2_dlt20pc'
+
+    job = Gaia.launch_job_async(query)
+    r = job.get_results()
+
+    dr3_source_ids = np.array(r['source_id'])
+
+    csvpaths = given_dr3_sourceids_get_rvs_spectra(dr3_source_ids, cache_id)
