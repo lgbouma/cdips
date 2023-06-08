@@ -8,8 +8,6 @@ Contents:
     | given_dr2_sourceids_get_edr3_xmatch
     | given_dr3_sourceids_get_dr2_xmatch
 
-    | given_dr3_sourceids_get_rvs_spectra
-
     | make_votable_given_source_ids
     | given_votable_get_df
 
@@ -20,6 +18,10 @@ Contents:
 
     Photometric conversion:
     | dr3_bprp_to_gv
+
+    RVS:
+    | given_dr3_sourceids_get_rvs_spectra
+    | run_query_to_get_rvs_spectra
 """
 ###########
 # imports #
@@ -1046,3 +1048,5 @@ def run_query_to_get_rvs_spectra():
     dr3_source_ids = np.array(r['source_id'])
 
     csvpaths = given_dr3_sourceids_get_rvs_spectra(dr3_source_ids, cache_id)
+
+    return csvpaths
