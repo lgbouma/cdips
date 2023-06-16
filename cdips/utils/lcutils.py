@@ -224,8 +224,8 @@ def stitch_light_curves(
     normstitch:bool = False
 ):
     """
-    Given lists of , returning stitched times, fluxes, and flux
-    errors.
+    Given lists of times, mags, magerrs, return stitched times,
+    fluxes, and flux errors.
 
     Args:
 
