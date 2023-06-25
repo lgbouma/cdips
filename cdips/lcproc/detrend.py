@@ -973,7 +973,52 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20, do_factor_analysis=0):
         # for the fit, require that for each tempalte light curve is only made
         # of finite values. this might drop a row or two.
         #
-        fmags = mags[~np.isnan(mags).any(axis=1)]
+
+        N_template_lcs = len(mags)
+        if N_template_lcs < 10:
+            # NOTE: if this error is raised... it means that as-written, you
+            # have no way of computing PCA light curves for this
+            # sector/camera/ccd tuple, because you do not have enough viable
+            # template light curves.  the most likely path forward in this case
+            # would be to reselect template light curves in a less exclusive
+            # way, since this is probably happening because of wild scattered
+            # light that was not adequately masked out.
+            LOGERROR(f"ERROR!  N_template_lcs: {N_template_lcs}")
+            raise AssertionError
+
+        __fmags = mags[~np.isnan(mags).any(axis=1)]
+        N_cand_finite_template_lcs = len(__fmags)
+
+        DO_METHOD_0 = 1
+        DO_METHOD_1 = 0
+        if N_cand_finite_template_lcs < 20:
+            DO_METHOD_0 = 0
+            DO_METHOD_1 = 1
+
+        assert DO_METHOD_0 + DO_METHOD_1 == 1
+
+        if DO_METHOD_0:
+            # drop nan template vectors.  preferred for historical continuity.
+            fmags = mags[~np.isnan(mags).any(axis=1)]
+
+        if DO_METHOD_1:
+            LOGINFO(f"WRN! Linearly interpolating over nans in template vectors")
+            # if we do not have enough normal, finite template light curves,
+            # then linearly interpolate over nans in the template vectors
+            fmaglist = []
+            for m in mags:
+                nans, _m = nan_helper(m)
+                m[nans]= np.interp(_m(nans), _m(~nans), m[~nans])
+                fmaglist.append(m)
+            fmags = np.vstack(fmaglist)
+            assert fmags.shape == mags.shape
+
+        N_finite_template_lcs = len(fmags)
+        LOGINFO(f"N_template_lcs: {N_template_lcs}")
+        LOGINFO(f"N_finite_template_lcs: {N_finite_template_lcs}")
+        if N_finite_template_lcs < 10:
+            LOGERROR(f"ERROR!  N_finite_template_lcs: {N_finite_template_lcs}")
+            raise AssertionError
 
         #
         # subtract mean, as is standard in PCA.
@@ -1049,8 +1094,6 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20, do_factor_analysis=0):
                     mag_rstfc = iu.get_data_keyword(next_lcpath, 'RSTFC')
 
             mean_mag = np.nanmean(mag)
-            mag = mag - mean_mag
-            mag = mag[~pd.isnull(mag)]
 
             component_list = [1, 2, 4, 8, 12, 16, 20]
 
@@ -1060,7 +1103,8 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20, do_factor_analysis=0):
 
             for n_components, ax, ax_r in zip(component_list, axs[:,0], axs[:,1]):
                 #
-                # eigenvecs shape: 200 x N_times
+                # eigenvecs shape: N_finite_template_lcs x N_times
+                # (and ideally, N_finite_template_lcs = 200)
                 #
                 # model: 
                 # y(w, x) = w_0 + w_1 x_1 + ... + w_p x_p.
@@ -1068,49 +1112,31 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20, do_factor_analysis=0):
                 # X is matrix of (n_samples, n_features).
                 #
 
-                # either linear regression or bayesian ridge regression seems fine
-                reg = LinearRegression(fit_intercept=True)
-                #reg = BayesianRidge(fit_intercept=True)
-
-                # n.b., you need to simultaneously cast the eigenvectors and
-                # magnitudes to the same shape of nans [?!]
                 y = mag
                 _X = eigenvecs[:n_components, :]
 
-                try:
-                    reg.fit(_X.T, y)
-                except Exception as e:
-                    LOGEXCEPTION(e)
-                    LOGEXCEPTION(n_components)
-                    continue
-
-                model_mag = reg.intercept_ + (reg.coef_ @ _X)
-
-                # given "true" (full) RSTFC list, and the actual list
-                # ("rstfc" above), need a function that gives model mags
-                # (or data mags) with nans in correct place
+                pca_mag, n_comp = calculate_linear_model_mag(
+                    y, _X, 5, method='LinearRegression'
+                )
+                model_mag = y - pca_mag + mean_mag
 
                 time = nparr(df_dates['btjd'])
                 full_rstfc = nparr(df_dates['rstfc'])
 
-                full_mag = insert_nans_given_rstfc(mag, mag_rstfc, full_rstfc)
+                assert len(time) == len(model_mag)
 
-                full_model_mag = insert_nans_given_rstfc(
-                    model_mag, mag_rstfc, full_rstfc
-                )
-
-                ax.scatter(time, full_mag + mean_mag, c='k', alpha=0.9,
+                ax.scatter(time, mag, c='k', alpha=0.9,
                            zorder=2, s=1, rasterized=True, linewidths=0)
-                ax.plot(time, full_model_mag + mean_mag, c='C0', zorder=1,
+                ax.plot(time, model_mag, c='C0', zorder=1,
                         rasterized=True, lw=0.5, alpha=0.7 )
 
                 txt = '{} components'.format(n_components)
                 ax.text(0.02, 0.02, txt, ha='left', va='bottom',
                         fontsize='medium', transform=ax.transAxes)
 
-                ax_r.scatter(time, full_mag-full_model_mag, c='k', alpha=0.9, zorder=2,
+                ax_r.scatter(time, pca_mag, c='k', alpha=0.9, zorder=2,
                              s=1, rasterized=True, linewidths=0)
-                ax_r.plot(time, full_model_mag-full_model_mag, c='C0', zorder=1,
+                ax_r.plot(time, model_mag-model_mag, c='C0', zorder=1,
                           rasterized=True, lw=0.5, alpha=0.7)
 
             for a in axs[:,0]:
