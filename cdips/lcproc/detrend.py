@@ -787,7 +787,26 @@ def insert_nans_given_rstfc(mag, mag_rstfc, full_rstfc):
         return full_mag
 
 
-def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
+def nan_helper(y):
+    """Helper to handle indices and logical indices of NaNs.
+
+    Input:
+        - y, 1d numpy array with possible NaNs
+    Output:
+        - nans, logical indices of NaNs
+        - index, a function, with signature indices= index(logical_indices),
+          to convert logical indices of NaNs to 'equivalent' indices
+    Example:
+        >>> # linear interpolation of NaNs
+        >>> nans, x= nan_helper(y)
+        >>> y[nans]= np.interp(x(nans), x(~nans), y[~nans])
+    """
+
+    return np.isnan(y), lambda z: z.nonzero()[0]
+
+
+
+def prepare_pca(cam, ccd, sector, projid, N_to_make=20, do_factor_analysis=0):
     """
     This function:
 
@@ -812,6 +831,9 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
 
         N_to_make: integer number of plots showing the effects of adding more
         principal components to the fit.
+
+        do_factor_analysis (bool): whether to run the `compute_scores` factor
+        analysis to select an optimal number of components.  (Not very useful).
 
     Returns:
 
@@ -878,6 +900,10 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
     eigveclist, smooth_eigveclist, optimal_n_comp = [], [], {}
 
     for ap in [1,2,3]:
+
+        idtuple = sector, cam, ccd, projid
+        LOGINFO(42*'-')
+        LOGINFO(f'{idtuple}: beginning prepare_pca with ap {ap}...')
 
         #
         # path, x, y. space-separated. for 200 TFA template stars.
@@ -1004,9 +1030,9 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
 
             if ap != 2:
                 continue
-            savpath = os.path.join(pcadir,
-                                   'test_reconstruction_{}_ap{}.png'.
-                                   format(i, ap))
+            savpath = os.path.join(
+                pcadir, 'test_reconstruction_{}_ap{}.png'.format(i, ap)
+            )
             if os.path.exists(savpath):
                 continue
 
@@ -1106,36 +1132,42 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         # see
         # https://scikit-learn.org/stable/auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
         #
-        n_components = np.arange(0,50,1)
 
-        pca_scores, fa_scores = compute_scores(X, n_components)
+        if do_factor_analysis:
+            n_components = np.arange(0,50,1)
 
-        plt.close('all')
-        f,ax = plt.subplots(figsize=(4,3))
+            LOGINFO(f'{idtuple}: beginning compute_scores in prepare_pca, ap {ap}...')
+            pca_scores, fa_scores = compute_scores(X, n_components)
 
-        ax.plot(n_components, pca_scores, label='PCA CV score')
-        ax.plot(n_components, fa_scores, label='FA CV score')
+            plt.close('all')
+            f,ax = plt.subplots(figsize=(4,3))
 
-        ax.legend(loc='best')
-        ax.set_xlabel('N components')
-        ax.set_ylabel('Cross-validation score')
+            ax.plot(n_components, pca_scores, label='PCA CV score')
+            ax.plot(n_components, fa_scores, label='FA CV score')
 
-        f.tight_layout(pad=0.2)
-        savpath = os.path.join(pcadir, 'test_optimal_n_components.png')
-        f.savefig(savpath, dpi=350, bbox_inches='tight')
-        LOGINFO('made {}'.format(savpath))
+            ax.legend(loc='best')
+            ax.set_xlabel('N components')
+            ax.set_ylabel('Cross-validation score')
 
-        #
-        # write the factor analysis maximum to a dataframe
-        #
-        n_components_pca_cv = n_components[np.argmax(pca_scores)]
-        n_components_fa_cv = n_components[np.argmax(fa_scores)]
+            f.tight_layout(pad=0.2)
+            savpath = os.path.join(pcadir, 'test_optimal_n_components.png')
+            f.savefig(savpath, dpi=350, bbox_inches='tight')
+            LOGINFO('made {}'.format(savpath))
 
-        LOGINFO('n_components_pca_cv: {}'.format(n_components_pca_cv))
-        LOGINFO('n_components_fa_cv: {}'.format(n_components_fa_cv))
+            #
+            # write the factor analysis maximum to a dataframe
+            #
+            n_components_pca_cv = n_components[np.argmax(pca_scores)]
+            n_components_fa_cv = n_components[np.argmax(fa_scores)]
 
-        optimal_n_comp['pca_cv_ap{}'.format(ap)] = n_components_pca_cv
-        optimal_n_comp['fa_cv_ap{}'.format(ap)] = n_components_fa_cv
+            LOGINFO('n_components_pca_cv: {}'.format(n_components_pca_cv))
+            LOGINFO('n_components_fa_cv: {}'.format(n_components_fa_cv))
+
+            optimal_n_comp['pca_cv_ap{}'.format(ap)] = n_components_pca_cv
+            optimal_n_comp['fa_cv_ap{}'.format(ap)] = n_components_fa_cv
+        else:
+            optimal_n_comp['pca_cv_ap{}'.format(ap)] = -1
+            optimal_n_comp['fa_cv_ap{}'.format(ap)] = -1
 
     optimal_n_comp_df = pd.DataFrame(optimal_n_comp, index=[0])
     optimal_n_comp_df.to_csv(csvpath, index=False)
