@@ -916,6 +916,7 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20, do_factor_analysis=0):
 
         df_dates = pd.read_csv(datestfa_path, sep=' ', header=None,
                                names=['rstfc','btjd'])
+        df_dates = df_dates.sort_values(by='btjd')
 
         lcpaths = glob(os.path.join(lcdir, '*_llc.fits'))
 
