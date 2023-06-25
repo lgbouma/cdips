@@ -876,6 +876,7 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
     datestfa_path = os.path.join(statsdir,'dates_tfa.txt')
 
     eigveclist, smooth_eigveclist, optimal_n_comp = [], [], {}
+
     for ap in [1,2,3]:
 
         #
@@ -922,7 +923,7 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
         #
         # construct a "mean time" vector in order to smooth the eigenvectors --
         # call it mean_tmid_bjd.  require that average time-difference across
-        # the reference light curves is not more than one second.
+        # the reference light curves is not more than ten seconds.
         #
         tmid_bjd =  nparr(
             list(
@@ -933,7 +934,7 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20):
                    )
             )
         )
-        TOLERANCE_SEC = 1
+        TOLERANCE_SEC = 10
         assert (
             np.abs(np.diff(tmid_bjd, axis=0).mean(axis=0)).max() * 24*60*60
             <
