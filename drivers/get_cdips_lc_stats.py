@@ -26,10 +26,11 @@ def get_cdips_lc_stats(
     sector=6,
     cdipssource_vnum=None,
     nworkers=32,
-    overwrite=0
+    overwrite=0,
+    filesystem='phtess2'
 ):
 
-    projdir = '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips'
+    projdir = f'/nfs/{filesystem}/ar0/TESS/PROJ/lbouma/cdips'
     statsdir = os.path.join(projdir,
                             'results',
                             'cdips_lc_stats',
@@ -42,8 +43,7 @@ def get_cdips_lc_stats(
         return
 
     lcdirectory = (
-        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{}/'.
-        format(sector)
+        f'/nfs/{filesystem}/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{sector}/'
     )
     lcglob = 'cam?_ccd?/*_llc.fits'
 
@@ -65,8 +65,7 @@ def get_cdips_lc_stats(
                 format(cdipssource_vnum)
             )
             cdipsdf = pd.read_csv(cfile, sep=',')
-            
-            
+
         outdf = cdipsdf[['source_id','phot_rp_mean_mag']].dropna(axis=0, how='any')
 
         outdf.to_csv(catalogfile, sep=' ', index=False, header=False)
