@@ -1120,8 +1120,9 @@ def prepare_pca(cam, ccd, sector, projid, N_to_make=20, do_factor_analysis=0):
                 )
                 model_mag = y - pca_mag + mean_mag
 
-                time = nparr(df_dates['btjd'])
-                full_rstfc = nparr(df_dates['rstfc'])
+                time = mean_tmid_bjd * 1.
+                #time = nparr(df_dates['btjd'])
+                #full_rstfc = nparr(df_dates['rstfc'])
 
                 assert len(time) == len(model_mag)
 
