@@ -78,16 +78,20 @@ def main():
     else:
         print('found {}'.format(suppstatsfile))
 
+    print('🎉 got stats, moved allnan light curves!')
+
     # see how many LCs were expected
-    outpath = (
-        '/nfs/php1/ar0/TESS/PROJ/lbouma/cdips/results/star_catalog/'+
-        'how_many_cdips_stars_on_silicon_sector{}.txt'.
-        format(sector)
-    )
-    if not os.path.exists(outpath) and not overwrite:
-        how_many_cdips_stars_on_silicon(sector=sector, ver=OC_MG_CAT_ver)
-    else:
-        print('found {}'.format(outpath))
+    run_howmany = 0
+    if run_howmany:
+        outpath = (
+            '/nfs/php1/ar0/TESS/PROJ/lbouma/cdips/results/star_catalog/'+
+            'how_many_cdips_stars_on_silicon_sector{}.txt'.
+            format(sector)
+        )
+        if not os.path.exists(outpath) and not overwrite:
+            how_many_cdips_stars_on_silicon(sector=sector, ver=OC_MG_CAT_ver)
+        else:
+            print('found {}'.format(outpath))
 
 
 if __name__=="__main__":
