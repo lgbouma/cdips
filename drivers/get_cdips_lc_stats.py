@@ -30,40 +30,37 @@ def get_cdips_lc_stats(
     filesystem='phtess2'
 ):
 
-    projdir = f'/nfs/{filesystem}/ar0/TESS/PROJ/lbouma/cdips'
-    statsdir = os.path.join(projdir,
-                            'results',
-                            'cdips_lc_stats',
-                            'sector-{}'.format(sector))
-    if not os.path.exists(statsdir):
-        os.mkdir(statsdir)
+    if filesystem in ['phtess2', 'php1']:
+        fs = f"/nfs/{filesystem}"
+        projdir = f'{fs}/ar0/TESS/PROJ/lbouma/cdips'
+        lcdirectory = f'/nfs/phtess2/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{sector}/'
+        catdir = '/nfs/phtess1/ar1/TESS/PROJ/lbouma/'
+
+    elif filesystem in ['wh1', 'wh2']:
+        projdir = "/ar1/PROJ/luke/proj/cdips"
+        lcdirectory = f'/ar1/PROJ/luke/proj/CDIPS_LCS/sector-{sector}/'
+        catdir = '/ar1/local/cdips/catalogs/'
+
+    statsdir = join(projdir, 'results', 'cdips_lc_stats', f'sector-{sector}')
+    if not os.path.exists(statsdir): os.mkdir(statsdir)
     statsfile = os.path.join(statsdir,'cdips_lc_statistics.txt')
     if os.path.exists(statsfile) and not overwrite:
         print("found statsfile and not overwrite. skip")
         return
 
-    lcdirectory = (
-        f'/nfs/{filesystem}/ar0/TESS/PROJ/lbouma/CDIPS_LCS/sector-{sector}/'
-    )
     lcglob = 'cam?_ccd?/*_llc.fits'
 
     # a cut on OC_MG_FINAL_GaiaRp_lt_16_v0.4.csv to be genfromtxt readable
-    catalogfile = (
-        '/nfs/phtess1/ar1/TESS/PROJ/lbouma/sourceid_and_photrpmeanmag_v{}.csv'.
-        format(cdipssource_vnum)
-    )
+    catalogfile = join(catdir,
+                       f'sourceid_and_photrpmeanmag_v{cdipssource_vnum}.csv' )
     if not os.path.exists(catalogfile):
         if cdipssource_vnum < 0.6:
-            cfile = (
-                '/nfs/phtess1/ar1/TESS/PROJ/lbouma/OC_MG_FINAL_GaiaRp_lt_16_v{}.csv'.
-                format(cdipssource_vnum)
-            )
+            cfile = join(catdir,
+                         f'OC_MG_FINAL_GaiaRp_lt_16_v{cdipssource_vnum}.csv')
             cdipsdf = pd.read_csv(cfile, sep=';')
         else:
-            cfile = (
-                '/nfs/phtess1/ar1/TESS/PROJ/lbouma/cdips_targets_v{}_gaiasources_Rplt16_orclose.csv'.
-                format(cdipssource_vnum)
-            )
+            cfile = join(catdir,
+                         f'cdips_targets_v{cdipssource_vnum}_gaiasources_Rplt16_orclose.csv')
             cdipsdf = pd.read_csv(cfile, sep=',')
 
         outdf = cdipsdf[['source_id','phot_rp_mean_mag']].dropna(axis=0, how='any')
@@ -83,7 +80,7 @@ def get_cdips_lc_stats(
                               sigclip=5.0, fovcathasgaiaids=True)
 
     ap.plot_stats_file(statsfile, statsdir,
-                       'sector-{} cdips'.format(sector),
+                       f'sector-{sector} cdips',
                        binned=False, logy=True, logx=False,
                        correctmagsafter=None, rangex=(5.9,16),
                        observatory='tess', fovcathasgaiaids=True,
