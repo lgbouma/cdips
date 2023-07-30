@@ -15,6 +15,7 @@ USAGE:
 import os, shutil
 from glob import glob
 import multiprocessing as mp
+from os.path import join
 
 from cdips.lcproc import trex_lc_to_mast_lc as tlml
 import get_cdips_lc_stats as get_cdips_lc_stats
@@ -57,21 +58,25 @@ def main():
 
     # get stats, make the supp data file, print out the metadata, and move
     # allnan light curves
-    statsfile = os.path.join(
-        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/cdips_lc_stats',
-        'sector-{}'.format(sector),
-        'cdips_lc_statistics.txt'
-    )
+    from cdips.paths import RESULTSDIR
+    if not os.path.exists(RESULTSDIR): os.mkdir(RESULTSDIR)
+    lcstatsdir = join(RESULTSDIR, "cdips_lc_stats")
+    if not os.path.exists(lcstatsdir): os.mkdir(lcstatsdir)
+    lcstatsdir = join(RESULTSDIR, "cdips_lc_stats", f'sector-{sector}')
+    if not os.path.exists(lcstatsdir): os.mkdir(lcstatsdir)
+
+    statsfile = join(lcstatsdir, 'cdips_lc_statistics.txt')
     suppstatsfile = statsfile.replace('cdips_lc_statistics',
                                       'supplemented_cdips_lc_statistics')
     if not os.path.exists(suppstatsfile) and not overwrite:
-        get_cdips_lc_stats.main(sector, OC_MG_CAT_ver, cdipsvnum, overwrite)
+        get_cdips_lc_stats.main(sector, OC_MG_CAT_ver, cdipsvnum, overwrite,
+                                filesystem=filesystem)
     else:
         print('found {}'.format(suppstatsfile))
 
     # see how many LCs were expected
     outpath = (
-        '/nfs/phtess2/ar0/TESS/PROJ/lbouma/cdips/results/star_catalog/'+
+        '/nfs/php1/ar0/TESS/PROJ/lbouma/cdips/results/star_catalog/'+
         'how_many_cdips_stars_on_silicon_sector{}.txt'.
         format(sector)
     )
