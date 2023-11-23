@@ -54,7 +54,7 @@ def get_nasa_exoplanet_archive_pscomppars(ver=TODAYSTR, N_max=int(2e4)):
         query = (
             f'select top {N_max} '+
             'pl_name, hostname, pl_letter, gaia_id, tic_id, ra, dec, '+
-            'discoverymethod, disc_year, disc_facility, pl_orbper, pl_orbsmax, pl_rade, '+
+            'discoverymethod, disc_year, disc_facility, disc_pubdate, pl_orbper, pl_orbsmax, pl_rade, '+
             'pl_radeerr1, pl_radeerr2, '+
             'pl_radjerr1, pl_radjerr2, '+
             'pl_radj, pl_bmasse, pl_bmasseerr1, pl_bmasseerr2, pl_bmassj, '+
