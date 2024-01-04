@@ -32,6 +32,8 @@ Light curve miscellanea:
     get_best_ap_number_given_lcpath: self-descriptive.
 
     stitch_light_curves: stitch lists of light curves across sectors.
+
+    astropy_utc_time_to_bjd_tdb: compute barycentric corrections
 """
 
 from glob import glob
@@ -545,3 +547,67 @@ def determine_if_recovered(cachepath, inj_dict):
 
     # true means the signal was recovered
     return was_signal_recovered, was_signal_partially_recovered
+
+
+def astropy_utc_time_to_bjd_tdb(tmid_utc, ra, dec, observatory='earthcenter',
+                                get_barycorr=False):
+    """
+    <code duplication from cdips-pipeline/lcutils, but dependencies are easier
+    in this package>
+
+    Args:
+
+        tmid_utc (astropy.time.core.Time): measurement midtime in UTC
+        reference, as an astropy Time object. It can be vector, e.g.,
+
+            <Time object: scale='utc' format='jd' value=[2458363.41824751
+            2458364.41824751]>
+
+        ra, dec: with astropy units included.
+
+        get_barycorr: if True, returns tmid_bjd_tdb, ltt_bary tuple.
+
+    Returns:
+
+        tmid_bjd_tdb (np.ndarray, or float) if not get_barycorr.
+
+        else
+
+        tmid_bjd_tdb, ltt_bary: tuple of midtimes in BJD_TDB, and the
+        barycentric time corrections that were applied.
+    """
+
+    from astropy.time.core import Time
+    from astropy.units.quantity import Quantity
+    import astropy.coordinates as coord
+    from astropy import units as u
+
+    assert type(tmid_utc) == Time
+    assert type(ra) == Quantity
+
+    if observatory in ['earthcenter', 'tess']:
+        # For TESS, assume the observatory is at the Earth's center. This
+        # introduces a maximal timing error of
+        #
+        # (orbital major axis length)/(speed of light) ~= 80R_earth/c = 1.7 seconds.
+        #
+        # This is below the timing precision expected for pretty much anything
+        # from our lightcurves.
+
+        location = coord.EarthLocation.from_geocentric(0*u.m,0*u.m,0*u.m)
+    else:
+        raise NotImplementedError
+
+    tmid_utc.location = location
+
+    obj = coord.SkyCoord(ra, dec, frame='icrs')
+
+    ltt_bary = tmid_utc.light_travel_time(obj)
+
+    tmid_bjd_tdb = tmid_utc.tdb + ltt_bary
+
+    if not get_barycorr:
+        return tmid_bjd_tdb.jd
+    else:
+        return tmid_bjd_tdb.jd, ltt_bary.value
+
