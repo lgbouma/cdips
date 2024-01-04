@@ -278,6 +278,7 @@ def get_exofop_toi_catalog(ver=TODAYSTR, returnpath=False):
         'ast1607-astro':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/',
         'PU-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/',
         'marduk.local':'/Users/luke/local/cdips/catalogs/',
+        'mico.lan':'/Users/luke/local/cdips/catalogs/',
         'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/'
     }
 
