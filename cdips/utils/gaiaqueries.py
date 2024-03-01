@@ -138,10 +138,11 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         dataframe with Gaia DR2 / EDR3 crossmatch info.
     """
 
-    if n_max > int(6e4):
+    if n_max > int(6.6e4):
         raise NotImplementedError(
             'the gaia archive / astroquery seems to give invalid results past '
-            '60000 source_ids in this implementation...'
+            '66000 source_ids in this implementation... '
+            '(if you query all columns)'
         )
 
     if type(source_ids) != np.ndarray:
@@ -860,7 +861,7 @@ def parallax_to_distance_highsn(parallax_mas, e_parallax_mas=0,
 
     assert gaia_datarelease in ['gaia_edr3', 'gaia_dr3', 'gaia_dr2', 'none']
 
-    if gaia_datarelease in ['gaia_edr3', 'gaiadr3']:
+    if gaia_datarelease in ['gaia_edr3', 'gaia_dr3']:
         # Applicable to 5-parameter solutions (and more or less to 6-parameter
         # too) e.g., https://arxiv.org/abs/2103.16096,
         # https://arxiv.org/abs/2101.09691
