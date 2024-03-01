@@ -12,6 +12,7 @@ Contents:
     | ``get_interp_BmV_from_BpmRp``
     | ``get_interp_BpmRp_from_BmV``
     | ``get_interp_SpType_from_teff``
+    | ``get_interp_logL_from_MG``
     | ``get_SpType_BpmRp_correspondence``
     | ``get_SpType_GmRp_correspondence``
     | ``get_SpType_Teff_correspondence``
@@ -520,4 +521,29 @@ def given_VmKs_get_Teff(VmKs):
     return Teff
 
 
+def get_interp_logL_from_MG(M_G):
 
+    mamajek_df = load_basetable()
+    mamajek_df = mamajek_df[22:-6] # finite, monotonic BpmRp
+
+    sel = (
+        (mamajek_df['M_G'] != '...')
+        &
+        (mamajek_df['logL'] != '...')
+        &
+        (~mamajek_df['M_G'].str.endswith(':'))
+    )
+
+    mamaMG, mamalogL = (
+        nparr(mamajek_df['M_G'][sel])[::-1].astype(float),
+        nparr(mamajek_df['logL'][sel])[::-1].astype(float)
+    )
+
+    # include "isbad" catch because EVEN ONCE SORTED, you can have multivalued
+    # BmVs. so remove anything where diff not strictly greater than...
+    isbad = np.insert(np.diff(mamaMG) == 0, False, 0)
+
+    fn = interp1d(mamaMG[~isbad], mamalogL[~isbad], kind='quadratic',
+                  bounds_error=False, fill_value='extrapolate')
+
+    return fn(M_G)
