@@ -15,6 +15,7 @@ Contents:
     | edr3_propermotion_to_ICRF
     | parallax_to_distance_highsn
     | dr3_activityindex_espcs_to_RprimeIRT
+    | apparent_to_absolute_mag
 
     Photometric conversion:
     | dr3_bprp_to_gv
@@ -87,11 +88,21 @@ def make_votable_given_vector_dict(vectordict, outpath=None):
     return outpath
 
 
+def contains_uppercase(string):
+    return any(char.isupper() for char in string)
+
+
 def given_votable_get_df(votablepath, assert_equal='source_id'):
 
     vot = parse(votablepath)
     tab = vot.get_first_table().to_table()
     df = tab.to_pandas()
+
+    if isinstance(assert_equal, str):
+        for c in df.columns:
+            if contains_uppercase(c):
+                df = df.rename({c: c.lower()}, axis='columns')
+                tab.rename_column(c, c.lower())
 
     if isinstance(assert_equal, str):
         np.testing.assert_array_equal(tab[assert_equal], df[assert_equal])
@@ -1051,3 +1062,21 @@ def run_query_to_get_rvs_spectra():
     csvpaths = given_dr3_sourceids_get_rvs_spectra(dr3_source_ids, cache_id)
 
     return csvpaths
+
+
+def apparent_to_absolute_mag(apparent_mag, parallax_mas):
+    """
+    Convert apparent magnitude to absolute magnitude given the parallax.
+
+    Parameters:
+    apparent_mag (float): Apparent magnitude
+    parallax_mas (float): Parallax in milliarcseconds (mas)
+
+    Returns:
+    float: Absolute magnitude
+
+    """
+
+    absolute_mag = apparent_mag + 5*np.log10(parallax_mas/1e3) + 5
+
+    return absolute_mag
