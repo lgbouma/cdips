@@ -407,7 +407,7 @@ def toiid_to_ticid(toi_id):
 def get_tic_star_information(
     ticid,
     desiredcols=['ID', 'GAIA', 'ra', 'dec', 'Bmag', 'Vmag', 'Jmag', 'Hmag', 'Kmag', 'Tmag',
-                 'Teff', 'logg', 'rad', 'mass'],
+                 'Teff', 'logg', 'rad', 'mass', 'plx'],
     raise_error_on_multiple_match=True):
     """
     Given sting ticid, return single-rowed dataframe with TICv8 information of
