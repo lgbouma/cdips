@@ -149,7 +149,7 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
         dataframe with Gaia DR2 / EDR3 crossmatch info.
     """
 
-    if n_max > int(6.6e4):
+    if n_max > int(6.6e4) and which_columns == '*':
         raise NotImplementedError(
             'the gaia archive / astroquery seems to give invalid results past '
             '66000 source_ids in this implementation... '
