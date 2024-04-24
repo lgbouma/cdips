@@ -254,7 +254,7 @@ def given_source_ids_get_gaia_data(source_ids, groupname, n_max=10000,
 def given_source_ids_get_neighbor_counts(
     source_ids, dGmag, sep_arcsec, runid, n_max=20000, overwrite=True,
     enforce_all_sourceids_viable=True,
-    gaia_datarelease='gaiadr3'):
+    gaia_datarelease='gaiadr3', impose_nmax=1):
     """
     Given a list of Gaia source_ids, return a dataframe containing the count of
     the number of sources within `dGmag` magnitudes and `sep_arcsec` arcseconds
@@ -286,7 +286,7 @@ def given_source_ids_get_neighbor_counts(
         relative to each target star.
     """
 
-    if n_max > int(6e4):
+    if n_max > int(6e4) and impose_nmax:
         raise NotImplementedError(
             'the gaia archive / astroquery seems to give invalid results past '
             '60000 source_ids in this implementation...'
