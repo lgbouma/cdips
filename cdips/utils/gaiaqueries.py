@@ -101,8 +101,10 @@ def given_votable_get_df(votablepath, assert_equal='source_id'):
     if isinstance(assert_equal, str):
         for c in df.columns:
             if contains_uppercase(c):
-                df = df.rename({c: c.lower()}, axis='columns')
-                tab.rename_column(c, c.lower())
+                if c.lower() not in df.columns:
+                    df = df.rename({c: c.lower()}, axis='columns')
+                if c.lower() not in list(tab.columns):
+                    tab.rename_column(c, c.lower())
 
     if isinstance(assert_equal, str):
         np.testing.assert_array_equal(tab[assert_equal], df[assert_equal])
