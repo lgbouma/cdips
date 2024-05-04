@@ -16,6 +16,7 @@ Contents:
     | parallax_to_distance_highsn
     | dr3_activityindex_espcs_to_RprimeIRT
     | apparent_to_absolute_mag
+    | propermotion_to_kms
 
     Photometric conversion:
     | dr3_bprp_to_gv
@@ -1082,3 +1083,35 @@ def apparent_to_absolute_mag(apparent_mag, parallax_mas):
     absolute_mag = apparent_mag + 5*np.log10(parallax_mas/1e3) + 5
 
     return absolute_mag
+
+
+def propermotion_to_kms(mu, plx):
+    """
+    Convert proper motion from mas/yr to km/s given the parallax.
+
+    Args:
+        mu (float or numpy.ndarray): Proper motion in milliarcseconds per year (mas/yr).
+        plx (float or numpy.ndarray): Parallax in milliarcseconds (mas).
+
+    Returns:
+        float or numpy.ndarray: Proper motion in kilometers per second (km/s).
+
+    Example:
+        >>> propermotion_to_kms(100, 50)
+        9.477796327367532
+        >>> propermotion_to_kms(np.array([100, 200]), np.array([50, 75]))
+        array([9.47779633, 12.6370618 ])
+    """
+    if isinstance(mu, pd.Series):
+        mu = np.array(mu)
+        plx = np.array(plx)
+
+    distance_pc = 1 / (plx*1e-3)
+
+    mu_AU_per_yr = (
+        (mu*1e-3) * distance_pc
+    )*(u.AU/u.yr)
+
+    mu_kms = mu_AU_per_yr.to(u.km/u.second)
+
+    return mu_kms.value
