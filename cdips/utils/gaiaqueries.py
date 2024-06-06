@@ -31,6 +31,7 @@ Contents:
 import os
 from os.path import join
 import uuid
+from collections import Counter
 import numpy as np, matplotlib.pyplot as plt, pandas as pd
 
 from astropy.io.votable import from_table, writeto, parse
@@ -378,7 +379,32 @@ def given_source_ids_get_neighbor_counts(
     df = given_votable_get_df(dlpath, assert_equal=None)
     df = df.rename({'source_id_2':'nbhr_source_id'})
 
-    from collections import Counter
+    r = Counter(df['source_id'])
+
+    foo_df = pd.DataFrame(
+        {"source_id":source_ids, "nbhr_count_0":np.zeros(len(source_ids))}
+    )
+    temp_df = pd.DataFrame(
+        {"source_id":r.keys(), "nbhr_count_1":r.values()}
+    )
+    count_df = foo_df.merge(temp_df, how='left', on='source_id')
+    count_df['nbhr_count'] = np.nanmax(
+        [count_df.nbhr_count_0, count_df.nbhr_count_1], axis=0
+    ).astype(int)
+    count_df = count_df[['source_id', 'nbhr_count']]
+
+    return count_df, df
+
+
+def _big_nbhr_count_cleaner(dlpath, source_ids):
+    """
+    If you need to run given_source_ids_get_neighbor_counts on the Gaia Archive
+    because the query is too big, then this helper cleans the output .vot.gz
+    file.
+    """
+
+    df = given_votable_get_df(dlpath, assert_equal=None)
+    df = df.rename({'source_id_2':'nbhr_source_id'})
 
     r = Counter(df['source_id'])
 
@@ -395,6 +421,7 @@ def given_source_ids_get_neighbor_counts(
     count_df = count_df[['source_id', 'nbhr_count']]
 
     return count_df, df
+
 
 
 def query_neighborhood(bounds, groupname, n_max=2000, overwrite=True,
