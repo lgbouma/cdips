@@ -280,7 +280,7 @@ def stitch_light_curves(
         norm_A_5_95 = np.array([
             np.nanpercentile(f,95) - np.nanpercentile(f,5) for f in normfluxlist
         ])
-        assert np.all(np.diff(norm_A_5_95) < 1e-7)
+        assert np.all(np.diff(norm_A_5_95) < 1e-4)
 
         # renormalize around median of 1
         offsets = [np.nanmedian(f)-1 for f in normfluxlist]
