@@ -8,6 +8,8 @@ Very useful:
     clean_rotationsignal_tess_singlesector_light_curve: masks orbit edges,
         sigma slide clip, detrends, re-sigma slide clip.
 
+    basic_cleaning: sigma slide clip, nan-masking
+
     _run_notch: a wrapper to Aaron Rizzuto's Notch implementation.
 
     _run_locor: a wrapper to Aaron Rizzuto's LOCOR implementation.
@@ -105,6 +107,92 @@ wotanversion = version.WOTAN_VERSIONING
 wotanversiontuple = tuple(wotanversion.split('.'))
 assert int(wotanversiontuple[0]) >= 1
 assert int(wotanversiontuple[1]) >= 9
+
+
+def _rotation_period(time, flux, lsp_options):
+
+    period_min = lsp_options['period_min']
+    period_max = lsp_options['period_max']
+
+    ls = LombScargle(time, flux, flux*1e-3)
+    freq, power = ls.autopower(
+        minimum_frequency=1/period_max, maximum_frequency=1/period_min
+    )
+    ls_fap = ls.false_alarm_probability(power.max())
+    best_freq = freq[np.argmax(power)]
+    ls_period = 1/best_freq
+    theta = ls.model_parameters(best_freq)
+    ls_amplitude = theta[1]
+
+    lsp_dict = {}
+    lsp_dict['ls_period'] = ls_period
+    lsp_dict['ls_amplitude'] = np.abs(ls_amplitude)
+    lsp_dict['ls_fap'] = ls_fap
+
+    return lsp_dict
+
+
+def basic_cleaning(time, flux, dtr_dict=None,
+                   lsp_options={'period_min':0.1, 'period_max':20},
+                   verbose=True, slide_clip_lo=20, slide_clip_hi=3):
+    """
+    NaN-mask and sliding sigma-clip a light curve.  Run LS on it as well.
+    """
+
+    mask = np.isnan(flux) | np.isnan(time)
+    time = time[~mask].astype(float)
+    flux = flux[~mask].astype(float)
+
+    # identify rotation period
+    lsp_dict = _rotation_period(time, flux, lsp_options)
+    LOGINFO(f"Prot = {lsp_dict['ls_period']:.3f} days")
+
+    #
+    # sliding sigma clip asymmetric [20,3]*MAD, about median. use a 3-day
+    # window, to give ~100 to 150 data points at 30-minute cadence. mostly
+    # avoids big flares, provided restrictive slide_clip_lo and slide_clip_hi
+    # are given.
+    #
+    from wotan import slide_clip
+    clip_window = 3
+    slide_clip_lo = 20
+    slide_clip_hi = 3
+    clipped_flux = slide_clip(
+        time, flux, window_length=clip_window, low=slide_clip_lo,
+        high=slide_clip_hi, method='mad', center='median'
+    )
+    sel0 = ~np.isnan(clipped_flux) & (clipped_flux != 0)
+
+    search_time = time[sel0]
+    search_flux = clipped_flux[sel0]
+
+    dtr_stages_dict = {
+        # initial time and flux.
+        'time': time,
+        'flux': flux,
+        # after initial window sigma_clip on flux, what is left?
+        'clipped_flux': clipped_flux,
+        # non-nan indices from clipped_flux
+        'sel0': sel0,
+        # times and fluxes used
+        'search_time': search_time,
+        'search_flux': search_flux
+    }
+    if isinstance(lsp_dict, dict):
+        # in most cases, cache the LS period, amplitude, and FAP
+        dtr_stages_dict['lsp_dict'] = lsp_dict
+
+    outdict = {
+        'search_time':search_time,
+        'search_flux':search_flux,
+        'dtr_stages_dict':dtr_stages_dict
+    }
+    with open(dtrcachepath, 'wb') as f:
+        pickle.dump(outdict, f)
+        LOGINFO(f"Wrote {dtrcachepath}")
+
+    return search_time, search_flux, dtr_stages_dict
+
 
 def clean_rotationsignal_tess_singlesector_light_curve(
     time, mag, magisflux=False, dtr_dict=None, lsp_dict=None,
