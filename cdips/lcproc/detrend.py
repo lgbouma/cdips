@@ -109,7 +109,9 @@ assert int(wotanversiontuple[0]) >= 1
 assert int(wotanversiontuple[1]) >= 9
 
 
-def _rotation_period(time, flux, lsp_options):
+def rotation_period(
+    time, flux, lsp_options={'period_min':0.1, 'period_max':20}
+):
 
     period_min = lsp_options['period_min']
     period_max = lsp_options['period_max']
@@ -144,7 +146,7 @@ def basic_cleaning(time, flux, dtr_dict=None,
     flux = flux[~mask].astype(float)
 
     # identify rotation period
-    lsp_dict = _rotation_period(time, flux, lsp_options)
+    lsp_dict = rotation_period(time, flux, lsp_options)
     LOGINFO(f"Prot = {lsp_dict['ls_period']:.3f} days")
 
     #
