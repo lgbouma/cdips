@@ -319,7 +319,7 @@ def clean_rotationsignal_tess_singlesector_light_curve(
 
     dtr_method_used = dtr_method
 
-    if dtr_method in ['pspline','biweight','none']:
+    if dtr_method in ['pspline','biweight']:
 
         if 'break_tolerance' not in dtr_dict:
             dtr_dict['break_tolerance'] = None
@@ -365,6 +365,9 @@ def clean_rotationsignal_tess_singlesector_light_curve(
             dtr_method_used += '-locor'
         else:
             raise NotImplementedError(f"Got LS period {lsp_dict['ls_period']}")
+
+    elif dtr_method == 'none':
+        flat_flux = 1. * clipped_flux[sel0]
 
     #
     # re-apply sliding sigma clip asymmetric [20,3]*MAD, about median, after
