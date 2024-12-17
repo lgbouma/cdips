@@ -3,7 +3,7 @@
 #############
 
 import logging
-from astrobase import log_sub, log_fmt, log_date_fmt
+from cdips import log_sub, log_fmt, log_date_fmt
 
 DEBUG = False
 if DEBUG:
@@ -28,7 +28,6 @@ LOGEXCEPTION = LOGGER.exception
 ## IMPORTS ##
 #############
 
-from astrobase import lcmath
 import numpy as np, pandas as pd
 import os, textwrap
 from glob import glob
@@ -46,6 +45,7 @@ def mask_orbit_start_and_end(time, flux, flux_err=None, orbitgap=1, expected_nor
     returns:
         time, flux: with `orbitpadding` days trimmed out
     """
+    from astrobase import lcmath
     norbits, groups = lcmath.find_lc_timegroups(time, mingap=orbitgap)
 
     if norbits != expected_norbits:
