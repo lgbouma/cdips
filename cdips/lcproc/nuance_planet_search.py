@@ -33,33 +33,38 @@ LOGEXCEPTION = LOGGER.exception
 import os, pickle
 from os.path import join
 from tqdm import tqdm
-import jax
 import numpy as np, matplotlib.pyplot as plt
+
+import jax
 import jax.numpy as jnp
+
 from tinygp import kernels, GaussianProcess
+
 from nuance import core, Star
 from nuance.core import gp_model
-from nuance.utils import minimize, sigma_clip_mask
+from nuance.utils import minimize
 from nuance import utils
+from nuance.kernels import rotation
 
 from nuance.linear_search import linear_search
 from nuance.periodic_search import periodic_search
 
 from cdips.utils.periodogramutils import find_good_peaks, flag_harmonics
-from cdips.lcproc.detrend import basic_cleaning
+from cdips.lcproc.lccleaning import basic_cleaning, iterativegp_cleaning
 
 jax.config.update("jax_enable_x64", True)
 
 def _build_gp(params, time):
+    """single simple harmonic oscillator GP kernel; usually you'll want
+    `nuance.kernels.rotation` instead.
+    """
 
     kernel = kernels.quasisep.SHO(
         sigma = jnp.exp(params["log_sigma"]),
         omega = 2. * jnp.pi / jnp.exp(params["log_period"]),
         quality = jnp.exp(params["log_Q"]),
     )
-    #kernel = kernels.quasisep.SHO(10.0, 10.0, 0.002)
 
-    #FIXME TODO LEFT OFF HERE...
     return GaussianProcess(kernel, time, diag=params["error"]**2, mean=1.)
 
 
@@ -118,6 +123,15 @@ def run_nuance(
     assert isinstance(flux, np.ndarray)
     assert isinstance(flux_err, np.ndarray)
 
+    # Drop NaNs & median normalize.
+    mask = np.isnan(flux) | np.isnan(time)
+    time = time[~mask].astype(float)
+    flux = flux[~mask].astype(float)
+
+    flux_median = np.median(flux)
+    flux /= flux_median
+    flux_err /= flux_median
+
     assert cleaning_type in ['basic', 'iterativegp', 'none']
 
     if cleaning_type == 'none':
@@ -125,19 +139,11 @@ def run_nuance(
 
     elif cleaning_type == 'basic':
         # default: slide_clip_lo=20, slide_clip_hi=3, clip_window=3
-        time, flux, _ = basic_cleaning(time, flux)
+        time, flux, dtr_stages_dict = basic_cleaning(time, flux)
 
     elif cleaning_type == 'iterativegp':
-
-    # basic light curve cleaning: mask NaNs and normalize
-
-    mask = np.isnan(time) | np.isnan(flux)
-    time = time[~mask].astype(float)
-    flux = flux[~mask].astype(float)
-
-    flux_median = np.median(flux)
-    flux /= flux_median
-    flux_err /= flux_median
+        # NOTE: cleaning is further below
+        pass
 
     if lsp_dict is None:
         from cdips.lcproc.lccleaning import _rotation_period
@@ -184,39 +190,64 @@ def run_nuance(
 
     os.environ["XLA_FLAGS"] = f"--xla_force_host_platform_device_count={n_cpus}"
 
-    # define a GP using an appropriate kernel
-    initial_params = {
-        "log_period": jnp.log(lsp_dict['ls_period']),
-        "log_Q": jnp.log(100),  # 10: overfitting more in coherence time, 1000: less
-        "log_sigma": jnp.log(1e-1),
-        "error": np.mean(flux_err),
-    }
+    ###########################################
+    # define a GP using an appropriate kernel #
+    ###########################################
+    prot = lsp_dict['ls_period']
+    # build GP using the "rotation" kernel, which is a re-implementation of
+    # https://celerite2.readthedocs.io/en/latest/api/python/#celerite2.terms.RotationTerm
+    # but with two exponential dampings, over "short_scale" and "long_scale",
+    # in addition to the quality factors which are supposed to help with this
+    # anyway...
+    # This is discussed in Section 4.2.2 of the nuance paper.
+    build_gp, init_params = rotation(prot, flux_err.mean(), long_scale=0.5)
+    mu, nll = gp_model(time, flux, build_gp)
 
-    mu, nll = gp_model(time, flux, _build_gp)
+    gp_params = minimize(
+        nll, init_params, ["log_sigma", "log_short_scale", "log_short_sigma", "log_long_sigma"]
+    )
+    init_gp_params = minimize(nll, gp_params)
 
-    gp_params = minimize(nll, initial_params)
-
-    ##FIXME FIXME FIXME
-    #crap_params = minimize(nll, initial_params)
-
-    #from copy import deepcopy
-    #gp_params = deepcopy(initial_params)
-
-    #crap_params2 = minimize(nll, initial_params, param_names=['log_Q'])
-    #import IPython; IPython.embed()
-    #FIXME
+    if cleaning_type == 'iterativegp':
+        gpfitted_time, gpfitted_flux, gp_params, dtr_stages_dict = (
+            iterativegp_cleaning(
+                time, flux, nll, init_gp_params, mu,
+                N_iter=3, sigma_clip=3, clipwindow=5, verbose=True
+            )
+        )
 
     # viz 1: plot optimized gp model...
-    prot = lsp_dict['ls_period']
     if make_optimized_gp_plot:
         plt.close("all")
         title = f"LS P={prot:.1f}d, opt gp param = {gp_params}"
+        LOGINFO(title)
         fig, axs = plt.subplots(nrows=2, figsize=(8, 6))
-        axs[0].plot(time, flux, ".", c="0.7", ms=2, label="flux")
-        axs[1].plot(time, flux, ".", c="0.7", ms=2, label="flux")
-        label = f"GP model"
-        axs[1].plot(time, mu(gp_params), c="k", label=label, lw=0.5)
-        axs[1].plot(time, mu(initial_params), c="r", label=label, lw=0.5)
+        axs[0].plot(time, flux, ".", c="lightgray", ms=3, label="all")
+        axs[0].plot(gpfitted_time, gpfitted_flux, ".", c="k", ms=2, label="gpfitted")
+        axs[1].plot(time, flux, ".", c="lightgray", ms=3, label="all")
+        axs[1].plot(gpfitted_time, gpfitted_flux, ".", c="k", ms=2, label="gpfitted")
+
+        # plot two GPs: one built on the masked time/flux, and the other built
+        # on the full time-series.  ideally, the latter shouldn't be
+        # overfitting...
+        mu, _ = gp_model(gpfitted_time, gpfitted_flux, build_gp)
+        gp_mean = mu(gp_params)
+        split_idxs = [
+            0,
+            *np.flatnonzero(np.diff(gpfitted_time) > 5*30 / 60 / 24),
+            len(time),
+        ]
+        _ = True
+        for i in range(len(split_idxs) - 1):
+            x = gpfitted_time[split_idxs[i] + 1 : split_idxs[i + 1]]
+            y = gp_mean[split_idxs[i] + 1 : split_idxs[i + 1]]
+            axs[1].plot(x, y, "k", label="GP mean" if _ else None, lw=1)
+            _ = False
+
+        _mu, _ = gp_model(time, flux, build_gp)
+        label = f"GP model (all time)"
+        axs[1].plot(time, _mu(gp_params), c="darkgray", label=label, lw=0.3)
+
         axs[1].set_xlabel("time")
         axs[0].set_ylabel("flux")
         axs[1].set_ylabel("flux")
@@ -224,10 +255,10 @@ def run_nuance(
         fig.tight_layout()
         outpath = join(cachedir, f'{star_id}_gpopt_initial_gp_model.png')
         LOGINFO(f'wrote {outpath}')
-        fig.savefig(outpath)
+        fig.savefig(outpath, dpi=300)
 
     # compute gp used for search
-    gp = _build_gp(gp_params, time)
+    gp = build_gp(gp_params, time)
 
     # Run linear search
     ls = linear_search(time, flux, gp=gp)(epoch_grid, duration_grid)
@@ -288,13 +319,13 @@ def run_nuance(
             cachedir, f'{star_id}_gpopt_periodic_transit_search_result.png'
         )
         LOGINFO(f'wrote {outpath}')
-        fig.savefig(outpath)
+        fig.savefig(outpath, dpi=300)
 
 
     outdict = {
         # GP optimization
         'gp_prot': lsp_dict['ls_period'],
-        'initial_params': initial_params,
+        #'initial_params': initial_params,
         'gp_params': gp_params,
         # search result
         't0': t0,
