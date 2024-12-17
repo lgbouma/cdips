@@ -5,6 +5,8 @@ Contents:
 
     basic_cleaning: sliding sigma clipper, with nan-masking
 
+    iterativegp_cleaning: fit GP to LC while iteratively excluding outliers
+
     _rotation_period: Lomb-Scargle wrapper.
 
 """
@@ -38,7 +40,7 @@ LOGEXCEPTION = LOGGER.exception
 ## IMPORTS ##
 #############
 import os, shutil, socket
-from os.path impor tjoin
+from os.path import join
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 from astropy.io import fits
 
@@ -60,6 +62,15 @@ assert int(wotanversiontuple[1]) >= 9
 def _rotation_period(time, flux,
                      lsp_options={'period_min':0.1, 'period_max':20}):
 
+    # Drop NaNs & median normalize.
+    mask = np.isnan(flux) | np.isnan(time)
+    time = time[~mask].astype(float)
+    flux = flux[~mask].astype(float)
+
+    flux_median = np.median(flux)
+    flux /= flux_median
+
+    # Calculate the periodogram.
     period_min = lsp_options['period_min']
     period_max = lsp_options['period_max']
 
@@ -81,6 +92,55 @@ def _rotation_period(time, flux,
     return lsp_dict
 
 
+def iterativegp_cleaning(time, flux,
+                         nll, gp_params, mu,
+                         N_iter=3,
+                         sigma_clip=3,
+                         clipwindow=3,
+                         verbose=True):
+    """
+    Fit GP to LC while iteratively excluding outliers.
+    Call only really makes sense in context of lcproc/nuance_planet_search.py
+
+    NB: The main point of this routine isn't really to "clean" the light curve,
+    it's to obtain reasonable GP parameters.
+
+    Args:
+        time (np.ndarray): Array of time values for the light curve.
+        flux (np.ndarray): Array of flux values for the light curve.
+        clipwindow (int): Number of points around outliers to also drop.
+
+    Returns:
+        search_time, search_flux, dtr_stages_dict (tuple):
+    """
+
+    from nuance.utils import minimize, sigma_clip_mask
+    outlier_mask = np.ones_like(time).astype(bool)
+
+    for _ in range(N_iter):
+        residuals = flux - mu(gp_params)
+        outlier_mask = (
+            outlier_mask &
+            sigma_clip_mask(residuals, sigma=sigma_clip,
+                            window=clipwindow)
+        )
+        gp_params = minimize(nll, gp_params)
+
+    search_time = time[outlier_mask]
+    search_flux = flux[outlier_mask]
+
+    dtr_stages_dict = {
+        # initial time and flux.
+        'time': time,
+        'flux': flux,
+        # times and fluxes used
+        'search_time': search_time,
+        'search_flux': search_flux
+    }
+    return search_time, search_flux, gp_params, dtr_stages_dict
+
+
+
 def basic_cleaning(time, flux,
                    lsp_options={'period_min':0.1, 'period_max':20},
                    verbose=True,
@@ -89,11 +149,22 @@ def basic_cleaning(time, flux,
                    clip_window=3):
     """
     NaN-mask and sliding sigma-clip a light curve.  Run LS on it as well.
+
+    Args:
+        time (np.ndarray): Array of time values for the light curve.
+        flux (np.ndarray): Array of flux values for the light curve.
+
+    Returns:
+        search_time, search_flux, dtr_stages_dict (tuple):
     """
 
     mask = np.isnan(flux) | np.isnan(time)
     time = time[~mask].astype(float)
     flux = flux[~mask].astype(float)
+
+    flux_median = np.median(flux)
+    flux /= flux_median
+    flux_err /= flux_median
 
     # identify rotation period
     lsp_dict = _rotation_period(time, flux, lsp_options)
@@ -134,6 +205,4 @@ def basic_cleaning(time, flux,
         dtr_stages_dict['lsp_dict'] = lsp_dict
 
     return search_time, search_flux, dtr_stages_dict
-
-
 
