@@ -45,7 +45,6 @@ from astropy.io import fits
 from astropy.time import Time
 from cdips.utils import bash_grep
 
-from astrobase.imageutils import get_header_keyword
 from cdips.utils.tess_noise_model import N_pixels_in_aperture_Sullivan
 
 def find_cdips_lc_paths(
@@ -203,6 +202,8 @@ def get_best_ap_number_given_lcpath(lcpath):
     Given a CDIPS LC, figure out which aperture is "optimal" given the
     brightness of the star, assuming Sullivan+2015's defintion of "optimal".
     """
+
+    from astrobase.imageutils import get_header_keyword
 
     tess_mag = get_header_keyword(lcpath, 'TESSMAG')
 
