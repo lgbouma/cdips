@@ -1477,27 +1477,29 @@ def calculate_linear_model_mag(y, basisvecs, n_components,
     return out_mag, n_comp
 
 
-def transit_mask(t, period, duration, T0):
+def transit_mask(t: np.ndarray, period: float, duration: float, T0: float) -> np.ndarray:
     """
-    :t: *(array)* Time series of the data (in units of days)
-    :period: *(float)* Transit period e.g. from results: ``period``
-    :duration: *(float)* Transit duration e.g. from results: ``duration``
-    :T0: *(float)* Mid-transit of first transit e.g. from results: ``T0``
+    Creates a mask identifying in-transit points in a time series.
 
-    Returns
+    Args:
+        t (np.ndarray): Time series of the data (in units of days).
+        period (float): Transit period (e.g., from results: `period`).
+        duration (float): Transit duration (e.g., from results: `duration`).
+        T0 (float): Mid-transit time of the first transit (e.g., from results: `T0`).
 
-    :intransit: *(numpy array mask)* A numpy array mask (of True/False values)
-    for each data point in the time series. ``True`` values are in-transit.
+    Returns:
+        np.ndarray: A boolean array where `True` indicates in-transit points
+        and `False` indicates out-of-transit points.
 
-    Example usage:
-
-    ::
-
+    Example:
+        ```python
         intransit = transit_mask(t, period, duration, T0)
         print(intransit)
-        >>> [False False False ...]
-        plt.scatter(t[in_transit], y[in_transit], color='red')  # in-transit points in red
-        plt.scatter(t[~in_transit], y[~in_transit], color='blue')  # other points in blue
+        # Output: [False, False, False, ...]
+
+        plt.scatter(t[intransit], y[intransit], color='red')  # in-transit points in red
+        plt.scatter(t[~intransit], y[~intransit], color='blue')  # other points in blue
+        ```
     """
     mask = np.abs((t - T0 + 0.5*period) % period - 0.5*period) < 0.5 * duration
     return mask
