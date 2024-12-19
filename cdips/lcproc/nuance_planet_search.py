@@ -35,24 +35,10 @@ from os.path import join
 from tqdm import tqdm
 import numpy as np, matplotlib.pyplot as plt
 
-import jax
-import jax.numpy as jnp
-
 from tinygp import kernels, GaussianProcess
-
-from nuance import core, Star
-from nuance.core import gp_model
-from nuance.utils import minimize
-from nuance import utils
-from nuance.kernels import rotation
-
-from nuance.linear_search import linear_search
-from nuance.periodic_search import periodic_search
 
 from cdips.utils.periodogramutils import find_good_peaks, flag_harmonics
 from cdips.lcproc.lccleaning import basic_cleaning, iterativegp_cleaning
-
-jax.config.update("jax_enable_x64", True)
 
 def _build_gp(params, time):
     """single simple harmonic oscillator GP kernel; usually you'll want
@@ -66,8 +52,6 @@ def _build_gp(params, time):
     )
 
     return GaussianProcess(kernel, time, diag=params["error"]**2, mean=1.)
-
-
 
 
 def run_nuance(
@@ -87,7 +71,7 @@ def run_nuance(
         'oversample': 5
     },
     verbose: bool = True,
-) -> dict:
+    ) -> dict:
     """
     Run the Nuance algorithm for transit searches.
 
@@ -112,6 +96,36 @@ def run_nuance(
         outdict (dict): Dictionary containing search results.
     """
 
+    # set number of cpus to use
+    cpu_count = os.cpu_count()
+    if n_cpus > cpu_count / 2 :
+        LOGWARNING(
+            f'Found n_cpus > cpu_count / 2 '
+            f'(n_cpus = {n_cpus}, cpu_count={cpu_count}...'
+        )
+        LOGWARNING(
+            'Throttling n_cpus to avoid overflow...'
+        )
+        n_cpus = cpu_count / 2
+
+    os.environ["XLA_FLAGS"] = f"--xla_force_host_platform_device_count={n_cpus}"
+
+    # import jax after the XLA_FLAGS environment variable is set
+    import jax
+    import jax.numpy as jnp
+
+    from nuance import core, Star
+    from nuance.core import gp_model
+    from nuance.utils import minimize
+    from nuance import utils
+    from nuance.kernels import rotation
+
+    from nuance.linear_search import linear_search
+    from nuance.periodic_search import periodic_search
+
+    jax.config.update("jax_enable_x64", True)
+
+    # if this has been done before pull from the cache
     dtrcachepath = join(cachedir, f'{star_id}_nuance_result.pkl')
     if os.path.exists(dtrcachepath):
         LOGINFO(f'Found {dtrcachepath}, loading & returning.')
@@ -132,6 +146,10 @@ def run_nuance(
     flux /= flux_median
     flux_err /= flux_median
 
+    if verbose:
+        N = len(time)
+        LOGINFO(f'{star_id}: Got N={N} points.')
+
     assert cleaning_type in ['basic', 'iterativegp', 'none']
 
     if cleaning_type == 'none':
@@ -142,13 +160,14 @@ def run_nuance(
         time, flux, dtr_stages_dict = basic_cleaning(time, flux)
 
     elif cleaning_type == 'iterativegp':
-        # NOTE: cleaning is further below
+        # NOTE: this 'cleaning' is further below
         pass
 
     if lsp_dict is None:
         from cdips.lcproc.lccleaning import _rotation_period
         lsp_options = {'period_min':0.1, 'period_max':20}
         lsp_dict = _rotation_period(time, flux, lsp_options=lsp_options)
+        prot = lsp_dict['ls_period']
 
     if verbose:
         LOGINFO(f'{star_id}: Got Prot={lsp_dict["ls_period"]} days.')
@@ -176,24 +195,9 @@ def run_nuance(
     # epoch grid.  over 2 minute cadence this is probably overkill.
     epoch_grid = time.copy()
 
-    # set number of cpus to use
-    cpu_count = os.cpu_count()
-    if n_cpus > cpu_count / 2 :
-        LOGWARNING(
-            f'Found n_cpus > cpu_count / 2 '
-            f'(n_cpus = {n_cpus}, cpu_count={cpu_count}...'
-        )
-        LOGWARNING(
-            'Throttling n_cpus to avoid overflow...'
-        )
-        n_cpus = cpu_count / 2
-
-    os.environ["XLA_FLAGS"] = f"--xla_force_host_platform_device_count={n_cpus}"
-
     ###########################################
     # define a GP using an appropriate kernel #
     ###########################################
-    prot = lsp_dict['ls_period']
     # build GP using the "rotation" kernel, which is a re-implementation of
     # https://celerite2.readthedocs.io/en/latest/api/python/#celerite2.terms.RotationTerm
     # but with two exponential dampings, over "short_scale" and "long_scale",
@@ -206,15 +210,24 @@ def run_nuance(
     gp_params = minimize(
         nll, init_params, ["log_sigma", "log_short_scale", "log_short_sigma", "log_long_sigma"]
     )
-    init_gp_params = minimize(nll, gp_params)
+    gpfitted_time, gpfitted_flux = time*1., flux*1.
 
-    if cleaning_type == 'iterativegp':
-        gpfitted_time, gpfitted_flux, gp_params, dtr_stages_dict = (
-            iterativegp_cleaning(
-                time, flux, nll, init_gp_params, mu,
-                N_iter=3, sigma_clip=3, clipwindow=5, verbose=True
+    # NOTE: yo dog.  i herd you don't like overfitting.  so i tried fitting
+    # your overfitting to prevent the overfitting.  and i got some more
+    # overfitting.
+    RUN_OPTIMIZATION = 0
+    if not RUN_OPTIMIZATION:
+        LOGWARNING('skipping iterativegp cleaning because there is no point.')
+    if RUN_OPTIMIZATION:
+        init_gp_params = minimize(nll, gp_params)
+
+        if cleaning_type == 'iterativegp':
+            gpfitted_time, gpfitted_flux, gp_params, dtr_stages_dict = (
+                iterativegp_cleaning(
+                    time, flux, nll, init_gp_params, mu,
+                    N_iter=3, sigma_clip=3, clipwindow=5, verbose=True
+                )
             )
-        )
 
     # viz 1: plot optimized gp model...
     if make_optimized_gp_plot:
@@ -261,7 +274,9 @@ def run_nuance(
     gp = build_gp(gp_params, time)
 
     # Run linear search
-    ls = linear_search(time, flux, gp=gp)(epoch_grid, duration_grid)
+    ls = linear_search(
+        time, flux, gp=gp, backend='cpu', batch_size=n_cpus
+    )(epoch_grid, duration_grid)
 
     # Run periodic search:
     # Pick the best period that is not a harmonic of the rotation period.
@@ -277,7 +292,9 @@ def run_nuance(
         |
         flag_harmonics(pgdict['nbestperiods'], 0.5*prot)
     )
-    min_index_not_true = next(i for i, val in enumerate(pgdict['periodmask']) if not val)
+    min_index_not_true = (
+        next(i for i, val in enumerate(pgdict['periodmask']) if not val)
+    )
     period_ind = int(
         np.argwhere(
             np.float64(pgdict['nbestparams']['P'][min_index_not_true]
