@@ -1,7 +1,7 @@
 import os
 from os.path import join
 import numpy as np, pandas as pd, lightkurve as lk
-from cdips.lcproc.nuance_planet_search import run_nuance
+from cdips.lcproc.nuance_planet_search import run_nuance, run_iterative_nuance
 
 star_id = 'Kepler_1627'
 cachedir = "./temp/"
@@ -46,7 +46,7 @@ time = time[:int(N/2)]
 flux = flux[:int(N/2)]
 flux_err = flux_err[:int(N/2)]
 
-outdict = run_nuance(
+outdict = run_iterative_nuance(
     time, flux, flux_err,
     star_id, cachedir,
     cleaning_type='iterativegp',
