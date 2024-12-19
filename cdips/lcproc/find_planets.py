@@ -57,7 +57,7 @@ nworkers = mp.cpu_count()
 def detrend_and_iterative_tls(
     star_id, time, mag, dtr_dict,
     search_method='tls',
-    max_tls_iterations=3,
+    max_iterations=3,
     period_min=0.5, period_max=27,
     R_star=1.0, M_star=1.0,
     R_star_min=0.1, R_star_max=5,
@@ -77,7 +77,7 @@ def detrend_and_iterative_tls(
 
     kwargs:
 
-        as in run_periodograms_and_detrend, except for `max_tls_iterations`,
+        as in run_periodograms_and_detrend, except for `max_iterations`,
         which is self-explanatory.
 
     Returns:
@@ -141,7 +141,7 @@ def detrend_and_iterative_tls(
     outdicts['dtr_stages_dict'] = dtr_stages_dict
 
     # run the TLS periodograms
-    while count < max_tls_iterations:
+    while count < max_iterations:
 
         dy = np.ones_like(search_time)*_p2p_rms(search_flux)
 
