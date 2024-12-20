@@ -156,12 +156,17 @@ def find_good_peaks(period_grid, power_vals, periodepsilon=0.1, nbestpeaks=5,
 
         prevperiod = period
 
+    if nbestparams is not None:
+        nbestparamsout = {k:nparr(v) for k,v in nbestparams.items()}
+    else:
+        nbestparamsout = None
+
     return {'bestperiod':finperiods[bestperiodind],
             'bestpowerval':finpower[bestperiodind],
             'nbestpeaks':nbestpeaks,
             'nbestpowervals':nparr(nbestpowervals),
             'nbestperiods':nparr(nbestperiods),
-            'nbestparams':{k:nparr(v) for k,v in nbestparams.items()},
+            'nbestparams':nbestparamsout,
             'powervals':power_vals,
             'periods':period_grid}
 
