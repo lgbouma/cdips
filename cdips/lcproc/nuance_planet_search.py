@@ -385,6 +385,7 @@ def run_iterative_nuance(
             # periodogram
             'period_grid': period_grid,
             'snr': snr,
+            'pgdict': pgdict,
             # data & processing stages
             'time': time,
             'phi': phi,
@@ -729,6 +730,7 @@ def run_nuance(
         # periodogram
         'period_grid': period_grid,
         'snr': snr,
+        'pgdict': pgdict,
         # data & processing stages
         'time': time,
         'phi': phi,
