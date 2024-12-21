@@ -3,7 +3,7 @@ from os.path import join
 import numpy as np, pandas as pd, lightkurve as lk
 from cdips.lcproc.nuance_planet_search import run_nuance, run_iterative_nuance
 
-star_id = 'Kepler_1627'
+star_id = 'Kepler_1627' # Kepler_1627, Kepler_1643, KOI-7368, KIC_8873450 (=KOI-7913)
 cachedir = "./temp/"
 
 csvcachepath = join(cachedir, f"{star_id}_lc.csv")
@@ -11,7 +11,7 @@ if not os.path.exists(csvcachepath):
     # Get long cadence light curves for all quarters. Median normalize all
     # quarters, remove nans, and run a 5-sigma outlier clipping.
     lcf = lk.search_lightcurve(
-        "6184894", mission="Kepler", author="Kepler", cadence="long"
+        star_id.replace("_"," "), mission="Kepler", author="Kepler", cadence="long"
     ).download_all()
     lc = lcf.stitch().remove_nans().remove_outliers()
 
