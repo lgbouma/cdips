@@ -27,6 +27,7 @@ if not os.path.exists(csvcachepath):
     df.to_csv(csvcachepath, index=False)
 
 df = pd.read_csv(csvcachepath)
+df = df.sort_values(by='time')
 time, flux, flux_err = np.array(df.time), np.array(df.flux), np.array(df.flux_err)
 med_flux = np.nanmedian(flux)
 flux /= med_flux
