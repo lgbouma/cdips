@@ -280,6 +280,7 @@ def run_iterative_nuance(
         if not RUN_OPTIMIZATION:
             LOGWARNING('skipping iterativegp cleaning b/c as implemented it overfits.')
         if RUN_OPTIMIZATION:
+            LOGINFO('running iterativegp cleaning...')
             if cleaning_type == 'iterativegp':
                 gpfitted_time, gpfitted_flux, gp_params, dtr_stages_dict = (
                     iterativegp_cleaning(
@@ -367,7 +368,7 @@ def run_iterative_nuance(
 
         t0, D, P = params[period_ind]
         if verbose:
-            LOGINFO(f'{star_id}: getting P={P}')
+            LOGINFO(f'{star_id}: getting P={P:.3f}, SNR={np.nanmax(snr):.3f}')
 
         linear, found, noise = core.separate_models(time, flux, gp=gp)(t0, D, P)
         detrended = flux - noise - linear
