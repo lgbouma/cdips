@@ -74,6 +74,7 @@ def run_iterative_nuance(
         'oversample': 5
     },
     verbose: bool = True,
+    gpkernel_id: str = 'rotation',
     ) -> dict:
     """
     Run the Nuance algorithm for transit searches, iteratively.
@@ -94,6 +95,7 @@ def run_iterative_nuance(
             period search.
         n_cpus (int, optional): Number of CPUs to use for parallel computation.
             Defaults to 10.
+        gpkernel_id (str, optional):  "rotation", "SHO", "2SHO".
 
     Returns:
         outdict (dict): Dictionary containing search results.
@@ -121,6 +123,7 @@ def run_iterative_nuance(
     from nuance.core import gp_model
     from nuance.utils import minimize
     from nuance import utils
+    from tinygp import kernels, GaussianProcess
     from nuance.kernels import rotation
 
     from nuance.linear_search import linear_search
@@ -236,13 +239,32 @@ def run_iterative_nuance(
         # in addition to the quality factors which are supposed to help with this
         # anyway...
         # This is discussed in Section 4.2.2 of the nuance paper.
-        build_gp, init_params = rotation(prot, flux_err.mean(), long_scale=0.5)
-        mu, nll = gp_model(time, flux, build_gp)
+        if gpkernel_id == 'rotation':
+            build_gp, init_params = rotation(prot, flux_err.mean(), long_scale=0.5)
+            mu, nll = gp_model(time, flux, build_gp)
+            gp_params = minimize(
+                nll, init_params,
+                ["log_sigma", "log_short_scale", "log_short_sigma", "log_long_sigma"]
+            )
 
-        gp_params = minimize(
-            nll, init_params,
-            ["log_sigma", "log_short_scale", "log_short_sigma", "log_long_sigma"]
-        )
+
+        elif gpkernel_id == 'SHO':
+            init_params = {
+                "log_period": jnp.log(prot),
+                "log_Q": jnp.log(100),
+                "log_sigma": jnp.log(1e-1),
+                "error": np.mean(flux_err),
+            }
+            def build_gp(params, time):
+                kernel = kernels.quasisep.SHO(
+                    jnp.exp(params["log_sigma"]),
+                    jnp.exp(params["log_period"]),
+                    jnp.exp(params["log_Q"]),
+                )
+                return GaussianProcess(kernel, time, diag=params["error"]**2, mean=1.0)
+            mu, nll = gp_model(time, flux, build_gp)
+            gp_params = minimize(nll, init_params)
+
         gpfitted_time, gpfitted_flux = time*1., flux*1.
 
         # NOTE: The idea behind this "optimization" is to find the
