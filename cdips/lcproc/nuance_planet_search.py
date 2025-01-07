@@ -275,6 +275,7 @@ def run_iterative_nuance(
         if not RUN_OPTIMIZATION:
             LOGWARNING('skipping iterativegp cleaning b/c as implemented it overfits.')
         if RUN_OPTIMIZATION:
+            assert 0 # this dont work
             init_gp_params = minimize(nll, gp_params)
             if cleaning_type == 'iterativegp':
                 gpfitted_time, gpfitted_flux, gp_params, dtr_stages_dict = (
@@ -320,6 +321,9 @@ def run_iterative_nuance(
             axs[0].set_ylabel("flux")
             axs[1].set_ylabel("flux")
             axs[1].legend()
+            if np.nanmax(time) - np.nanmin(time) > 500:
+                for ax in axs:
+                    ax.set_xlim((np.nanmin(time), npnanmin(time)+100))
             fig.tight_layout()
             outpath = join(
                 cachedir, f'{star_id}_gpopt_initial_gp_model_iter{count}.png'
