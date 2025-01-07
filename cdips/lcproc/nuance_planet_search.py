@@ -101,6 +101,8 @@ def run_iterative_nuance(
         outdict (dict): Dictionary containing search results.
     """
 
+    assert gpkernel_id in ['rotation', 'SHO', '2SHO']
+
     # set number of cpus to use
     cpu_count = os.cpu_count()
     if n_cpus > cpu_count / 2 :
@@ -265,23 +267,24 @@ def run_iterative_nuance(
             mu, nll = gp_model(time, flux, build_gp)
             gp_params = minimize(nll, init_params)
 
+        elif gpkernel_id == '2SHO':
+            raise NotImplementedError('not hard; just didnt do it yet')
+
         gpfitted_time, gpfitted_flux = time*1., flux*1.
 
         # NOTE: The idea behind this "optimization" is to find the
         # max-likelihood hyperparameters that help the GP not overfit.  It
         # doesn't work.  As-implemented, the GP always overfits.  A future TODO
         # to fix this would be to try crossvalidation or something analogous.
-        RUN_OPTIMIZATION = 0
+        RUN_OPTIMIZATION = 1 # NOTE FIXME
         if not RUN_OPTIMIZATION:
             LOGWARNING('skipping iterativegp cleaning b/c as implemented it overfits.')
         if RUN_OPTIMIZATION:
-            assert 0 # this dont work
-            init_gp_params = minimize(nll, gp_params)
             if cleaning_type == 'iterativegp':
                 gpfitted_time, gpfitted_flux, gp_params, dtr_stages_dict = (
                     iterativegp_cleaning(
-                        time, flux, nll, init_gp_params, mu,
-                        N_iter=3, sigma_clip=3, clipwindow=5, verbose=True
+                        time, flux, nll, gp_params, mu,
+                        N_iter=3, sigma_clip=3, clipwindow=10, verbose=True
                     )
                 )
 
@@ -323,7 +326,7 @@ def run_iterative_nuance(
             axs[1].legend()
             if np.nanmax(time) - np.nanmin(time) > 500:
                 for ax in axs:
-                    ax.set_xlim((np.nanmin(time), npnanmin(time)+100))
+                    ax.set_xlim((np.nanmin(time), np.nanmin(time)+100))
             fig.tight_layout()
             outpath = join(
                 cachedir, f'{star_id}_gpopt_initial_gp_model_iter{count}.png'
