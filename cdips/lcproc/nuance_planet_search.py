@@ -195,7 +195,7 @@ def run_iterative_nuance(
         LOGINFO(f'{star_id}: Will search over N_freq={N_freq} frequencies.')
 
     # same duration grid as notch
-    duration_grid = np.array([0.75, 1., 2., 4.]) / 24
+    duration_grid = np.array([0.75, 1., 2., 3., 4.]) / 24
 
     # epoch grid.  over 2 minute cadence this is probably overkill.
     epoch_grid = time.copy()
