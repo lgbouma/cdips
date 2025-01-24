@@ -20,6 +20,7 @@ Contents:
 
     Photometric conversion:
     | dr3_bprp_to_gv
+    | flux_and_err_to_mag_unc
 
     RVS:
     | given_dr3_sourceids_get_rvs_spectra
@@ -995,6 +996,24 @@ def dr3_bprp_to_gv(bp_rp):
     c3 = 0.01426
     y = c0 + c1*x + c2*x**2 + c3*x**3
     return y
+
+
+def calculate_phot_g_mean_mag_unc(flux, flux_error):
+    """
+    Calculate the uncertainty in magnitude given the uncertainties in the flux:
+    m = -2.5 × log₁₀(F)
+    ∂m/∂F = -2.5 / (F × ln(10))
+    σₘ = |∂m/∂F| × σ_F
+    σₘ = (2.5 / ln(10)) × (σ_F / F)
+
+    Args:
+        flux (float): The mean flux in the G-band (phot_g_mean_flux).
+        flux_error (float): The error in the mean flux (phot_g_mean_flux_error).
+
+    Returns:
+        float: The uncertainty in the G-band magnitude.
+    """
+    return (2.5 / np.log(10)) * (flux_error / flux)
 
 
 def given_dr3_sourceids_get_rvs_spectra(source_ids, cache_id):
