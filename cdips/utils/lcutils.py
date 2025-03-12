@@ -34,6 +34,8 @@ Light curve miscellanea:
     stitch_light_curves: stitch lists of light curves across sectors.
 
     astropy_utc_time_to_bjd_tdb: compute barycentric corrections
+
+    compute_duty_cycle: calculate fraction of a light curve with data
 """
 
 from glob import glob
@@ -44,8 +46,6 @@ from copy import deepcopy
 from astropy.io import fits
 from astropy.time import Time
 from cdips.utils import bash_grep
-
-from cdips.utils.tess_noise_model import N_pixels_in_aperture_Sullivan
 
 def find_cdips_lc_paths(
     source_id,
@@ -204,6 +204,7 @@ def get_best_ap_number_given_lcpath(lcpath):
     """
 
     from astrobase.imageutils import get_header_keyword
+    from cdips.utils.tess_noise_model import N_pixels_in_aperture_Sullivan
 
     tess_mag = get_header_keyword(lcpath, 'TESSMAG')
 
@@ -611,4 +612,71 @@ def astropy_utc_time_to_bjd_tdb(tmid_utc, ra, dec, observatory='earthcenter',
         return tmid_bjd_tdb.jd
     else:
         return tmid_bjd_tdb.jd, ltt_bary.value
+
+
+def compute_duty_cycle(time: np.ndarray, flux: np.ndarray) -> float:
+    """Compute the duty cycle of a light curve that may have data gaps.
+
+    The duty cycle is defined as the total time spanned by valid observations
+    (grouped into contiguous segments) divided by the total time from the
+    minimum to maximum valid time. A gap is considered present if more than 5
+    consecutive cadences are missing. The cadence is estimated as the median of
+    consecutive time differences.
+
+    Args:
+        time (np.ndarray):
+            Array of time values (may contain NaNs).
+        flux (np.ndarray):
+            Array of flux values (may contain NaNs).
+
+    Returns:
+        float:
+            The duty cycle, a number between 0 and 1.
+    """
+    # Remove any rows where time or flux is NaN
+    valid_mask = ~np.isnan(time) & ~np.isnan(flux)
+    if not np.any(valid_mask):
+        return 0.0
+
+    time_valid = time[valid_mask]
+    flux_valid = flux[valid_mask]
+
+    # Sort by time
+    sort_inds = np.argsort(time_valid)
+    time_sorted = time_valid[sort_inds]
+    flux_sorted = flux_valid[sort_inds]
+
+    # If fewer than 2 valid points remain, duty cycle is 0
+    if len(time_sorted) < 2:
+        return 0.0
+
+    # Calculate median cadence
+    dt = np.nanmedian(np.diff(time_sorted))
+
+    # Total span
+    t_min = np.nanmin(time_sorted)
+    t_max = np.nanmax(time_sorted)
+    total_time = t_max - t_min
+    if total_time <= 0:
+        return 0.0
+
+    # Identify contiguous segments
+    segment_starts = []
+    segment_ends = []
+    current_start = time_sorted[0]
+
+    for i in range(len(time_sorted) - 1):
+        if (time_sorted[i+1] - time_sorted[i]) > 5.0 * dt:
+            segment_starts.append(current_start)
+            segment_ends.append(time_sorted[i])
+            current_start = time_sorted[i+1]
+
+    # Close out the final segment
+    segment_starts.append(current_start)
+    segment_ends.append(time_sorted[-1])
+
+    # Sum the durations of all segments
+    coverage = np.sum(np.array(segment_ends) - np.array(segment_starts))
+
+    return coverage / total_time
 
