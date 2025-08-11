@@ -14,9 +14,6 @@ from datetime import datetime
 from astropy import units as u, constants as const
 from astropy.coordinates import SkyCoord
 
-from transitleastsquares import transit_mask
-from astrobase import lcmath
-
 from astroquery.mast import Tesscut
 
 DEBUG = False
@@ -173,9 +170,12 @@ def measure_centroid(t0,per,dur,sector,sourceid,c_obj,outdir):
     flux = flux[quality == 0]
     flux_err = flux_err[quality == 0]
 
+    from transitleastsquares import transit_mask
     intra = transit_mask(time, per, dur, t0)
 
     mingap = per/2
+
+    from astrobase import lcmath
     ngroups, groups = lcmath.find_lc_timegroups(time[intra], mingap=mingap)
 
     oot_times = time[~intra]
