@@ -99,7 +99,8 @@ def get_cdips_catalog(ver=0.6):
         'marduk.local':'/Users/luke/local/cdips/catalogs/',
         'mico.lan':'/Users/luke/local/cdips/catalogs/',
         'dhcp-194-240.caltech.edu':'/Users/luke/local/cdips/catalogs/',
-        'wh1':'/ar1/local/cdips/catalogs/'
+        'wh1':'/ar1/local/cdips/catalogs/',
+        'MacBookPro':'/Users/luke/local/cdips/catalogs/',
     }
 
     cdips_stars_dir = dir_d[socket.gethostname()]
@@ -134,7 +135,8 @@ def get_cdips_pub_catalog(ver=0.6):
         'marduk.local':'/Users/luke/local/cdips/catalogs/',
         'mico.lan':'/Users/luke/local/cdips/catalogs/',
         'WWS-C02C76B8MD6T':'/Users/luke/local/cdips/catalogs/',
-        'wh1':'/ar1/local/cdips/catalogs/'
+        'wh1':'/ar1/local/cdips/catalogs/',
+        'MacBookPro':'/Users/luke/local/cdips/catalogs/',
     }
 
     cdips_stars_dir = dir_d[socket.gethostname()]
@@ -282,6 +284,7 @@ def get_exofop_toi_catalog(ver=TODAYSTR, returnpath=False):
         'marduk.local':'/Users/luke/local/cdips/catalogs/',
         'mico.lan':'/Users/luke/local/cdips/catalogs/',
         'MacBookPro.lan':'/Users/luke/local/cdips/catalogs/',
+        'MacBookPro':'/Users/luke/local/cdips/catalogs/',
         'WWS-C02C76B8MD6T':'/Users/luke/Dropbox/proj/cdips/data/toi-exofop_catalogs/'
     }
 
