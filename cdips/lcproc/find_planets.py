@@ -69,7 +69,8 @@ def detrend_and_iterative_tls(
     dtr_method='best', n_threads=1,
     magisflux=False,
     cachepath=None, verbose=False,
-    slide_clip_lo=20, slide_clip_hi=3
+    slide_clip_lo=20, slide_clip_hi=3,
+    lsp_options = {'period_min':0.1, 'period_max':20}
     ):
     """
     This function is a clone of run_periodograms_and_detrend, but TLS is
@@ -79,6 +80,9 @@ def detrend_and_iterative_tls(
 
         as in run_periodograms_and_detrend, except for `max_iterations`,
         which is self-explanatory.
+
+        lsp_options: If None, skips detrending.  Else, detrends as in
+        clean_rotationsignal_tess_singlesector_light_curve
 
     Returns:
         "outdicts": keys are TLS iterations (plus dtr_stages_dict).  Each TLS
@@ -101,7 +105,6 @@ def detrend_and_iterative_tls(
             return d
 
     dtrcachepath = cachepath.replace(".pkl", "_dtrcache.pkl")
-    lsp_options = {'period_min':0.1, 'period_max':20}
     if os.path.exists(dtrcachepath):
         LOGINFO(f"Found {dtrcachepath}, loading results.")
         with open(dtrcachepath, 'rb') as f:
@@ -109,6 +112,16 @@ def detrend_and_iterative_tls(
         search_time, search_flux, dtr_stages_dict = (
             d['search_time'], d['search_flux'], d['dtr_stages_dict']
         )
+    elif lsp_options is None:
+        dtr_stages_dict = {'dtr_method': 'None'}
+        outdict = {
+            'search_time':time,
+            'search_flux':mag,
+            'dtr_stages_dict':dtr_stages_dict
+        }
+        ls_period = None
+        ls_amplitude = None
+        ls_fap = None
     else:
         # otherwise, run the detrending; cache results
         search_time, search_flux, dtr_stages_dict = (
@@ -128,10 +141,10 @@ def detrend_and_iterative_tls(
             pickle.dump(outdict, f)
             LOGINFO(f"Wrote {dtrcachepath}")
 
-    # retrieve LS periodogram information
-    ls_period = dtr_stages_dict['lsp_dict']['ls_period']
-    ls_amplitude = np.abs(dtr_stages_dict['lsp_dict']['ls_amplitude'])
-    ls_fap = dtr_stages_dict['lsp_dict']['ls_fap']
+        # retrieve LS periodogram information
+        ls_period = dtr_stages_dict['lsp_dict']['ls_period']
+        ls_amplitude = np.abs(dtr_stages_dict['lsp_dict']['ls_amplitude'])
+        ls_fap = dtr_stages_dict['lsp_dict']['ls_fap']
 
     results = {}
 
