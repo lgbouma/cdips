@@ -2235,8 +2235,10 @@ def plot_neighborhood_only(
     ax.set_ylim((max(ylim),min(ylim)))
 
     # set M_omega y limits
-    min_y = np.nanmin(np.array([np.nanpercentile(nbhd_yval, 2), target_yval]))
-    max_y = np.nanmax(np.array([np.nanpercentile(nbhd_yval, 98), target_yval]))
+    min_y = np.nanmin(np.array([np.nanpercentile(nbhd_yval, 2),
+                                float(target_yval)]))
+    max_y = np.nanmax(np.array([np.nanpercentile(nbhd_yval, 98),
+                                float(target_yval)]))
     edge_y = 0.01*(max_y - min_y)
     momega_ylim = [max_y+edge_y, min_y-edge_y]
     ax.set_ylim(momega_ylim)

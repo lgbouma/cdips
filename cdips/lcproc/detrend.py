@@ -578,7 +578,7 @@ def detrend_flux(time, flux, break_tolerance=0.5, method='pspline', cval=None,
                 # a 2-sigma cutoff is standard, but there's no obvious reason for
                 # this being the case. generally, anything far from the median
                 # shouldn't go into the fit.
-                stdev_cut = 1.5
+                stdev_cut = 2
 
                 edge_cutoff = 0
 
