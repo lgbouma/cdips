@@ -63,7 +63,7 @@ def get_nasa_exoplanet_archive_pscomppars(ver=TODAYSTR, N_max=int(2e4)):
             'pl_eqt, pl_eqt, pl_eqt, '+
             'st_teff, st_rad, st_mass, st_met, st_logg, st_rotp, sy_dist, '+
             'sy_disterr1, sy_disterr2, sy_plx, sy_plxerr1, sy_plxerr2, '+
-            'sy_vmag, sy_tmag, '+
+            'sy_vmag, sy_tmag, sy_kepmag, '+
             'tran_flag, rv_flag, ima_flag, '+
             'st_age, st_ageerr1, st_ageerr2 from pscomppars'
         )
