@@ -19,7 +19,6 @@ get_tic_star_information: Given TICID, query TICv8 for arbitrary columns.
 
 import pandas as pd, numpy as np
 import socket, os, json, csv
-from astrobase.services.mast import tic_objectsearch
 from cdips.utils import today_YYYYMMDD
 TODAYSTR = '-'.join([today_YYYYMMDD()[:4],
                      today_YYYYMMDD()[4:6],
@@ -445,6 +444,7 @@ def get_tic_star_information(
     if not isinstance(ticid, str):
         raise ValueError('ticid needs to be string')
 
+    from astrobase.services.mast import tic_objectsearch
     ticres = tic_objectsearch(ticid)
 
     with open(ticres['cachefname'], 'r') as json_file:
